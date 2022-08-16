@@ -29,8 +29,7 @@ class Shape(NamedTuple):
     A named tuple of two integer fields, `nrows` and `ncols`.
 
     Note that there is no validation of arguments on construction - the limits
-    of valid dimensions are left up to the matrix implementation, meaning that
-    negative dimensions are free to be interpreted by sub-classes.
+    of valid dimensions are left up to the matrix implementation.
     """
 
     nrows: int
@@ -146,16 +145,14 @@ def indices(key: tuple[int | slice, int | slice], nrows: int, ncols: int) -> Ite
     try:
         yield index(rowkey, nrows)
     except TypeError:
-        name = rowkey.__class__.__name__
-        raise TypeError(f"tuple index must contain integers and/or slices: row index was type '{name}'") from None
+        raise TypeError("tuple index must contain integers and/or slices") from None
     except IndexError:
         raise IndexError(f"row index out of range: there are {nrows} rows but index was {rowkey}") from None
 
     try:
         yield index(colkey, ncols)
     except TypeError:
-        name = colkey.__class__.__name__
-        raise TypeError(f"tuple index must contain integers and/or slices: column index was type '{name}'") from None
+        raise TypeError("tuple index must contain integers and/or slices") from None
     except IndexError:
         raise IndexError(f"column index out of range: there are {ncols} columns but index was {colkey}") from None
 
@@ -174,10 +171,7 @@ class Matrix(Sequence[T]):
     always done in row-major order unless stated otherwise.
     """
 
-    __slots__ = {
-        "data": "A list of the matrix's values, should be treated as read-only",
-        "shape": "A tuple of the matrix's number of rows and columns",
-    }
+    __slots__ = ("data", "shape")
 
     def __init__(self: Matrix[T], values: Iterable[T], nrows: int, ncols: int) -> None:
         """Construct a matrix from the elements of `values`, interpreting it as
@@ -212,8 +206,7 @@ class Matrix(Sequence[T]):
           equal `len(data)`.
         """
         self = cls.__new__(cls)
-        self.data  = data
-        self.shape = shape
+        self.data, self.shape = data, shape
         return self
 
     @classmethod
@@ -347,18 +340,14 @@ class Matrix(Sequence[T]):
         def call(func: Callable[P, R], args: tuple[Any, ...], kwargs: dict[str, Any]) -> R:
             return func(*args, **kwargs)
 
-        return self.map(call, args, kwargs)  # XXX: MyPy doesn't like when this is a comprehension?
+        return self.map(call, args, kwargs)
 
     def __len__(self: Matrix[T]) -> int:
         """Return the matrix's size"""
         return self.size
 
-    @typing.overload
+    @typing.overload  # type: ignore[override]
     def __getitem__(self: Matrix[T], key: int) -> T:
-        pass
-
-    @typing.overload
-    def __getitem__(self: Matrix[T], key: slice) -> Matrix[T]:
         pass
 
     @typing.overload
@@ -380,68 +369,50 @@ class Matrix(Sequence[T]):
     def __getitem__(self, key):
         """Return the element or sub-matrix corresponding to `key`
 
-        If the `key` is an integer or slice, it is treated as if it is indexing
-        the flattened matrix, returning the corresponding value(s) in row-major
-        order. A slice will always return a new matrix of shape `(1, N)`, where
-        `N` is the length of the slice's range.
+        If `key` is an integer, it is treated as if it is indexing the
+        flattened matrix, returning the corresponding value.
 
-        If the `key` is a tuple, the first index is applied against the rows,
-        while the second is applied against the columns. A tuple of two
-        integers, `(i, j)`, will return the element at column `j`, within row
-        `i`. All other tuple variations will return a new sub-matrix of shape
-        `(M, N)`, where `M` is the length of the first slice's range, and `N`
-        is the length of the second slice's range - either becomes 1 if the
-        sub-key is an integer.
+        If `key` is a tuple, the first index is applied against the rows, while
+        the second is applied against the columns. A tuple of two integers,
+        `(i, j)`, will return the element at row `i`, column `j`. All other
+        tuple variations will return a new sub-matrix of shape `(M, N)`, where
+        `M` is the length of the first slice's range, and `N` is the length of
+        the second slice's range - either becomes 1 if the sub-key is an
+        integer.
         """
         nrows, ncols = self.shape
-        data = self.data
 
         if isinstance(key, int):
             try:
-                res = data[key]
+                res = self.data[key]
             except IndexError:
                 size = nrows * ncols
                 raise IndexError(f"index out of range: size is {size} but index was {key}") from None
             else:
                 return res
+        try:
+            (mi, ix), (mj, jx) = indices(key, nrows, ncols)
+        except TypeError:
+            raise TypeError("indices must be an integer or tuple of slices and/or integers") from None
 
-        if isinstance(key, slice):
-            ix = range(*key.indices(nrows * ncols))
-            return self.__class__.new(
-                data  = [data[i] for i in ix],
-                shape = Shape(1, len(ix)),
-            )
-
-        (im, ix), (jm, jx) = indices(key, nrows, ncols)
-
-        if im is Key.ONE:
-            if jm is Key.ONE:
-                res = data[ix * ncols + jx]
+        if mi is Key.ONE:
+            if mj is Key.ONE:
+                return self.data[ix * ncols + jx]
             else:
-                res = self.__class__.new(
-                    data  = [data[ix * ncols + j] for j in jx],
-                    shape = Shape(1, len(jx)),
-                )
+                data  = [self.data[ix * ncols + j] for j in jx]
+                shape = Shape(1, len(jx))
         else:
-            if jm is Key.ONE:
-                res = self.__class__.new(
-                    data  = [data[i * ncols + jx] for i in ix],
-                    shape = Shape(len(ix), 1),
-                )
+            if mj is Key.ONE:
+                data  = [self.data[i * ncols + jx] for i in ix]
+                shape = Shape(len(ix), 1)
             else:
-                res = self.__class__.new(
-                    data  = [data[i * ncols + j] for i in ix for j in jx],
-                    shape = Shape(len(ix), len(jx)),
-                )
+                data  = [self.data[i * ncols + j] for i in ix for j in jx]
+                shape = Shape(len(ix), len(jx))
 
-        return res
+        return self.__class__.new(data, shape)
 
-    @typing.overload
+    @typing.overload  # type: ignore[override]
     def __setitem__(self: Matrix[T], key: int, value: T) -> None:
-        pass
-
-    @typing.overload
-    def __setitem__(self: Matrix[T], key: slice, value: Iterable[T]) -> None:
         pass
 
     @typing.overload
@@ -449,74 +420,74 @@ class Matrix(Sequence[T]):
         pass
 
     @typing.overload
-    def __setitem__(self: Matrix[T], key: tuple[int, slice], value: Iterable[T]) -> None:
+    def __setitem__(self: Matrix[T], key: tuple[int, slice], value: Matrix[T] | T) -> None:
         pass
 
     @typing.overload
-    def __setitem__(self: Matrix[T], key: tuple[slice, int], value: Iterable[T]) -> None:
+    def __setitem__(self: Matrix[T], key: tuple[slice, int], value: Matrix[T] | T) -> None:
         pass
 
     @typing.overload
-    def __setitem__(self: Matrix[T], key: tuple[slice, slice], value: Iterable[T]) -> None:
+    def __setitem__(self: Matrix[T], key: tuple[slice, slice], value: Matrix[T] | T) -> None:
         pass
 
     def __setitem__(self, key, value):
         """Overwrite the element or sub-matrix corresponding to `key` with
         `value`
 
-        If the `key` is an integer or slice, it is treated as if it is indexing
-        the flattened matrix, overwriting the corresponding value(s) in
-        row-major order.
+        If `key` is an integer, it is treated as if it is indexing
+        the flattened matrix, overwriting the corresponding value.
 
-        If the `key` is a tuple, the first index is applied against the rows,
-        while the second is applied against the columns. A tuple of two
-        integers, `(i, j)`, will overwrite the element at column `j`, within
-        row `i`. All other tuple variations will overwrite a sub-matrix of
-        shape `(M, N)`, where `M` is the length of the first slice's range, and
-        `N` is the length of the second slice's range - either becomes 1 if the
-        sub-key is an integer.
-
-        If overwriting a range of values using a slice or tuple of slices, this
-        method will take as many elements from `value` as it can, stopping if
-        there are not enough values within the iterable to overwrite the entire
-        range, while the remaining elements stay unaltered. Note that this is
-        different from how built-in `list` handles slice assignment - as a
-        shorter iterable will trim the unselected elements from the end of the
-        list.
+        If `key` is a tuple, the first index is applied against the rows, while
+        the second is applied against the columns. A tuple of two integers,
+        `(i, j)`, will overwrite the element at row `i`, column `j`. All other
+        tuple variations will overwrite a sub-matrix of shape `(M, N)`, where
+        `M` is the length of the first slice's range, and `N` is the length of
+        the second slice's range - either becomes 1 if the sub-key is an
+        integer.
         """
         nrows, ncols = self.shape
-        data = self.data
 
         if isinstance(key, int):
             try:
-                data[key] = value
+                self.data[key] = value
             except IndexError:
                 size = nrows * ncols
                 raise IndexError(f"index out of range: size is {size} but index was {key}") from None
             else:
                 return
+        try:
+            (mi, ix), (mj, jx) = indices(key, nrows, ncols)
+        except TypeError:
+            raise TypeError("indices must be an integer or tuple of slices and/or integers") from None
 
-        if isinstance(key, slice):
-            ix = range(*key.indices(nrows * ncols))
-            for i, x in zip(ix, value):
-                data[i] = x
-            return
-
-        (im, ix), (jm, jx) = indices(key, nrows, ncols)
-
-        if im is Key.ONE:
-            if jm is Key.ONE:
-                data[ix * ncols + jx] = value
+        def values(m: int) -> Iterator[T]:
+            try:
+                n = value.size
+            except AttributeError:
+                yield from itertools.repeat(value, m)
             else:
-                for j, x in zip(jx, value):
-                    data[ix * ncols + j] = x
+                if m != n:
+                    raise ValueError(f"incompatible sizes: input matrix has size {n} but selection was size {m}")
+                yield from iter(value)
+
+        if mi is Key.ONE:
+            if mj is Key.ONE:
+                self.data[ix * ncols + jx] = value
+            else:
+                it = values(len(jx))
+                for j, x in zip(jx, it):
+                    self.data[ix * ncols + j] = x
         else:
-            if jm is Key.ONE:
-                for i, x in zip(ix, value):
-                    data[i * ncols + jx] = x
+            if mj is Key.ONE:
+                it = values(len(ix))
+                for i, x in zip(ix, it):
+                    self.data[i * ncols + jx] = x
             else:
-                for (i, j), x in zip(itertools.product(ix, jx), value):
-                    data[i * ncols + j] = x
+                it = values(len(ix) * len(jx))
+                for i in ix:
+                    for j in jx:
+                        self.data[i * ncols + j] = next(it)
 
     def __iter__(self: Matrix[T]) -> Iterator[T]:
         """Return an iterator over the elements of the matrix"""
@@ -591,53 +562,53 @@ class Matrix(Sequence[T]):
 
     def __radd__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse mapping of `operator.add()`"""
-        add = binary_reverse(operator.add)
-        return self.map(add, other)
+        radd = binary_reverse(operator.add)
+        return self.map(radd, other)
 
     def __rsub__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse mapping of `operator.sub()`"""
-        sub = binary_reverse(operator.sub)
-        return self.map(sub, other)
+        rsub = binary_reverse(operator.sub)
+        return self.map(rsub, other)
 
     def __rmul__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse mapping of `operator.mul()`"""
-        mul = binary_reverse(operator.mul)
-        return self.map(mul, other)
+        rmul = binary_reverse(operator.mul)
+        return self.map(rmul, other)
 
     def __rtruediv__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse mapping of `operator.truediv()`"""
-        truediv = binary_reverse(operator.truediv)
-        return self.map(truediv, other)
+        rtruediv = binary_reverse(operator.truediv)
+        return self.map(rtruediv, other)
 
     def __rfloordiv__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse mapping of `operator.floordiv()"""
-        floordiv = binary_reverse(operator.floordiv)
-        return self.map(floordiv, other)
+        rfloordiv = binary_reverse(operator.floordiv)
+        return self.map(rfloordiv, other)
 
     def __rmod__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse mapping of `operator.mod()`"""
-        mod = binary_reverse(operator.mod)
-        return self.map(mod, other)
+        rmod = binary_reverse(operator.mod)
+        return self.map(rmod, other)
 
     def __rpow__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse mapping of `operator.pow()`"""
-        pow = binary_reverse(operator.pow)
-        return self.map(pow, other)
+        rpow = binary_reverse(operator.pow)
+        return self.map(rpow, other)
 
     def __rand__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[bool]:
         """Return the reverse mapping of `logical_and()`"""
-        land = binary_reverse(logical_and)
-        return self.map(land, other)
+        rand = binary_reverse(logical_and)
+        return self.map(rand, other)
 
     def __rxor__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[bool]:
         """Return the reverse mapping of `logical_xor()`"""
-        lxor = binary_reverse(logical_xor)
-        return self.map(lxor, other)
+        rxor = binary_reverse(logical_xor)
+        return self.map(rxor, other)
 
     def __ror__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[bool]:
         """Return the reverse mapping of `logical_or()`"""
-        lor = binary_reverse(logical_or)
-        return self.map(lor, other)
+        ror = binary_reverse(logical_or)
+        return self.map(ror, other)
 
     def __iadd__(self: Matrix[T], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the application of `operator.add()`"""
@@ -731,13 +702,8 @@ class Matrix(Sequence[T]):
 
         Raises `ValueError` if `value` could not be found in the matrix.
         """
-        start = max(0, start)
-        if stop is None:
-            stop = self.size
-        else:
-            stop = stop + (self.size if stop < 0 else 0)
-        try:
-            index = super().index(value, start, stop)
+        try:                                           # typeshed doesn't hint `stop: Optional[int]` like it should
+            index = super().index(value, start, stop)  # type: ignore[arg-type]
         except ValueError:
             raise ValueError("value not found") from None
         else:
@@ -793,7 +759,7 @@ class Matrix(Sequence[T]):
                 if isinstance(other, Matrix):
                     n = other.size
                     if m != n:
-                        raise ValueError(f"incompatible sizes: matrix has size {m} but operand {i} has size {n}")
+                        raise ValueError(f"incompatible sizes: operating matrix has size {m} but operand {i} has size {n}")
                     operand = iter(other)
                 else:
                     operand = itertools.repeat(other, m)
@@ -832,52 +798,45 @@ class Matrix(Sequence[T]):
                 if isinstance(other, Matrix):
                     n = other.size
                     if m != n:
-                        raise ValueError(f"incompatible sizes: matrix has size {m} but operand {i} has size {n}")
+                        raise ValueError(f"incompatible sizes: operating matrix has size {m} but operand {i} has size {n}")
                     operand = iter(other)
                 else:
                     operand = itertools.repeat(other, m)
                 operands.append(operand)
-        data = self.data
         for i, result in enumerate(map(func, self, *operands)):
-            data[i] = result
+            self.data[i] = result
         return self
 
     def vals(self: Matrix[T], *, by: Rule = Rule.ROW) -> Iterator[T]:
         """Return an iterator over the values of the matrix in row or
         column-major order
         """
-        data = self.data
-
         if by is Rule.COL:
             nrows, ncols = self.shape
-
             jx, ix = range(ncols), range(nrows)
             for j in jx:
                 for i in ix:
-                    yield data[i * ncols + j]
+                    yield self.data[i * ncols + j]
             return
-
-        yield from data
+        yield from self.data
 
     def rows(self: Matrix[T]) -> Iterator[Matrix[T]]:
         """Return an iterator over the rows of the matrix"""
         nrows, ncols = self.shape
-        data = self.data
-
         shape = Shape(1, ncols)
+
         for i in range(nrows):
-            row = data[i * ncols : i * ncols + ncols]
-            yield self.__class__.new(row, shape)
+            data = self.data[i * ncols : i * ncols + ncols]
+            yield self.__class__.new(data, shape)
 
     def cols(self: Matrix[T]) -> Iterator[Matrix[T]]:
         """Return an iterator over the columns of the matrix"""
         nrows, ncols = self.shape
-        data = self.data
-
         shape = Shape(nrows, 1)
+
         for j in range(ncols):
-            col = data[j : nrows * ncols + j : ncols]
-            yield self.__class__.new(col, shape)
+            data = self.data[j : nrows * ncols + j : ncols]
+            yield self.__class__.new(data, shape)
 
     def replace(self: Matrix[T], old: T, new: T, *, times: int | None = None) -> Matrix[T]:
         """Replace elements equal to `old` with `new`
@@ -898,10 +857,8 @@ class Matrix(Sequence[T]):
 
         ix = indices()
 
-        data = self.data
         for i in itertools.islice(ix, times):
-            data[i] = new
-
+            self.data[i] = new
         return self
 
     def reverse(self: Matrix[T]) -> Matrix[T]:
@@ -941,26 +898,50 @@ class Matrix(Sequence[T]):
                 for k in range(n):
                     yield (i * n + k, j * n + k)
 
-        data = self.data
         for x, y in indices():
-            data[x], data[y] = data[y], data[x]
+            self.data[x], self.data[y] = self.data[y], self.data[x]
 
         return self
 
     def flip(self: Matrix[T], *, by: Rule = Rule.ROW) -> Matrix[T]:
-        """Reverse the matrix's rows or columns in place
+        """Reverse the matrix's rows or columns in place"""
+        shape = self.shape
+        m, n = shape[by.value], shape[not by.value]
 
-        If the operating matrix is a row or column vector, it's recommended to
-        use `reverse()` for better performance.
-        """
-        n = self.shape[by.value]
-        for i in range(n // 2):
-            self.swap(i, n - i - 1, by=by)
+        if n > 1:
+
+            if by is Rule.COL:
+
+                def indices(i: int, j: int) -> Iterator[tuple[int, int]]:
+                    for k in range(n):
+                        yield (k * m + i, k * m + j)
+
+            else:
+
+                def indices(i: int, j: int) -> Iterator[tuple[int, int]]:
+                    for k in range(n):
+                        yield (i * n + k, j * n + k)
+
+            for i in range(m // 2):
+                for x, y in indices(i, m - i - 1):
+                    self.data[x], self.data[y] = self.data[y], self.data[x]
+
+        else:
+            self.data.reverse()  # Faster path for row and column vectors
+
         return self
 
-    def flatten(self: Matrix[T]) -> Matrix[T]:
-        """Flatten the matrix in place"""
-        self.shape = Shape(1, self.size)
+    def flatten(self: Matrix[T], *, by: Rule = Rule.ROW) -> Matrix[T]:
+        """Re-shape the matrix to a row or column vector
+
+        If flattened to a column vector, the elements are put into column-major
+        order.
+        """
+        if by is Rule.COL:
+            self.data[:] = self.vals(by=by)
+            self.shape = Shape(self.size, 1)
+        else:
+            self.shape = Shape(1, self.size)
         return self
 
     def transpose(self: Matrix[T]) -> Matrix[T]:
