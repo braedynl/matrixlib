@@ -116,13 +116,13 @@ class Shape:
         """Construct a shape from its two dimensions"""
         self.data = [nrows, ncols]
 
-    def __str__(self) -> str:
-        """Return a string representation of the shape"""
-        return f"{self.nrows} × {self.ncols}"
-
     def __repr__(self) -> str:
         """Return a canonical representation of the shape"""
         return f"{self.__class__.__name__}(nrows={self.nrows!r}, ncols={self.ncols!r})"
+
+    def __str__(self) -> str:
+        """Return a string representation of the shape"""
+        return f"{self.nrows} × {self.ncols}"
 
     def __eq__(self, other: Any) -> bool:
         """Return true if the two shapes have equal dimensions, otherwise false"""
@@ -148,7 +148,7 @@ class Shape:
         return self.data[key]
 
     def __setitem__(self, key: SupportsIndex, value: int) -> None:
-        """Set the dimension corresponding to `key`"""
+        """Set the dimension corresponding to `key` with `value`"""
         key = operator.index(key)
         self.data[key] = value
 
@@ -307,6 +307,11 @@ class Matrix(Sequence[T]):
         return cls.fill(value, *other.shape)
 
     @property
+    def size(self: Matrix[T]) -> int:
+        """The product of the number of rows and columns"""
+        return self.shape.size
+
+    @property
     def nrows(self: Matrix[T]) -> int:
         """The matrix's number of rows"""
         return self.shape.nrows
@@ -315,11 +320,6 @@ class Matrix(Sequence[T]):
     def ncols(self: Matrix[T]) -> int:
         """The matrix's number of columns"""
         return self.shape.ncols
-
-    @property
-    def size(self: Matrix[T]) -> int:
-        """The product of the number of rows and columns"""
-        return self.shape.size
 
     @reprlib.recursive_repr(fillvalue="...")
     def __repr__(self: Matrix[T]) -> str:
@@ -364,27 +364,27 @@ class Matrix(Sequence[T]):
 
         return result.getvalue()
 
-    def __lt__(self: Matrix[T], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __lt__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.lt()`"""
         return self.copy().flat_map(operator.lt, other)
 
-    def __le__(self: Matrix[T], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __le__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.le()`"""
         return self.copy().flat_map(operator.le, other)
 
-    def __eq__(self: Matrix[T], other: Sequence[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
+    def __eq__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
         """Return the flattened mapping of `operator.eq()`"""
         return self.copy().flat_map(operator.eq, other)
 
-    def __ne__(self: Matrix[T], other: Sequence[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
+    def __ne__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
         """Return the flattened mapping of `operator.ne()`"""
         return self.copy().flat_map(operator.ne, other)
 
-    def __gt__(self: Matrix[T], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __gt__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.gt()`"""
         return self.copy().flat_map(operator.gt, other)
 
-    def __ge__(self: Matrix[T], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __ge__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.ge()`"""
         return self.copy().flat_map(operator.ge, other)
 
@@ -424,6 +424,21 @@ class Matrix(Sequence[T]):
         pass
 
     def __getitem__(self, key):
+        """Return the element or sub-matrix corresponding to `key`
+
+        If `key` is an integer or slice, it is treated as if it is indexing the
+        flattened matrix, returning the corresponding value(s). A slice will
+        always return a new matrix of shape `(1, N)`, where `N` is the length
+        of the slice's range.
+
+        If `key` is a tuple, the first index is applied against the rows, while
+        the second is applied against the columns. A tuple of two integers,
+        `(i, j)`, will return the element at row `i`, column `j`. All other
+        tuple variations will return a new sub-matrix of shape `(M, N)`, where
+        `M` is the length of the first slice's range, and `N` is the length of
+        the second slice's range - integers are treated as length 1 slices if
+        mixed with at least one other slice.
+        """
         data, shape = self.data, self.shape
 
         if isinstance(key, tuple):
@@ -506,6 +521,19 @@ class Matrix(Sequence[T]):
         pass
 
     def __setitem__(self, key, value):
+        """Overwrite the element or sub-matrix corresponding to `key`
+
+        If `key` is an integer or slice, it is treated as if it is indexing the
+        flattened matrix, overwriting the corresponding value(s).
+
+        If `key` is a tuple, the first index is applied against the rows, while
+        the second is applied against the columns. A tuple of two integers,
+        `(i, j)`, will overwrite the element at row `i`, column `j`. All other
+        tuple variations will overwrite a sub-matrix of shape `(M, N)`, where
+        `M` is the length of the first slice's range, and `N` is the length of
+        the second slice's range - integers are treated as length 1 slices if
+        mixed with at least one other slice.
+        """
         data, shape = self.data, self.shape
 
         if isinstance(key, tuple):
@@ -686,6 +714,9 @@ class Matrix(Sequence[T]):
     def __matmul__(self: Matrix[Any], other: Matrix[Any]) -> Matrix[Any]:
         """Return the matrix product
 
+        Note that, during augmented assignment, the left-hand side matrix's
+        shape may be altered.
+
         In general, elements must behave "numerically" in their implementation
         of `__add__()` and `__mul__()` for a valid matrix product. This method
         attempts to generalize by using a left fold summation.
@@ -800,10 +831,10 @@ class Matrix(Sequence[T]):
         pass
 
     def flat_map(self, func, *others):
-        """Map `func` across the values in parallel with other matrices and/or
+        """Map `func` across the values in parallel with other sequences and/or
         objects, writing the results to the matrix
 
-        Raises `ValueError` if operand matrices differ in size.
+        Raises `ValueError` if operand sequences differ in size.
         """
         itx = []
         itx.append(iter(self))
@@ -862,8 +893,8 @@ class Matrix(Sequence[T]):
         pass
 
     def map(self, func, *others, by=Rule.ROW):
-        """Map `func` across the rows or columns in parallel other matrices
-        and/or objects, writing the results to the matrix
+        """Map `func` across the rows or columns in parallel with other
+        matrices and/or objects, writing the results to the matrix
 
         Raises `ValueError` if operand matrices differ in shape.
         """
@@ -895,6 +926,9 @@ class Matrix(Sequence[T]):
     def collapse(self: Matrix[T], func: Callable[[Matrix[T]], T], *, by: Rule = Rule.ROW) -> Matrix[T]:
         """Evaluate `func` over the rows or columns, collapsing it to the
         results
+
+        Note that, for certain empty shapes, the matrix may expand if `func`
+        returns a value for zero-length sequences.
         """
         self.data[:] = map(func, self.slices(by=by))
         self.shape[by.inverse] = 1
@@ -904,7 +938,7 @@ class Matrix(Sequence[T]):
         """Replace the elements who have a true parallel value in `selector`
         with `null`
 
-        Raises `ValueError` if the selector matrix differs in shape.
+        Raises `ValueError` if the selector differs in size.
         """
         if (m := self.size) != (n := len(selector)):
             raise ValueError(f"operating matrix has size {m} but selector has size {n}")
