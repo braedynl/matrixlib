@@ -1,3 +1,4 @@
+import itertools
 from unittest import TestCase
 
 from . import Matrix, Rule
@@ -64,6 +65,251 @@ class TestMatrix(TestCase):
     on for building other methods (e.g., most operator overloads call
     `flat_map()`, and so `flat_map()` is scrutinized).
     """
+
+    def testGetItem(self) -> None:
+        """Tests for `Matrix.__getitem__()`"""
+
+        for (i, j), x in zip(
+            itertools.product(range(2), range(3)),
+            range(6),
+        ):
+            y = M2x3[i, j]
+            self.assertEqual(x, y)
+
+        with self.assertRaises(IndexError):
+            M2x3[2, 0]
+
+        with self.assertRaises(IndexError):
+            M2x3[0, 3]
+
+        with self.assertRaises(IndexError):
+            M2x3[2, 3]
+
+        res = M2x3[0, :]
+        exp = Matrix([
+            0, 1, 2,
+        ], nrows=1, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        res = M2x3[1, :]
+        exp = Matrix([
+            3, 4, 5,
+        ], nrows=1, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        with self.assertRaises(IndexError):
+            M2x3[2, :]
+
+        res = M2x3[:, 0]
+        exp = Matrix([
+            0,
+            3,
+        ], nrows=2, ncols=1)
+
+        self.assertTrue(eq(res, exp))
+
+        res = M2x3[:, 1]
+        exp = Matrix([
+            1,
+            4,
+        ], nrows=2, ncols=1)
+
+        self.assertTrue(eq(res, exp))
+
+        res = M2x3[:, 2]
+        exp = Matrix([
+            2,
+            5,
+        ], nrows=2, ncols=1)
+
+        self.assertTrue(eq(res, exp))
+
+        with self.assertRaises(IndexError):
+            M2x3[:, 3]
+
+        res = M2x3[:, :]
+        exp = M2x3
+
+        self.assertTrue(eq(res, exp))
+
+        res = M3x3[1:, :]
+        exp = Matrix([
+            3, 4, 5,
+            6, 7, 8,
+        ], nrows=2, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        res = M3x3[:, 1:]
+        exp = Matrix([
+            1, 2,
+            4, 5,
+            7, 8,
+        ], nrows=3, ncols=2)
+
+        self.assertTrue(eq(res, exp))
+
+        res = M3x3[1:, 1:]
+        exp = Matrix([
+            4, 5,
+            7, 8,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(eq(res, exp))
+
+    def testSetItem(self) -> None:
+        """Tests for `Matrix.__setitem__()`"""
+
+        res = M2x3.copy()
+
+        for (i, j), x in zip(
+            itertools.product(range(2), range(3)),
+            range(-1, -6 - 1, -1),
+        ):
+            res[i, j] = x
+            y = res[i, j]
+            self.assertEqual(x, y)
+
+        with self.assertRaises(IndexError):
+            res[2, 0] = -1
+
+        with self.assertRaises(IndexError):
+            res[0, 3] = -1
+
+        with self.assertRaises(IndexError):
+            res[2, 3] = -1
+
+        res = M2x3.copy()
+
+        res[0, :] = (-1, -2, -3)
+        exp = Matrix([
+            -1, -2, -3,
+             3,  4,  5,
+        ], nrows=2, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        res[1, :] = (-4, -5, -6)
+        exp = Matrix([
+            -1, -2, -3,
+            -4, -5, -6,
+        ], nrows=2, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        with self.assertRaises(IndexError):
+            res[2, :] = (-7, -8, -9)
+
+        with self.assertRaises(ValueError):
+            res[0, :] = (-1, -2, -3, -4)
+
+        res = M2x3.copy()
+
+        res[:, 0] = (
+            -1,
+            -2,
+        )
+        exp = Matrix([
+            -1, 1, 2,
+            -2, 4, 5,
+        ], nrows=2, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        res[:, 1] = (
+            -3,
+            -4,
+        )
+        exp = Matrix([
+            -1, -3, 2,
+            -2, -4, 5,
+        ], nrows=2, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        res[:, 2] = (
+            -5,
+            -6,
+        )
+        exp = Matrix([
+            -1, -3, -5,
+            -2, -4, -6,
+        ], nrows=2, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        with self.assertRaises(IndexError):
+            res[:, 3] = (
+                -7,
+                -8,
+            )
+
+        with self.assertRaises(ValueError):
+            res[:, 0] = (
+                -1,
+                -2,
+                -3,
+            )
+
+        res = M3x3.copy()
+
+        res[:, :] = (
+            -1, -2, -3,
+            -4, -5, -6,
+            -7, -8, -9,
+        )
+        exp = Matrix([
+            -1, -2, -3,
+            -4, -5, -6,
+            -7, -8, -9,
+        ], nrows=3, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        res = M3x3.copy()
+
+        res[1:, :] = (
+            -4, -5, -6,
+            -7, -8, -9,
+        )
+        exp = Matrix([
+             0,  1,  2,
+            -4, -5, -6,
+            -7, -8, -9,
+        ], nrows=3, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        res = M3x3.copy()
+
+        res[:, 1:] = (
+            -1, -2,
+            -3, -4,
+            -5, -6,
+        )
+        exp = Matrix([
+            0, -1, -2,
+            3, -3, -4,
+            6, -5, -6,
+        ], nrows=3, ncols=3)
+
+        self.assertTrue(eq(res, exp))
+
+        res = M3x3.copy()
+
+        res[1:, 1:] = (
+            -1, -2,
+            -3, -4,
+        )
+        exp = Matrix([
+            0,  1,  2,
+            3, -1, -2,
+            6, -3, -4,
+        ], nrows=3, ncols=3)
+
+        self.assertTrue(eq(res, exp))
 
     def testReshape(self) -> None:
         """Tests for `Matrix.reshape()`"""
@@ -556,6 +802,6 @@ class TestMatrix(TestCase):
 
         with self.assertRaises(IndexError):
             M3x3.copy().pull(3, by=Rule.ROW)
-        
+
         with self.assertRaises(IndexError):
             M3x3.copy().pull(3, by=Rule.COL)

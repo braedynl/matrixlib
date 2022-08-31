@@ -81,7 +81,7 @@ class Rule(Enum):
         minor_step = minor_index * minor + major_index
 
         start = minor_step * index
-        stop = major_step * minor + start
+        stop  = major_step * minor + start
 
         return start, stop, major_step
 
@@ -173,25 +173,26 @@ class Shape:
     @property
     def nrows(self) -> int:
         """The first dimension of the shape"""
-        return self[0]
+        return self.data[0]
 
     @nrows.setter
     def nrows(self, value: int) -> None:
-        self[0] = value
+        self.data[0] = value
 
     @property
     def ncols(self) -> int:
         """The second dimension of the shape"""
-        return self[1]
+        return self.data[1]
 
     @ncols.setter
     def ncols(self, value: int) -> None:
-        self[1] = value
+        self.data[1] = value
 
     @property
     def size(self) -> int:
         """The product of the shape's dimensions"""
-        return self[0] * self[1]
+        nrows, ncols = self.data
+        return nrows * ncols
 
     def copy(self) -> Shape:
         """Return a copy of the shape"""
@@ -207,7 +208,7 @@ class Shape:
 
         Raises `IndexError` if the key is out of range.
         """
-        n = self[by]
+        n = self.data[by]
 
         res = operator.index(key)
         res = res + (n * (res < 0))
@@ -222,7 +223,7 @@ class Shape:
         """Return a slice `key` as an equivalent sequence of indices,
         respective to a rule
         """
-        n = self[by]
+        n = self.data[by]
         return range(*key.indices(n))
 
 
@@ -439,14 +440,14 @@ class Matrix(Sequence[T]):
         the second slice's range - integers are treated as length 1 slices if
         mixed with at least one other slice.
         """
-        data, shape = self.data, self.shape
+        shape = self.shape
 
         if isinstance(key, tuple):
             rowkey, colkey = key
 
             w = shape.ncols
             def getitems(indices, nrows, ncols):
-                data = [data[i * w + j] for i, j in indices]
+                data = [self.data[i * w + j] for i, j in indices]
                 return Matrix.new(data, shape=Shape(nrows, ncols))
 
             if isinstance(rowkey, slice):
@@ -481,16 +482,16 @@ class Matrix(Sequence[T]):
 
                 else:
                     j = shape.resolve_index(colkey, by=Rule.COL)
-                    return data[i * w + j]
+                    return self.data[i * w + j]
 
         if isinstance(key, slice):
             ix = range(*key.indices(shape.size))
 
-            data = [data[i] for i in ix]
+            data = [self.data[i] for i in ix]
             return Matrix.new(data, shape=Shape(1, len(ix)))
 
         try:
-            value = data[key]
+            value = self.data[key]
         except IndexError:
             raise IndexError("index out of range") from None
         else:
@@ -796,7 +797,8 @@ class Matrix(Sequence[T]):
         shape = self.shape
         subshape = by.subshape(shape)
         for i in range(shape[by]):
-            yield Matrix.new(self.data[by.slice(i, shape)], shape=subshape.copy())
+            data = self.data[by.slice(i, shape)]
+            yield Matrix.new(data, shape=subshape.copy())
 
     @typing.overload
     def flat_map(
@@ -839,7 +841,7 @@ class Matrix(Sequence[T]):
         itx = []
         itx.append(iter(self))
 
-        m = self.size
+        m = len(self)
         for i, other in enumerate(others, start=1):
             if isinstance(other, Sequence):
                 if m != (n := len(other)):
@@ -898,11 +900,10 @@ class Matrix(Sequence[T]):
 
         Raises `ValueError` if operand matrices differ in shape.
         """
-        shape = self.shape
-
         itx = []
         itx.append(self.slices(by=by))
 
+        shape = self.shape
         for i, other in enumerate(others, start=1):
             if isinstance(other, Matrix):
                 if shape != (other_shape := other.shape):
@@ -940,7 +941,7 @@ class Matrix(Sequence[T]):
 
         Raises `ValueError` if the selector differs in size.
         """
-        if (m := self.size) != (n := len(selector)):
+        if (m := len(self)) != (n := len(selector)):
             raise ValueError(f"operating matrix has size {m} but selector has size {n}")
         for i, masked in enumerate(selector):
             if masked: self.data[i] = null
@@ -1023,8 +1024,7 @@ class Matrix(Sequence[T]):
         If `other` is a sequence type, but not a matrix, it will be interpreted
         as a row or column vector.
         """
-        if self is other:
-            other = other.copy()  # type: ignore[attr-defined]
+        if self is other: other = other.copy()  # type: ignore[attr-defined]
 
         dy = by.inverse
 
