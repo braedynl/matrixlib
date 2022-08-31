@@ -535,7 +535,7 @@ class Matrix(Sequence[T]):
         the second slice's range - integers are treated as length 1 slices if
         mixed with at least one other slice.
         """
-        data, shape = self.data, self.shape
+        shape = self.shape
 
         if isinstance(key, tuple):
             rowkey, colkey = key
@@ -544,7 +544,7 @@ class Matrix(Sequence[T]):
             def setitems(indices, nrows, ncols):
                 if (m := nrows * ncols) != (n := len(value)):
                     raise ValueError(f"slice selected {m} items but sequence has length {n}")
-                for (i, j), x in zip(indices, value): data[i * w + j] = x
+                for (i, j), x in zip(indices, value): self.data[i * w + j] = x
                 return
 
             if isinstance(rowkey, slice):
@@ -579,7 +579,7 @@ class Matrix(Sequence[T]):
 
                 else:
                     j = shape.resolve_index(colkey, by=Rule.COL)
-                    data[i * w + j] = value
+                    self.data[i * w + j] = value
                     return
 
         if isinstance(key, slice):
@@ -587,12 +587,12 @@ class Matrix(Sequence[T]):
 
             if (m := len(ix)) != (n := len(value)):
                 raise ValueError(f"slice selected {m} items but sequence has length {n}")
-            for i, x in zip(ix, value): data[i] = x
+            for i, x in zip(ix, value): self.data[i] = x
 
             return
 
         try:
-            data[key] = value
+            self.data[key] = value
         except IndexError:
             raise IndexError("index out of range") from None
         else:
