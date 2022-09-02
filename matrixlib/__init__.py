@@ -59,7 +59,7 @@ class Rule(Enum):
         return "column" if self is Rule.COL else "row"
 
     def subshape(self, shape: Shape) -> Shape:
-        """Return the rule's shape"""
+        """Return the rule's shape given the matrix's shape"""
         shape = shape.copy()
         shape[self] = 1
         return shape
@@ -544,7 +544,8 @@ class Matrix(Sequence[T]):
             def setitems(indices, nrows, ncols):
                 if (m := nrows * ncols) != (n := len(value)):
                     raise ValueError(f"slice selected {m} items but sequence has length {n}")
-                for (i, j), x in zip(indices, value): self.data[i * w + j] = x
+                for (i, j), x in zip(indices, value):
+                    self.data[i * w + j] = x
                 return
 
             if isinstance(rowkey, slice):
@@ -587,8 +588,8 @@ class Matrix(Sequence[T]):
 
             if (m := len(ix)) != (n := len(value)):
                 raise ValueError(f"slice selected {m} items but sequence has length {n}")
-            for i, x in zip(ix, value): self.data[i] = x
-
+            for i, x in zip(ix, value):
+                self.data[i] = x
             return
 
         try:
@@ -845,7 +846,7 @@ class Matrix(Sequence[T]):
         for i, other in enumerate(others, start=1):
             if isinstance(other, Sequence):
                 if m != (n := len(other)):
-                    raise ValueError(f"operating matrix has size {m} but sequence operand {i} has size {n}")
+                    raise ValueError(f"operating matrix has size {m} but operand {i} has size {n}")
                 it = iter(other)
             else:
                 it = itertools.repeat(other)
@@ -898,16 +899,19 @@ class Matrix(Sequence[T]):
         """Map `func` across the rows or columns in parallel with other
         matrices and/or objects, writing the results to the matrix
 
-        Raises `ValueError` if operand matrices differ in shape.
+        Raises `ValueError` if operand matrices differ in the given dimension.
         """
+        shape = self.shape
+
         itx = []
         itx.append(self.slices(by=by))
 
-        shape = self.shape
+        m = shape[by]
         for i, other in enumerate(others, start=1):
             if isinstance(other, Matrix):
-                if shape != (other_shape := other.shape):
-                    raise ValueError(f"operating matrix has shape {shape} but matrix operand {i} has shape {other_shape}")
+                if m != (n := other.shape[by]):
+                    name = by.true_name
+                    raise ValueError(f"operating matrix has {m} {name}s but operand {i} has {n}")
                 it = other.slices(by=by)
             else:
                 it = itertools.repeat(other)
