@@ -22,6 +22,7 @@ Tx = TypeVar("Tx")
 P = ParamSpec("P")
 
 
+@typing.final
 class Rule(Enum):
     """The direction by which to operate within a matrix
 
@@ -102,6 +103,7 @@ class Rule(Enum):
         return slice(*self.serialize(index, shape))
 
 
+@typing.final
 class Shape:
     """A mutable sequence-like type for storing the dimensions of a matrix
 
@@ -899,7 +901,9 @@ class Matrix(Sequence[T]):
         """Map `func` across the rows or columns in parallel with other
         matrices and/or objects, writing the results to the matrix
 
-        Raises `ValueError` if operand matrices differ in the given dimension.
+        Raises `ValueError` if operand matrices differ by the given dimension,
+        or if a mapping result has a length that is not equal to the inverse
+        dimension.
         """
         shape = self.shape
 
@@ -1022,11 +1026,11 @@ class Matrix(Sequence[T]):
     def stack(self: Matrix[T], other: Sequence[T], *, by: Rule = Rule.ROW) -> Matrix[T]:
         """Stack a sequence or other matrix along the rows or columns
 
-        Raises `ValueError` if the opposite dimension corresponding to the
-        given rule differs between the operand matrices.
-
         If `other` is a sequence type, but not a matrix, it will be interpreted
-        as a row or column vector.
+        as a vector.
+
+        Raises `ValueError` if the inverse dimension differs between the
+        operand matrices.
         """
         if self is other: other = other.copy()  # type: ignore[attr-defined]
 
