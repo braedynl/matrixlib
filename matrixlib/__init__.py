@@ -120,7 +120,7 @@ class Shape:
 
     def __repr__(self) -> str:
         """Return a canonical representation of the shape"""
-        return f"{self.__class__.__name__}(nrows={self.nrows!r}, ncols={self.ncols!r})"
+        return f"Shape(nrows={self.nrows!r}, ncols={self.ncols!r})"
 
     def __str__(self) -> str:
         """Return a string representation of the shape"""
@@ -168,7 +168,7 @@ class Shape:
 
     def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Shape:
         """Return a copy of the shape"""
-        return self.__class__(*self)  # Our components are immutable
+        return Shape(*self.data)  # Our components are immutable
 
     __copy__ = __deepcopy__
 
@@ -198,7 +198,7 @@ class Shape:
 
     def copy(self) -> Shape:
         """Return a copy of the shape"""
-        return copy.deepcopy(self)
+        return Shape(*self.data)
 
     def reverse(self) -> Shape:
         """Reverse the shape's dimensions in place"""
@@ -299,7 +299,7 @@ class Matrix(Sequence[T]):
         """
         if nrows < 0 or ncols < 0:
             raise ValueError("dimensions must be non-negative")
-        data = list(itertools.repeat(value, nrows * ncols))
+        data = [value] * (nrows * ncols)
         return cls.new(data, shape=Shape(nrows, ncols))
 
     @classmethod
@@ -327,7 +327,7 @@ class Matrix(Sequence[T]):
     @reprlib.recursive_repr(fillvalue="...")
     def __repr__(self: Matrix[T]) -> str:
         """Return a canonical representation of the matrix"""
-        return f"{self.__class__.__name__}({self.data!r}, nrows={self.nrows!r}, ncols={self.ncols!r})"
+        return f"Matrix({self.data!r}, nrows={self.nrows!r}, ncols={self.ncols!r})"
 
     def __str__(self: Matrix[T]) -> str:
         """Return a string representation of the matrix
@@ -345,58 +345,59 @@ class Matrix(Sequence[T]):
         items = iter(self)
 
         max_width = 10
-        result = StringIO()
+        res = StringIO()
 
         if shape.size:
             for _ in range(shape.nrows):
-                result.write("| ")
+                res.write("| ")
 
                 for _ in range(shape.ncols):
                     chars = str(next(items))
                     if len(chars) > max_width:
-                        result.write(f"{chars[:max_width - 1]}…")
+                        res.write(f"{chars[:max_width - 1]}…")
                     else:
-                        result.write(chars.rjust(max_width))
-                    result.write(" ")
+                        res.write(chars.rjust(max_width))
+                    res.write(" ")
 
-                result.write("|\n")
+                res.write("|\n")
         else:
-            result.write("Empty matrix ")
+            res.write("Empty matrix ")
 
-        result.write(f"({shape})")
+        res.write(f"({shape})")
 
-        return result.getvalue()
+        return res.getvalue()
 
     def __lt__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.lt()`"""
-        return self.copy().flat_map(operator.lt, other)
+        return self.flat_map(operator.lt, other)
 
     def __le__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.le()`"""
-        return self.copy().flat_map(operator.le, other)
+        return self.flat_map(operator.le, other)
 
     def __eq__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
         """Return the flattened mapping of `operator.eq()`"""
-        return self.copy().flat_map(operator.eq, other)
+        return self.flat_map(operator.eq, other)
 
     def __ne__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
         """Return the flattened mapping of `operator.ne()`"""
-        return self.copy().flat_map(operator.ne, other)
+        return self.flat_map(operator.ne, other)
 
     def __gt__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.gt()`"""
-        return self.copy().flat_map(operator.gt, other)
+        return self.flat_map(operator.gt, other)
 
     def __ge__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.ge()`"""
-        return self.copy().flat_map(operator.ge, other)
+        return self.flat_map(operator.ge, other)
 
     def __call__(self: Matrix[Callable[P, R]], *args: P.args, **kwargs: P.kwargs) -> Matrix[R]:
         """Return a new matrix of the results from calling each element with
         the given arguments
         """
         data = [func(*args, **kwargs) for func in self.data]
-        return Matrix.new(data, shape=self.shape.copy())
+        shape = self.shape
+        return Matrix.new(data, shape=shape.copy())
 
     def __len__(self: Matrix[T]) -> int:
         """Return the matrix's size"""
@@ -548,7 +549,6 @@ class Matrix(Sequence[T]):
                     raise ValueError(f"slice selected {m} items but sequence has length {n}")
                 for (i, j), x in zip(indices, value):
                     self.data[i * w + j] = x
-                return
 
             if isinstance(rowkey, slice):
                 ix = shape.resolve_slice(rowkey, by=Rule.ROW)
@@ -592,6 +592,7 @@ class Matrix(Sequence[T]):
                 raise ValueError(f"slice selected {m} items but sequence has length {n}")
             for i, x in zip(ix, value):
                 self.data[i] = x
+
             return
 
         try:
@@ -615,105 +616,105 @@ class Matrix(Sequence[T]):
 
     def __add__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.add()`"""
-        return self.copy().flat_map(operator.add, other)
+        return self.flat_map(operator.add, other)
 
     def __sub__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.sub()`"""
-        return self.copy().flat_map(operator.sub, other)
+        return self.flat_map(operator.sub, other)
 
     def __mul__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.mul()`"""
-        return self.copy().flat_map(operator.mul, other)
+        return self.flat_map(operator.mul, other)
 
     def __truediv__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.truediv()`"""
-        return self.copy().flat_map(operator.truediv, other)
+        return self.flat_map(operator.truediv, other)
 
     def __floordiv__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.floordiv()`"""
-        return self.copy().flat_map(operator.floordiv, other)
+        return self.flat_map(operator.floordiv, other)
 
     def __mod__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.mod()`"""
-        return self.copy().flat_map(operator.mod, other)
+        return self.flat_map(operator.mod, other)
 
     def __pow__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.pow()`"""
-        return self.copy().flat_map(operator.pow, other)
+        return self.flat_map(operator.pow, other)
 
     def __and__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
         """Return the flattened mapping of `logical_and()`"""
-        return self.copy().flat_map(logical_and, other)
+        return self.flat_map(logical_and, other)
 
     def __xor__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
         """Return the flattened mapping of `logical_xor()`"""
-        return self.copy().flat_map(logical_xor, other)
+        return self.flat_map(logical_xor, other)
 
     def __or__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
         """Return the flattened mapping of `logical_or()`"""
-        return self.copy().flat_map(logical_or, other)
+        return self.flat_map(logical_or, other)
 
     def __radd__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.add()`"""
         radd = binary_reverse(operator.add)
-        return self.copy().flat_map(radd, other)
+        return self.flat_map(radd, other)
 
     def __rsub__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.sub()`"""
         rsub = binary_reverse(operator.sub)
-        return self.copy().flat_map(rsub, other)
+        return self.flat_map(rsub, other)
 
     def __rmul__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.mul()`"""
         rmul = binary_reverse(operator.mul)
-        return self.copy().flat_map(rmul, other)
+        return self.flat_map(rmul, other)
 
     def __rtruediv__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.truediv()`"""
         rtruediv = binary_reverse(operator.truediv)
-        return self.copy().flat_map(rtruediv, other)
+        return self.flat_map(rtruediv, other)
 
     def __rfloordiv__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.floordiv()"""
         rfloordiv = binary_reverse(operator.floordiv)
-        return self.copy().flat_map(rfloordiv, other)
+        return self.flat_map(rfloordiv, other)
 
     def __rmod__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.mod()`"""
         rmod = binary_reverse(operator.mod)
-        return self.copy().flat_map(rmod, other)
+        return self.flat_map(rmod, other)
 
     def __rpow__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.pow()`"""
         rpow = binary_reverse(operator.pow)
-        return self.copy().flat_map(rpow, other)
+        return self.flat_map(rpow, other)
 
     def __rand__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
         """Return the reverse flattened mapping of `logical_and()`"""
         rand = binary_reverse(logical_and)
-        return self.copy().flat_map(rand, other)
+        return self.flat_map(rand, other)
 
     def __rxor__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
         """Return the reverse flattened mapping of `logical_xor()`"""
         rxor = binary_reverse(logical_xor)
-        return self.copy().flat_map(rxor, other)
+        return self.flat_map(rxor, other)
 
     def __ror__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
         """Return the reverse flattened mapping of `logical_or()`"""
         ror = binary_reverse(logical_or)
-        return self.copy().flat_map(ror, other)
+        return self.flat_map(ror, other)
 
     def __neg__(self: Matrix[Any]) -> Matrix[Any]:
         """Return the flattened mapping of `operator.neg()`"""
-        return self.copy().flat_map(operator.neg)
+        return self.flat_map(operator.neg)
 
     def __pos__(self: Matrix[Any]) -> Matrix[Any]:
         """Return the flattened mapping of `operator.pos()`"""
-        return self.copy().flat_map(operator.pos)
+        return self.flat_map(operator.pos)
 
     def __invert__(self: Matrix[Any]) -> Matrix[bool]:
         """Return the flattened mapping of `logical_not()`"""
-        return self.copy().flat_map(logical_not)
+        return self.flat_map(logical_not)
 
     def __matmul__(self: Matrix[Any], other: Matrix[Any]) -> Matrix[Any]:
         """Return the matrix product
@@ -758,11 +759,15 @@ class Matrix(Sequence[T]):
 
     def __copy__(self: Matrix[T]) -> Matrix[T]:
         """Return a shallow copy of the matrix"""
-        return Matrix.new(copy.copy(self.data), shape=self.shape.copy())
+        data = copy.copy(self.data)
+        shape = self.shape
+        return Matrix.new(data, shape=shape.copy())
 
     def __deepcopy__(self: Matrix[T], memo: dict[int, Any] | None = None) -> Matrix[T]:
         """Return a deep copy of the matrix"""
-        return Matrix.new(copy.deepcopy(self.data, memo), shape=self.shape.copy())
+        data = copy.deepcopy(self.data, memo)
+        shape = self.shape
+        return Matrix.new(data, shape=shape.copy())
 
     def index(self: Matrix[T], value: T, start: int = 0, stop: int | None = None) -> int:
         """Return the index of the first element equal to `value`
@@ -806,41 +811,43 @@ class Matrix(Sequence[T]):
     @typing.overload
     def flat_map(
         self: Matrix[T1],
-        func: Callable[[T1], T1],
-    ) -> Matrix[T1]:
+        func: Callable[[T1], R],
+    ) -> Matrix[R]:
         pass
 
     @typing.overload
     def flat_map(
         self: Matrix[T1],
-        func: Callable[[T1, T2], T1],
+        func: Callable[[T1, T2], R],
         other1: Sequence[T2] | T2,
-    ) -> Matrix[T1]:
+    ) -> Matrix[R]:
         pass
 
     @typing.overload
     def flat_map(
         self: Matrix[T1],
-        func: Callable[[T1, T2, T3], T1],
+        func: Callable[[T1, T2, T3], R],
         other1: Sequence[T2] | T2,
         other2: Sequence[T3] | T3,
-    ) -> Matrix[T1]:
+    ) -> Matrix[R]:
         pass
 
     @typing.overload
     def flat_map(
         self: Matrix[T1],
-        func: Callable[..., T1],
+        func: Callable[..., R],
         *others: Sequence[Tx] | Tx,
-    ) -> Matrix[T1]:
+    ) -> Matrix[R]:
         pass
 
     def flat_map(self, func, *others):
         """Map `func` across the values in parallel with other sequences and/or
-        objects, writing the results to the matrix
+        objects to produce a new matrix
 
         Raises `ValueError` if operand sequences differ in size.
         """
+        shape = self.shape
+
         itx = []
         itx.append(iter(self))
 
@@ -854,52 +861,52 @@ class Matrix(Sequence[T]):
                 it = itertools.repeat(other)
             itx.append(it)
 
-        self.data[:] = map(func, *itx)
+        data = list(map(func, *itx))
 
-        return self
+        return Matrix.new(data, shape=shape.copy())
 
     @typing.overload
     def map(
         self: Matrix[T1],
-        func: Callable[[Matrix[T1]], Sequence[T1]],
+        func: Callable[[Matrix[T1]], Sequence[R]],
         *,
         by: Rule = Rule.ROW,
-    ) -> Matrix[T1]:
+    ) -> Matrix[R]:
         pass
 
     @typing.overload
     def map(
         self: Matrix[T1],
-        func: Callable[[Matrix[T1], Matrix[T2] | T2], Sequence[T1]],
+        func: Callable[[Matrix[T1], Matrix[T2] | T2], Sequence[R]],
         other1: Matrix[T2] | T2,
         *,
         by: Rule = Rule.ROW,
-    ) -> Matrix[T1]:
+    ) -> Matrix[R]:
         pass
 
     @typing.overload
     def map(
         self: Matrix[T1],
-        func: Callable[[Matrix[T1], Matrix[T2] | T2, Matrix[T3] | T3], Sequence[T1]],
+        func: Callable[[Matrix[T1], Matrix[T2] | T2, Matrix[T3] | T3], Sequence[R]],
         other1: Matrix[T2] | T2,
         other2: Matrix[T3] | T3,
         *,
         by: Rule = Rule.ROW,
-    ) -> Matrix[T1]:
+    ) -> Matrix[R]:
         pass
 
     @typing.overload
     def map(
         self: Matrix[T1],
-        func: Callable[..., Sequence[T1]],
-        *,
+        func: Callable[..., Sequence[R]],
+        *others: Matrix[Tx] | Tx,
         by: Rule = Rule.ROW,
-    ) -> Matrix[T1]:
+    ) -> Matrix[R]:
         pass
 
     def map(self, func, *others, by=Rule.ROW):
         """Map `func` across the rows or columns in parallel with other
-        matrices and/or objects, writing the results to the matrix
+        matrices and/or objects to produce a new matrix
 
         Raises `ValueError` if operand matrices differ by the given dimension,
         or if a mapping result has a length that is not equal to the inverse
@@ -921,6 +928,7 @@ class Matrix(Sequence[T]):
                 it = itertools.repeat(other)
             itx.append(it)
 
+        data = [None] * shape.size
         dy = by.inverse
 
         m = shape[dy]
@@ -928,20 +936,76 @@ class Matrix(Sequence[T]):
             if m != (n := len(seq)):
                 name = dy.true_name
                 raise ValueError(f"operating matrix has {m} {name}s but a mapping result has size {n}")
-            self.data[by.slice(i, shape)] = seq
+            data[by.slice(i, shape)] = seq
 
-        return self
+        return Matrix.new(data, shape=shape.copy())
 
-    def collapse(self: Matrix[T], func: Callable[[Matrix[T]], T], *, by: Rule = Rule.ROW) -> Matrix[T]:
-        """Evaluate `func` over the rows or columns, collapsing it to the
-        results
+    @typing.overload
+    def collapse(
+        self: Matrix[T1],
+        func: Callable[[Matrix[T1]], R],
+        *,
+        by: Rule = Rule.ROW,
+    ) -> Matrix[R]:
+        pass
 
-        Note that, for certain empty shapes, the matrix may expand if `func`
-        returns a value for zero-length sequences.
+    @typing.overload
+    def collapse(
+        self: Matrix[T1],
+        func: Callable[[Matrix[T1], Matrix[T2] | T2], R],
+        other1: Matrix[T2] | T2,
+        *,
+        by: Rule = Rule.ROW,
+    ) -> Matrix[R]:
+        pass
+
+    @typing.overload
+    def collapse(
+        self: Matrix[T1],
+        func: Callable[[Matrix[T1], Matrix[T2] | T2, Matrix[T3] | T3], R],
+        other1: Matrix[T2] | T2,
+        other2: Matrix[T3] | T3,
+        *,
+        by: Rule = Rule.ROW,
+    ) -> Matrix[R]:
+        pass
+
+    @typing.overload
+    def collapse(
+        self: Matrix[T1],
+        func: Callable[..., R],
+        *others: Matrix[Tx] | Tx,
+        by: Rule = Rule.ROW,
+    ) -> Matrix[R]:
+        pass
+
+    def collapse(self, func, *others, by=Rule.ROW):
+        """Map `func` across the rows or columns in parallel with other
+        matrices and/or objects to produce a vector of the results
+
+        Raises `ValueError` if operand matrices differ by the given dimension,
+        or if a mapping result has a length that is not equal to the inverse
+        dimension.
         """
-        self.data[:] = map(func, self.slices(by=by))
-        self.shape[by.inverse] = 1
-        return self
+        shape = self.shape
+
+        itx = []
+        itx.append(self.slices(by=by))
+
+        m = shape[by]
+        for i, other in enumerate(others, start=1):
+            if isinstance(other, Matrix):
+                if m != (n := other.shape[by]):
+                    name = by.true_name
+                    raise ValueError(f"operating matrix has {m} {name}s but operand {i} has {n}")
+                it = other.slices(by=by)
+            else:
+                it = itertools.repeat(other)
+            itx.append(it)
+
+        data = list(map(func, *itx))
+
+        return Matrix.new(data, shape=by.inverse.subshape(shape))
 
     def mask(self: Matrix[T], selector: Sequence[Any], null: T) -> Matrix[T]:
         """Replace the elements who have a true parallel value in `selector`
@@ -1012,15 +1076,12 @@ class Matrix(Sequence[T]):
 
     def transpose(self: Matrix[T]) -> Matrix[T]:
         """Transpose the matrix in place"""
-        data, shape = self.data, self.shape
-
-        nrows, ncols = shape
-        if nrows > 1 and ncols > 1:
-            ix = range(nrows)
-            jx = range(ncols)
+        shape = self.shape
+        if (nrows := shape[0]) > 1 and (ncols := shape[1]) > 1:
+            data = self.data
+            ix, jx = range(nrows), range(ncols)
             data[:] = (data[i * ncols + j] for j in jx for i in ix)
         shape.reverse()
-
         return self
 
     def stack(self: Matrix[T], other: Sequence[T], *, by: Rule = Rule.ROW) -> Matrix[T]:
@@ -1071,6 +1132,7 @@ class Matrix(Sequence[T]):
         range.
         """
         shape = self.shape
+
         slice = by.slice(shape.resolve_index(key, by=by), shape)
 
         data = self.data[slice]

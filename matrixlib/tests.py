@@ -339,12 +339,12 @@ class TestMatrix(TestCase):
     def testFlatMap(self) -> None:
         """Tests for `Matrix.flat_map()`"""
 
-        res = M0x0.copy().flat_map(lambda x: x + 1)
+        res = M0x0.flat_map(lambda x: x + 1)
         exp = Matrix([], nrows=0, ncols=0)
 
         self.assertTrue(eq(res, exp))
 
-        res = M2x2.copy().flat_map(lambda x: x + 1)
+        res = M2x2.flat_map(lambda x: x + 1)
         exp = Matrix([
             1, 2,
             3, 4,
@@ -352,7 +352,7 @@ class TestMatrix(TestCase):
 
         self.assertTrue(eq(res, exp))
 
-        res = M2x2.copy().flat_map(lambda x, y: x + y, M2x2)
+        res = M2x2.flat_map(lambda x, y: x + y, M2x2)
         exp = Matrix([
             0 * 2, 1 * 2,
             2 * 2, 3 * 2,
@@ -360,7 +360,7 @@ class TestMatrix(TestCase):
 
         self.assertTrue(eq(res, exp))
 
-        res = M2x2.copy().flat_map(lambda x, y, z: x + y + z, M2x2, M2x2)
+        res = M2x2.flat_map(lambda x, y, z: x + y + z, M2x2, M2x2)
         exp = Matrix([
             0 * 3, 1 * 3,
             2 * 3, 3 * 3,
@@ -368,7 +368,7 @@ class TestMatrix(TestCase):
 
         self.assertTrue(eq(res, exp))
 
-        res = M2x2.copy().flat_map(lambda x, y: x + y, 1)
+        res = M2x2.flat_map(lambda x, y: x + y, 1)
         exp = Matrix([
             0 + 1, 1 + 1,
             2 + 1, 3 + 1,
@@ -376,7 +376,7 @@ class TestMatrix(TestCase):
 
         self.assertTrue(eq(res, exp))
 
-        res = M2x2.copy().flat_map(lambda x, y: x + y, range(M2x2.size))
+        res = M2x2.flat_map(lambda x, y: x + y, range(M2x2.size))
         exp = Matrix([
             0 * 2, 1 * 2,
             2 * 2, 3 * 2,
@@ -385,22 +385,22 @@ class TestMatrix(TestCase):
         self.assertTrue(eq(res, exp))
 
         with self.assertRaises(ValueError):
-            M2x2.copy().flat_map(lambda x, y: x + y, M0x0)
+            M2x2.flat_map(lambda x, y: x + y, M0x0)
 
         with self.assertRaises(ValueError):
-            M2x2.copy().flat_map(lambda x, y, z: x + y + z, 1, M0x0)
+            M2x2.flat_map(lambda x, y, z: x + y + z, 1, M0x0)
 
     def testMap(self) -> None:
         """Tests for `Matrix.map()`"""
 
-        res1 = M0x0.copy().map(lambda row: row.reverse(), by=Rule.ROW)
-        res2 = M0x0.copy().map(lambda col: col.reverse(), by=Rule.COL)
+        res1 = M0x0.map(lambda row: row.reverse(), by=Rule.ROW)
+        res2 = M0x0.map(lambda col: col.reverse(), by=Rule.COL)
         exp = Matrix([], nrows=0, ncols=0)
 
         self.assertTrue(eq(res1, exp))
         self.assertTrue(eq(res2, exp))
 
-        res = M2x2.copy().map(lambda row: row.reverse(), by=Rule.ROW)
+        res = M2x2.map(lambda row: row.reverse(), by=Rule.ROW)
         exp = Matrix([
             1, 0,
             3, 2,
@@ -408,7 +408,7 @@ class TestMatrix(TestCase):
 
         self.assertTrue(eq(res, exp))
 
-        res = M2x2.copy().map(lambda col: col.reverse(), by=Rule.COL)
+        res = M2x2.map(lambda col: col.reverse(), by=Rule.COL)
         exp = Matrix([
             2, 3,
             0, 1,
@@ -416,8 +416,8 @@ class TestMatrix(TestCase):
 
         self.assertTrue(eq(res, exp))
 
-        res1 = M2x2.copy().map(lambda row1, row2: row1 + row2, M2x2, by=Rule.ROW)
-        res2 = M2x2.copy().map(lambda col1, col2: col1 + col2, M2x2, by=Rule.COL)
+        res1 = M2x2.map(lambda row1, row2: row1 + row2, M2x2, by=Rule.ROW)
+        res2 = M2x2.map(lambda col1, col2: col1 + col2, M2x2, by=Rule.COL)
         exp = Matrix([
             0 * 2, 1 * 2,
             2 * 2, 3 * 2,
@@ -426,8 +426,8 @@ class TestMatrix(TestCase):
         self.assertTrue(eq(res1, exp))
         self.assertTrue(eq(res2, exp))
 
-        res1 = M2x2.copy().map(lambda row, x: row + x, 1, by=Rule.ROW)
-        res2 = M2x2.copy().map(lambda col, x: col + x, 1, by=Rule.COL)
+        res1 = M2x2.map(lambda row, x: row + x, 1, by=Rule.ROW)
+        res2 = M2x2.map(lambda col, x: col + x, 1, by=Rule.COL)
         exp = Matrix([
             0 + 1, 1 + 1,
             2 + 1, 3 + 1,
@@ -437,10 +437,10 @@ class TestMatrix(TestCase):
         self.assertTrue(eq(res2, exp))
 
         with self.assertRaises(ValueError):
-            M2x3.copy().map(lambda row: [0, 1], by=Rule.ROW)
+            M2x3.map(lambda row: [0, 1], by=Rule.ROW)
 
         with self.assertRaises(ValueError):
-            M2x3.copy().map(lambda col: [0, 1, 2], by=Rule.COL)
+            M2x3.map(lambda col: [0, 1, 2], by=Rule.COL)
 
     def testSlices(self) -> None:
         """Tests for `Matrix.slices()`"""
@@ -564,19 +564,19 @@ class TestMatrix(TestCase):
     def testCollapse(self) -> None:
         """Tests for `Matrix.collapse()`"""
 
-        res = M0x2.copy().collapse(sum, by=Rule.ROW)
+        res = M0x2.collapse(sum, by=Rule.ROW)
         exp = Matrix([], nrows=0, ncols=1)
 
         self.assertTrue(eq(res, exp))
 
-        res = M0x2.copy().collapse(sum, by=Rule.COL)
+        res = M0x2.collapse(sum, by=Rule.COL)
         exp = Matrix([
             0, 0,
         ], nrows=1, ncols=2)
 
         self.assertTrue(eq(res, exp))
 
-        res = M2x3.copy().collapse(max, by=Rule.ROW)
+        res = M2x3.collapse(max, by=Rule.ROW)
         exp = Matrix([
             2,
             5,
@@ -584,7 +584,7 @@ class TestMatrix(TestCase):
 
         self.assertTrue(eq(res, exp))
 
-        res = M2x3.copy().collapse(max, by=Rule.COL)
+        res = M2x3.collapse(max, by=Rule.COL)
         exp = Matrix([
             3, 4, 5,
         ], nrows=1, ncols=3)
