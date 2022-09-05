@@ -1,3 +1,14 @@
+"""A basic set of utilities for storing and manipulating data in ≤ 2
+dimensions.
+
+Contains the `Matrix` definition, along with its related utility classes and
+alternate constructors.
+
+Author: Braedyn Lettinga
+Version: 0.1.0
+Documentation: https://github.com/braedynl/matrices-py/wiki
+"""
+
 from __future__ import annotations
 
 import copy
@@ -10,6 +21,11 @@ from collections.abc import Callable, Iterable, Iterator, Sequence
 from enum import Enum
 from io import StringIO
 from typing import Any, Literal, ParamSpec, SupportsIndex, Type, TypeVar
+
+__all__ = [
+    "Rule", "Shape", "Matrix",
+    "vector", "matrix",
+]
 
 T = TypeVar("T")
 R = TypeVar("R")
@@ -29,9 +45,6 @@ class Rule(Enum):
     The value of a rule member is usable as an index that retrieves the rule's
     corresponding dimension from a matrix's shape (or any two-element sequence
     type).
-
-    Additional methods are included to aid in managing index resolution and row
-    or column-sequencing in a one-dimensional container.
     """
 
     ROW: int = 0
@@ -910,7 +923,7 @@ class Matrix(Sequence[T]):
 
         Raises `ValueError` if operand matrices differ by the given dimension,
         or if a mapping result has a length that is not equal to the inverse
-        dimension.
+        dimension of the operating matrix.
         """
         shape = self.shape
 
@@ -983,9 +996,7 @@ class Matrix(Sequence[T]):
         """Map `func` across the rows or columns in parallel with other
         matrices and/or objects to produce a vector of the results
 
-        Raises `ValueError` if operand matrices differ by the given dimension,
-        or if a mapping result has a length that is not equal to the inverse
-        dimension.
+        Raises `ValueError` if operand matrices differ by the given dimension.
         """
         shape = self.shape
 
