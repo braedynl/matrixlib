@@ -233,7 +233,7 @@ def binary_reverse(func: Callable[[Any, Any], R]) -> Callable[[Any, Any], R]:
     """Return a wrapper of a given binary function that reverses its incoming
     arguments
     """
-    def wrapper(x: Any, y: Any) -> R:
+    def wrapper(x, y):
         return func(y, x)
     return wrapper
 
@@ -367,27 +367,27 @@ class Matrix(Sequence[T]):
 
         return res.getvalue()
 
-    def __lt__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __lt__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.lt()`"""
         return self.flat_map(operator.lt, other)
 
-    def __le__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __le__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.le()`"""
         return self.flat_map(operator.le, other)
 
-    def __eq__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
+    def __eq__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
         """Return the flattened mapping of `operator.eq()`"""
         return self.flat_map(operator.eq, other)
 
-    def __ne__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
+    def __ne__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:  # type: ignore[override]
         """Return the flattened mapping of `operator.ne()`"""
         return self.flat_map(operator.ne, other)
 
-    def __gt__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __gt__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.gt()`"""
         return self.flat_map(operator.gt, other)
 
-    def __ge__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __ge__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.ge()`"""
         return self.flat_map(operator.ge, other)
 
@@ -614,92 +614,92 @@ class Matrix(Sequence[T]):
         """Return true if the matrix contains `value`, otherwise false"""
         return value in self.data
 
-    def __add__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __add__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.add()`"""
         return self.flat_map(operator.add, other)
 
-    def __sub__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __sub__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.sub()`"""
         return self.flat_map(operator.sub, other)
 
-    def __mul__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __mul__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.mul()`"""
         return self.flat_map(operator.mul, other)
 
-    def __truediv__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __truediv__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.truediv()`"""
         return self.flat_map(operator.truediv, other)
 
-    def __floordiv__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __floordiv__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.floordiv()`"""
         return self.flat_map(operator.floordiv, other)
 
-    def __mod__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __mod__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.mod()`"""
         return self.flat_map(operator.mod, other)
 
-    def __pow__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __pow__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the flattened mapping of `operator.pow()`"""
         return self.flat_map(operator.pow, other)
 
-    def __and__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
+    def __and__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[bool]:
         """Return the flattened mapping of `logical_and()`"""
         return self.flat_map(logical_and, other)
 
-    def __xor__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
+    def __xor__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[bool]:
         """Return the flattened mapping of `logical_xor()`"""
         return self.flat_map(logical_xor, other)
 
-    def __or__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
+    def __or__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[bool]:
         """Return the flattened mapping of `logical_or()`"""
         return self.flat_map(logical_or, other)
 
-    def __radd__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __radd__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.add()`"""
         radd = binary_reverse(operator.add)
         return self.flat_map(radd, other)
 
-    def __rsub__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __rsub__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.sub()`"""
         rsub = binary_reverse(operator.sub)
         return self.flat_map(rsub, other)
 
-    def __rmul__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __rmul__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.mul()`"""
         rmul = binary_reverse(operator.mul)
         return self.flat_map(rmul, other)
 
-    def __rtruediv__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __rtruediv__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.truediv()`"""
         rtruediv = binary_reverse(operator.truediv)
         return self.flat_map(rtruediv, other)
 
-    def __rfloordiv__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __rfloordiv__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.floordiv()"""
         rfloordiv = binary_reverse(operator.floordiv)
         return self.flat_map(rfloordiv, other)
 
-    def __rmod__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __rmod__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.mod()`"""
         rmod = binary_reverse(operator.mod)
         return self.flat_map(rmod, other)
 
-    def __rpow__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[Any]:
+    def __rpow__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[Any]:
         """Return the reverse flattened mapping of `operator.pow()`"""
         rpow = binary_reverse(operator.pow)
         return self.flat_map(rpow, other)
 
-    def __rand__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
+    def __rand__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[bool]:
         """Return the reverse flattened mapping of `logical_and()`"""
         rand = binary_reverse(logical_and)
         return self.flat_map(rand, other)
 
-    def __rxor__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
+    def __rxor__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[bool]:
         """Return the reverse flattened mapping of `logical_xor()`"""
         rxor = binary_reverse(logical_xor)
         return self.flat_map(rxor, other)
 
-    def __ror__(self: Matrix[Any], other: Sequence[Any] | Any) -> Matrix[bool]:
+    def __ror__(self: Matrix[Any], other: Matrix[Any] | Any) -> Matrix[bool]:
         """Return the reverse flattened mapping of `logical_or()`"""
         ror = binary_reverse(logical_or)
         return self.flat_map(ror, other)
@@ -819,7 +819,7 @@ class Matrix(Sequence[T]):
     def flat_map(
         self: Matrix[T1],
         func: Callable[[T1, T2], R],
-        other1: Sequence[T2] | T2,
+        other1: Matrix[T2] | T2,
     ) -> Matrix[R]:
         pass
 
@@ -827,8 +827,8 @@ class Matrix(Sequence[T]):
     def flat_map(
         self: Matrix[T1],
         func: Callable[[T1, T2, T3], R],
-        other1: Sequence[T2] | T2,
-        other2: Sequence[T3] | T3,
+        other1: Matrix[T2] | T2,
+        other2: Matrix[T3] | T3,
     ) -> Matrix[R]:
         pass
 
@@ -836,25 +836,25 @@ class Matrix(Sequence[T]):
     def flat_map(
         self: Matrix[T1],
         func: Callable[..., R],
-        *others: Sequence[Tx] | Tx,
+        *others: Matrix[Tx] | Tx,
     ) -> Matrix[R]:
         pass
 
     def flat_map(self, func, *others):
-        """Map `func` across the values in parallel with other sequences and/or
+        """Map `func` across the values in parallel with other matrices and/or
         objects to produce a new matrix
 
-        Raises `ValueError` if operand sequences differ in size.
+        Raises `ValueError` if operand matrices differ in size.
         """
         shape = self.shape
 
         itx = []
         itx.append(iter(self))
 
-        m = len(self)
+        m = self.size
         for i, other in enumerate(others, start=1):
-            if isinstance(other, Sequence):
-                if m != (n := len(other)):
+            if isinstance(other, Matrix):
+                if m != (n := other.size):
                     raise ValueError(f"operating matrix has size {m} but operand {i} has size {n}")
                 it = iter(other)
             else:
@@ -1007,13 +1007,13 @@ class Matrix(Sequence[T]):
 
         return Matrix.new(data, shape=by.inverse.subshape(shape))
 
-    def mask(self: Matrix[T], selector: Sequence[Any], null: T) -> Matrix[T]:
+    def mask(self: Matrix[T], selector: Matrix[Any], null: T) -> Matrix[T]:
         """Replace the elements who have a true parallel value in `selector`
         with `null`
 
         Raises `ValueError` if the selector differs in size.
         """
-        if (m := len(self)) != (n := len(selector)):
+        if (m := self.size) != (n := selector.size):
             raise ValueError(f"operating matrix has size {m} but selector has size {n}")
         for i, masked in enumerate(selector):
             if masked: self.data[i] = null
@@ -1186,6 +1186,6 @@ def matrix(values: Iterable[Iterable[T]]) -> Matrix[T]:
         for k, val in enumerate(row, start=1):
             data.append(val)
         if n != k:
-            raise ValueError(f"row {m} has length {k} but precedent row(s) have length {n}")
+            raise ValueError(f"row {m} has length {k} but precedent rows have length {n}")
 
     return Matrix.new(data, shape=Shape(m, n))

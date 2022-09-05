@@ -376,14 +376,6 @@ class TestMatrix(TestCase):
 
         self.assertTrue(eq(res, exp))
 
-        res = M2x2.flat_map(lambda x, y: x + y, range(M2x2.size))
-        exp = Matrix([
-            0 * 2, 1 * 2,
-            2 * 2, 3 * 2,
-        ], nrows=2, ncols=2)
-
-        self.assertTrue(eq(res, exp))
-
         with self.assertRaises(ValueError):
             M2x2.flat_map(lambda x, y: x + y, M0x0)
 

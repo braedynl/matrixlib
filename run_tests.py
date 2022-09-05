@@ -1,6 +1,6 @@
 import unittest
 
-from matrixlib.tests import TestMatrix
+from matrices.tests import TestMatrix
 
 if __name__ == "__main__":
     unittest.main()
