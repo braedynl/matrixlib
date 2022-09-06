@@ -8,7 +8,7 @@ The intent, here, is **not** to provide a substitute for [NumPy](https://numpy.o
 
 ## Getting Started
 
-This project is available through [pip](https://pip.pypa.io/en/stable/):
+This project is available through [pip](https://pip.pypa.io/en/stable/) (requires Python 3.10 or higher):
 
 ```
 pip install matrices-py
