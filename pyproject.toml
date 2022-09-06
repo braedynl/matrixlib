@@ -10,7 +10,7 @@ authors = [
 ]
 description = "A basic set of utilities for storing and manipulating data in ≤ 2 dimensions."
 readme = "README.md"
-license = { file="LICENSE" }
+license = { text="MIT License" }
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
