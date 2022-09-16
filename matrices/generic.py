@@ -322,7 +322,8 @@ class GenericMatrix(Sequence):
     @reprlib.recursive_repr(fillvalue="...")
     def __repr__(self):
         """Return a canonical representation of the matrix"""
-        return f"Matrix({self.data!r}, nrows={self.nrows!r}, ncols={self.ncols!r})"
+        name = type(self).__name__
+        return f"{name}({self.data!r}, nrows={self.nrows!r}, ncols={self.ncols!r})"
 
     def __str__(self):
         """Return a string representation of the matrix
@@ -381,11 +382,11 @@ class GenericMatrix(Sequence):
         return out.wrap(data, shape=shape.copy())
 
     def __eq__(self, other):
-        """Element-wise equals"""
+        """Element-wise `__eq__()`"""
         return self.binary_operator(operator.eq, other)
 
     def __ne__(self, other):
-        """Element-wise not equals"""
+        """Element-wise `__ne__()`"""
         return self.binary_operator(operator.ne, other)
 
     def __and__(self, other):
@@ -655,10 +656,11 @@ class GenericMatrix(Sequence):
     def slices(self, *, by=Rule.ROW):
         """Return an iterator that yields shallow copies of each row or column"""
         shape = self.shape
+        cls = type(self)
         subshape = by.subshape(shape)
         for i in range(shape[by]):
             data = self.data[by.slice(i, shape)]
-            yield type(self).wrap(data, shape=subshape.copy())
+            yield cls.wrap(data, shape=subshape.copy())
 
     def mask(self, selector, null):
         """Replace the elements who have a true parallel value in `selector`
@@ -672,8 +674,8 @@ class GenericMatrix(Sequence):
             if masked: self.data[i] = null
         return self
 
-    def replace(self, old, wrap, *, times=None):
-        """Replace elements equal to `old` with `wrap`
+    def replace(self, old, new, *, times=None):
+        """Replace elements equal to `old` with `new`
 
         If `times` is given, only the first `times` occurrences of `old` will
         be replaced.
@@ -684,7 +686,7 @@ class GenericMatrix(Sequence):
         """
         ix = (i for i, x in enumerate(self) if x is old or x == old)
         for i in itertools.islice(ix, times):
-            self.data[i] = wrap
+            self.data[i] = new
         return self
 
     def reverse(self):
