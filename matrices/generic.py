@@ -6,7 +6,11 @@ from collections.abc import Sequence
 from enum import Enum
 from io import StringIO
 
-__all__ = ["Rule", "Shape", "BaseMatrix"]
+# We need IntegralMatrix in some methods (which derives from GenericMatrix), so
+# this must be module-level to avoid a circular import
+from . import numeric
+
+__all__ = ["Rule", "Shape", "GenericMatrix"]
 
 
 class Rule(Enum):
@@ -211,22 +215,13 @@ class Shape:
         return range(*key.indices(n))
 
 
-def binary_reverse(func):
-    """Return a wrapper of a given binary function that reverses its incoming
-    arguments
-    """
-    def wrapper(x, y):
-        return func(y, x)
-    return wrapper
-
-
 def logical_and(a, b, /): return not not (a and b)
 def logical_or(a, b, /): return not not (a or b)
 def logical_xor(a, b, /): return (not not a) is not (not not b)
 def logical_not(a, /): return not a
 
 
-class BaseMatrix(Sequence):
+class GenericMatrix(Sequence):
     """A sequence type for manipulating arbitrary data types in both one and
     two dimensions
 
@@ -367,32 +362,68 @@ class BaseMatrix(Sequence):
 
         return res.getvalue()
 
-    def map(self, func, other=None):
-        if other is not None:
-            if not isinstance(other, BaseMatrix):
-                return NotImplemented
-            if (m := self.size) != (n := other.size):
-                raise ValueError(f"operating matrix has size {m} but operand has size {n}")
-            values = map(func, self, other)
+    def unary_operator(self, basis, *, out=None):
+        out = out or GenericMatrix
+        shape = self.shape
+        return out.wrap(list(map(basis, self)), shape=shape.copy())
+
+    def binary_operator(self, basis, other, *, exp=None, out=None, reverse=False):
+        exp, out = (exp or GenericMatrix, out or GenericMatrix)
+        if not isinstance(other, exp):
+            return NotImplemented
+        if (m := self.size) != (n := other.size):
+            raise ValueError(f"operating matrix has size {m} but operand has size {n}")
+        if reverse:
+            data = list(map(basis, other, self))
         else:
-            values = map(func, self)
-        return list(values)
+            data = list(map(basis, self, other))
+        shape = self.shape
+        return out.wrap(data, shape=shape.copy())
 
     def __eq__(self, other):
         """Element-wise equals"""
-        data = self.map(operator.eq, other)
-        if data is NotImplemented:
-            return data
-        shape = self.shape
-        return BaseMatrix.wrap(data, shape=shape.copy())
+        return self.binary_operator(operator.eq, other)
 
     def __ne__(self, other):
         """Element-wise not equals"""
-        data = self.map(operator.ne, other)
-        if data is NotImplemented:
-            return data
-        shape = self.shape
-        return BaseMatrix.wrap(data, shape=shape.copy())
+        return self.binary_operator(operator.ne, other)
+
+    def __and__(self, other):
+        """Element-wise logical AND"""
+        return self.binary_operator(
+            logical_and,
+            other,
+            out=numeric.IntegralMatrix,
+        )
+
+    __rand__ = __and__
+
+    def __xor__(self, other):
+        """Element-wise logical XOR"""
+        return self.binary_operator(
+            logical_xor,
+            other,
+            out=numeric.IntegralMatrix,
+        )
+
+    __rxor__ = __xor__
+
+    def __or__(self, other):
+        """Element-wise logical OR"""
+        return self.binary_operator(
+            logical_or,
+            other,
+            out=numeric.IntegralMatrix,
+        )
+
+    __ror__ = __or__
+
+    def __invert__(self):
+        """Element-wise logical NOT"""
+        return self.unary_operator(
+            logical_not,
+            out=numeric.IntegralMatrix,
+        )
 
     def __len__(self):
         """Return the matrix's size"""
@@ -563,15 +594,13 @@ class BaseMatrix(Sequence):
 
     def __copy__(self):
         """Return a shallow copy of the matrix"""
-        data = copy.copy(self.data)
         shape = self.shape
-        return type(self).wrap(data, shape=shape.copy())
+        return type(self).wrap(copy.copy(self.data), shape=shape.copy())
 
     def __deepcopy__(self, memo=None):
         """Return a deep copy of the matrix"""
-        data = copy.deepcopy(self.data, memo)
         shape = self.shape
-        return type(self).wrap(data, shape=shape.copy())
+        return type(self).wrap(copy.deepcopy(self.data, memo), shape=shape.copy())
 
     @property
     def size(self):
@@ -603,6 +632,10 @@ class BaseMatrix(Sequence):
     def count(self, value):
         """Return the number of times `value` appears in the matrix"""
         return super().count(value)
+
+    def bool(self):
+        """Element-wise boolean conversion"""
+        return self.unary_operator(bool, out=numeric.IntegralMatrix)
 
     def reshape(self, nrows, ncols):
         """Re-interpret the matrix's shape
@@ -718,7 +751,7 @@ class BaseMatrix(Sequence):
         dy = by.inverse
 
         shape = self.shape
-        if isinstance(other, BaseMatrix):
+        if isinstance(other, GenericMatrix):
             other_shape = other.shape
         else:
             other_shape = Shape()

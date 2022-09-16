@@ -1,45 +1,29 @@
 import operator
 
-from .base import BaseMatrix
+from .generic import GenericMatrix
 
 __all__ = ["OrderingMatrix"]
 
 
-class OrderingMatrix(BaseMatrix):
-    """Subclass of `BaseMatrix` that adds element-wise `<`, `>`, `<=` and `>=`
-    operators
+class OrderingMatrix(GenericMatrix):
+    """Subclass of `GenericMatrix` that adds element-wise `<`, `>`, `<=` and
+    `>=` operators
     """
 
     __slots__ = ()
 
     def __lt__(self, other):
-        """Element-wise less than"""
-        data = self.map(operator.lt, other)
-        if data is NotImplemented:
-            return data
-        shape = self.shape
-        return BaseMatrix.wrap(data, shape=shape.copy())
+        """Element-wise `__lt__()`"""
+        return self.binary_operator(operator.lt, other)
 
     def __gt__(self, other):
-        """Element-wise greater than"""
-        data = self.map(operator.gt, other)
-        if data is NotImplemented:
-            return data
-        shape = self.shape
-        return BaseMatrix.wrap(data, shape=shape.copy())
+        """Element-wise `__gt__()`"""
+        return self.binary_operator(operator.gt, other)
 
     def __le__(self, other):
-        """Element-wise less than/equal to"""
-        data = self.map(operator.le, other)
-        if data is NotImplemented:
-            return data
-        shape = self.shape
-        return BaseMatrix.wrap(data, shape=shape.copy())
+        """Element-wise `__le__()`"""
+        return self.binary_operator(operator.le, other)
 
     def __ge__(self, other):
-        """Element-wise greater than/equal to"""
-        data = self.map(operator.ge, other)
-        if data is NotImplemented:
-            return data
-        shape = self.shape
-        return BaseMatrix.wrap(data, shape=shape.copy())
+        """Element-wise `__ge__()`"""
+        return self.binary_operator(operator.ge, other)

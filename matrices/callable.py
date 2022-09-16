@@ -1,15 +1,20 @@
-from .base import BaseMatrix
+import functools
+
+from .generic import GenericMatrix
 
 __all__ = ["CallableMatrix"]
 
+def call(func, args, kwargs): return func(*args, **kwargs)
 
-class CallableMatrix(BaseMatrix):
-    """Subclass of `BaseMatrix` that adds element-wise calling"""
+
+class CallableMatrix(GenericMatrix):
+    """Subclass of `GenericMatrix` that adds element-wise calling"""
 
     __slots__ = ()
 
     def __call__(self, *args, **kwargs):
         """Element-wise call"""
-        data = [func(*args, **kwargs) for func in self.data]
-        shape = self.shape
-        return BaseMatrix.wrap(data, shape=shape.copy())
+        return self.unary_operator(
+            functools.partial(call, args, kwargs),
+            out=GenericMatrix,
+        )
