@@ -10,7 +10,12 @@ from io import StringIO
 # this must be module-level to avoid a circular import
 from . import numeric
 
-__all__ = ["Rule", "Shape", "GenericMatrix"]
+__all__ = [
+    "Rule",
+    "IncompatibilityError",
+    "Shape",
+    "GenericMatrix",
+]
 
 
 class Rule(Enum):
@@ -31,6 +36,10 @@ class Rule(Enum):
         sequences that coerce integer keys via `operator.index()`.
         """
         return self.value
+
+    def __invert__(self):
+        """Return the rule's inverse"""
+        return self.inverse
 
     @property
     def inverse(self):
@@ -88,6 +97,23 @@ class Rule(Enum):
         See `serialize()` for more details.
         """
         return slice(*self.serialize(index, shape))
+
+
+class IncompatibilityError(ValueError):
+    """Raised if two matrices are incompatible with each other
+
+    Matrices are considered to be "compatible" if at least one of the following
+    criteria is met:
+    - Their shapes are equivalent
+    - Their sizes are equivalent and both matrices are vector-like
+
+    In a nutshell: vectors are compatible so long as their sizes match -
+    matrices are compatible so long as their shapes match.
+
+    A matrix is considered "vector-like" if at least one dimension of its shape
+    is equal to 1. This can be easily checked with `1 in matrix.shape`.
+    """
+    pass
 
 
 class Shape:
@@ -182,6 +208,20 @@ class Shape:
         nrows, ncols = self.data
         return nrows * ncols
 
+    def compatible(self, other, *, error=False):
+        """Return true if the shape is compatible with `other`, otherwise false
+
+        If `error` is true, `IncompatibilityError` will be raised if the two
+        shapes are found to be incompatible. See the `IncompatibilityError`
+        documentation for more details.
+        """
+        res = self == other
+        if not res:
+            res = self.size == other.size and 1 in self and 1 in other
+            if error and not res:
+                raise IncompatibilityError(f"operating matrix of shape {self} is incompatible with operand of shape {other}")
+        return res
+
     def copy(self):
         """Return a copy of the shape"""
         return Shape(*self.data)
@@ -244,7 +284,7 @@ class GenericMatrix(Sequence):
         if nrows < 0 or ncols < 0:
             raise ValueError("dimensions must be non-negative")
         data, shape = list(values), Shape(nrows, ncols)
-        if (n := len(data)) != shape.size:
+        if (n := len(data)) != (nrows * ncols):
             raise ValueError(f"cannot interpret size {n} iterable as shape {shape}")
         self.data, self.shape = data, shape
 
@@ -337,17 +377,17 @@ class GenericMatrix(Sequence):
         addition. For the time being, custom formatting must be done manually.
         The implementation for this method is subject to change.
         """
-        shape = self.shape
         items = iter(self)
+        h = self.shape
 
         max_width = 10
         res = StringIO()
 
-        if shape.size:
-            for _ in range(shape.nrows):
+        if h.size:
+            for _ in range(h.nrows):
                 res.write("| ")
 
-                for _ in range(shape.ncols):
+                for _ in range(h.ncols):
                     chars = str(next(items))
                     if len(chars) > max_width:
                         res.write(f"{chars[:max_width - 1]}…")
@@ -359,27 +399,26 @@ class GenericMatrix(Sequence):
         else:
             res.write("Empty matrix ")
 
-        res.write(f"({shape})")
+        res.write(f"({h})")
 
         return res.getvalue()
 
     def unary_operator(self, basis, *, out=None):
         out = out or GenericMatrix
-        shape = self.shape
-        return out.wrap(list(map(basis, self)), shape=shape.copy())
+        h = self.shape
+        return out.wrap(list(map(basis, self)), shape=h.copy())
 
     def binary_operator(self, basis, other, *, exp=None, out=None, reverse=False):
         exp, out = (exp or GenericMatrix, out or GenericMatrix)
         if not isinstance(other, exp):
             return NotImplemented
-        if (m := self.size) != (n := other.size):
-            raise ValueError(f"operating matrix has size {m} but operand has size {n}")
+        h = self.shape
+        h.compatible(other.shape, error=True)
         if reverse:
             data = list(map(basis, other, self))
         else:
             data = list(map(basis, self, other))
-        shape = self.shape
-        return out.wrap(data, shape=shape.copy())
+        return out.wrap(data, shape=h.copy())
 
     def __eq__(self, other):
         """Element-wise `__eq__()`"""
@@ -426,10 +465,6 @@ class GenericMatrix(Sequence):
             out=numeric.IntegralMatrix,
         )
 
-    def __len__(self):
-        """Return the matrix's size"""
-        return len(self.data)
-
     def __getitem__(self, key):
         """Return the element or sub-matrix corresponding to `key`
 
@@ -446,64 +481,64 @@ class GenericMatrix(Sequence):
         the second slice's range - integers are treated as length 1 slices if
         mixed with at least one other slice.
         """
-        shape = self.shape
+        data = self.data
+        h = self.shape
 
         if isinstance(key, tuple):
+
+            def get(keys, k):
+                return type(self).wrap(
+                    [data[i * h[1] + j] for i, j in keys],
+                    shape=k,
+                )
+
             rowkey, colkey = key
 
-            w = shape.ncols
-            def getitems(indices, nrows, ncols):
-                data = [self.data[i * w + j] for i, j in indices]
-                return type(self).wrap(data, shape=Shape(nrows, ncols))
-
             if isinstance(rowkey, slice):
-                ix = shape.resolve_slice(rowkey, by=Rule.ROW)
+                ix = h.resolve_slice(rowkey, by=Rule.ROW)
 
                 if isinstance(colkey, slice):
-                    jx = shape.resolve_slice(colkey, by=Rule.COL)
-                    return getitems(
-                        indices=itertools.product(ix, jx),
-                        nrows=len(ix),
-                        ncols=len(jx),
-                    )
+                    jx = h.resolve_slice(colkey, by=Rule.COL)
+                    other = get(itertools.product(ix, jx), k=Shape(len(ix), len(jx)))
 
                 else:
-                    j = shape.resolve_index(colkey, by=Rule.COL)
-                    return getitems(
-                        indices=zip(ix, itertools.repeat(j)),
-                        nrows=len(ix),
-                        ncols=1,
-                    )
+                    j = h.resolve_index(colkey, by=Rule.COL)
+                    other = get(zip(ix, itertools.repeat(j)), k=Shape(len(ix), 1))
 
             else:
-                i = shape.resolve_index(rowkey, by=Rule.ROW)
+                i = h.resolve_index(rowkey, by=Rule.ROW)
 
                 if isinstance(colkey, slice):
-                    jx = shape.resolve_slice(colkey, by=Rule.COL)
-                    return getitems(
-                        indices=zip(itertools.repeat(i), jx),
-                        nrows=1,
-                        ncols=len(jx),
-                    )
+                    jx = h.resolve_slice(colkey, by=Rule.COL)
+                    other = get(zip(itertools.repeat(i), jx), k=Shape(1, len(jx)))
 
                 else:
-                    j = shape.resolve_index(colkey, by=Rule.COL)
-                    return self.data[i * w + j]
+                    j = h.resolve_index(colkey, by=Rule.COL)
+                    other = data[i * h[1] + j]
+
+            return other
 
         if isinstance(key, slice):
-            ix = range(*key.indices(shape.size))
 
-            data = [self.data[i] for i in ix]
-            return type(self).wrap(data, shape=Shape(1, len(ix)))
+            def get(keys, k):
+                return type(self).wrap(
+                    [data[i] for i in keys],
+                    shape=k,
+                )
+
+            ix = range(*key.indices(h.size))
+            other = get(ix, k=Shape(1, len(ix)))
+
+            return other
 
         try:
-            value = self.data[key]
+            other = data[key]
         except IndexError:
             raise IndexError("index out of range") from None
         else:
-            return value
+            return other
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, other):
         """Overwrite the element or sub-matrix corresponding to `key`
 
         If `key` is an integer or slice, it is treated as if it is indexing the
@@ -517,69 +552,64 @@ class GenericMatrix(Sequence):
         the second slice's range - integers are treated as length 1 slices if
         mixed with at least one other slice.
         """
-        shape = self.shape
+        data = self.data
+        h = self.shape
 
         if isinstance(key, tuple):
+
+            def set(keys, k):
+                k.compatible(other.shape, error=True)
+                for (i, j), x in zip(keys, other):
+                    data[i * h[1] + j] = x
+
             rowkey, colkey = key
 
-            w = shape.ncols
-            def setitems(indices, nrows, ncols):
-                if (m := nrows * ncols) != (n := len(value)):
-                    raise ValueError(f"slice selected {m} items but sequence has length {n}")
-                for (i, j), x in zip(indices, value):
-                    self.data[i * w + j] = x
-
             if isinstance(rowkey, slice):
-                ix = shape.resolve_slice(rowkey, by=Rule.ROW)
+                ix = h.resolve_slice(rowkey, by=Rule.ROW)
 
                 if isinstance(colkey, slice):
-                    jx = shape.resolve_slice(colkey, by=Rule.COL)
-                    return setitems(
-                        indices=itertools.product(ix, jx),
-                        nrows=len(ix),
-                        ncols=len(jx),
-                    )
+                    jx = h.resolve_slice(colkey, by=Rule.COL)
+                    set(itertools.product(ix, jx), k=Shape(len(ix), len(jx)))
 
                 else:
-                    j = shape.resolve_index(colkey, by=Rule.COL)
-                    return setitems(
-                        indices=zip(ix, itertools.repeat(j)),
-                        nrows=len(ix),
-                        ncols=1,
-                    )
+                    j = h.resolve_index(colkey, by=Rule.COL)
+                    set(zip(ix, itertools.repeat(j)), k=Shape(len(ix), 1))
 
             else:
-                i = shape.resolve_index(rowkey, by=Rule.ROW)
+                i = h.resolve_index(rowkey, by=Rule.ROW)
 
                 if isinstance(colkey, slice):
-                    jx = shape.resolve_slice(colkey, by=Rule.COL)
-                    return setitems(
-                        indices=zip(itertools.repeat(i), jx),
-                        nrows=1,
-                        ncols=len(jx),
-                    )
+                    jx = h.resolve_slice(colkey, by=Rule.COL)
+                    set(zip(itertools.repeat(i), jx), k=Shape(1, len(jx)))
 
                 else:
-                    j = shape.resolve_index(colkey, by=Rule.COL)
-                    self.data[i * w + j] = value
-                    return
+                    j = h.resolve_index(colkey, by=Rule.COL)
+                    data[i * h[1] + j] = other
+
+            return
 
         if isinstance(key, slice):
-            ix = range(*key.indices(shape.size))
 
-            if (m := len(ix)) != (n := len(value)):
-                raise ValueError(f"slice selected {m} items but sequence has length {n}")
-            for i, x in zip(ix, value):
-                self.data[i] = x
+            def set(keys, k):
+                k.compatible(other.shape, error=True)
+                for i, x in zip(keys, other):
+                    data[i] = x
+
+            ix = range(*key.indices(h.size))
+            set(ix, k=Shape(1, len(ix)))
 
             return
 
         try:
-            self.data[key] = value
+            data[key] = other
         except IndexError:
             raise IndexError("index out of range") from None
         else:
             return
+
+    def __len__(self):
+        """Return the matrix's size"""
+        return len(self.data)
 
     def __iter__(self):
         """Return an iterator over the elements of the matrix"""
@@ -595,13 +625,15 @@ class GenericMatrix(Sequence):
 
     def __copy__(self):
         """Return a shallow copy of the matrix"""
-        shape = self.shape
-        return type(self).wrap(copy.copy(self.data), shape=shape.copy())
+        data = self.data
+        h = self.shape
+        return type(self).wrap(copy.copy(data), shape=h.copy())
 
     def __deepcopy__(self, memo=None):
         """Return a deep copy of the matrix"""
-        shape = self.shape
-        return type(self).wrap(copy.deepcopy(self.data, memo), shape=shape.copy())
+        data = self.data
+        h = self.shape
+        return type(self).wrap(copy.deepcopy(data, memo), shape=h.copy())
 
     @property
     def size(self):
@@ -611,12 +643,12 @@ class GenericMatrix(Sequence):
     @property
     def nrows(self):
         """The matrix's number of rows"""
-        return self.shape.nrows
+        return self.shape[0]
 
     @property
     def ncols(self):
         """The matrix's number of columns"""
-        return self.shape.ncols
+        return self.shape[1]
 
     def index(self, value, start=0, stop=None):
         """Return the index of the first element equal to `value`
@@ -646,21 +678,20 @@ class GenericMatrix(Sequence):
         """
         if nrows < 0 or ncols < 0:
             raise ValueError("dimensions must be non-negative")
-        shape = self.shape
-        if (n := shape.size) != nrows * ncols:
+        h = self.shape
+        if (n := h.size) != (nrows * ncols):
             raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × {ncols}")
-        shape.nrows = nrows
-        shape.ncols = ncols
+        h[0], h[1] = nrows, ncols
         return self
 
     def slices(self, *, by=Rule.ROW):
         """Return an iterator that yields shallow copies of each row or column"""
-        shape = self.shape
         cls = type(self)
-        subshape = by.subshape(shape)
-        for i in range(shape[by]):
-            data = self.data[by.slice(i, shape)]
-            yield cls.wrap(data, shape=subshape.copy())
+        h = self.shape
+        k = by.subshape(h)
+        for i in range(h[by]):
+            data = self.data[by.slice(i, h)]
+            yield cls.wrap(data, shape=k.copy())
 
     def mask(self, selector, null):
         """Replace the elements who have a true parallel value in `selector`
@@ -668,10 +699,11 @@ class GenericMatrix(Sequence):
 
         Raises `ValueError` if the selector differs in size.
         """
-        if (m := self.size) != (n := selector.size):
-            raise ValueError(f"operating matrix has size {m} but selector has size {n}")
-        for i, masked in enumerate(selector):
-            if masked: self.data[i] = null
+        data = self.data
+        h = self.shape
+        h.compatible(selector.shape, error=True)
+        for i, x in enumerate(selector):
+            if x: data[i] = null
         return self
 
     def replace(self, old, new, *, times=None):
@@ -684,14 +716,16 @@ class GenericMatrix(Sequence):
         equality is satisfied, which can sometimes be helpful for replacing
         objects such as `math.nan`.
         """
+        data = self.data
         ix = (i for i, x in enumerate(self) if x is old or x == old)
         for i in itertools.islice(ix, times):
-            self.data[i] = new
+            data[i] = new
         return self
 
     def reverse(self):
         """Reverse the matrix's elements in place"""
-        self.data.reverse()
+        data = self.data
+        data.reverse()
         return self
 
     def swap(self, key1, key2, *, by=Rule.ROW):
@@ -700,21 +734,23 @@ class GenericMatrix(Sequence):
         Note that, due to how `Matrix` stores its data, swapping is performed
         in linear time with respect to the specified dimension.
         """
-        data, shape = self.data, self.shape
-        i = shape.resolve_index(key1, by=by)
-        j = shape.resolve_index(key2, by=by)
-        for h, k in zip(by.range(i, shape), by.range(j, shape)):
-            data[h], data[k] = data[k], data[h]
+        data = self.data
+        h = self.shape
+        i = h.resolve_index(key1, by=by)
+        j = h.resolve_index(key2, by=by)
+        for ii, jj in zip(by.range(i, h), by.range(j, h)):
+            data[ii], data[jj] = data[jj], data[ii]
         return self
 
     def flip(self, *, by=Rule.ROW):
         """Reverse the matrix's rows or columns in place"""
-        data, shape = self.data, self.shape
-        n = shape[by]
+        data = self.data
+        h = self.shape
+        n = h[by]
         for i in range(n // 2):
             j = n - i - 1
-            for h, k in zip(by.range(i, shape), by.range(j, shape)):
-                data[h], data[k] = data[k], data[h]
+            for ii, jj in zip(by.range(i, h), by.range(j, h)):
+                data[ii], data[jj] = data[jj], data[ii]
         return self
 
     def flatten(self, *, by=Rule.ROW):
@@ -724,59 +760,50 @@ class GenericMatrix(Sequence):
         column-major order.
         """
         if by is Rule.COL: self.transpose()  # For column-major order
-        shape = self.shape
-        shape[by.inverse] = shape.size
-        shape[by] = 1
+        h = self.shape
+        h[~by] = h.size
+        h[by] = 1
         return self
 
     def transpose(self):
         """Transpose the matrix in place"""
-        shape = self.shape
-        if (nrows := shape[0]) > 1 and (ncols := shape[1]) > 1:
+        h = self.shape
+        if (m := h[0]) > 1 and (n := h[1]) > 1:
+            ix, jx = range(m), range(n)
             data = self.data
-            ix, jx = range(nrows), range(ncols)
-            data[:] = (data[i * ncols + j] for j in jx for i in ix)
-        shape.reverse()
+            data[:] = (data[i * n + j] for j in jx for i in ix)
+        h.reverse()
         return self
 
     def stack(self, other, *, by=Rule.ROW):
-        """Stack a sequence or other matrix along the rows or columns
-
-        If `other` is a sequence type, but not a matrix, it will be interpreted
-        as a vector.
+        """Stack a matrix along the rows or columns
 
         Raises `ValueError` if the inverse dimension differs between the
         operand matrices.
         """
-        if self is other: other = other.copy()  # type: ignore[attr-defined]
+        if self is other: other = other.copy()
 
-        dy = by.inverse
+        data = self.data
+        h, k = self.shape, other.shape
 
-        shape = self.shape
-        if isinstance(other, GenericMatrix):
-            other_shape = other.shape
-        else:
-            other_shape = Shape()
-            other_shape[by] = 1
-            other_shape[dy] = len(other)
-
-        if (m := shape[dy]) != (n := other_shape[dy]):
+        dy = ~by
+        if (m := h[dy]) != (n := k[dy]):
             name = dy.true_name
             raise ValueError(f"operating matrix has {m} {name}s but operand has {n}")
 
-        (m, n), (_, q) = (shape, other_shape)
+        (m, n), (_, q) = (h, k)
 
         if by is Rule.COL and m > 1:
             left, right = iter(self), iter(other)
-            self.data[:] = (
+            data[:] = (
                 x
                 for _ in range(m)
                 for x in itertools.chain(itertools.islice(left, n), itertools.islice(right, q))
             )
         else:
-            self.data.extend(other)
+            data.extend(other)
 
-        shape[by] += other_shape[by]
+        h[by] += k[by]
 
         return self
 
@@ -786,16 +813,15 @@ class GenericMatrix(Sequence):
         Raises `IndexError` if the matrix is empty, or if the index is out of
         range.
         """
-        shape = self.shape
+        h = self.shape
+        s = by.slice(h.resolve_index(key, by=by), h)
 
-        slice = by.slice(shape.resolve_index(key, by=by), shape)
+        data = self.data[s]
+        del self.data[s]
 
-        data = self.data[slice]
-        del self.data[slice]
+        h[by] -= 1
 
-        shape[by] -= 1
-
-        return type(self).wrap(data, shape=by.subshape(shape))
+        return type(self).wrap(data, shape=by.subshape(h))
 
     def copy(self, *, deep=False):
         """Return a shallow or deep copy of the matrix"""
