@@ -37,7 +37,7 @@ Previously, there used to be two alternate constructors in the form of free func
 A new alternate constructor, `GenericMatrix.refer()`, has been added. This allows two matrices to share the same information. If a matrix, $B$, refers to another matrix, $A$, changes to $A$ will be reflected in $B$, and vice versa. This method can also be used as a kind of type cast, for those using type checkers:
 
 ```python
-from matrices import GenericMatrix, IntegralMatrix
+from matrices import GenericMatrix, RealMatrix
 
 a = GenericMatrix([
     1, 2, 3,
@@ -45,15 +45,13 @@ a = GenericMatrix([
     7, 8, 9,
 ], nrows=3, ncols=3)
 
-b = a.copy()
+# copy() will return a GenericMatrix[int]. We can refer the copy to a
+# RealMatrix to add methods that work with real numbers
 
-# __eq__() will return a GenericMatrix[Any]. If you know that the elements will
-# return booleans in their __eq__() implementation, you can refer it to an
-# IntegralMatrix to add methods that work with Integral types
-c = IntegralMatrix[bool].refer(a == b)
+b = RealMatrix[int].refer(a.copy())
 ```
 
-Referencing is performed in constant time ($O(1)$).
+Referencing is performed in constant time ( $O(1)$ ).
 
 ## v0.1.0
 
