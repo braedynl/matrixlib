@@ -18,10 +18,7 @@ __all__ = [
     "GenericMatrix",
     "OrderingMatrix",
     "CallableMatrix",
-    "NumericMatrix",
     "ComplexMatrix",
-    "RealMatrix",
-    "RationalMatrix",
     "RealMatrix",
 ]
 
@@ -233,10 +230,6 @@ class Shape(Collection):
         """
         n = self.data[by]
         return range(*key.indices(n))
-
-
-
-def call(func, args, kwargs, /): return func(*args, **kwargs)
 
 
 class ShapeError(ValueError):
@@ -617,25 +610,6 @@ class GenericMatrix(Sequence):
         data = list(map(func, self))
         return out.wrap(data, shape=h.copy())
 
-    def binary_map(self, func, other, *, exp=None, out=None, reverse=False):
-        exp, out = (exp or GenericMatrix, out or GenericMatrix)
-        if not isinstance(other, exp):
-            return NotImplemented
-        h = self.shape
-        if not h & (k := other.shape):
-            raise ShapeError(f"operating matrix of shape {h} is incompatible with operand of shape {k}")
-        if reverse:
-            data = list(map(func, other, self))
-        else:
-            data = list(map(func, self, other))
-        return out.wrap(data, shape=h.copy())
-
-    def unary_map(self, func, *, out=None):
-        out = out or GenericMatrix
-        h = self.shape
-        data = list(map(func, self))
-        return out.wrap(data, shape=h.copy())
-
     def binary_map(self, func, other, *, out=None, reverse=False):
         out = out or GenericMatrix
         h = self.shape
@@ -647,56 +621,45 @@ class GenericMatrix(Sequence):
             data = list(map(func, self, other))
         return out.wrap(data, shape=h.copy())
 
-    def comparison_operator():
-        pass
+    def unary_comparison(self, func):
+        out = RealMatrix
+        return self.unary_map(func, out=out)
 
-    def arithmetic_operator():
-        pass
+    def binary_comparison(self, func, other):
+        if not isinstance(other, GenericMatrix):
+            return NotImplemented
+        out = RealMatrix
+        return self.binary_map(func, other, out=out)
 
     def __eq__(self, other):
         """Element-wise `__eq__()`"""
-        return self.binary_map(operator.eq, other)
+        return self.binary_comparison(operator.eq, other)
 
     def __ne__(self, other):
         """Element-wise `__ne__()`"""
-        return self.binary_map(operator.ne, other)
+        return self.binary_comparison(operator.ne, other)
 
     def __and__(self, other):
         """Element-wise logical AND"""
-        return self.binary_map(
-            logical_and,
-            other,
-            out=RealMatrix,
-        )
+        return self.binary_comparison(logical_and, other)
 
     __rand__ = __and__
 
     def __xor__(self, other):
         """Element-wise logical XOR"""
-        return self.binary_map(
-            logical_xor,
-            other,
-            out=RealMatrix,
-        )
+        return self.binary_comparison(logical_xor, other)
 
     __rxor__ = __xor__
 
     def __or__(self, other):
         """Element-wise logical OR"""
-        return self.binary_map(
-            logical_or,
-            other,
-            out=RealMatrix,
-        )
+        return self.binary_comparison(logical_or, other)
 
     __ror__ = __or__
 
     def __invert__(self):
         """Element-wise logical NOT"""
-        return self.unary_map(
-            logical_not,
-            out=RealMatrix,
-        )
+        return self.unary_comparison(logical_not)
 
     @property
     def size(self):
@@ -899,19 +862,19 @@ class OrderingMatrix(GenericMatrix):
 
     def __lt__(self, other):
         """Element-wise `__lt__()`"""
-        return self.binary_map(operator.lt, other)
+        return self.binary_comparison(operator.lt, other)
 
     def __gt__(self, other):
         """Element-wise `__gt__()`"""
-        return self.binary_map(operator.gt, other)
+        return self.binary_comparison(operator.gt, other)
 
     def __le__(self, other):
         """Element-wise `__le__()`"""
-        return self.binary_map(operator.le, other)
+        return self.binary_comparison(operator.le, other)
 
     def __ge__(self, other):
         """Element-wise `__ge__()`"""
-        return self.binary_map(operator.ge, other)
+        return self.binary_comparison(operator.ge, other)
 
 
 class CallableMatrix(GenericMatrix):
@@ -921,29 +884,16 @@ class CallableMatrix(GenericMatrix):
 
     def __call__(self, *args, **kwargs):
         """Element-wise `__call__()`"""
+
+        def call(func, args, kwargs, /):
+            return func(*args, **kwargs)
+
         return self.unary_map(functools.partial(call, args, kwargs))
 
 
-class NumericMatrix(GenericMatrix):
-    """Subclass of `GenericMatrix` that acts as the root of all matrices
-    containing numeric objects
-
-    This type does not implement any unique methods, but can be used to check
-    for matrices that strictly contain numeric objects without caring for their
-    specific classification:
-
-    ```
-    if isinstance(matrix, NumericMatrix):
-        # matrix is either ComplexMatrix, RealMatrix, etc.
-    ```
-    """
-
-    __slots__ = ()
-
-
-class ComplexMatrix(NumericMatrix):
-    """Subclass of `NumericMatrix` that adds operations defined for
-    `numbers.Complex` types.
+class ComplexMatrix(GenericMatrix):
+    """Subclass of `GenericMatrix` that adds operations defined for
+    complex numeric types
     """
 
     __slots__ = ()
@@ -970,150 +920,112 @@ class ComplexMatrix(NumericMatrix):
 
     def norm(self):
         """Return the Euclidean norm"""
-        return math.sqrt(sum(lambda x: abs(x) ** 2, self))
+        return math.sqrt(sum(map(lambda x: abs(x) ** 2, self)))
 
-    def complex(self):
-        """Element-wise complex conversion"""
-        return self.unary_map(
-            complex,
-            out=ComplexMatrix,
-        )
+    def unary_arithmetic(self, func):
+        out = ComplexMatrix
+        return self.unary_map(func, out=out)
+
+    def binary_arithmetic(self, func, other, *, reverse=False):
+        if isinstance(other, ComplexMatrix):
+            out = ComplexMatrix
+        elif isinstance(other, GenericMatrix):
+            out = GenericMatrix
+        else:
+            return NotImplemented
+        return self.binary_map(func, other, out=out, reverse=reverse)
 
     def abs(self):
         """Element-wise real distance"""
-        return self.unary_map(
-            abs,
-            out=RealMatrix,
-        )
+        out = RealMatrix
+        return self.unary_map(abs, out=out)
 
     def conjugate(self):
         """Element-wise conjugation"""
-        cls = type(self)
-        return self.unary_map(
-            conjugate,
-            out=cls,
-        )
+        return self.unary_arithmetic(conjugate)
 
     def __add__(self, other):
         """Element-wise `__add__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.add,
             other,
-            exp=cls,
-            out=cls,
         )
 
     def __radd__(self, other):
         """Element-wise `__add__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.add,
             other,
-            exp=cls,
-            out=cls,
             reverse=True,
         )
 
     def __sub__(self, other):
         """Element-wise `__sub__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.sub,
             other,
-            exp=cls,
-            out=cls,
         )
 
     def __rsub__(self, other):
         """Element-wise `__sub__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.sub,
             other,
-            exp=cls,
-            out=cls,
             reverse=True,
         )
 
     def __mul__(self, other):
         """Element-wise `__mul__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.mul,
             other,
-            exp=cls,
-            out=cls,
         )
 
     def __rmul__(self, other):
         """Element-wise `__mul__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.mul,
             other,
-            exp=cls,
-            out=cls,
             reverse=True,
         )
 
     def __truediv__(self, other):
         """Element-wise `__truediv__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.truediv,
             other,
-            exp=cls,
-            out=cls,
         )
 
     def __rtruediv__(self, other):
         """Element-wise `__truediv__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.truediv,
             other,
-            exp=cls,
-            out=cls,
             reverse=True,
         )
 
     def __pow__(self, other):
         """Element-wise `__pow__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.pow,
             other,
-            exp=cls,
-            out=cls,
         )
 
     def __rpow__(self, other):
         """Element-wise `__pow__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.pow,
             other,
-            exp=cls,
-            out=cls,
             reverse=True,
         )
 
     def __neg__(self):
         """Element-wise `__neg__()`"""
-        cls = type(self)
-        return self.unary_map(
-            operator.neg,
-            out=cls,
-        )
+        return self.unary_arithmetic(operator.neg)
 
     def __pos__(self):
         """Element-wise `__pos__()`"""
-        cls = type(self)
-        return self.unary_map(
-            operator.pos,
-            out=cls,
-        )
+        return self.unary_arithmetic(operator.pos)
 
     def matmul(self, other, *, reverse=False):
         cls = type(self)
@@ -1162,81 +1074,50 @@ class RealMatrix(ComplexMatrix, OrderingMatrix):
 
     def abs(self):
         """Element-wise absolute value"""
-        return type(self).refer(super().abs())
-
-    def float(self):
-        """Element-wise float conversion"""
-        return self.unary_map(
-            float,
-            out=RealMatrix,
-        )
+        return self.unary_arithmetic(abs)
 
     def trunc(self):
         """Element-wise `math.trunc()`"""
-        return self.unary_map(
-            math.trunc,
-            out=RealMatrix,
-        )
-
-    def round(self, ndigits=None):
-        """Element-wise `round()`"""
-        return self.unary_map(
-            functools.partial(round, ndigits),
-            out=RealMatrix,
-        )
+        return self.unary_arithmetic(math.trunc)
 
     def floor(self):
         """Element-wise `math.floor()`"""
-        return self.unary_map(
-            math.floor,
-            out=RealMatrix,
-        )
+        return self.unary_arithmetic(math.floor)
 
     def ceil(self):
         """Element-wise `math.ceil()`"""
-        return self.unary_map(
-            math.ceil,
-            out=RealMatrix,
-        )
+        return self.unary_arithmetic(math.ceil)
+
+    def round(self, ndigits=None):
+        """Element-wise `round()`"""
+        return self.unary_arithmetic(functools.partial(round, ndigits))
 
     def __floordiv__(self, other):
         """Element-wise `__floordiv__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.floordiv,
             other,
-            exp=cls,
-            out=cls,
         )
 
     def __rfloordiv__(self, other):
         """Element-wise `__floordiv__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.floordiv,
             other,
-            exp=cls,
-            out=cls,
             reverse=True,
         )
 
     def __mod__(self, other):
         """Element-wise `__mod__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.mod,
             other,
-            exp=cls,
-            out=cls,
         )
 
     def __rmod__(self, other):
         """Element-wise `__mod__()`"""
-        cls = type(self)
-        return self.binary_map(
+        return self.binary_arithmetic(
             operator.mod,
             other,
-            exp=cls,
-            out=cls,
             reverse=True,
         )

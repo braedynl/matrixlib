@@ -136,7 +136,7 @@ class Real(Complex, Protocol):
     Like complex values, binary operations should return new reals if their
     operands are real. Implementors are free to handle demotion to a complex
     result if the operands are non-real complex values - demotion and promotion
-    are free to happen anywhere, so long as it happens somewhere.
+    are free to happen anywhere, so long as it happens at all.
     """
 
     @abstractmethod
