@@ -1,6 +1,4 @@
-from typing import Any, TypeVar
-
-from .types import SupportsConjugate
+from typing import Any, Protocol, TypeVar
 
 __all__ = [
     "logical_and",
@@ -10,7 +8,12 @@ __all__ = [
     "conjugate",
 ]
 
-T = TypeVar("T")
+T        = TypeVar("T")
+T_co     = TypeVar("T_co")
+T_contra = TypeVar("T_contra")
+
+class SupportsConjugate(Protocol[T_co]):
+    def conjugate(self) -> T_co: ...
 
 
 def logical_and(a: Any, b: Any, /) -> bool:
