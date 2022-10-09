@@ -1,22 +1,19 @@
+import abc
 import copy
 import functools
 import itertools
 import math
 import operator
 import reprlib
+import sys
+import typing
 from collections.abc import Collection, Sequence
 from enum import Enum
 from io import StringIO
+from typing import Protocol
 
-from .exceptions import IncompatibleShapesError, ShapeError
 from .utilities import (conjugate, logical_and, logical_not, logical_or,
                         logical_xor)
-
-__all__ = [
-    "Rule", "ROW", "COL",
-    "Shape",
-    "GenericMatrix", "CallableMatrix",
-]
 
 
 class Rule(Enum):
@@ -39,12 +36,7 @@ class Rule(Enum):
         return self.value
 
     def __invert__(self):
-        """Return the rule's inverse"""
-        return self.inverse
-
-    @property
-    def inverse(self):
-        """The rule's inverse
+        """Return the rule's inverse
 
         The column-rule if row-rule, or the row-rule if column-rule. Equivalent
         to `Rule(not self.value)`.
@@ -53,14 +45,18 @@ class Rule(Enum):
 
     @property
     def true_name(self):
-        """The rule's unformatted name"""
-        return "column" if self is Rule.COL else "row"
+        """The rule's "true", unformatted name
+
+        Typically used for error messages.
+        """
+        names = {Rule.ROW: "row", Rule.COL: "column"}
+        return names[self]
 
     def subshape(self, shape):
         """Return the rule's shape given the matrix's shape"""
-        shape = shape.copy()
-        shape[self] = 1
-        return shape
+        subshape = shape.copy()
+        subshape[self] = 1
+        return subshape
 
     def serialize(self, index, shape):
         """Return the start, stop, and step values required to create a range
@@ -115,25 +111,33 @@ class Shape(Collection):
 
     def __repr__(self):
         """Return a canonical representation of the shape"""
-        return f"Shape(nrows={self.nrows!r}, ncols={self.ncols!r})"
+        name = type(self).__name__
+        return f"{name}(nrows={self.nrows!r}, ncols={self.ncols!r})"
 
     def __str__(self):
         """Return a string representation of the shape"""
         return f"{self.nrows} × {self.ncols}"
 
     def __eq__(self, other):
-        """Return true if the two shapes have equal dimensions, otherwise false"""
-        if not isinstance(other, Shape):
-            return NotImplemented
-        return self.data == other.data
+        """Return true if the two shapes are compatible, otherwise false
 
-    def __ne__(self, other):
-        """Return true if the two shapes do not have equal dimensions,
-        otherwise false
+        Shapes are considered "compatible" if at least one of the following
+        criteria is met:
+        - The shapes are element-wise equivalent
+        - The shapes' products are equivalent, and both contain at least one
+          dimension equal to 1 (i.e., both could be represented
+          one-dimensionally)
         """
         if not isinstance(other, Shape):
             return NotImplemented
-        return self.data != other.data
+        return self.data == other.data or self.size == other.size and 1 in self.data and 1 in other.data
+
+    def __ne__(self, other):
+        """Return true if the two shapes are not compatible, otherwise false
+
+        See `__eq__()` for more information.
+        """
+        return not self == other
 
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
@@ -159,7 +163,7 @@ class Shape(Collection):
 
     def __deepcopy__(self, memo=None):
         """Return a copy of the shape"""
-        return Shape(*self.data)  # Our components are immutable
+        return type(self)(*self.data)  # Our components are (hopefully) immutable
 
     __copy__ = __deepcopy__
 
@@ -189,22 +193,12 @@ class Shape(Collection):
 
     def copy(self):
         """Return a copy of the shape"""
-        return Shape(*self.data)
+        return type(self)(*self.data)
 
     def reverse(self):
         """Reverse the shape's dimensions in place"""
         self.data.reverse()
         return self
-
-    def match(self, other):
-        """Return the shape if compatible with `other`, otherwise raise
-        `IncompatibleShapesError`
-        """
-        if self.data == other.data:
-            return self
-        if self.size == other.size and 1 in self.data and 1 in other.data:
-            return self
-        raise IncompatibleShapesError(f"matrix shapes {self} and {other} are incompatible")
 
     def resolve_index(self, key, *, by=Rule.ROW):
         """Return an index `key` as an equivalent integer, respective to a rule
@@ -212,14 +206,11 @@ class Shape(Collection):
         Raises `IndexError` if the key is out of range.
         """
         n = self.data[by]
-
         res = operator.index(key)
         res = res + (n * (res < 0))
-
         if res < 0 or res >= n:
             name = by.true_name
             raise IndexError(f"there are {n} {name}s but index is {key}")
-
         return res
 
     def resolve_slice(self, key, *, by=Rule.ROW):
@@ -228,6 +219,7 @@ class Shape(Collection):
         """
         n = self.data[by]
         return range(*key.indices(n))
+
 
 
 class GenericMatrix(Sequence):
@@ -292,8 +284,7 @@ class GenericMatrix(Sequence):
         """Construct a matrix from the contents of `other`, sharing the memory
         between them
 
-        Can be used as a kind of "cast" to a different matrix subclass if
-        `other` goes unused.
+        Can be used as a sort of "cast" to a different matrix subclass.
         """
         return cls.wrap(other.data, other.shape)
 
@@ -395,7 +386,7 @@ class GenericMatrix(Sequence):
 
             def getitems(keys, nrows, ncols):
                 return type(self).wrap(
-                    [data[i * h.ncols + j] for i, j in keys],
+                    [data[i * self.ncols + j] for i, j in keys],
                     shape=Shape(nrows, ncols),
                 )
 
@@ -433,7 +424,7 @@ class GenericMatrix(Sequence):
 
                 else:
                     j = h.resolve_index(colkey, by=Rule.COL)
-                    res = data[i * h.ncols + j]
+                    res = data[i * self.ncols + j]
 
             return res
 
@@ -445,7 +436,7 @@ class GenericMatrix(Sequence):
                     shape=Shape(nrows, ncols),
                 )
 
-            ix = range(*key.indices(h.size))
+            ix = range(*key.indices(self.size))
             res = getitems(
                 ix,
                 nrows=1,
@@ -481,10 +472,10 @@ class GenericMatrix(Sequence):
         if isinstance(key, tuple):
 
             def setitems(keys, nrows, ncols):
-                k = Shape(nrows, ncols).match(other.shape)
+                if (h := Shape(nrows, ncols)) != (k := other.shape):
+                    raise ValueError(f"selection of shape {h} is incompatible with operand of shape {k}")
                 for (i, j), x in zip(keys, other):
-                    data[i * h.ncols + j] = x
-                return k
+                    data[i * self.ncols + j] = x
 
             rowkey, colkey = key
 
@@ -520,19 +511,19 @@ class GenericMatrix(Sequence):
 
                 else:
                     j = h.resolve_index(colkey, by=Rule.COL)
-                    data[i * h.ncols + j] = other
+                    data[i * self.ncols + j] = other
 
             return
 
         if isinstance(key, slice):
 
             def setitems(keys, nrows, ncols):
-                k = Shape(nrows, ncols).match(other.shape)
+                if (h := Shape(nrows, ncols)) != (k := other.shape):
+                    raise ValueError(f"selection of shape {h} is incompatible with operand of shape {k}")
                 for i, x in zip(keys, other):
                     data[i] = x
-                return k
 
-            ix = range(*key.indices(h.size))
+            ix = range(*key.indices(self.size))
             setitems(
                 ix,
                 nrows=1,
@@ -564,78 +555,62 @@ class GenericMatrix(Sequence):
         """Return true if the matrix contains `value`, otherwise false"""
         return value in self.data
 
-    def __copy__(self):
-        """Return a shallow copy of the matrix"""
-        data = self.data
-        h = self.shape
-        return type(self).wrap(copy.copy(data), shape=h.copy())
-
     def __deepcopy__(self, memo=None):
         """Return a deep copy of the matrix"""
-        data = self.data
+        data = copy.deepcopy(self.data, memo)
         h = self.shape
-        return type(self).wrap(copy.deepcopy(data, memo), shape=h.copy())
+        return type(self).wrap(data, shape=h.copy())
 
-    def unary_map(self, func, *, cls):
-        """Map `func` across the values of the matrix to compose a new one of
-        type `cls`
-
-        This method is for internal use only, and is thus omitted from the
-        interface file.
-        """
+    def __copy__(self):
+        """Return a shallow copy of the matrix"""
+        data = copy.copy(self.data)
         h = self.shape
-        data = list(map(func, self))
-        return cls.wrap(data, shape=h.copy())
-
-    def binary_map(self, func, other, *, cls, reverse=False):
-        """Map `func` across the values of two matrices to compose a new one of
-        type `cls`
-
-        This method is for internal use only, and is thus omitted from the
-        interface file.
-        """
-        h = self.shape
-        if isinstance(other, GenericMatrix):
-            h.match(other.shape)
-        else:
-            other = itertools.repeat(other)
-        data = list(map(func, other, self) if reverse else map(func, self, other))
-        return cls.wrap(data, shape=h.copy())
+        return type(self).wrap(data, shape=h.copy())
 
     def __eq__(self, other):
-        """Return an element-wise mapping of `operator.eq()`"""
-        return self.binary_map(operator.eq, other)
+        """Return element-wise `a == b`
+
+        This method does not return `NotImplemented`.
+        """
+        return binary_basic(self, other, mapper=operator.eq, type=IntegralMatrix)
 
     def __ne__(self, other):
-        """Return an element-wise mapping of `operator.ne()`"""
-        return self.binary_map(operator.ne, other)
+        """Return element-wise `a != b`
+
+        This method does not return `NotImplemented`.
+        """
+        return binary_basic(self, other, mapper=operator.ne, type=IntegralMatrix)
 
     def __and__(self, other):
-        """Return an element-wise mapping of `logical_and()`"""
-        return self.binary_map(logical_and, other)
+        """Return element-wise `logical_and(a, b)`
+
+        This method does not return `NotImplemented`.
+        """
+        return binary_basic(self, other, mapper=logical_and, type=IntegralMatrix)
 
     __rand__ = __and__
 
     def __or__(self, other):
-        """Return an element-wise mapping of `logical_or()`"""
-        return self.binary_map(logical_or, other)
+        """Return element-wise `logical_or(a, b)`
+
+        This method does not return `NotImplemented`.
+        """
+        return binary_basic(self, other, mapper=logical_or, type=IntegralMatrix)
 
     __ror__ = __or__
 
     def __xor__(self, other):
-        """Return an element-wise mapping of `logical_xor()`"""
-        return self.binary_map(logical_xor, other)
+        """Return element-wise `logical_xor(a, b)`
+
+        This method does not return `NotImplemented`.
+        """
+        return binary_basic(self, other, mapper=logical_xor, type=IntegralMatrix)
 
     __rxor__ = __xor__
 
     def __invert__(self):
-        """Return an element-wise mapping of `logical_not()`"""
-        return self.unary_map(logical_not)
-
-    @property
-    def size(self):
-        """The product of the number of rows and columns"""
-        return self.shape.size
+        """Return element-wise `logical_not(a)`"""
+        return unary_basic(self, mapper=logical_not, type=IntegralMatrix)
 
     @property
     def nrows(self):
@@ -647,13 +622,18 @@ class GenericMatrix(Sequence):
         """The matrix's number of columns"""
         return self.shape.ncols
 
+    @property
+    def size(self):
+        """The product of the number of rows and columns"""
+        return self.shape.size
+
     def index(self, value, start=0, stop=None):
         """Return the index of the first element equal to `value`
 
         Raises `ValueError` if the value could not be found in the matrix.
         """
         try:
-            index = super().index(value, start, stop)
+            index = super().index(value, start, stop)  # type: ignore[arg-type]
         except ValueError:
             raise ValueError("value not found") from None
         else:
@@ -694,8 +674,8 @@ class GenericMatrix(Sequence):
         Raises `ValueError` if the selector differs in size.
         """
         data = self.data
-        h = self.shape
-        h.match(selector.shape)
+        if (h := self.shape) != (k := selector.shape):
+            raise ValueError(f"operating matrix of shape {h} is incompatible with operand of shape {k}")
         for i, x in enumerate(selector):
             if x: data[i] = null
         return self
@@ -755,7 +735,8 @@ class GenericMatrix(Sequence):
         """
         if by is Rule.COL: self.transpose()  # For column-major order
         h = self.shape
-        h[~by] = h.size
+        dy = ~by
+        h[dy] = h.size
         h[by] = 1
         return self
 
@@ -773,7 +754,7 @@ class GenericMatrix(Sequence):
     def stack(self, other, *, by=Rule.ROW):
         """Stack a matrix along the rows or columns
 
-        Raises `ShapeError` if the inverse dimension differs between the
+        Raises `ValueError` if the inverse dimension differs between the
         operand matrices.
         """
         if self is other: other = other.copy()
@@ -784,7 +765,7 @@ class GenericMatrix(Sequence):
         dy = ~by
         if (m := h[dy]) != (n := k[dy]):
             name = dy.true_name
-            raise ShapeError(f"operating matrix has {m} {name}s but operand has {n}")
+            raise ValueError(f"operating matrix has {m} {name}s but operand has {n}")
 
         (m, n), (_, q) = (h, k)
 
@@ -817,20 +798,550 @@ class GenericMatrix(Sequence):
 
         del self.data[keys]
 
-        return type(self).wrap(data, shape=k)
+        return type(self).wrap(data, k)
 
     def copy(self, *, deep=False):
         """Return a shallow or deep copy of the matrix"""
         return copy.deepcopy(self) if deep else copy.copy(self)
 
 
-class CallableMatrix(GenericMatrix):
-    """Subclass of `GenericMatrix` that adds element-wise calling"""
+def unary_basic(a, mapper, *, type=GenericMatrix):
+    return type(map(mapper, a), *a.shape)
+
+
+def binary_basic(a, b, mapper, *, type=GenericMatrix, bounds=(), reverse=False):
+    if not isinstance(b, bounds):
+        return NotImplemented
+    if isinstance(b, GenericMatrix):
+        if (h := a.shape) != (k := b.shape):
+            raise ValueError(f"operating matrix of shape {h} is incompatible with operand of shape {k}")
+    else:
+        b = itertools.repeat(b)
+    return type(map(mapper, b, a) if reverse else map(mapper, a, b), *a.shape)
+
+
+def matmul(a, b, adder=operator.add, multiplier=operator.mul, *, type=GenericMatrix, bounds=(), reverse=False):
+    if not isinstance(b, bounds):
+        return NotImplemented
+
+    (m, n), (p, q) = (b.shape, a.shape) if reverse else (a.shape, b.shape)
+
+    if n != p:
+        raise ValueError(f"operating matrix has {n} columns, but operand has {p} rows")
+    if not n:
+        return type.fill(0, m, q)  # Use int 0 here since it supports all numeric operations
+
+    ix = range(m)
+    jx = range(q)
+    kx = range(n)
+
+    return type.wrap(
+        [
+            functools.reduce(
+                adder,
+                (multiplier(a.data[i * n + k], b.data[k * q + j]) for k in kx),
+            )
+            for i in ix
+            for j in jx
+        ],
+        shape=Shape(m, q),
+    )
+
+
+@typing.runtime_checkable
+class ComplexLike(Protocol):
+    """Protocol of operations defined for complex numbers
+
+    Defines a subset of methods described by `numbers.Complex`. Binary
+    operators should accept any complex-like object and demote/promote when
+    appropriate.
+    """
+
+    if sys.version_info >= (3, 11):
+
+        @abc.abstractmethod
+        def __complex__(self):
+            """Return the number as a built-in `complex` instance"""
+            pass
+
+    @abc.abstractmethod
+    def __add__(self, other):
+        """Return `a + b`"""
+        pass
+
+    def __sub__(self, other):
+        """Return `a - b`"""
+        return self + -other
+
+    @abc.abstractmethod
+    def __mul__(self, other):
+        """Return `a * b`"""
+        pass
+
+    @abc.abstractmethod
+    def __truediv__(self, other):
+        """Return `a / b`"""
+        pass
+
+    @abc.abstractmethod
+    def __pow__(self, other):
+        """Return `a ** b`"""
+        pass
+
+    @abc.abstractmethod
+    def __radd__(self, other):
+        """Return `b + a`"""
+        pass
+
+    def __rsub__(self, other):
+        """Return `b - a`"""
+        return -self + other
+
+    @abc.abstractmethod
+    def __rmul__(self, other):
+        """Return `b * a`"""
+        pass
+
+    @abc.abstractmethod
+    def __rtruediv__(self, other):
+        """Return `b / a`"""
+        pass
+
+    @abc.abstractmethod
+    def __rpow__(self, other):
+        """Return `b ** a`"""
+        pass
+
+    @abc.abstractmethod
+    def __neg__(self):
+        """Return `-a`"""
+        pass
+
+    @abc.abstractmethod
+    def __pos__(self):
+        """Return `+a`"""
+        pass
+
+    @abc.abstractmethod
+    def __abs__(self):
+        """Return the number's real distance"""
+        pass
+
+    @abc.abstractmethod
+    def conjugate(self):
+        """Return the number's complex conjugate"""
+        pass
+
+
+@typing.runtime_checkable
+class RealLike(ComplexLike, Protocol):
+    """Protocol of operations defined for real numbers
+
+    Defines a subset of methods described by `numbers.Real`, extending
+    `ComplexLike`. Binary operators should accept any complex-like object and
+    demote/promote when appropriate.
+
+    Note that the `Decimal` type from the standard library will pass under this
+    protocol, but it does not interoperate with numeric types in general (which
+    is why it's not registered under `numbers.Real`). It's recommended to avoid
+    using `Decimal` in a numeric matrix.
+    """
+
+    @abc.abstractmethod
+    def __lt__(self, other):
+        """Return `a < b`"""
+        pass
+
+    @abc.abstractmethod
+    def __le__(self, other):
+        """Return `a <= b`"""
+        pass
+
+    if sys.version_info >= (3, 11):
+
+        def __complex__(self):
+            return complex(float(self))
+
+    @abc.abstractmethod
+    def __float__(self):
+        """Return the number as a built-in `float` instance"""
+        pass
+
+    @abc.abstractmethod
+    def __round__(self, ndigits=None):
+        """Return the number rounded to an int or real"""
+        pass
+
+    @abc.abstractmethod
+    def __trunc__(self):
+        """Return the number truncated to an int"""
+        pass
+
+    @abc.abstractmethod
+    def __floor__(self):
+        """Return the number floored to an int"""
+        pass
+
+    @abc.abstractmethod
+    def __ceil__(self):
+        """Return the number ceiled to an int"""
+        pass
+
+    @abc.abstractmethod
+    def __floordiv__(self, other):
+        """Return `a // b`"""
+        pass
+
+    @abc.abstractmethod
+    def __mod__(self, other):
+        """Return `a % b`"""
+        pass
+
+    @abc.abstractmethod
+    def __rfloordiv__(self, other):
+        """Return `b // a`"""
+        pass
+
+    @abc.abstractmethod
+    def __rmod__(self, other):
+        """Return `b % a`"""
+        pass
+
+    @abc.abstractmethod
+    def __abs__(self):
+        """Return the number's absolute value"""
+        pass
+
+    def conjugate(self):
+        """Return the number
+
+        Complex conjugation is a no-op for reals.
+        """
+        return +self
+
+
+@typing.runtime_checkable
+class IntegralLike(RealLike, Protocol):
+    """Protocol of operations defined for integral numbers
+
+    Defines a subset of methods described by `numbers.Integral`, extending
+    `RealLike`. Binary operators should accept any complex-like object and
+    demote/promote when appropriate.
+    """
+
+    def __float__(self):
+        return float(int(self))
+
+    @abc.abstractmethod
+    def __int__(self):
+        """Return the number as a built-in `int` instance"""
+        pass
+
+    def __index__(self):
+        """Return the number as a built-in `int` instance, losslessly"""
+        return int(self)
+
+
+@typing.runtime_checkable
+class ComplexMatrixLike(Protocol):
+
+    def __add__(self, other, *, type=None, reverse=False):
+        """Return element-wise `a + b`"""
+        type = type or self.__class__
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.add,
+            bounds=self.bounds,
+            type=type,
+            reverse=reverse,
+        )
+
+    def __sub__(self, other, *, type=None, reverse=False):
+        """Return element-wise `a - b`"""
+        type = type or self.__class__
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.sub,
+            bounds=self.bounds,
+            type=type,
+            reverse=reverse,
+        )
+
+    def __mul__(self, other, *, type=None, reverse=False):
+        """Return element-wise `a * b`"""
+        type = type or self.__class__
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.mul,
+            bounds=self.bounds,
+            type=type,
+            reverse=reverse,
+        )
+
+    def __truediv__(self, other, *, type=None, reverse=False):
+        """Return element-wise `a / b`"""
+        type = type or self.__class__
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.truediv,
+            bounds=self.bounds,
+            type=type,
+            reverse=reverse,
+        )
+
+    def __pow__(self, other, *, reverse=False):
+        """Return element-wise `a ** b`"""
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.pow,
+            bounds=self.bounds,
+            type=ComplexMatrix,
+            reverse=reverse,
+        )
+
+    def __matmul__(self, other, *, type=None, reverse=False):
+        """Return the matrix product"""
+        type = type or self.__class__
+        return matmul(
+            self,
+            other,
+            adder=operator.add,
+            multiplier=operator.mul,
+            bounds=self.bounds,
+            type=type,
+            reverse=reverse,
+        )
+
+    def __radd__(self, other):
+        """Return element-wise `b + a`"""
+        return self.__add__(other, reverse=True)
+
+    def __rsub__(self, other):
+        """Return element-wise `b - a`"""
+        return self.__sub__(other, reverse=True)
+
+    def __rmul__(self, other):
+        """Return element-wise `b * a`"""
+        return self.__mul__(other, reverse=True)
+
+    def __rtruediv__(self, other):
+        """Return element-wise `b / a`"""
+        return self.__truediv__(other, reverse=True)
+
+    def __rpow__(self, other):
+        """Return element-wise `b ** a`"""
+        return self.__pow__(other, reverse=True)
+
+    def __rmatmul__(self, other):
+        """Return the reversed matrix product"""
+        return self.__matmul__(other, reverse=True)
+
+    def __neg__(self, *, type=None):
+        """Return element-wise `-a`"""
+        type = type or self.__class__
+        return unary_basic(
+            self,
+            mapper=operator.neg,
+            type=type,
+        )
+
+    def __pos__(self, *, type=None):
+        """Return element-wise `+a`"""
+        type = type or self.__class__
+        return unary_basic(
+            self,
+            mapper=operator.pos,
+            type=type,
+        )
+
+    @property
+    def bounds(self):
+        return (ComplexMatrixLike, ComplexLike)
+
+    def abs(self, *, type=None):
+        """Return element-wise `abs(a)`"""
+        type = type or self.__class__
+        return unary_basic(
+            self,
+            mapper=abs,
+            type=type,
+        )
+
+    def conjugate(self, *, type=None):
+        """Return element-wise `conjugate(a)`"""
+        type = type or self.__class__
+        return unary_basic(
+            self,
+            mapper=conjugate,
+            type=type,
+        )
+
+    def complex(self):
+        """Return element-wise `complex(a)`"""
+        return unary_basic(
+            self,
+            mapper=complex,
+            type=ComplexMatrix,
+        )
+
+
+@typing.runtime_checkable
+class RealMatrixLike(ComplexMatrixLike, Protocol):
+
+    def __lt__(self, other):
+        """Return element-wise `a < b`"""
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.lt,
+            bounds=self.bounds,
+            type=IntegralMatrix,
+        )
+
+    def __gt__(self, other):
+        """Return element-wise `a > b`"""
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.gt,
+            bounds=self.bounds,
+            type=IntegralMatrix,
+        )
+
+    def __le__(self, other):
+        """Return element-wise `a <= b`"""
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.le,
+            bounds=self.bounds,
+            type=IntegralMatrix,
+        )
+
+    def __ge__(self, other):
+        """Return element-wise `a >= b`"""
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.ge,
+            bounds=self.bounds,
+            type=IntegralMatrix,
+        )
+
+    def __floordiv__(self, other, *, type=None, reverse=False):
+        """Return element-wise `a // b`"""
+        type = type or self.__class__
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.floordiv,
+            bounds=self.bounds,
+            type=type,
+            reverse=reverse,
+        )
+
+    def __mod__(self, other, *, type=None, reverse=False):
+        """Return element-wise `a % b`"""
+        type = type or self.__class__
+        return binary_basic(
+            self,
+            other,
+            mapper=operator.mod,
+            bounds=self.bounds,
+            type=type,
+            reverse=reverse,
+        )
+
+    def __rfloordiv__(self, other):
+        """Return element-wise `b // a`"""
+        return self.__floordiv__(other, reverse=True)
+
+    def __rmod__(self, other):
+        """Return element-wise `b % a`"""
+        return self.__mod__(other, reverse=True)
+
+    @property
+    def bounds(self):
+        return (RealMatrixLike, RealLike)
+
+    def round(self, ndigits=None):
+        """Return element-wise `round(a)`"""
+        return unary_basic(
+            self,
+            mapper=functools.partial(round, ndigits),
+            type=IntegralMatrix if ndigits is None else RealMatrix,
+        )
+
+    def trunc(self):
+        """Return element-wise `math.trunc(a)`"""
+        return unary_basic(
+            self,
+            mapper=math.trunc,
+            type=IntegralMatrix,
+        )
+
+    def floor(self):
+        """Return element-wise `math.floor(a)`"""
+        return unary_basic(
+            self,
+            mapper=math.floor,
+            type=IntegralMatrix,
+        )
+
+    def ceil(self):
+        """Return element-wise `math.ceil(a)`"""
+        return unary_basic(
+            self,
+            mapper=math.ceil,
+            type=IntegralMatrix,
+        )
+
+    def float(self):
+        """Return element-wise `float(a)`"""
+        return unary_basic(
+            self,
+            mapper=float,
+            type=RealMatrix,
+        )
+
+
+@typing.runtime_checkable
+class IntegralMatrixLike(RealMatrixLike, Protocol):
+
+    @property
+    def bounds(self):
+        return (IntegralMatrixLike, IntegralLike)
+
+    def int(self):
+        """Return element-wise `int(a)`"""
+        return unary_basic(
+            self,
+            mapper=int,
+            type=IntegralMatrix,
+        )
+
+
+class ComplexMatrix(ComplexMatrixLike, GenericMatrix):
 
     __slots__ = ()
 
-    def __call__(self, *args, **kwargs):
-        """Return a matrix of the results from calling each element with the
-        given arguments
-        """
-        return self.unary_map(lambda f: f(*args, **kwargs), cls=GenericMatrix)
+    def abs(self):
+        return super().abs(type=RealMatrix)
+
+
+class RealMatrix(RealMatrixLike, GenericMatrix):
+
+    __slots__ = ()
+
+
+class IntegralMatrix(IntegralMatrixLike, GenericMatrix):
+
+    __slots__ = ()
+
+    def __truediv__(self, other, *, reverse=False):
+        return super().__truediv__(other, reverse=reverse, type=RealMatrix)

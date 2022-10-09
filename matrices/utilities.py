@@ -8,9 +8,8 @@ __all__ = [
     "conjugate",
 ]
 
-T        = TypeVar("T")
-T_co     = TypeVar("T_co")
-T_contra = TypeVar("T_contra")
+T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
 
 class SupportsConjugate(Protocol[T_co]):
     def conjugate(self) -> T_co: ...
