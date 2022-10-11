@@ -1,5 +1,3 @@
-from typing import Any, Protocol, TypeVar
-
 __all__ = [
     "logical_and",
     "logical_or",
@@ -8,33 +6,26 @@ __all__ = [
     "conjugate",
 ]
 
-T = TypeVar("T")
-T_co = TypeVar("T_co", covariant=True)
-
-class SupportsConjugate(Protocol[T_co]):
-    def conjugate(self) -> T_co: ...
-
-
-def logical_and(a: Any, b: Any, /) -> bool:
-    """Return the logical AND of two objects"""
+def logical_and(a, b, /):
+    """Return the logical AND of `a` and `b`"""
     return not not (a and b)
 
 
-def logical_or(a: Any, b: Any, /) -> bool:
-    """Return the logical OR of two objects"""
+def logical_or(a, b, /):
+    """Return the logical OR of `a` and `b`"""
     return not not (a or b)
 
 
-def logical_xor(a: Any, b: Any, /) -> bool:
-    """Return the logical XOR of two objects"""
+def logical_xor(a, b, /):
+    """Return the logical XOR of `a` and `b`"""
     return (not not a) is not (not not b)
 
 
-def logical_not(a: Any, /) -> bool:
-    """Return the logical NOT of an object"""
+def logical_not(a, /):
+    """Return the logical NOT of `a`"""
     return not a
 
 
-def conjugate(x: SupportsConjugate[T], /) -> T:
-    """Return the conjugate of an object"""
+def conjugate(x, /):
+    """Return the object's conjugate"""
     return x.conjugate()
