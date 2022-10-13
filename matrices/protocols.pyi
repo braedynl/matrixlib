@@ -92,6 +92,8 @@ class IntegralLike(RealLike, Protocol):
 @runtime_checkable
 class ShapeLike(Protocol):
 
+    def __eq__(self, other: Any) -> bool: ...
+
     def __len__(self: Self) -> Literal[2]: ...
     @abstractmethod
     def __getitem__(self: Self, key: SupportsIndex) -> int: ...
@@ -105,6 +107,11 @@ class ShapeLike(Protocol):
     def ncols(self: Self) -> int: ...
     @property
     def size(self: Self) -> int: ...
+
+    def true_equals(self: Self, other: ShapeLike) -> bool: ...
+
+
+# TODO: true_equals() for MatrixLike and concrete Shape
 
 
 @runtime_checkable

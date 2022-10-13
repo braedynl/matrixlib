@@ -204,9 +204,27 @@ class IntegralLike(RealLike, Protocol):
 class ShapeLike(Protocol):
     """Protocol of operations defined for shape-like objects
 
-    Note that this protocol can match with matrix types. This is only ever
-    valid if the matrix is of size 2.
+    Note that this protocol can match with matrix types, though such a match is
+    considered invalid. A shape's length is always 2, and its size is the
+    product of its elements - a matrix's length and size are identical, being
+    the size of its shape.
     """
+
+    def __eq__(self, other):
+        """Return true if the two shapes are equal, otherwise false
+
+        Under this protocol, shapes are considered equal if at least one of
+        the following criteria is met:
+        - The shapes are element-wise equivalent
+        - The shapes' products are equivalent, and both contain at least one
+          dimension equal to 1 (i.e., both could be represented
+          one-dimensionally)
+
+        For element-wise equivalence alone, use the `true_equals()` method.
+        """
+        if not isinstance(other, ShapeLike):
+            return NotImplemented
+        return self.true_equals(other) or (self.size == other.size and 1 in self and 1 in other)
 
     def __len__(self):
         """Return literal 2"""
@@ -249,6 +267,12 @@ class ShapeLike(Protocol):
         """The product of the shape's dimensions"""
         nrows, ncols = self
         return nrows * ncols
+
+    def true_equals(self, other):
+        """Return true if the two shapes are element-wise equivalent, otherwise
+        false
+        """
+        return self.nrows == other.nrows and self.ncols == other.ncols
 
 
 @runtime_checkable
