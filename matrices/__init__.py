@@ -8,3 +8,6 @@ Author: Braedyn Lettinga
 Version: 0.2.0
 Documentation: https://github.com/braedynl/matrices-py/wiki
 """
+
+from .protocols import *
+from .types import *

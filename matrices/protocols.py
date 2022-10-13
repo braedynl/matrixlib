@@ -14,16 +14,16 @@ __all__ = [
 ]
 
 
-# XXX: for implementors: all binary operators (except / and **, more on these
-# two later) should return instances of themselves or some instance of the
-# subclassed protocol when the operand is an instance of the subclassed
-# protocol. For example, a subclass of RealLike should implement an __add__()
-# and __radd__() that takes an instance of RealLike, and produces a RealLike
-# as a result (either a new instance of the enclosing class, or a built-in
-# real such as float or int).
+# XXX: Notice for implementors
 #
-# The exception to this rule is __truediv__()/__rtruediv__() and
-# __pow__()/__rpow__().
+# All binary operators (except / and **, more on these two later) should return
+# instances of themselves or some instance of the subclassed protocol when the
+# operand is an instance of the subclassed protocol. For example, a subclass of
+# RealLike should implement an __add__() and __radd__() that takes an instance
+# of RealLike, and produces a RealLike as a result (either a new instance of
+# the enclosing class, or a "built-in real" such as float or int).
+#
+# The exception to this rule is true division and exponentiation.
 #
 # True division should follow the rule above in all subclasses up to (but not
 # including) IntegralLike. Subclasses of IntegralLike may produce a RealLike,
@@ -34,10 +34,31 @@ __all__ = [
 # value - not type - and so instances of ComplexMatrix will always return a
 # ComplexMatrix in their __pow__()/__rpow__() overloads to be type-safe without
 # spending time evaluating the contents of the matrices.
+#
+# __abs__() should return a RealLike in subclasses that are specifically
+# complex-likes. If real-like or narrower, it should return an instance of the
+# subclassed protocol (a complex number's absolute value is its real distance,
+# real numbers' absolute value can be a new real number).
+
+
+# These protocols are implemented as a hierarchy. The numeric matrix types,
+# too, are implemented as a hierarchy - but, there is a lot of ongoing debate
+# on whether numeric types should be implemented as a hierachy at all, since
+# it often requires violating the Liskov Substitution Principle.
+#
+# Implementors are free to choose how to structure their subclasses - the
+# numeric matrices are implemented hierarchically as a means to reduce some
+# repetitious code, while advising users to perform instance checks with
+# the protocols rather than with one of the concrete implementations (since
+# their registration as subclasses may change in the future).
 
 
 @runtime_checkable
 class ComplexLike(Protocol):
+    """Protocol of operations defined for complex-like objects
+
+    Acts as the root of the numeric-like protocol tower.
+    """
 
     @abstractmethod
     def __add__(self, other):
@@ -121,6 +142,10 @@ class ComplexLike(Protocol):
 
 @runtime_checkable
 class RealLike(ComplexLike, Protocol):
+    """Protocol of operations defined for real-like objects
+
+    Derives from `ComplexLike`.
+    """
 
     @abstractmethod
     def __lt__(self, other):
@@ -160,6 +185,10 @@ class RealLike(ComplexLike, Protocol):
 
 @runtime_checkable
 class IntegralLike(RealLike, Protocol):
+    """Protocol of operations defined for integral-like objects
+
+    Derives from `RealLike`.
+    """
 
     @abstractmethod
     def __int__(self):
@@ -173,10 +202,18 @@ class IntegralLike(RealLike, Protocol):
 
 @runtime_checkable
 class ShapeLike(Protocol):
+    """Protocol of operations defined for shape-like objects
+
+    Note that this protocol can match with matrix types. This is only ever
+    valid if the matrix is of size 2.
+    """
 
     def __len__(self):
         """Return literal 2"""
         return 2
+
+    # XXX: Implementors should coerce keys to integers via operator.index()
+    # so that enums like Rule can be used as keys
 
     @abstractmethod
     def __getitem__(self, key):
@@ -216,6 +253,7 @@ class ShapeLike(Protocol):
 
 @runtime_checkable
 class MatrixLike(Protocol):
+    """Protocol of operations defined for matrix-like objects"""
 
     def __len__(self):
         """Return the matrix's size"""
@@ -271,6 +309,11 @@ class MatrixLike(Protocol):
 
 @runtime_checkable
 class ComplexMatrixLike(ComplexLike, MatrixLike, Protocol):
+    """Protocol of operations defined for matrix-like objects that contain
+    complex-like values
+
+    Derives from `ComplexLike` and `MatrixLike`.
+    """
 
     @abstractmethod
     def __matmul__(self, other):
@@ -290,6 +333,11 @@ class ComplexMatrixLike(ComplexLike, MatrixLike, Protocol):
 
 @runtime_checkable
 class RealMatrixLike(RealLike, ComplexMatrixLike, Protocol):
+    """Protocol of operations defined for matrix-like objects that contain
+    real-like values
+
+    Derives from `RealLike` and `ComplexMatrixLike`.
+    """
 
     @abstractmethod
     def __gt__(self, other):
@@ -309,6 +357,11 @@ class RealMatrixLike(RealLike, ComplexMatrixLike, Protocol):
 
 @runtime_checkable
 class IntegralMatrixLike(IntegralLike, RealMatrixLike, Protocol):
+    """Protocol of operations defined for matrix-like objects that contain
+    integral-like values
+
+    Derives from `IntegralLike` and `RealMatrixLike`.
+    """
 
     @abstractmethod
     def int(self):

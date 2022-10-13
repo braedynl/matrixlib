@@ -1,17 +1,27 @@
 import copy
 import functools
 import itertools
-import math
 import operator
 import reprlib
-import typing
 from collections.abc import Collection, Sequence
 from enum import Enum
 from io import StringIO
 
-from .protocols import MatrixLike, ShapeLike
+from .protocols import (ComplexLike, ComplexMatrixLike, IntegralLike,
+                        IntegralMatrixLike, RealLike, RealMatrixLike)
 from .utilities import (conjugate, logical_and, logical_not, logical_or,
                         logical_xor)
+
+__all__ = [
+    "Rule",
+    "ROW",
+    "COL",
+    "Shape",
+    "GenericMatrix",
+    "ComplexMatrix",
+    "RealMatrix",
+    "IntegralMatrix",
+]
 
 
 class Rule(Enum):
@@ -47,7 +57,7 @@ class Rule(Enum):
 
         Typically used for error messages.
         """
-        names = {Rule.ROW: "row", Rule.COL: "column"}
+        names = ("row", "column")
         return names[self]
 
     def subshape(self, shape):
@@ -98,7 +108,7 @@ ROW = Rule.ROW
 COL = Rule.COL
 
 
-class Shape(ShapeLike, Collection):
+class Shape(Collection):
     """A mutable collection type for storing matrix dimensions"""
 
     __slots__ = ("data",)
@@ -129,13 +139,6 @@ class Shape(ShapeLike, Collection):
         if not isinstance(other, Shape):
             return NotImplemented
         return self.data == other.data or self.size == other.size and 1 in self.data and 1 in other.data
-
-    def __ne__(self, other):
-        """Return true if the two shapes are not compatible, otherwise false
-
-        See `__eq__()` for more information.
-        """
-        return not self == other
 
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
@@ -208,12 +211,12 @@ class Shape(ShapeLike, Collection):
         Raises `IndexError` if the key is out of range.
         """
         n = self.data[by]
-        res = operator.index(key)
-        res = res + (n * (res < 0))
-        if res < 0 or res >= n:
+        i = operator.index(key)
+        i = i + (n * (i < 0))
+        if i < 0 or i >= n:
             name = by.true_name
             raise IndexError(f"there are {n} {name}s but index is {key}")
-        return res
+        return i
 
     def resolve_slice(self, key, *, by=Rule.ROW):
         """Return a slice `key` as an equivalent sequence of indices,
@@ -223,7 +226,7 @@ class Shape(ShapeLike, Collection):
         return range(*key.indices(n))
 
 
-class GenericMatrix(MatrixLike, Sequence):
+class GenericMatrix(Sequence):
     """A sequence type for manipulating arbitrary data types in both one and
     two dimensions
 
@@ -338,31 +341,32 @@ class GenericMatrix(MatrixLike, Sequence):
         addition. For the time being, custom formatting must be done manually.
         The implementation for this method is subject to change.
         """
-        items = iter(self)
         h = self.shape
 
+        if not h.size:
+            return f"Empty matrix ({h})"
+
+        result = StringIO()
+        items  = iter(self)
+
         max_width = 10
-        res = StringIO()
 
-        if h.size:
-            for _ in range(h.nrows):
-                res.write("| ")
+        for _ in range(h.nrows):
+            result.write("| ")
 
-                for _ in range(h.ncols):
-                    chars = str(next(items))
-                    if len(chars) > max_width:
-                        res.write(f"{chars[:max_width - 1]}…")
-                    else:
-                        res.write(chars.rjust(max_width))
-                    res.write(" ")
+            for _ in range(h.ncols):
+                chars = str(next(items))
+                if len(chars) > max_width:
+                    result.write(f"{chars[:max_width - 1]}…")
+                else:
+                    result.write(chars.rjust(max_width))
+                result.write(" ")
 
-                res.write("|\n")
-        else:
-            res.write("Empty matrix ")
+            result.write("|\n")
 
-        res.write(f"({h})")
+        result.write(f"({h})")
 
-        return res.getvalue()
+        return result.getvalue()
 
     def __getitem__(self, key):
         """Return the element or sub-matrix corresponding to `key`
@@ -398,7 +402,7 @@ class GenericMatrix(MatrixLike, Sequence):
 
                 if isinstance(colkey, slice):
                     jx = h.resolve_slice(colkey, by=Rule.COL)
-                    res = getitems(
+                    result = getitems(
                         itertools.product(ix, jx),
                         nrows=len(ix),
                         ncols=len(jx),
@@ -406,7 +410,7 @@ class GenericMatrix(MatrixLike, Sequence):
 
                 else:
                     j = h.resolve_index(colkey, by=Rule.COL)
-                    res = getitems(
+                    result = getitems(
                         zip(ix, itertools.repeat(j)),
                         nrows=len(ix),
                         ncols=1,
@@ -417,7 +421,7 @@ class GenericMatrix(MatrixLike, Sequence):
 
                 if isinstance(colkey, slice):
                     jx = h.resolve_slice(colkey, by=Rule.COL)
-                    res = getitems(
+                    result = getitems(
                         zip(itertools.repeat(i), jx),
                         nrows=1,
                         ncols=len(jx),
@@ -425,9 +429,9 @@ class GenericMatrix(MatrixLike, Sequence):
 
                 else:
                     j = h.resolve_index(colkey, by=Rule.COL)
-                    res = data[i * self.ncols + j]
+                    result = data[i * self.ncols + j]
 
-            return res
+            return result
 
         if isinstance(key, slice):
 
@@ -438,20 +442,20 @@ class GenericMatrix(MatrixLike, Sequence):
                 )
 
             ix = range(*key.indices(self.size))
-            res = getitems(
+            result = getitems(
                 ix,
                 nrows=1,
                 ncols=len(ix),
             )
 
-            return res
+            return result
 
         try:
-            res = data[key]
+            result = data[key]
         except IndexError:
             raise IndexError("index out of range") from None
         else:
-            return res
+            return result
 
     def __setitem__(self, key, other):
         """Overwrite the element or sub-matrix corresponding to `key`
@@ -568,50 +572,90 @@ class GenericMatrix(MatrixLike, Sequence):
         h = self.shape
         return type(self).wrap(data, shape=h.copy())
 
-    # def __eq__(self, other):
-    #     """Return element-wise `a == b`
+    def scalar_map(self, func):
+        if (n := self.size) != 1:
+            raise ValueError(f"matrix of size {n} cannot be demoted to a scalar")
+        return func(self[0])
 
-    #     This method does not return `NotImplemented`.
-    #     """
-    #     return map2(operator.eq, self, other, type=IntegralMatrix)
+    def unary_map(self, func, *, cls):
+        return cls(map(func, self.data), *self.shape)
 
-    # def __ne__(self, other):
-    #     """Return element-wise `a != b`
+    def binary_map(self, func, other, *, cls, reverse=False):
+        if isinstance(other, GenericMatrix):
+            if (h := self.shape) != (k := other.shape):
+                raise ValueError(f"matrix of shape {h} is incompatible with operand of shape {k}")
+            it = iter(other.data)
+        else:
+            it = itertools.repeat(other)
+        return cls(map(func, it, self.data) if reverse else map(func, self.data, it), *self.shape)
 
-    #     This method does not return `NotImplemented`.
-    #     """
-    #     return map2(operator.ne, self, other, type=IntegralMatrix)
+    def __eq__(self, other):
+        """Return element-wise `a == b`
 
-    # def __and__(self, other):
-    #     """Return element-wise `logical_and(a, b)`
+        This method can never return `NotImplemented`.
+        """
+        return self.binary_map(
+            operator.eq,
+            other,
+            cls=IntegralMatrix,
+        )
 
-    #     This method does not return `NotImplemented`.
-    #     """
-    #     return map2(logical_and, self, other, type=IntegralMatrix)
+    def __ne__(self, other):
+        """Return element-wise `a != b`
 
-    # __rand__ = __and__
+        This method can never return `NotImplemented`.
+        """
+        return self.binary_map(
+            operator.ne,
+            other,
+            cls=IntegralMatrix,
+        )
 
-    # def __or__(self, other):
-    #     """Return element-wise `logical_or(a, b)`
+    def __and__(self, other):
+        """Return element-wise `logical_and(a, b)`
 
-    #     This method does not return `NotImplemented`.
-    #     """
-    #     return map2(logical_or, self, other, type=IntegralMatrix)
+        This method can never return `NotImplemented`.
+        """
+        return self.binary_map(
+            logical_and,
+            other,
+            cls=IntegralMatrix,
+        )
 
-    # __ror__ = __or__
+    __rand__ = __and__
 
-    # def __xor__(self, other):
-    #     """Return element-wise `logical_xor(a, b)`
+    def __or__(self, other):
+        """Return element-wise `logical_or(a, b)`
 
-    #     This method does not return `NotImplemented`.
-    #     """
-    #     return map2(logical_xor, self, other, type=IntegralMatrix)
+        This method can never return `NotImplemented`.
+        """
+        return self.binary_map(
+            logical_or,
+            other,
+            cls=IntegralMatrix,
+        )
 
-    # __rxor__ = __xor__
+    __ror__ = __or__
 
-    # def __invert__(self):
-    #     """Return element-wise `logical_not(a)`"""
-    #     return map1(logical_not, self, type=IntegralMatrix)
+    def __xor__(self, other):
+        """Return element-wise `logical_xor(a, b)`
+
+        This method can never return `NotImplemented`.
+        """
+        return self.binary_map(
+            logical_xor,
+            other,
+            cls=IntegralMatrix,
+        )
+
+    __rxor__ = __xor__
+
+    def __invert__(self):
+        """Return element-wise `logical_not(a)`"""
+        return self.unary_map(
+            logical_not,
+            cls=IntegralMatrix,
+        )
 
     @property
     def nrows(self):
@@ -676,7 +720,7 @@ class GenericMatrix(MatrixLike, Sequence):
         """
         data = self.data
         if (h := self.shape) != (k := selector.shape):
-            raise ValueError(f"operating matrix of shape {h} is incompatible with operand of shape {k}")
+            raise ValueError(f"matrix of shape {h} is incompatible with operand of shape {k}")
         for i, x in enumerate(selector):
             if x: data[i] = null
         return self
@@ -766,7 +810,7 @@ class GenericMatrix(MatrixLike, Sequence):
         dy = ~by
         if (m := h[dy]) != (n := k[dy]):
             name = dy.true_name
-            raise ValueError(f"operating matrix has {m} {name}s but operand has {n}")
+            raise ValueError(f"matrix has {m} {name}s but operand has {n}")
 
         (m, n), (_, q) = (h, k)
 
@@ -806,49 +850,388 @@ class GenericMatrix(MatrixLike, Sequence):
         return copy.deepcopy(self) if deep else copy.copy(self)
 
 
-def scalar_map(func, a):
-    if (n := a.size) != 1:
-        raise ValueError(f"operating matrix of size {n} cannot be demoted to a scalar")
-    return func(a[0])
+class ComplexMatrix(GenericMatrix):
+
+    __slots__ = ()
+
+    def __add__(self, other, *, cls=None, reverse=False):
+        """Return element-wise `a + b`"""
+        if not isinstance(other, ComplexLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.add,
+            other,
+            cls=cls or ComplexMatrix,
+            reverse=reverse,
+        )
+
+    def __radd__(self, other):
+        """Return element-wise `b + a`"""
+        return self.__add__(other, reverse=True)
+
+    def __sub__(self, other, *, cls=None, reverse=False):
+        """Return element-wise `a - b`"""
+        if not isinstance(other, ComplexLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.sub,
+            other,
+            cls=cls or ComplexMatrix,
+            reverse=reverse,
+        )
+
+    def __rsub__(self, other):
+        """Return element-wise `b - a`"""
+        return self.__sub__(other, reverse=True)
+
+    def __mul__(self, other, *, cls=None, reverse=False):
+        """Return element-wise `a * b`"""
+        if not isinstance(other, ComplexLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.mul,
+            other,
+            cls=cls or ComplexMatrix,
+            reverse=reverse,
+        )
+
+    def __rmul__(self, other):
+        """Return element-wise `b * a`"""
+        return self.__mul__(other, reverse=True)
+
+    def __truediv__(self, other, *, cls=None, reverse=False):
+        """Return element-wise `a / b`"""
+        if not isinstance(other, ComplexLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.truediv,
+            other,
+            cls=cls or ComplexMatrix,
+            reverse=reverse,
+        )
+
+    def __rtruediv__(self, other):
+        """Return element-wise `b / a`"""
+        return self.__truediv__(other, reverse=True)
+
+    def __pow__(self, other, *, cls=None, reverse=False):
+        """Return element-wise `a ** b`"""
+        if not isinstance(other, ComplexLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.pow,
+            other,
+            cls=cls or ComplexMatrix,
+            reverse=reverse,
+        )
+
+    def __rpow__(self, other):
+        """Return element-wise `b ** a`"""
+        return self.__pow__(other, reverse=True)
+
+    def __matmul__(self, other, *, cls=None, reverse=False):
+        """Return the matrix product `a @ b`"""
+        if not isinstance(other, ComplexMatrixLike):
+            return NotImplemented
+
+        cls = cls or ComplexMatrix
+
+        (m, n), (p, q) = (other.shape, self.shape) if reverse else (self.shape, other.shape)
+        if n != p:
+            raise ValueError(f"left-hand side matrix has {n} columns, but right-hand side has {p} rows")
+        if not n:
+            return cls.fill(0, m, q)  # Use int 0 here since it supports all numeric operations
+
+        ix = range(m)
+        jx = range(q)
+        kx = range(n)
+
+        return cls.wrap(
+            [
+                functools.reduce(
+                    operator.add,
+                    (self.data[i * n + k] * other.data[k * q + j] for k in kx),
+                )
+                for i in ix
+                for j in jx
+            ],
+            shape=Shape(m, q),
+        )
+
+    def __rmatmul__(self, other):
+        """Return the matrix product `b @ a`"""
+        return self.__matmul__(other, reverse=True)
+
+    def __neg__(self, *, cls=None):
+        """Return element-wise `-a`"""
+        return self.unary_map(
+            operator.neg,
+            cls=cls or ComplexMatrix,
+        )
+
+    def __pos__(self, *, cls=None):
+        """Return element-wise `+a`"""
+        return self.unary_map(
+            operator.pos,
+            cls=cls or ComplexMatrix,
+        )
+
+    def __abs__(self, *, cls=None):
+        """Return element-wise `abs(a)`"""
+        return self.unary_map(
+            abs,
+            cls=cls or RealMatrix,
+        )
+
+    def __complex__(self):
+        """Return the matrix as a built-in `complex` instance"""
+        return self.scalar_map(complex)
+
+    def conjugate(self, *, cls=None):
+        """Return element-wise `conjugate(a)`"""
+        return self.unary_map(
+            conjugate,
+            cls=cls or ComplexMatrix,
+        )
+
+    def complex(self):
+        """Return a matrix of each element's equivalent built-in `complex`
+        instance
+        """
+        return self.unary_map(
+            complex,
+            cls=ComplexMatrix,
+        )
 
 
-def unary_map(func, a, *, type=GenericMatrix):
-    return type(map(func, a), *a.shape)
+class RealMatrix(ComplexMatrix):
+
+    __slots__ = ()
+
+    def __lt__(self, other):
+        """Return element-wise `a < b`"""
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.lt,
+            other,
+            cls=IntegralMatrix,
+        )
+
+    def __le__(self, other):
+        """Return element-wise `a <= b`"""
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.le,
+            other,
+            cls=IntegralMatrix,
+        )
+
+    def __gt__(self, other):
+        """Return element-wise `a > b`"""
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.gt,
+            other,
+            cls=IntegralMatrix,
+        )
+
+    def __ge__(self, other):
+        """Return element-wise `a >= b`"""
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.ge,
+            other,
+            cls=IntegralMatrix,
+        )
+
+    def __add__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return super().__add__(
+            other,
+            cls=cls or RealMatrix,
+            reverse=reverse,
+        )
+
+    def __sub__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return super().__sub__(
+            other,
+            cls=cls or RealMatrix,
+            reverse=reverse,
+        )
+
+    def __mul__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return super().__mul__(
+            other,
+            cls=cls or RealMatrix,
+            reverse=reverse,
+        )
+
+    def __truediv__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return super().__truediv__(
+            other,
+            cls=cls or RealMatrix,
+            reverse=reverse,
+        )
+
+    def __matmul__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, RealMatrixLike):
+            return NotImplemented
+        return super().__matmul__(
+            other,
+            cls=cls or RealMatrix,
+            reverse=reverse,
+        )
+
+    def __floordiv__(self, other, *, cls=None, reverse=False):
+        """Return element-wise `a // b`"""
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.floordiv,
+            other,
+            cls=cls or RealMatrix,
+            reverse=reverse,
+        )
+
+    def __rfloordiv__(self, other):
+        """Return element-wise `b // a`"""
+        return self.__floordiv__(other, reverse=True)
+
+    def __mod__(self, other, *, cls=None, reverse=False):
+        """Return element-wise `a % b`"""
+        if not isinstance(other, RealLike):
+            return NotImplemented
+        return self.binary_map(
+            operator.mod,
+            other,
+            cls=cls or RealMatrix,
+            reverse=reverse,
+        )
+
+    def __rmod__(self, other):
+        """Return element-wise `b % a`"""
+        return self.__mod__(other, reverse=True)
+
+    def __neg__(self, *, cls=None):
+        return super().__neg__(cls=cls or RealMatrix)
+
+    def __pos__(self, *, cls=None):
+        return super().__pos__(cls=cls or RealMatrix)
+
+    def __abs__(self, *, cls=None):
+        return super().__abs__(cls=cls or RealMatrix)
+
+    def __float__(self):
+        """Return the matrix as a built-in `float` instance"""
+        return self.scalar_map(float)
+
+    def conjugate(self, *, cls=None):
+        return super().conjugate(cls=cls or RealMatrix)
+
+    def float(self):
+        """Return a matrix of each element's equivalent built-in `float`
+        instance
+        """
+        return self.unary_map(
+            float,
+            cls=RealMatrix,
+        )
 
 
-def binary_map(func, a, b, *, type=GenericMatrix, bounds=()):
-    if not isinstance(b, bounds):
-        return NotImplemented
-    if isinstance(b, GenericMatrix):
-        if (h := a.shape) != (k := b.shape):
-            raise ValueError(f"operating matrix of shape {h} is incompatible with operand of shape {k}")
-    else:
-        b = itertools.repeat(b)
-    return type(map(func, a, b), *a.shape)
+class IntegralMatrix(RealMatrix):
 
+    __slots__ = ()
 
-def matrix_product(a, b, *, type=GenericMatrix, bounds=()):
-    if not isinstance(b, bounds):
-        return NotImplemented
+    def __add__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, IntegralLike):
+            return NotImplemented
+        return super().__add__(
+            other,
+            cls=cls or IntegralMatrix,
+            reverse=reverse,
+        )
 
-    (m, n), (p, q) = (a.shape, b.shape)
-    if n != p:
-        raise ValueError(f"operating matrix has {n} columns, but operand has {p} rows")
-    if not n:
-        return type.fill(0, m, q)  # Use int 0 here since it supports all numeric operations
+    def __sub__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, IntegralLike):
+            return NotImplemented
+        return super().__sub__(
+            other,
+            cls=cls or IntegralMatrix,
+            reverse=reverse,
+        )
 
-    ix = range(m)
-    jx = range(q)
-    kx = range(n)
+    def __mul__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, IntegralLike):
+            return NotImplemented
+        return super().__mul__(
+            other,
+            cls=cls or IntegralMatrix,
+            reverse=reverse,
+        )
 
-    return type.wrap(
-        [
-            functools.reduce(
-                operator.add,
-                (a.data[i * n + k] * b.data[k * q + j] for k in kx),
-            )
-            for i in ix
-            for j in jx
-        ],
-        shape=Shape(m, q),
-    )
+    def __matmul__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, IntegralMatrixLike):
+            return NotImplemented
+        return super().__matmul__(
+            other,
+            cls=cls or IntegralMatrix,
+            reverse=reverse,
+        )
+
+    def __floordiv__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, IntegralLike):
+            return NotImplemented
+        return super().__floordiv__(
+            other,
+            cls=cls or IntegralMatrix,
+            reverse=reverse,
+        )
+
+    def __mod__(self, other, *, cls=None, reverse=False):
+        if not isinstance(other, IntegralLike):
+            return NotImplemented
+        return super().__mod__(
+            other,
+            cls=cls or IntegralMatrix,
+            reverse=reverse,
+        )
+
+    def __neg__(self, *, cls=None):
+        return super().__neg__(cls=cls or IntegralMatrix)
+
+    def __pos__(self, *, cls=None):
+        return super().__pos__(cls=cls or IntegralMatrix)
+
+    def __abs__(self, *, cls=None):
+        return super().__abs__(cls=cls or IntegralMatrix)
+
+    def __int__(self):
+        """Return the matrix as a built-in `int` instance"""
+        return self.scalar_map(int)
+
+    def __index__(self):
+        """Return the matrix as a built-in `int` instance, losslessly"""
+        return self.scalar_map(operator.index)
+
+    def conjugate(self, *, cls=None):
+        return super().conjugate(cls=cls or IntegralMatrix)
+
+    def int(self):
+        """Return a matrix of each element's equivalent built-in `int`
+        instance
+        """
+        return self.unary_map(
+            int,
+            cls=IntegralMatrix,
+        )
