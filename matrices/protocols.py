@@ -1,3 +1,4 @@
+import copy
 import sys
 from abc import abstractmethod
 from typing import Protocol, runtime_checkable
@@ -272,12 +273,45 @@ class ShapeLike(Protocol):
         """Return true if the two shapes are element-wise equivalent, otherwise
         false
         """
-        return self.nrows == other.nrows and self.ncols == other.ncols
+        return self[0] == other[0] and self[1] == other[1]
 
 
 @runtime_checkable
 class MatrixLike(Protocol):
     """Protocol of operations defined for matrix-like objects"""
+
+    # XXX: For vectorized operations like __eq__() and __ne__(), a new matrix
+    # composed of the results from the mapped operation should be returned,
+    # with a shape equivalent to that of the left-hand side matrix (i.e.,
+    # self).
+    # ValueError should be raised if two matrices have unequal shapes -
+    # equality being in terms of how the ShapeLike protocol defines shape
+    # equality.
+    # If the right-hand side is not a matrix, the object should be "dragged"
+    # along the map. Example implementation:
+
+    # def equals(self, other):
+    #     if isinstance(other, MatrixLike):
+    #         if self.shape != other.shape:
+    #             raise ValueError
+    #         it = iter(other)
+    #     else:
+    #         it = itertools.repeat(other)
+    #     return MyMatrix(map(operator.eq, self, it), *self.shape)
+
+    # Depending on the matrix class' type bound, certain operators may be
+    # unable to return the NotImplemented constant. If NotImplemented can be
+    # returned, it should be returned.
+
+    @abstractmethod
+    def __eq__(self, other):
+        """Return element-wise `a == b`"""
+        pass
+
+    @abstractmethod
+    def __ne__(self, other):
+        """Return element-wise `a != b`"""
+        pass
 
     def __len__(self):
         """Return the matrix's size"""
@@ -290,24 +324,50 @@ class MatrixLike(Protocol):
 
     def __iter__(self):
         """Return an iterator over the values of the matrix in row-major order"""
-        n = len(self)
-        for i in range(n):
+        for i in range(self.size):
             yield self[i]
 
     def __reversed__(self):
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
-        n = len(self)
-        for i in reversed(range(n)):
+        for i in reversed(range(self.size)):
             yield self[i]
 
     def __contains__(self, value):
         """Return true if the matrix contains `value`, otherwise false"""
-        for x in self:
-            if x is value or x == value:
-                return True
-        return False
+        return any(map(lambda x: x is value or x == value), self)
+
+    @abstractmethod
+    def __copy__(self):
+        """Return a shallow copy of the matrix"""
+        pass
+
+    @abstractmethod
+    def __and__(self, other):
+        """Return element-wise `logical_and(a, b)`"""
+        pass
+
+    __rand__ = __and__
+
+    @abstractmethod
+    def __or__(self, other):
+        """Return element-wise `logical_or(a, b)`"""
+        pass
+
+    __ror__ = __or__
+
+    @abstractmethod
+    def __xor__(self, other):
+        """Return element-wise `logical_xor(a, b)`"""
+        pass
+
+    __rxor__ = __xor__
+
+    @abstractmethod
+    def __invert__(self):
+        """Return element-wise `logical_not(a)`"""
+        pass
 
     @property
     @abstractmethod
@@ -329,6 +389,19 @@ class MatrixLike(Protocol):
     def size(self):
         """The product of the matrix's number of rows and columns"""
         return self.shape.size
+
+    def true_equals(self, other):
+        """Return true if the two matrices have an element-wise equivalent data
+        buffer and shape, otherwise false
+        """
+        h, k = self.shape, other.shape
+        if not h.true_equals(k):
+            return False
+        return all(map(lambda x, y: x is y or x == y, self, other))
+
+    def copy(self):
+        """Return a shallow copy of the matrix"""
+        return copy.copy(self)
 
 
 @runtime_checkable

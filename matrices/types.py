@@ -196,6 +196,12 @@ class Shape(Collection):
         nrows, ncols = self.data
         return nrows * ncols
 
+    def true_equals(self, other):
+        """Return true if the two shapes are element-wise equivalent, otherwise
+        false
+        """
+        return self.data[0] == other[0] and self.data[1] == other[1]
+
     def copy(self):
         """Return a copy of the shape"""
         return Shape(*self.data)
@@ -671,6 +677,15 @@ class GenericMatrix(Sequence):
     def size(self):
         """The product of the number of rows and columns"""
         return self.shape.size
+
+    def true_equals(self, other):
+        """Return true if the two matrices have an element-wise equivalent data
+        buffer and shape, otherwise false
+        """
+        h, k = self.shape, other.shape
+        if not h.true_equals(k):
+            return False
+        return all(map(lambda x, y: x is y or x == y, self.data, other))
 
     def index(self, value, start=0, stop=None):
         """Return the index of the first element equal to `value`
