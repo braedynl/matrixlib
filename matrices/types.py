@@ -4,11 +4,12 @@ import itertools
 import operator
 import reprlib
 from collections.abc import Collection, Sequence
-from enum import Enum
+from enum import IntEnum
 from io import StringIO
 
 from .protocols import (ComplexLike, ComplexMatrixLike, IntegralLike,
-                        IntegralMatrixLike, RealLike, RealMatrixLike)
+                        IntegralMatrixLike, MatrixLike, RealLike,
+                        RealMatrixLike, ShapeLike)
 from .utilities import (conjugate, logical_and, logical_not, logical_or,
                         logical_xor)
 
@@ -24,7 +25,7 @@ __all__ = [
 ]
 
 
-class Rule(Enum):
+class Rule(IntEnum):
     """The direction by which to operate within a matrix
 
     The value of a rule member is usable as an index that retrieves the rule's
@@ -35,21 +36,10 @@ class Rule(Enum):
     ROW = 0
     COL = 1
 
-    def __index__(self):
-        """Return the rule's value
-
-        This exists so that members can be used directly as an index for
-        sequences that coerce integer keys via `operator.index()`.
-        """
-        return self.value
-
-    def __invert__(self):
-        """Return the rule's inverse
-
-        The column-rule if row-rule, or the row-rule if column-rule. Equivalent
-        to `Rule(not self.value)`.
-        """
-        return Rule(not self.value)
+    @property
+    def inverse(self):
+        """The rule corresponding to the opposite dimension"""
+        return Rule(not self)
 
     @property
     def true_name(self):
@@ -57,51 +47,7 @@ class Rule(Enum):
 
         Typically used for error messages.
         """
-        names = ("row", "column")
-        return names[self]
-
-    def subshape(self, shape):
-        """Return the rule's shape given the matrix's shape"""
-        subshape = shape.copy()
-        subshape[self] = 1
-        return subshape
-
-    def serialize(self, index, shape):
-        """Return the start, stop, and step values required to create a range
-        or slice object of the rule's shape beginning at `index`
-
-        The input `index` must be positive - negative indices may produce
-        unexpected results. This requirement is not checked for.
-        """
-        major_index = self.value
-        minor_index = not major_index
-
-        major = shape[major_index]
-        minor = shape[minor_index]
-
-        major_step = major_index * major + minor_index
-        minor_step = minor_index * minor + major_index
-
-        start = minor_step * index
-        stop  = major_step * minor + start
-
-        return start, stop, major_step
-
-    def range(self, index, shape):
-        """Return a range of indices that can be used to construct a
-        sub-sequence of the rule's shape beginning at `index`
-
-        See `serialize()` for more details.
-        """
-        return range(*self.serialize(index, shape))
-
-    def slice(self, index, shape):
-        """Return a slice that can be used to construct a sub-sequence of the
-        rule's shape beginning at `index`
-
-        See `serialize()` for more details.
-        """
-        return slice(*self.serialize(index, shape))
+        return ("row", "column")[self]
 
 
 ROW = Rule.ROW
@@ -119,26 +65,27 @@ class Shape(Collection):
 
     def __repr__(self):
         """Return a canonical representation of the shape"""
-        name = type(self).__name__
-        return f"{name}(nrows={self.nrows!r}, ncols={self.ncols!r})"
+        return f"Shape(nrows={self[0]!r}, ncols={self[1]!r})"
 
     def __str__(self):
         """Return a string representation of the shape"""
-        return f"{self.nrows} × {self.ncols}"
+        return f"{self[0]} × {self[1]}"
 
     def __eq__(self, other):
-        """Return true if the two shapes are compatible, otherwise false
+        """Return true if the two shapes are equal, otherwise false
 
-        Shapes are considered "compatible" if at least one of the following
-        criteria is met:
+        Shapes are considered equal if at least one of the following criteria
+        is met:
         - The shapes are element-wise equivalent
         - The shapes' products are equivalent, and both contain at least one
           dimension equal to 1 (i.e., both could be represented
           one-dimensionally)
+
+        For element-wise equivalence alone, use the `true_equals()` method.
         """
-        if not isinstance(other, Shape):
+        if not isinstance(other, ShapeLike):
             return NotImplemented
-        return self.data == other.data or self.size == other.size and 1 in self.data and 1 in other.data
+        return self.true_equals(other) or self.size == other.size and 1 in self and 1 in other
 
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
@@ -168,55 +115,61 @@ class Shape(Collection):
 
     def __deepcopy__(self, memo=None):
         """Return a copy of the shape"""
-        return Shape(*self.data)  # Our components are (hopefully) immutable
+        return Shape(*self)  # Our components are (hopefully) immutable
 
     __copy__ = __deepcopy__
 
     @property
     def nrows(self):
         """The first dimension of the shape"""
-        return self.data[0]
+        return self[0]
 
     @nrows.setter
     def nrows(self, value):
-        self.data[0] = value
+        self[0] = value
 
     @property
     def ncols(self):
         """The second dimension of the shape"""
-        return self.data[1]
+        return self[1]
 
     @ncols.setter
     def ncols(self, value):
-        self.data[1] = value
+        self[1] = value
 
     @property
     def size(self):
         """The product of the shape's dimensions"""
-        nrows, ncols = self.data
+        nrows, ncols = self
         return nrows * ncols
 
     def true_equals(self, other):
         """Return true if the two shapes are element-wise equivalent, otherwise
         false
         """
-        return self.data[0] == other[0] and self.data[1] == other[1]
+        return self[0] == other[0] and self[1] == other[1]
 
     def copy(self):
         """Return a copy of the shape"""
-        return Shape(*self.data)
+        return Shape(*self)
 
     def reverse(self):
         """Reverse the shape's dimensions in place"""
         self.data.reverse()
         return self
 
+    def subshape(self, *, by=Rule.ROW):
+        """Return the shape of any sub-matrix in the given rule's form"""
+        shape = self.copy()
+        shape[by] = 1
+        return shape
+
     def resolve_index(self, key, *, by=Rule.ROW):
         """Return an index `key` as an equivalent integer, respective to a rule
 
         Raises `IndexError` if the key is out of range.
         """
-        n = self.data[by]
+        n = self[by]
         i = operator.index(key)
         i = i + (n * (i < 0))
         if i < 0 or i >= n:
@@ -228,8 +181,44 @@ class Shape(Collection):
         """Return a slice `key` as an equivalent sequence of indices,
         respective to a rule
         """
-        n = self.data[by]
+        n = self[by]
         return range(*key.indices(n))
+
+    def serialize(self, index, *, by=Rule.ROW):
+        """Return the start, stop, and step values required to create a range
+        or slice object of the given rule's shape beginning at `index`
+
+        The input `index` must be positive - negative indices may produce
+        unexpected results. This requirement is not checked for.
+        """
+        dy = not by
+
+        major = self[by]
+        minor = self[dy]
+
+        major_step = by * major + dy
+        minor_step = dy * minor + by
+
+        start = minor_step * index
+        stop  = major_step * minor + start
+
+        return start, stop, major_step
+
+    def range(self, index, *, by=Rule.ROW):
+        """Return a range of indices that can be used to construct a sub-matrix
+        of the rule's shape beginning at `index`
+
+        See `serialize()` for more details.
+        """
+        return range(*self.serialize(index, by=by))
+
+    def slice(self, index, *, by=Rule.ROW):
+        """Return a slice that can be used to construct a sub-matrix of the
+        rule's shape beginning at `index`
+
+        See `serialize()` for more details.
+        """
+        return slice(*self.serialize(index, by=by))
 
 
 class GenericMatrix(Sequence):
@@ -332,8 +321,7 @@ class GenericMatrix(Sequence):
     @reprlib.recursive_repr(fillvalue="...")
     def __repr__(self):
         """Return a canonical representation of the matrix"""
-        name = type(self).__name__
-        return f"{name}({self.data!r}, nrows={self.nrows!r}, ncols={self.ncols!r})"
+        return f"{self.__class__.__name__}({self.data!r}, nrows={self.nrows!r}, ncols={self.ncols!r})"
 
     def __str__(self):
         """Return a string representation of the matrix
@@ -552,7 +540,7 @@ class GenericMatrix(Sequence):
 
     def __len__(self):
         """Return the matrix's size"""
-        return len(self.data)
+        return self.size
 
     def __iter__(self):
         """Return an iterator over the elements of the matrix"""
@@ -568,15 +556,15 @@ class GenericMatrix(Sequence):
 
     def __deepcopy__(self, memo=None):
         """Return a deep copy of the matrix"""
-        data = copy.deepcopy(self.data, memo)
+        data = self.data
         h = self.shape
-        return type(self).wrap(data, shape=h.copy())
+        return type(self).wrap(copy.deepcopy(data), shape=h.copy())
 
     def __copy__(self):
         """Return a shallow copy of the matrix"""
-        data = copy.copy(self.data)
+        data = self.data
         h = self.shape
-        return type(self).wrap(data, shape=h.copy())
+        return type(self).wrap(copy.copy(data), shape=h.copy())
 
     def scalar_map(self, func):
         if (n := self.size) != 1:
@@ -584,16 +572,20 @@ class GenericMatrix(Sequence):
         return func(self[0])
 
     def unary_map(self, func, *, cls):
-        return cls(map(func, self.data), *self.shape)
+        data = self.data
+        h = self.shape
+        return cls(map(func, data), *h)
 
     def binary_map(self, func, other, *, cls, reverse=False):
-        if isinstance(other, GenericMatrix):
-            if (h := self.shape) != (k := other.shape):
+        data = self.data
+        h = self.shape
+        if isinstance(other, MatrixLike):
+            if h != (k := other.shape):
                 raise ValueError(f"matrix of shape {h} is incompatible with operand of shape {k}")
-            it = iter(other.data)
+            it = iter(other)
         else:
             it = itertools.repeat(other)
-        return cls(map(func, it, self.data) if reverse else map(func, self.data, it), *self.shape)
+        return cls(map(func, it, data) if reverse else map(func, data, it), *h)
 
     def __eq__(self, other):
         """Return element-wise `a == b`
@@ -682,10 +674,11 @@ class GenericMatrix(Sequence):
         """Return true if the two matrices have an element-wise equivalent data
         buffer and shape, otherwise false
         """
+        data = self.data
         h, k = self.shape, other.shape
         if not h.true_equals(k):
             return False
-        return all(map(lambda x, y: x is y or x == y, self.data, other))
+        return all(map(lambda x, y: x is y or x == y, data, other))
 
     def index(self, value, start=0, stop=None):
         """Return the index of the first element equal to `value`
@@ -702,6 +695,11 @@ class GenericMatrix(Sequence):
     def count(self, value):
         """Return the number of times `value` appears in the matrix"""
         return super().count(value)
+
+    def reverse(self):
+        """Reverse the matrix's elements in place"""
+        self.data.reverse()
+        return self
 
     def reshape(self, nrows, ncols):
         """Re-interpret the matrix's shape
@@ -720,12 +718,13 @@ class GenericMatrix(Sequence):
 
     def slices(self, *, by=Rule.ROW):
         """Return an iterator that yields shallow copies of each row or column"""
-        cls = type(self)
+        data = self.data
         h = self.shape
-        k = by.subshape(h)
+        k = h.subshape(by=by)
+        cls = type(self)
         for i in range(h[by]):
-            data = self.data[by.slice(i, h)]
-            yield cls.wrap(data, shape=k.copy())
+            temp = data[h.slice(i, by=by)]
+            yield cls.wrap(temp, shape=k.copy())
 
     def mask(self, selector, null):
         """Replace the elements who have a true parallel value in `selector`
@@ -751,15 +750,11 @@ class GenericMatrix(Sequence):
         objects such as `math.nan`.
         """
         data = self.data
-        ix = (i for i, x in enumerate(self) if x is old or x == old)
-        for i in itertools.islice(ix, times):
+        for i in itertools.islice(
+            (i for i, x in enumerate(data) if x is old or x == old),
+            times,
+        ):
             data[i] = new
-        return self
-
-    def reverse(self):
-        """Reverse the matrix's elements in place"""
-        data = self.data
-        data.reverse()
         return self
 
     def swap(self, key1, key2, *, by=Rule.ROW):
@@ -772,7 +767,7 @@ class GenericMatrix(Sequence):
         h = self.shape
         i = h.resolve_index(key1, by=by)
         j = h.resolve_index(key2, by=by)
-        for x, y in zip(by.range(i, h), by.range(j, h)):
+        for x, y in zip(h.range(i, by=by), h.range(j, by=by)):
             data[x], data[y] = data[y], data[x]
         return self
 
@@ -783,7 +778,7 @@ class GenericMatrix(Sequence):
         n = h[by]
         for i in range(n // 2):
             j = n - i - 1
-            for x, y in zip(by.range(i, h), by.range(j, h)):
+            for x, y in zip(h.range(i, by=by), h.range(j, by=by)):
                 data[x], data[y] = data[y], data[x]
         return self
 
@@ -793,10 +788,9 @@ class GenericMatrix(Sequence):
         If flattened to a column vector, the elements are arranged into
         column-major order.
         """
-        if by is Rule.COL: self.transpose()  # For column-major order
+        if by: self.transpose()  # For column-major order
         h = self.shape
-        dy = ~by
-        h[dy] = h.size
+        h[not by] = h.size
         h[by] = 1
         return self
 
@@ -822,14 +816,14 @@ class GenericMatrix(Sequence):
         data = self.data
         h, k = self.shape, other.shape
 
-        dy = ~by
+        dy = by.inverse
         if (m := h[dy]) != (n := k[dy]):
             name = dy.true_name
             raise ValueError(f"matrix has {m} {name}s but operand has {n}")
 
         (m, n), (_, q) = (h, k)
 
-        if by is Rule.COL and m > 1:
+        if by and m > 1:
             left, right = iter(self), iter(other)
             data[:] = (
                 x
@@ -849,16 +843,16 @@ class GenericMatrix(Sequence):
         Raises `IndexError` if the matrix is empty, or if the index is out of
         range.
         """
+        data = self.data
         h = self.shape
-        k = by.subshape(h)
 
-        keys = by.slice(h.resolve_index(key, by=by), h)
-        data = self.data[keys]
+        keys = h.slice(h.resolve_index(key, by=by), by=by)
+        temp = data[keys]
         h[by] -= 1
 
-        del self.data[keys]
+        del data[keys]
 
-        return type(self).wrap(data, k)
+        return type(self).wrap(temp, shape=h.subshape(by=by))
 
     def copy(self, *, deep=False):
         """Return a shallow or deep copy of the matrix"""
