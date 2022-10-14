@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Literal, TypeVar
+from typing import Literal, TypeVar, final
 
 __all__ = [
     "Rule",
@@ -10,6 +10,7 @@ __all__ = [
 Self = TypeVar("Self")
 
 
+@final
 class Rule(IntEnum):
 
     ROW: int = 0
