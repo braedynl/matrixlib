@@ -10,4 +10,6 @@ Documentation: https://github.com/braedynl/matrices-py/wiki
 """
 
 from .protocols import *
+from .rule import *
+from .shape import *
 from .types import *
