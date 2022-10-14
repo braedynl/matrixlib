@@ -171,7 +171,7 @@ class Shape(Collection):
         """
         n = self[by]
         i = operator.index(key)
-        i = i + (n * (i < 0))
+        i += n * (i < 0)
         if i < 0 or i >= n:
             name = by.true_name
             raise IndexError(f"there are {n} {name}s but index is {key}")
@@ -184,7 +184,7 @@ class Shape(Collection):
         n = self[by]
         return range(*key.indices(n))
 
-    def serialize(self, index, *, by=Rule.ROW):
+    def sequence(self, index, *, by=Rule.ROW):
         """Return the start, stop, and step values required to create a range
         or slice object of the given rule's shape beginning at `index`
 
@@ -207,18 +207,14 @@ class Shape(Collection):
     def range(self, index, *, by=Rule.ROW):
         """Return a range of indices that can be used to construct a sub-matrix
         of the rule's shape beginning at `index`
-
-        See `serialize()` for more details.
         """
-        return range(*self.serialize(index, by=by))
+        return range(*self.sequence(index, by=by))
 
     def slice(self, index, *, by=Rule.ROW):
         """Return a slice that can be used to construct a sub-matrix of the
         rule's shape beginning at `index`
-
-        See `serialize()` for more details.
         """
-        return slice(*self.serialize(index, by=by))
+        return slice(*self.sequence(index, by=by))
 
 
 class GenericMatrix(Sequence):
@@ -951,6 +947,8 @@ class ComplexMatrix(GenericMatrix):
         if not n:
             return cls.fill(0, m, q)  # Use int 0 here since it supports all numeric operations
 
+        data = self.data
+
         ix = range(m)
         jx = range(q)
         kx = range(n)
@@ -959,7 +957,7 @@ class ComplexMatrix(GenericMatrix):
             [
                 functools.reduce(
                     operator.add,
-                    (self.data[i * n + k] * other.data[k * q + j] for k in kx),
+                    (data[i * n + k] * other[k * q + j] for k in kx),
                 )
                 for i in ix
                 for j in jx
