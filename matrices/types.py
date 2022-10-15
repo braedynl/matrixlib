@@ -494,7 +494,18 @@ class GenericMatrix(Sequence):
         """
         data = self.data
         h, k = self.shape, other.shape
-        return h.equals(k) and all(map(lambda x, y: x is y or x == y, data, other))
+
+        def equals(x, y):
+            if x is y:
+                return True
+            flag = isinstance(x, MatrixLike) + isinstance(y, MatrixLike)
+            if flag == 2:
+                return x.equals(y)
+            if flag == 1:
+                return False
+            return x == y
+
+        return h.equals(k) and all(map(equals, data, other))
 
     def reshape(self, nrows, ncols):
         """Re-interpret the matrix's shape
@@ -502,9 +513,9 @@ class GenericMatrix(Sequence):
         Raises `ValueError` if any of the given dimensions are negative, or if
         their product does not equal the matrix's current size.
         """
+        h = self.shape
         if nrows < 0 or ncols < 0:
             raise ValueError("dimensions must be non-negative")
-        h = self.shape
         if (n := h.size) != (nrows * ncols):
             raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × {ncols}")
         h.nrows = nrows

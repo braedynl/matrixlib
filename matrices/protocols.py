@@ -395,7 +395,18 @@ class MatrixLike(Protocol):
         buffer and shape, otherwise false
         """
         h, k = self.shape, other.shape
-        return h.equals(k) and all(map(lambda x, y: x is y or x == y, self, other))
+
+        def equals(x, y):
+            if x is y:
+                return True
+            flag = isinstance(x, MatrixLike) + isinstance(y, MatrixLike)
+            if flag == 2:
+                return x.equals(y)
+            if flag == 1:
+                return False
+            return x == y
+
+        return h.equals(k) and all(map(equals, self, other))
 
     def copy(self):
         """Return a shallow copy of the matrix"""
