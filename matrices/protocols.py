@@ -221,11 +221,11 @@ class ShapeLike(Protocol):
           dimension equal to 1 (i.e., both could be represented
           one-dimensionally)
 
-        For element-wise equivalence alone, use the `true_equals()` method.
+        For element-wise equivalence alone, use the `equals()` method.
         """
         if not isinstance(other, ShapeLike):
             return NotImplemented
-        return self.true_equals(other) or (self.size == other.size and 1 in self and 1 in other)
+        return self.equals(other) or (self.size == other.size and 1 in self and 1 in other)
 
     def __len__(self):
         """Return literal 2"""
@@ -251,7 +251,7 @@ class ShapeLike(Protocol):
 
     def __contains__(self, value):
         """Return true if the shape contains `value`, otherwise false"""
-        return value == self[0] or value == self[1]
+        return self[0] == value or self[1] == value
 
     @property
     def nrows(self):
@@ -269,7 +269,7 @@ class ShapeLike(Protocol):
         nrows, ncols = self
         return nrows * ncols
 
-    def true_equals(self, other):
+    def equals(self, other):
         """Return true if the two shapes are element-wise equivalent, otherwise
         false
         """
@@ -290,7 +290,7 @@ class MatrixLike(Protocol):
     # If the right-hand side is not a matrix, the object should be "dragged"
     # along the map. Example implementation:
 
-    # def equals(self, other):
+    # def __eq__(self, other):
     #     if isinstance(other, MatrixLike):
     #         if self.shape != other.shape:
     #             raise ValueError
@@ -390,14 +390,12 @@ class MatrixLike(Protocol):
         """The product of the matrix's number of rows and columns"""
         return self.shape.size
 
-    def true_equals(self, other):
+    def equals(self, other):
         """Return true if the two matrices have an element-wise equivalent data
         buffer and shape, otherwise false
         """
         h, k = self.shape, other.shape
-        if not h.true_equals(k):
-            return False
-        return all(map(lambda x, y: x is y or x == y, self, other))
+        return h.equals(k) and all(map(lambda x, y: x is y or x == y, self, other))
 
     def copy(self):
         """Return a shallow copy of the matrix"""

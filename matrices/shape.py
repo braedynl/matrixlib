@@ -34,11 +34,11 @@ class Shape(Collection):
           dimension equal to 1 (i.e., both could be represented
           one-dimensionally)
 
-        For element-wise equivalence alone, use the `true_equals()` method.
+        For element-wise equivalence alone, use the `equals()` method.
         """
         if not isinstance(other, ShapeLike):
             return NotImplemented
-        return self.true_equals(other) or self.size == other.size and 1 in self and 1 in other
+        return self.equals(other) or (self.size == other.size and 1 in self and 1 in other)
 
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
@@ -96,7 +96,7 @@ class Shape(Collection):
         nrows, ncols = self
         return nrows * ncols
 
-    def true_equals(self, other):
+    def equals(self, other):
         """Return true if the two shapes are element-wise equivalent, otherwise
         false
         """
@@ -144,7 +144,7 @@ class Shape(Collection):
         The input `index` must be positive - negative indices may produce
         unexpected results. This requirement is not checked for.
         """
-        dy = not by
+        dy = by.inverse
 
         major = self[by]
         minor = self[dy]

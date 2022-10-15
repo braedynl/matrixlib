@@ -370,23 +370,19 @@ class GenericMatrix(Sequence):
     def scalar_map(self, func):
         if (n := self.size) != 1:
             raise ValueError(f"matrix of size {n} cannot be demoted to a scalar")
-        return func(self[0])
+        return func(self.data[0])
 
     def unary_map(self, func, *, cls):
-        data = self.data
-        h = self.shape
-        return cls(map(func, data), *h)
+        return cls(map(func, self.data), *self.shape)
 
     def binary_map(self, func, other, *, cls, reverse=False):
-        data = self.data
-        h = self.shape
         if isinstance(other, MatrixLike):
-            if h != (k := other.shape):
+            if (h := self.shape) != (k := other.shape):
                 raise ValueError(f"matrix of shape {h} is incompatible with operand of shape {k}")
             it = iter(other)
         else:
             it = itertools.repeat(other)
-        return cls(map(func, it, data) if reverse else map(func, data, it), *h)
+        return cls(map(func, it, self.data) if reverse else map(func, self.data, it), *self.shape)
 
     def __eq__(self, other):
         """Return element-wise `a == b`
@@ -471,16 +467,6 @@ class GenericMatrix(Sequence):
         """The product of the number of rows and columns"""
         return self.shape.size
 
-    def true_equals(self, other):
-        """Return true if the two matrices have an element-wise equivalent data
-        buffer and shape, otherwise false
-        """
-        data = self.data
-        h, k = self.shape, other.shape
-        if not h.true_equals(k):
-            return False
-        return all(map(lambda x, y: x is y or x == y, data, other))
-
     def index(self, value, start=0, stop=None):
         """Return the index of the first element equal to `value`
 
@@ -501,6 +487,14 @@ class GenericMatrix(Sequence):
         """Reverse the matrix's elements in place"""
         self.data.reverse()
         return self
+
+    def equals(self, other):
+        """Return true if the two matrices have an element-wise equivalent data
+        buffer and shape, otherwise false
+        """
+        data = self.data
+        h, k = self.shape, other.shape
+        return h.equals(k) and all(map(lambda x, y: x is y or x == y, data, other))
 
     def reshape(self, nrows, ncols):
         """Re-interpret the matrix's shape
@@ -591,7 +585,7 @@ class GenericMatrix(Sequence):
         """
         if by: self.transpose()  # For column-major order
         h = self.shape
-        h[not by] = h.size
+        h[by.inverse] = h.size
         h[by] = 1
         return self
 
@@ -612,7 +606,8 @@ class GenericMatrix(Sequence):
         Raises `ValueError` if the inverse dimension differs between the
         operand matrices.
         """
-        if self is other: other = other.copy()
+        if self is other:
+            other = other.copy()
 
         data = self.data
         h, k = self.shape, other.shape
