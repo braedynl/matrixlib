@@ -18,11 +18,13 @@ class Shape(Collection):
 
     def __repr__(self):
         """Return a canonical representation of the shape"""
-        return f"Shape(nrows={self[0]!r}, ncols={self[1]!r})"
+        data = self.data
+        return f"Shape(nrows={data[0]!r}, ncols={data[1]!r})"
 
     def __str__(self):
         """Return a string representation of the shape"""
-        return f"{self[0]} × {self[1]}"
+        data = self.data
+        return f"{data[0]} × {data[1]}"
 
     def __eq__(self, other):
         """Return true if the two shapes are equal, otherwise false
@@ -38,7 +40,7 @@ class Shape(Collection):
         """
         if not isinstance(other, ShapeLike):
             return NotImplemented
-        return self.equals(other) or (self.size == other.size and 1 in self and 1 in other)
+        return self.equals(other) or (self.size == other.size and 1 in self.data and 1 in other)
 
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
@@ -68,43 +70,44 @@ class Shape(Collection):
 
     def __deepcopy__(self, memo=None):
         """Return a copy of the shape"""
-        return Shape(*self)  # Our components are (hopefully) immutable
+        return Shape(*self.data)  # Our components are (hopefully) immutable
 
     __copy__ = __deepcopy__
 
     @property
     def nrows(self):
         """The first dimension of the shape"""
-        return self[0]
+        return self.data[0]
 
     @nrows.setter
     def nrows(self, value):
-        self[0] = value
+        self.data[0] = value
 
     @property
     def ncols(self):
         """The second dimension of the shape"""
-        return self[1]
+        return self.data[1]
 
     @ncols.setter
     def ncols(self, value):
-        self[1] = value
+        self.data[1] = value
 
     @property
     def size(self):
         """The product of the shape's dimensions"""
-        nrows, ncols = self
+        nrows, ncols = self.data
         return nrows * ncols
 
     def equals(self, other):
         """Return true if the two shapes are element-wise equivalent, otherwise
         false
         """
-        return self[0] == other[0] and self[1] == other[1]
+        data = self.data
+        return data[0] == other[0] and data[1] == other[1]
 
     def copy(self):
         """Return a copy of the shape"""
-        return Shape(*self)
+        return Shape(*self.data)
 
     def reverse(self):
         """Reverse the shape's dimensions in place"""
@@ -114,7 +117,7 @@ class Shape(Collection):
     def subshape(self, *, by=Rule.ROW):
         """Return the shape of any sub-matrix in the given rule's form"""
         shape = self.copy()
-        shape[by] = 1
+        shape.data[by] = 1
         return shape
 
     def resolve_index(self, key, *, by=Rule.ROW):
@@ -122,7 +125,7 @@ class Shape(Collection):
 
         Raises `IndexError` if the key is out of range.
         """
-        n = self[by]
+        n = self.data[by]
         i = operator.index(key)
         i += n * (i < 0)
         if i < 0 or i >= n:
@@ -134,7 +137,7 @@ class Shape(Collection):
         """Return a slice `key` as an equivalent sequence of indices,
         respective to a rule
         """
-        n = self[by]
+        n = self.data[by]
         return range(*key.indices(n))
 
     def sequence(self, index, *, by=Rule.ROW):
@@ -144,10 +147,11 @@ class Shape(Collection):
         The input `index` must be positive - negative indices may produce
         unexpected results. This requirement is not checked for.
         """
+        data = self.data
         dy = by.inverse
 
-        major = self[by]
-        minor = self[dy]
+        major = data[by]
+        minor = data[dy]
 
         major_step = by * major + dy
         minor_step = dy * minor + by
