@@ -638,8 +638,7 @@ class GenericMatrix(Sequence):
 
         dy = by.inverse
         if (m := h[dy]) != (n := k[dy]):
-            name = dy.true_name
-            raise ValueError(f"matrix has {m} {name}s but operand has {n}")
+            raise ValueError(f"matrix has {m} {dy.handle}s but operand has {n}")
 
         (m, n), (_, q) = (h, k)
 

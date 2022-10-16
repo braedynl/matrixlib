@@ -131,8 +131,7 @@ class Shape(Collection):
         i = operator.index(key)
         i += n * (i < 0)
         if i < 0 or i >= n:
-            name = by.true_name
-            raise IndexError(f"there are {n} {name}s but index is {key}")
+            raise IndexError(f"there are {n} {by.handle}s but index is {key}")
         return i
 
     def resolve_slice(self, key, *, by=Rule.ROW):

@@ -23,8 +23,8 @@ class Rule(IntEnum):
         return Rule(not self)
 
     @property
-    def true_name(self):
-        """The rule's "true", unformatted name"""
+    def handle(self):
+        """The rule's non-Pythonized name"""
         return ["row", "column"][self]
 
 
