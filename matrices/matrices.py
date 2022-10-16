@@ -168,16 +168,17 @@ class GenericMatrix(Sequence):
 
         If `key` is an integer or slice, it is treated as if it is indexing the
         flattened matrix, returning the corresponding value(s). A slice will
-        always return a wrap matrix of shape `(1, N)`, where `N` is the length
+        always return a new matrix of shape `(1, N)`, where `N` is the length
         of the slice's range.
 
         If `key` is a tuple, the first index is applied against the rows, while
-        the second is applied against the columns. A tuple of two integers,
-        `(i, j)`, will return the element at row `i`, column `j`. All other
-        tuple variations will return a wrap sub-matrix of shape `(M, N)`, where
-        `M` is the length of the first slice's range, and `N` is the length of
-        the second slice's range - integers are treated as length 1 slices if
-        mixed with at least one other slice.
+        the second is applied against the columns.
+
+        A tuple of two integers, `(i, j)`, will return the element at row `i`,
+        column `j`. All other tuple variations will return a new sub-matrix of
+        shape `(M, N)`, where `M` is the length of the first slice's range, and
+        `N` is the length of the second slice's range - integers are treated as
+        length 1 slices if mixed with at least one other slice.
         """
         data = self.data
         h = self.shape
@@ -260,12 +261,13 @@ class GenericMatrix(Sequence):
         flattened matrix, overwriting the corresponding value(s).
 
         If `key` is a tuple, the first index is applied against the rows, while
-        the second is applied against the columns. A tuple of two integers,
-        `(i, j)`, will overwrite the element at row `i`, column `j`. All other
-        tuple variations will overwrite a sub-matrix of shape `(M, N)`, where
-        `M` is the length of the first slice's range, and `N` is the length of
-        the second slice's range - integers are treated as length 1 slices if
-        mixed with at least one other slice.
+        the second is applied against the columns.
+
+        A tuple of two integers, `(i, j)`, will overwrite the element at row
+        `i`, column `j`. All other tuple variations will overwrite a sub-matrix
+        of shape `(M, N)`, where `M` is the length of the first slice's range,
+        and `N` is the length of the second slice's range - integers are
+        treated as length 1 slices if mixed with at least one other slice.
         """
         data = self.data
         h = self.shape
@@ -361,13 +363,19 @@ class GenericMatrix(Sequence):
         """Return a deep copy of the matrix"""
         data = self.data
         h = self.shape
-        return type(self).wrap(copy.deepcopy(data), shape=h.copy())
+        return type(self).wrap(
+            copy.deepcopy(data, memo=memo),
+            shape=h.copy(),
+        )
 
     def __copy__(self):
         """Return a shallow copy of the matrix"""
         data = self.data
         h = self.shape
-        return type(self).wrap(copy.copy(data), shape=h.copy())
+        return type(self).wrap(
+            copy.copy(data),
+            shape=h.copy(),
+        )
 
     def scalar_map(self, func):
         if (n := self.size) != 1:
