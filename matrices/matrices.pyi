@@ -9,7 +9,7 @@ from .rule import Rule
 from .shape import Shape
 
 __all__ = [
-    "GenericMatrix",
+    "Matrix",
     "ComplexMatrix",
     "RealMatrix",
     "IntegralMatrix",
@@ -23,7 +23,7 @@ IntegralLikeT = TypeVar("IntegralLikeT", bound=IntegralLike)
 Self = TypeVar("Self")
 
 
-class GenericMatrix(Sequence[T]):
+class Matrix(Sequence[T]):
 
     __slots__: tuple[Literal["data"], Literal["shape"]]
 
@@ -75,7 +75,7 @@ class GenericMatrix(Sequence[T]):
     @classmethod
     def fill(cls: type[Self], value: T, nrows: int, ncols: int) -> Self: ...
     @classmethod
-    def refer(cls: type[Self], other: GenericMatrix[T]) -> Self: ...  # Can't be MatrixLike, since this method relies on internal data
+    def refer(cls: type[Self], other: Matrix[T]) -> Self: ...  # Can't be MatrixLike, since this method relies on internal data
     @classmethod
     def infer(cls: type[Self], other: Iterable[Iterable[T]]) -> Self: ...
 
@@ -105,7 +105,7 @@ class GenericMatrix(Sequence[T]):
     def copy(self: Self, *, deep: bool = False) -> Self: ...
 
 
-class ComplexMatrix(GenericMatrix[ComplexLikeT]):
+class ComplexMatrix(Matrix[ComplexLikeT]):
 
     __slots__: tuple[()]
 

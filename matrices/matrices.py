@@ -15,14 +15,14 @@ from .utilities import (conjugate, logical_and, logical_not, logical_or,
                         logical_xor)
 
 __all__ = [
-    "GenericMatrix",
+    "Matrix",
     "ComplexMatrix",
     "RealMatrix",
     "IntegralMatrix",
 ]
 
 
-class GenericMatrix(Sequence):
+class Matrix(Sequence):
     """A sequence type for manipulating arbitrary data types in both one and
     two dimensions
 
@@ -678,7 +678,7 @@ class GenericMatrix(Sequence):
         return copy.deepcopy(self) if deep else copy.copy(self)
 
 
-class ComplexMatrix(GenericMatrix):
+class ComplexMatrix(Matrix):
 
     __slots__ = ()
 
