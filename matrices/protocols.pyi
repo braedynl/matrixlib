@@ -27,6 +27,9 @@ Self = TypeVar("Self")
 class ComplexLike(Protocol):
 
     @abstractmethod
+    def __eq__(self: Self, other: Any) -> Any: ...
+
+    @abstractmethod
     def __add__(self: Self, other: Any) -> Any: ...
     @abstractmethod
     def __radd__(self: Self, other: Any) -> Any: ...
@@ -115,9 +118,9 @@ class ShapeLike(Protocol):
 class MatrixLike(Protocol[T_co]):
 
     @abstractmethod
-    def __eq__(self: Self, other: Any) -> Any: ...  # type: ignore[override]
+    def __eq__(self: Self, other: Any) -> Any: ...
     @abstractmethod
-    def __ne__(self: Self, other: Any) -> Any: ...  # type: ignore[override]
+    def __ne__(self: Self, other: Any) -> Any: ...
 
     def __len__(self: Self) -> int: ...
     @abstractmethod

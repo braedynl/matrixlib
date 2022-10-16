@@ -17,12 +17,13 @@ __all__ = [
 
 # XXX: Notice for implementors
 #
-# All binary operators (except / and **, more on these two later) should return
-# instances of themselves or some instance of the subclassed protocol when the
-# operand is an instance of the subclassed protocol. For example, a subclass of
-# RealLike should implement an __add__() and __radd__() that takes an instance
-# of RealLike, and produces a RealLike as a result (either a new instance of
-# the enclosing class, or a "built-in real" such as float or int).
+# All arithmetic binary operators (except / and **, more on these two later)
+# should return instances of themselves or some instance of the subclassed
+# protocol when the operand is an instance of the subclassed protocol. For
+# example, a subclass of RealLike should implement an __add__() and __radd__()
+# that takes an instance of RealLike, and produces a RealLike as a result
+# (either a new instance of the enclosing class, or a "built-in real" such as
+# float or int).
 #
 # The exception to this rule is true division and exponentiation.
 #
@@ -40,6 +41,9 @@ __all__ = [
 # complex-likes. If real-like or narrower, it should return an instance of the
 # subclassed protocol (a complex number's absolute value is its real distance,
 # real numbers' absolute value can be a new real number).
+#
+# All comparison operators should return instances of IntegralLike. Numeric
+# matrix types will return instances of IntegralMatrixLike.
 
 
 # These protocols are implemented as a hierarchy. The numeric matrix types,
@@ -60,6 +64,11 @@ class ComplexLike(Protocol):
 
     Acts as the root of the numeric-like protocol tower.
     """
+
+    @abstractmethod
+    def __eq__(self, other):
+        """Return `a == b`"""
+        pass
 
     @abstractmethod
     def __add__(self, other):
@@ -423,12 +432,12 @@ class ComplexMatrixLike(ComplexLike, MatrixLike, Protocol):
 
     @abstractmethod
     def __matmul__(self, other):
-        """Return `a @ b`"""
+        """Return the matrix product `a @ b`"""
         pass
 
     @abstractmethod
     def __rmatmul__(self, other):
-        """Return `b @ a`"""
+        """Return the reverse matrix product `b @ a`"""
         pass
 
     @abstractmethod

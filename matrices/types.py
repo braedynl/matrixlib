@@ -185,8 +185,9 @@ class GenericMatrix(Sequence):
         if isinstance(key, tuple):
 
             def getitems(keys, nrows, ncols):
+                n = self.ncols
                 return type(self).wrap(
-                    [data[i * self.ncols + j] for i, j in keys],
+                    [data[i * n + j] for i, j in keys],
                     shape=Shape(nrows, ncols),
                 )
 
@@ -224,7 +225,7 @@ class GenericMatrix(Sequence):
 
                 else:
                     j = h.resolve_index(colkey, by=Rule.COL)
-                    result = data[i * self.ncols + j]
+                    result = data[i * h.ncols + j]
 
             return result
 
@@ -236,7 +237,7 @@ class GenericMatrix(Sequence):
                     shape=Shape(nrows, ncols),
                 )
 
-            ix = range(*key.indices(self.size))
+            ix = range(*key.indices(h.size))
             result = getitems(
                 ix,
                 nrows=1,
@@ -274,8 +275,9 @@ class GenericMatrix(Sequence):
             def setitems(keys, nrows, ncols):
                 if (h := Shape(nrows, ncols)) != (k := other.shape):
                     raise ValueError(f"selection of shape {h} is incompatible with operand of shape {k}")
+                n = self.ncols
                 for (i, j), x in zip(keys, other):
-                    data[i * self.ncols + j] = x
+                    data[i * n + j] = x
 
             rowkey, colkey = key
 
@@ -311,7 +313,7 @@ class GenericMatrix(Sequence):
 
                 else:
                     j = h.resolve_index(colkey, by=Rule.COL)
-                    data[i * self.ncols + j] = other
+                    data[i * h.ncols + j] = other
 
             return
 
@@ -323,7 +325,7 @@ class GenericMatrix(Sequence):
                 for i, x in zip(keys, other):
                     data[i] = x
 
-            ix = range(*key.indices(self.size))
+            ix = range(*key.indices(h.size))
             setitems(
                 ix,
                 nrows=1,
