@@ -502,6 +502,9 @@ class GenericMatrix(Sequence):
         """Return true if the two matrices have an element-wise equivalent data
         buffer and shape, otherwise false
         """
+        if self is other:
+            return True
+
         data = self.data
         h, k = self.shape, other.shape
 

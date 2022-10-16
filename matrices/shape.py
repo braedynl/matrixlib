@@ -102,6 +102,8 @@ class Shape(Collection):
         """Return true if the two shapes are element-wise equivalent, otherwise
         false
         """
+        if self is other:
+            return True
         data = self.data
         return data[0] == other[0] and data[1] == other[1]
 

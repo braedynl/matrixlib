@@ -282,6 +282,8 @@ class ShapeLike(Protocol):
         """Return true if the two shapes are element-wise equivalent, otherwise
         false
         """
+        if self is other:
+            return True
         return self[0] == other[0] and self[1] == other[1]
 
 
@@ -403,6 +405,9 @@ class MatrixLike(Protocol):
         """Return true if the two matrices have an element-wise equivalent data
         buffer and shape, otherwise false
         """
+        if self is other:
+            return True
+
         h, k = self.shape, other.shape
 
         def equals(x, y):
