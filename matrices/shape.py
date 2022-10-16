@@ -45,12 +45,18 @@ class Shape(Collection):
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
         key = operator.index(key)
-        return self.data[key]
+        try:
+            return self.data[key]
+        except IndexError:
+            raise IndexError("index out of range") from None
 
     def __setitem__(self, key, value):
         """Set the dimension corresponding to `key` with `value`"""
         key = operator.index(key)
-        self.data[key] = value
+        try:
+            self.data[key] = value
+        except IndexError:
+            raise IndexError("index out of range") from None
 
     def __len__(self):
         """Return literal 2"""
