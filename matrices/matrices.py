@@ -608,7 +608,7 @@ class Matrix(Sequence):
         """
         if by: self.transpose()  # For column-major order
         h = self.shape
-        h[by.inverse] = h.size
+        h[not by] = h.size
         h[by] = 1
         return self
 
@@ -635,9 +635,10 @@ class Matrix(Sequence):
         data = self.data
         h, k = self.shape, other.shape
 
-        dy = by.inverse
+        dy = not by
         if (m := h[dy]) != (n := k[dy]):
-            raise ValueError(f"matrix has {m} {dy.handle}s but operand has {n}")
+            rule = Rule(dy)
+            raise ValueError(f"matrix has {m} {rule.handle}s but operand has {n}")
 
         (m, n), (_, q) = (h, k)
 

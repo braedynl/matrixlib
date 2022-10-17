@@ -137,7 +137,8 @@ class Shape(Collection):
         i = operator.index(key)
         i += n * (i < 0)
         if i < 0 or i >= n:
-            raise IndexError(f"there are {n} {by.handle}s but index is {key}")
+            rule = Rule(by)
+            raise IndexError(f"there are {n} {rule.handle}s but index is {key}")
         return i
 
     def resolve_slice(self, key, *, by=Rule.ROW):
@@ -155,7 +156,7 @@ class Shape(Collection):
         unexpected results. This requirement is not checked for.
         """
         data = self.data
-        dy = by.inverse
+        dy = not by
 
         major = data[by]
         minor = data[dy]
