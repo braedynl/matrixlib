@@ -240,9 +240,6 @@ class ShapeLike(Protocol):
         """Return literal 2"""
         return 2
 
-    # XXX: Implementors should coerce keys to integers via operator.index()
-    # so that enums like Rule can be used as keys
-
     @abstractmethod
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
