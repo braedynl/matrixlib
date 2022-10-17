@@ -230,11 +230,11 @@ class ShapeLike(Protocol):
           dimension equal to 1 (i.e., both could be represented
           one-dimensionally)
 
-        For element-wise equivalence alone, use the `equals()` method.
+        For element-wise equivalence alone, use the `equal()` method.
         """
         if not isinstance(other, ShapeLike):
             return NotImplemented
-        return self.equals(other) or (self.size == other.size and 1 in self and 1 in other)
+        return self.equal(other) or (self.size == other.size and 1 in self and 1 in other)
 
     def __len__(self):
         """Return literal 2"""
@@ -275,7 +275,7 @@ class ShapeLike(Protocol):
         nrows, ncols = self
         return nrows * ncols
 
-    def equals(self, other):
+    def equal(self, other):
         """Return true if the two shapes are element-wise equivalent, otherwise
         false
         """
@@ -398,7 +398,7 @@ class MatrixLike(Protocol):
         """The product of the matrix's number of rows and columns"""
         return self.shape.size
 
-    def equals(self, other):
+    def equal(self, other):
         """Return true if the two matrices have an element-wise equivalent data
         buffer and shape, otherwise false
         """
@@ -407,17 +407,17 @@ class MatrixLike(Protocol):
 
         h, k = self.shape, other.shape
 
-        def equals(x, y):
+        def equal(x, y):
             if x is y:
                 return True
-            flag = isinstance(x, MatrixLike) + isinstance(y, MatrixLike)
-            if flag == 2:
-                return x.equals(y)
-            if flag == 1:
+            n = isinstance(x, MatrixLike) + isinstance(y, MatrixLike)
+            if n == 2:
+                return x.equal(y)
+            if n == 1:
                 return False
             return x == y
 
-        return h.equals(k) and all(map(equals, self, other))
+        return h.equal(k) and all(map(equal, self, other))
 
     def copy(self):
         """Return a shallow copy of the matrix"""

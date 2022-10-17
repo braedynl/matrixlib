@@ -498,27 +498,26 @@ class Matrix(Sequence):
         self.data.reverse()
         return self
 
-    def equals(self, other):
+    def equal(self, other):
         """Return true if the two matrices have an element-wise equivalent data
         buffer and shape, otherwise false
         """
         if self is other:
             return True
 
-        data = self.data
         h, k = self.shape, other.shape
 
-        def equals(x, y):
+        def equal(x, y):
             if x is y:
                 return True
-            flag = isinstance(x, MatrixLike) + isinstance(y, MatrixLike)
-            if flag == 2:
-                return x.equals(y)
-            if flag == 1:
+            n = isinstance(x, MatrixLike) + isinstance(y, MatrixLike)
+            if n == 2:
+                return x.equal(y)
+            if n == 1:
                 return False
             return x == y
 
-        return h.equals(k) and all(map(equals, data, other))
+        return h.equal(k) and all(map(equal, self, other))
 
     def reshape(self, nrows, ncols):
         """Re-interpret the matrix's shape
