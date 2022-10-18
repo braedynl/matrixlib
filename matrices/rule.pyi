@@ -13,8 +13,8 @@ Self = TypeVar("Self")
 @final
 class Rule(IntEnum):
 
-    ROW: Literal[0] = 0
-    COL: Literal[1] = 1
+    ROW: Literal[0]
+    COL: Literal[1]
 
     @property
     def inverse(self: Self) -> Rule: ...
