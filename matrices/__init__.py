@@ -13,3 +13,4 @@ from .matrices import *
 from .protocols import *
 from .rule import *
 from .shape import *
+from .utilities import *
