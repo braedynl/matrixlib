@@ -635,10 +635,9 @@ class Matrix(Sequence):
         data = self.data
         h, k = self.shape, other.shape
 
-        dy = not by
+        dy = by.inverse
         if (m := h[dy]) != (n := k[dy]):
-            rule = Rule(dy)
-            raise ValueError(f"matrix has {m} {rule.handle}s but operand has {n}")
+            raise ValueError(f"matrix has {m} {dy.handle}s but operand has {n}")
 
         (m, n), (_, q) = (h, k)
 

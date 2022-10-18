@@ -3,6 +3,8 @@ import sys
 from abc import abstractmethod
 from typing import Protocol, runtime_checkable
 
+from .rule import Rule
+
 __all__ = [
     "ComplexLike",
     "RealLike",
@@ -46,16 +48,13 @@ __all__ = [
 # matrix types will return instances of IntegralMatrixLike.
 
 
-# These protocols are implemented as a hierarchy. The numeric matrix types,
-# too, are implemented as a hierarchy - but, there is a lot of ongoing debate
-# on whether numeric types should be implemented as a hierachy at all, since
-# it often requires violating the Liskov Substitution Principle.
-#
-# Implementors are free to choose how to structure their subclasses - the
-# numeric matrices are implemented hierarchically as a means to reduce some
-# repetitious code, while advising users to perform instance checks with
-# the protocols rather than with one of the concrete implementations (since
-# their registration as subclasses may change in the future).
+# These protocols are implemented as a hierarchy, but note that the concrete
+# numeric matrix implementations are not - there is a lot of ongoing debate on
+# whether numeric types should be implemented hierarchically, since it often
+# requires violating the Liskov Substitution Principle.
+# Implementors are free to choose how to structure their subclasses, but do
+# bear in mind the potential consequences in creating a concrete hierarchy
+# rather than individual concrete implementations.
 
 
 @runtime_checkable
@@ -307,10 +306,6 @@ class MatrixLike(Protocol):
     #         it = itertools.repeat(other)
     #     return MyMatrix(map(operator.eq, self, it), *self.shape)
 
-    # Depending on the matrix class' type bound, certain operators may be
-    # unable to return the NotImplemented constant. If NotImplemented can be
-    # returned, it should be returned.
-
     @abstractmethod
     def __eq__(self, other):
         """Return element-wise `a == b`"""
@@ -423,14 +418,74 @@ class MatrixLike(Protocol):
         """Return a shallow copy of the matrix"""
         return copy.copy(self)
 
+    # XXX: By convention, methods that can be interpreted for either direction
+    # take a keyword argument, "by", that switches the method's interpretation
+    # between row and column-wise.
+    # 0 is used to dictate row-wise, 1 is used to dictate column-wise. All
+    # methods that can be interpreted in this manner should default to
+    # row-wise.
+
+    @abstractmethod
+    def slices(self, *, by=Rule.ROW):
+        """Return an iterator that yields shallow copies of each row or column"""
+        pass
+
 
 @runtime_checkable
-class ComplexMatrixLike(ComplexLike, MatrixLike, Protocol):
+class ComplexMatrixLike(MatrixLike, Protocol):
     """Protocol of operations defined for matrix-like objects that contain
     complex-like values
 
-    Derives from `ComplexLike` and `MatrixLike`.
+    Derives from `MatrixLike`.
     """
+
+    @abstractmethod
+    def __add__(self, other):
+        """Return element-wise `a + b`"""
+        pass
+
+    @abstractmethod
+    def __radd__(self, other):
+        """Return element-wise `b + a`"""
+        pass
+
+    def __sub__(self, other):
+        """Return element-wise `a - b`"""
+        return self + -other
+
+    def __rsub__(self, other):
+        """Return element-wise `b - a`"""
+        return other + -self
+
+    @abstractmethod
+    def __mul__(self, other):
+        """Return element-wise `a * b`"""
+        pass
+
+    @abstractmethod
+    def __rmul__(self, other):
+        """Return element-wise `b * a`"""
+        pass
+
+    @abstractmethod
+    def __truediv__(self, other):
+        """Return element-wise `a / b`"""
+        pass
+
+    @abstractmethod
+    def __rtruediv__(self, other):
+        """Return element-wise `b / a`"""
+        pass
+
+    @abstractmethod
+    def __pow__(self, other):
+        """Return element-wise `a ** b`"""
+        pass
+
+    @abstractmethod
+    def __rpow__(self, other):
+        """Return element-wise `b ** a`"""
+        pass
 
     @abstractmethod
     def __matmul__(self, other):
@@ -443,27 +498,91 @@ class ComplexMatrixLike(ComplexLike, MatrixLike, Protocol):
         pass
 
     @abstractmethod
+    def __neg__(self):
+        """Return element-wise `-a`"""
+        pass
+
+    @abstractmethod
+    def __pos__(self):
+        """Return element-wise `+a`"""
+        pass
+
+    @abstractmethod
+    def __abs__(self):
+        """Return element-wise `abs(a)`"""
+        pass
+
+    # XXX: Same version restriction reason as described by ComplexLike
+
+    if sys.version_info >= (3, 11):
+
+        @abstractmethod
+        def __complex__(self):
+            """Return an equivalent `complex` instance"""
+            pass
+
+    @abstractmethod
+    def conjugate(self):
+        """Return element-wise `conjugate(a)`"""
+        pass
+
+    @abstractmethod
     def complex(self):
         """Return a matrix of each value's equivalent `complex` instance"""
         pass
 
 
 @runtime_checkable
-class RealMatrixLike(RealLike, ComplexMatrixLike, Protocol):
+class RealMatrixLike(ComplexMatrixLike, Protocol):
     """Protocol of operations defined for matrix-like objects that contain
     real-like values
 
-    Derives from `RealLike` and `ComplexMatrixLike`.
+    Derives from `ComplexMatrixLike`.
     """
 
     @abstractmethod
+    def __lt__(self, other):
+        """Return element-wise `a < b`"""
+        pass
+
+    @abstractmethod
+    def __le__(self, other):
+        """Return element-wise `a <= b`"""
+        pass
+
+    @abstractmethod
     def __gt__(self, other):
-        """Return `a > b`"""
+        """Return element-wise `a > b`"""
         pass
 
     @abstractmethod
     def __ge__(self, other):
-        """Return `a >= b`"""
+        """Return element-wise `a >= b`"""
+        pass
+
+    @abstractmethod
+    def __floordiv__(self, other):
+        """Return element-wise `a // b`"""
+        pass
+
+    @abstractmethod
+    def __rfloordiv__(self, other):
+        """Return element-wise `b // a`"""
+        pass
+
+    @abstractmethod
+    def __mod__(self, other):
+        """Return element-wise `a % b`"""
+        pass
+
+    @abstractmethod
+    def __rmod__(self, other):
+        """Return element-wise `b % a`"""
+        pass
+
+    @abstractmethod
+    def __float__(self):
+        """Return an equivalent `float` instance"""
         pass
 
     @abstractmethod
@@ -473,12 +592,21 @@ class RealMatrixLike(RealLike, ComplexMatrixLike, Protocol):
 
 
 @runtime_checkable
-class IntegralMatrixLike(IntegralLike, RealMatrixLike, Protocol):
+class IntegralMatrixLike(RealMatrixLike, Protocol):
     """Protocol of operations defined for matrix-like objects that contain
     integral-like values
 
-    Derives from `IntegralLike` and `RealMatrixLike`.
+    Derives from `RealMatrixLike`.
     """
+
+    @abstractmethod
+    def __int__(self):
+        """Return an equivalent `int` instance"""
+        pass
+
+    def __index__(self):
+        """Return an equivalent `int` instance, losslessly"""
+        return int(self)
 
     @abstractmethod
     def int(self):
