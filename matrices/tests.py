@@ -1,7 +1,7 @@
 import itertools
 from unittest import TestCase
 
-from . import Matrix, Rule
+from . import ComplexMatrix, IntegralMatrix, Matrix, RealMatrix, Rule
 
 M0x0 = Matrix([], nrows=0, ncols=0)
 
@@ -18,7 +18,6 @@ M1x1 = Matrix([
 M1x2 = Matrix([
     0, 1,
 ], nrows=1, ncols=2)
-
 M2x1 = Matrix([
     0,
     1,
@@ -33,7 +32,6 @@ M2x3 = Matrix([
     0, 1, 2,
     3, 4, 5,
 ], nrows=2, ncols=3)
-
 M3x2 = Matrix([
     0, 1,
     2, 3,
@@ -693,3 +691,291 @@ class TestMatrix(TestCase):
 
         with self.assertRaises(IndexError):
             M3x3.copy().pull(3, by=Rule.COL)
+
+
+class TestComplexMatrix(TestCase):
+
+    def testOperatorClassDeduction(self):
+        """Tests for binary operator class deduction"""
+
+        a = ComplexMatrix([
+            1j, 2j,
+            3j, 4j,
+        ], nrows=2, ncols=2)
+        b = a
+
+        res = a + b  # ComplexMatrix + ComplexMatrix -> ComplexMatrix
+        exp = ComplexMatrix([
+            2j, 4j,
+            6j, 8j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = 1j
+
+        res = a + b  # ComplexMatrix + Complex -> ComplexMatrix
+        exp = ComplexMatrix([
+            2j, 3j,
+            4j, 5j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = RealMatrix([
+            1.0, 2.0,
+            3.0, 4.0,
+        ], nrows=2, ncols=2)
+
+        res = a + b  # ComplexMatrix + RealMatrix -> ComplexMatrix
+        exp = ComplexMatrix([
+            1+1j, 2+2j,
+            3+3j, 4+4j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = 1.0
+
+        res = a + b  # ComplexMatrix + Real -> ComplexMatrix
+        exp = ComplexMatrix([
+            1+1j, 1+2j,
+            1+3j, 1+4j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = IntegralMatrix([
+            1, 2,
+            3, 4,
+        ], nrows=2, ncols=2)
+
+        res = a + b  # ComplexMatrix + IntegralMatrix -> ComplexMatrix
+        exp = ComplexMatrix([
+            1+1j, 2+2j,
+            3+3j, 4+4j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = 1
+
+        res = a + b  # ComplexMatrix + Integral -> ComplexMatrix
+        exp = ComplexMatrix([
+            1+1j, 1+2j,
+            1+3j, 1+4j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = Matrix([
+            1, 2,
+            3, 4,
+        ], nrows=2, ncols=2)
+
+        res = a + b  # ComplexMatrix + (Matrix or Any) -> Matrix
+        exp = Matrix([
+            1+1j, 2+2j,
+            3+3j, 4+4j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, Matrix))
+
+
+class TestRealMatrix(TestCase):
+
+    def testOperatorClassDeduction(self):
+        """Tests for binary operator class deduction"""
+
+        a = RealMatrix([
+            1.0, 2.0,
+            3.0, 4.0,
+        ], nrows=2, ncols=2)
+        b = a
+
+        res = a + b  # RealMatrix + RealMatrix -> RealMatrix
+        exp = RealMatrix([
+            2.0, 4.0,
+            6.0, 8.0,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, RealMatrix))
+
+        b = 1.0
+
+        res = a + b  # RealMatrix + Real -> RealMatrix
+        exp = RealMatrix([
+            2.0, 3.0,
+            4.0, 5.0,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, RealMatrix))
+
+        b = ComplexMatrix([
+            1j, 2j,
+            3j, 4j,
+        ], nrows=2, ncols=2)
+
+        res = a + b  # RealMatrix + ComplexMatrix -> ComplexMatrix
+        exp = ComplexMatrix([
+            1+1j, 2+2j,
+            3+3j, 4+4j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = 1j
+
+        res = a + b  # RealMatrix + Complex -> ComplexMatrix
+        exp = ComplexMatrix([
+            1+1j, 2+1j,
+            3+1j, 4+1j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = IntegralMatrix([
+            1, 2,
+            3, 4,
+        ], nrows=2, ncols=2)
+
+        res = a + b  # RealMatrix + IntegralMatrix -> RealMatrix
+        exp = RealMatrix([
+            2.0, 4.0,
+            6.0, 8.0,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, RealMatrix))
+
+        b = 1
+
+        res = a + b  # RealMatrix + Integral -> RealMatrix
+        exp = RealMatrix([
+            2.0, 3.0,
+            4.0, 5.0,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, RealMatrix))
+
+        b = Matrix([
+            1, 2,
+            3, 4,
+        ], nrows=2, ncols=2)
+
+        res = a + b  # RealMatrix + (Matrix or Any) -> Matrix
+        exp = Matrix([
+            2.0, 4.0,
+            6.0, 8.0,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, Matrix))
+
+
+class TestIntegralMatrix(TestCase):
+
+    def testOperatorClassDeduction(self):
+        """Tests for binary operator class deduction"""
+
+        a = IntegralMatrix([
+            1, 2,
+            3, 4,
+        ], nrows=2, ncols=2)
+        b = a
+
+        res = a + b  # IntegralMatrix + IntegralMatrix -> IntegralMatrix
+        exp = IntegralMatrix([
+            2, 4,
+            6, 8,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, IntegralMatrix))
+
+        b = 1
+
+        res = a + b  # IntegralMatrix + Integral -> IntegralMatrix
+        exp = IntegralMatrix([
+            2, 3,
+            4, 5,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, IntegralMatrix))
+
+        b = ComplexMatrix([
+            1j, 2j,
+            3j, 4j,
+        ], nrows=2, ncols=2)
+
+        res = a + b  # IntegralMatrix + ComplexMatrix -> ComplexMatrix
+        exp = ComplexMatrix([
+            1+1j, 2+2j,
+            3+3j, 4+4j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = 1j
+
+        res = a + b  # IntegralMatrix + Complex -> ComplexMatrix
+        exp = ComplexMatrix([
+            1+1j, 2+1j,
+            3+1j, 4+1j,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, ComplexMatrix))
+
+        b = RealMatrix([
+            1.0, 2.0,
+            3.0, 4.0,
+        ], nrows=2, ncols=2)
+
+        res = a + b  # IntegralMatrix + RealMatrix -> RealMatrix
+        exp = RealMatrix([
+            2.0, 4.0,
+            6.0, 8.0,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, RealMatrix))
+
+        b = 1.0
+
+        res = a + b  # IntegralMatrix + Real -> RealMatrix
+        exp = RealMatrix([
+            2.0, 3.0,
+            4.0, 5.0,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, RealMatrix))
+
+        b = Matrix([
+            1, 2,
+            3, 4,
+        ], nrows=2, ncols=2)
+
+        res = a + b  # IntegralMatrix + (Matrix or Any) -> Matrix
+        exp = Matrix([
+            2, 4,
+            6, 8,
+        ], nrows=2, ncols=2)
+
+        self.assertTrue(res.equal(exp))
+        self.assertTrue(isinstance(res, Matrix))

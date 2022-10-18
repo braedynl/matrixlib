@@ -395,10 +395,7 @@ class Matrix(Sequence):
         return cls(map(func, it, self.data) if reverse else map(func, self.data, it), *self.shape)
 
     def __eq__(self, other):
-        """Return element-wise `a == b`
-
-        This method can never return `NotImplemented`.
-        """
+        """Return element-wise `a == b`"""
         return self.binary_map(
             operator.eq,
             other,
@@ -406,10 +403,7 @@ class Matrix(Sequence):
         )
 
     def __ne__(self, other):
-        """Return element-wise `a != b`
-
-        This method can never return `NotImplemented`.
-        """
+        """Return element-wise `a != b`"""
         return self.binary_map(
             operator.ne,
             other,
@@ -417,10 +411,7 @@ class Matrix(Sequence):
         )
 
     def __and__(self, other):
-        """Return element-wise `logical_and(a, b)`
-
-        This method can never return `NotImplemented`.
-        """
+        """Return element-wise `logical_and(a, b)`"""
         return self.binary_map(
             logical_and,
             other,
@@ -430,10 +421,7 @@ class Matrix(Sequence):
     __rand__ = __and__
 
     def __or__(self, other):
-        """Return element-wise `logical_or(a, b)`
-
-        This method can never return `NotImplemented`.
-        """
+        """Return element-wise `logical_or(a, b)`"""
         return self.binary_map(
             logical_or,
             other,
@@ -443,10 +431,7 @@ class Matrix(Sequence):
     __ror__ = __or__
 
     def __xor__(self, other):
-        """Return element-wise `logical_xor(a, b)`
-
-        This method can never return `NotImplemented`.
-        """
+        """Return element-wise `logical_xor(a, b)`"""
         return self.binary_map(
             logical_xor,
             other,
@@ -678,7 +663,7 @@ class Matrix(Sequence):
 
 
 class NumericMatrix(Matrix):
-    """Subclass of `Matrix` that adds the `matmul()` method
+    """Subclass of `Matrix` that adds the `multiply()` method
 
     This class exists solely to add matrix multiplication to individual
     subclasses, and should not be used directly.
@@ -686,7 +671,7 @@ class NumericMatrix(Matrix):
 
     __slots__ = ()
 
-    def matmul(self, other, *, cls, reverse=False):
+    def multiply(self, other, *, cls, reverse=False):
         (m, n), (p, q) = (other.shape, self.shape) if reverse else (self.shape, other.shape)
 
         if n != p:
@@ -810,7 +795,7 @@ class ComplexMatrix(NumericMatrix):
             cls = Matrix
         else:
             return NotImplemented
-        return self.matmul(other, cls=cls, reverse=reverse)
+        return self.multiply(other, cls=cls, reverse=reverse)
 
     def __rmatmul__(self, other):
         """Return the matrix product `b @ a`"""
@@ -997,10 +982,10 @@ class RealMatrix(NumericMatrix):
             cls = Matrix
         else:
             return NotImplemented
-        return self.matmul(other, cls=cls, reverse=reverse)
+        return self.multiply(other, cls=cls, reverse=reverse)
 
     def __rmatmul__(self, other):
-        """Return the reverse matrix product `b @ a`"""
+        """Return the matrix product `b @ a`"""
         return self.__matmul__(other, reverse=True)
 
     def __floordiv__(self, other, *, reverse=False):
@@ -1239,10 +1224,10 @@ class IntegralMatrix(NumericMatrix):
             cls = Matrix
         else:
             return NotImplemented
-        return self.matmul(other, cls=cls, reverse=reverse)
+        return self.multiply(other, cls=cls, reverse=reverse)
 
     def __rmatmul__(self, other):
-        """Return the reverse matrix product `b @ a`"""
+        """Return the matrix product `b @ a`"""
         return self.__matmul__(other, reverse=True)
 
     def __floordiv__(self, other, *, reverse=False):

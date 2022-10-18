@@ -213,10 +213,10 @@ class IntegralLike(RealLike, Protocol):
 class ShapeLike(Protocol):
     """Protocol of operations defined for shape-like objects
 
-    Note that this protocol can match with matrix types, though such a match is
-    considered invalid. A shape's length is always 2, and its size is the
-    product of its elements - a matrix's length and size are identical, being
-    the size of its shape.
+    Note that this protocol can match with matrix types through `isinstance()`,
+    though such a match is considered invalid. Matrices consider length and
+    size to be the same thing, whereas shapes have a constant length of 2, and
+    a size that is the product of its elements.
     """
 
     def __eq__(self, other):
