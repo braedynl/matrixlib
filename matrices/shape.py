@@ -8,7 +8,15 @@ __all__ = ["Shape"]
 
 
 class Shape(Collection):
-    """A mutable collection type for storing matrix dimensions"""
+    """A mutable collection type for storing matrix dimensions
+
+    Instances of `Shape` support integer - but not slice - indexing. Negative
+    values are accepted during write operations, and is left up to the matrix
+    implementation to consider.
+
+    Shapes should not be written-to when exposed by a matrix object, unless
+    stated otherwise by the matrix class' documentation.
+    """
 
     __slots__ = ("data",)
 
@@ -27,20 +35,11 @@ class Shape(Collection):
         return f"{data[0]} × {data[1]}"
 
     def __eq__(self, other):
-        """Return true if the two shapes are equal, otherwise false
-
-        Shapes are considered equal if at least one of the following criteria
-        is met:
-        - The shapes are element-wise equivalent
-        - The shapes' products are equivalent, and both contain at least one
-          dimension equal to 1 (i.e., both could be represented
-          one-dimensionally)
-
-        For element-wise equivalence alone, use the `equal()` method.
-        """
+        """Return true if the two shapes are equal, otherwise false"""
         if not isinstance(other, ShapeLike):
             return NotImplemented
-        return self.equal(other) or (self.size == other.size and 1 in self.data and 1 in other)
+        data = self.data
+        return data[0] == other[0] and data[1] == other[1]
 
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
@@ -103,15 +102,6 @@ class Shape(Collection):
         """The product of the shape's dimensions"""
         nrows, ncols = self.data
         return nrows * ncols
-
-    def equal(self, other):
-        """Return true if the two shapes are element-wise equivalent, otherwise
-        false
-        """
-        if self is other:
-            return True
-        data = self.data
-        return data[0] == other[0] and data[1] == other[1]
 
     def copy(self):
         """Return a copy of the shape"""

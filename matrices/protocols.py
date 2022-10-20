@@ -220,20 +220,10 @@ class ShapeLike(Protocol):
     """
 
     def __eq__(self, other):
-        """Return true if the two shapes are equal, otherwise false
-
-        Under this protocol, shapes are considered equal if at least one of
-        the following criteria is met:
-        - The shapes are element-wise equivalent
-        - The shapes' products are equivalent, and both contain at least one
-          dimension equal to 1 (i.e., both could be represented
-          one-dimensionally)
-
-        For element-wise equivalence alone, use the `equal()` method.
-        """
+        """Return true if the two shapes are equal, otherwise false"""
         if not isinstance(other, ShapeLike):
             return NotImplemented
-        return self.equal(other) or (self.size == other.size and 1 in self and 1 in other)
+        return self[0] == other[0] and self[1] == other[1]
 
     def __len__(self):
         """Return literal 2"""
@@ -274,46 +264,18 @@ class ShapeLike(Protocol):
         nrows, ncols = self
         return nrows * ncols
 
-    def equal(self, other):
-        """Return true if the two shapes are element-wise equivalent, otherwise
-        false
-        """
-        if self is other:
-            return True
-        return self[0] == other[0] and self[1] == other[1]
-
 
 @runtime_checkable
 class MatrixLike(Protocol):
     """Protocol of operations defined for matrix-like objects"""
 
-    # XXX: For vectorized operations like __eq__() and __ne__(), a new matrix
-    # composed of the results from the mapped operation should be returned,
-    # with a shape equivalent to that of the left-hand side matrix (i.e.,
-    # self).
-    # ValueError should be raised if two matrices have unequal shapes -
-    # equality being in terms of how the ShapeLike protocol defines shape
-    # equality.
-    # If the right-hand side is not a matrix, the object should be "dragged"
-    # along the map. Example implementation:
-
-    # def __eq__(self, other):
-    #     if isinstance(other, MatrixLike):
-    #         if self.shape != other.shape:
-    #             raise ValueError
-    #         it = iter(other)
-    #     else:
-    #         it = itertools.repeat(other)
-    #     return MyMatrix(map(operator.eq, self, it), *self.shape)
-
     @abstractmethod
     def __eq__(self, other):
-        """Return element-wise `a == b`"""
-        pass
+        """Return true if element-wise `a == b` is true for all element pairs,
+        `a` and `b`, otherwise false
 
-    @abstractmethod
-    def __ne__(self, other):
-        """Return element-wise `a != b`"""
+        For a matrix of each comparison result, use the `eq()` method.
+        """
         pass
 
     def __len__(self):
@@ -351,21 +313,30 @@ class MatrixLike(Protocol):
         """Return element-wise `logical_and(a, b)`"""
         pass
 
-    __rand__ = __and__
+    @abstractmethod
+    def __rand__(self, other):
+        """Return element-wise `logical_and(b, a)`"""
+        pass
 
     @abstractmethod
     def __or__(self, other):
         """Return element-wise `logical_or(a, b)`"""
         pass
 
-    __ror__ = __or__
+    @abstractmethod
+    def __ror__(self, other):
+        """Return element-wise `logical_or(b, a)`"""
+        pass
 
     @abstractmethod
     def __xor__(self, other):
         """Return element-wise `logical_xor(a, b)`"""
         pass
 
-    __rxor__ = __xor__
+    @abstractmethod
+    def __rxor__(self, other):
+        """Return element-wise `logical_xor(b, a)`"""
+        pass
 
     @abstractmethod
     def __invert__(self):
@@ -393,30 +364,20 @@ class MatrixLike(Protocol):
         """The product of the matrix's number of rows and columns"""
         return self.shape.size
 
-    def equal(self, other):
-        """Return true if the two matrices have an element-wise equivalent data
-        buffer and shape, otherwise false
-        """
-        if self is other:
-            return True
+    # XXX: For vectorized operations like eq() and ne(), a new matrix composed
+    # of the results from the mapped operation should be returned. ValueError
+    # should be raised if two matrices have unequal shapes. If the right-hand
+    # side is not a matrix, the object should be repeated for each operation
+    # performed on a matrix entry (essentially becoming a matrix of the same
+    # shape, filled entirely by the object).
 
-        h, k = self.shape, other.shape
+    @abstractmethod
+    def eq(self, other):
+        pass
 
-        def equal(x, y):
-            if x is y:
-                return True
-            n = isinstance(x, MatrixLike) + isinstance(y, MatrixLike)
-            if n == 2:
-                return x.equal(y)
-            if n == 1:
-                return False
-            return x == y
-
-        return h.equal(k) and all(map(equal, self, other))
-
-    def copy(self):
-        """Return a shallow copy of the matrix"""
-        return copy.copy(self)
+    @abstractmethod
+    def ne(self, other):
+        pass
 
     # XXX: By convention, methods that can be interpreted for either direction
     # take a keyword argument, "by", that switches the method's interpretation
@@ -429,6 +390,10 @@ class MatrixLike(Protocol):
     def slices(self, *, by=Rule.ROW):
         """Return an iterator that yields shallow copies of each row or column"""
         pass
+
+    def copy(self):
+        """Return a shallow copy of the matrix"""
+        return copy.copy(self)
 
 
 @runtime_checkable
@@ -494,7 +459,7 @@ class ComplexMatrixLike(MatrixLike, Protocol):
 
     @abstractmethod
     def __rmatmul__(self, other):
-        """Return the reverse matrix product `b @ a`"""
+        """Return the matrix product `b @ a`"""
         pass
 
     @abstractmethod
@@ -512,14 +477,17 @@ class ComplexMatrixLike(MatrixLike, Protocol):
         """Return element-wise `abs(a)`"""
         pass
 
-    # XXX: Same version restriction reason as described by ComplexLike
+    # XXX: Matrices may demote to a scalar object if, and only if, its size is
+    # 1. ValueError should be raised otherwise.
+    # Unlike ComplexLike, this method is version-independent due to the complex
+    # constructor having the ability to take complex instances as an argument
+    # (it's just that the complex type does not implement a special convering
+    # method for itself).
 
-    if sys.version_info >= (3, 11):
-
-        @abstractmethod
-        def __complex__(self):
-            """Return an equivalent `complex` instance"""
-            pass
+    @abstractmethod
+    def __complex__(self):
+        """Return an equivalent `complex` instance"""
+        pass
 
     @abstractmethod
     def conjugate(self):
@@ -528,7 +496,7 @@ class ComplexMatrixLike(MatrixLike, Protocol):
 
     @abstractmethod
     def complex(self):
-        """Return a matrix of each value's equivalent `complex` instance"""
+        """Return element-wise `complex(a)`"""
         pass
 
 
@@ -542,22 +510,38 @@ class RealMatrixLike(ComplexMatrixLike, Protocol):
 
     @abstractmethod
     def __lt__(self, other):
-        """Return element-wise `a < b`"""
+        """Return true if element-wise `a < b` is true for all element pairs,
+        `a` and `b`, otherwise false
+
+        For a matrix of each comparison result, use the `lt()` method.
+        """
         pass
 
     @abstractmethod
     def __le__(self, other):
-        """Return element-wise `a <= b`"""
+        """Return true if element-wise `a <= b` is true for all element pairs,
+        `a` and `b`, otherwise false
+
+        For a matrix of each comparison result, use the `le()` method.
+        """
         pass
 
     @abstractmethod
     def __gt__(self, other):
-        """Return element-wise `a > b`"""
+        """Return true if element-wise `a > b` is true for all element pairs,
+        `a` and `b`, otherwise false
+
+        For a matrix of each comparison result, use the `gt()` method.
+        """
         pass
 
     @abstractmethod
     def __ge__(self, other):
-        """Return element-wise `a >= b`"""
+        """Return true if element-wise `a >= b` is true for all element pairs,
+        `a` and `b`, otherwise false
+
+        For a matrix of each comparison result, use the `ge()` method.
+        """
         pass
 
     @abstractmethod
@@ -586,8 +570,28 @@ class RealMatrixLike(ComplexMatrixLike, Protocol):
         pass
 
     @abstractmethod
+    def lt(self, other):
+        """Return element-wise `a < b`"""
+        pass
+
+    @abstractmethod
+    def le(self, other):
+        """Return element-wise `a <= b`"""
+        pass
+
+    @abstractmethod
+    def gt(self, other):
+        """Return element-wise `a > b`"""
+        pass
+
+    @abstractmethod
+    def ge(self, other):
+        """Return element-wise `a >= b`"""
+        pass
+
+    @abstractmethod
     def float(self):
-        """Return a matrix of each value's equivalent `float` instance"""
+        """Return element-wise `float(a)`"""
         pass
 
 
@@ -610,5 +614,5 @@ class IntegralMatrixLike(RealMatrixLike, Protocol):
 
     @abstractmethod
     def int(self):
-        """Return a matrix of each value's equivalent `int` instance"""
+        """Return element-wise `int(a)`"""
         pass

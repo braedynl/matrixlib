@@ -80,14 +80,14 @@ class TestMatrix(TestCase):
             0, 1, 2,
         ], nrows=1, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M2x3[1, :]
         exp = Matrix([
             3, 4, 5,
         ], nrows=1, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(IndexError):
             M2x3[2, :]
@@ -98,7 +98,7 @@ class TestMatrix(TestCase):
             3,
         ], nrows=2, ncols=1)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M2x3[:, 1]
         exp = Matrix([
@@ -106,7 +106,7 @@ class TestMatrix(TestCase):
             4,
         ], nrows=2, ncols=1)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M2x3[:, 2]
         exp = Matrix([
@@ -114,7 +114,7 @@ class TestMatrix(TestCase):
             5,
         ], nrows=2, ncols=1)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(IndexError):
             M2x3[:, 3]
@@ -122,7 +122,7 @@ class TestMatrix(TestCase):
         res = M2x3[:, :]
         exp = M2x3
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x3[1:, :]
         exp = Matrix([
@@ -130,7 +130,7 @@ class TestMatrix(TestCase):
             6, 7, 8,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x3[:, 1:]
         exp = Matrix([
@@ -139,7 +139,7 @@ class TestMatrix(TestCase):
             7, 8,
         ], nrows=3, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x3[1:, 1:]
         exp = Matrix([
@@ -147,7 +147,7 @@ class TestMatrix(TestCase):
             7, 8,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
     def testSetItem(self) -> None:
         """Tests for `Matrix.__setitem__()`"""
@@ -181,7 +181,7 @@ class TestMatrix(TestCase):
              3,  4,  5,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res[1, :] = Matrix([
             -4, -5, -6,
@@ -191,7 +191,7 @@ class TestMatrix(TestCase):
             -4, -5, -6,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(IndexError):
             res[2, :] = Matrix([
@@ -214,7 +214,7 @@ class TestMatrix(TestCase):
             -2, 4, 5,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res[:, 1] = Matrix([
             -3,
@@ -225,7 +225,7 @@ class TestMatrix(TestCase):
             -2, -4, 5,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res[:, 2] = Matrix([
             -5,
@@ -236,7 +236,7 @@ class TestMatrix(TestCase):
             -2, -4, -6,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(IndexError):
             res[:, 3] = Matrix([
@@ -264,7 +264,7 @@ class TestMatrix(TestCase):
             -7, -8, -9,
         ], nrows=3, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x3.copy()
 
@@ -278,7 +278,7 @@ class TestMatrix(TestCase):
             -7, -8, -9,
         ], nrows=3, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x3.copy()
 
@@ -293,7 +293,7 @@ class TestMatrix(TestCase):
             6, -5, -6,
         ], nrows=3, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x3.copy()
 
@@ -307,7 +307,7 @@ class TestMatrix(TestCase):
             6, -3, -4,
         ], nrows=3, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
     def testReshape(self) -> None:
         """Tests for `Matrix.reshape()`"""
@@ -315,12 +315,12 @@ class TestMatrix(TestCase):
         res = M0x0.copy().reshape(0, 3)
         exp = Matrix([], nrows=0, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M0x0.copy().reshape(3, 0)
         exp = Matrix([], nrows=3, ncols=0)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M2x3.copy().reshape(3, 2)
         exp = Matrix([
@@ -329,7 +329,7 @@ class TestMatrix(TestCase):
             4, 5,
         ], nrows=3, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(ValueError):
             M2x3.copy().reshape(3, 4)
@@ -357,7 +357,7 @@ class TestMatrix(TestCase):
         res = next(it)
         exp = Matrix([], nrows=0, ncols=1)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(StopIteration):
             next(it)
@@ -369,14 +369,14 @@ class TestMatrix(TestCase):
             0, 1, 2,
         ], nrows=1, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = next(it)
         exp = Matrix([
             3, 4, 5,
         ], nrows=1, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(StopIteration):
             next(it)
@@ -389,7 +389,7 @@ class TestMatrix(TestCase):
             3,
         ], nrows=2, ncols=1)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = next(it)
         exp = Matrix([
@@ -397,7 +397,7 @@ class TestMatrix(TestCase):
             4,
         ], nrows=2, ncols=1)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = next(it)
         exp = Matrix([
@@ -405,7 +405,7 @@ class TestMatrix(TestCase):
             5,
         ], nrows=2, ncols=1)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(StopIteration):
             next(it)
@@ -416,17 +416,17 @@ class TestMatrix(TestCase):
         res = M0x0.copy().transpose()
         exp = Matrix([], nrows=0, ncols=0)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M0x1.copy().transpose()
         exp = Matrix([], nrows=1, ncols=0)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M1x0.copy().transpose()
         exp = Matrix([], nrows=0, ncols=1)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M2x2.copy().transpose()
         exp = Matrix([
@@ -434,7 +434,7 @@ class TestMatrix(TestCase):
             1, 3,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M2x3.copy().transpose()
         exp = Matrix([
@@ -443,7 +443,7 @@ class TestMatrix(TestCase):
             2, 5,
         ], nrows=3, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x2.copy().transpose()
         exp = Matrix([
@@ -451,7 +451,7 @@ class TestMatrix(TestCase):
             1, 3, 5,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
     def testSwap(self) -> None:
         """Tests for `Matrix.swap()`"""
@@ -459,7 +459,7 @@ class TestMatrix(TestCase):
         res = M2x0.copy().swap(0, 1, by=Rule.ROW)
         exp = Matrix([], nrows=2, ncols=0)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(IndexError):
             M2x0.copy().swap(0, 1, by=Rule.COL)
@@ -470,7 +470,7 @@ class TestMatrix(TestCase):
             0, 1, 2,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M2x3.copy().swap(0, -1, by=Rule.COL)
         exp = Matrix([
@@ -478,7 +478,7 @@ class TestMatrix(TestCase):
             5, 4, 3,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(IndexError):
             M2x3.copy().swap(0, 2, by=Rule.ROW)
@@ -492,12 +492,12 @@ class TestMatrix(TestCase):
         res = M0x2.copy().flip(by=Rule.ROW)
         exp = Matrix([], nrows=0, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M0x2.copy().flip(by=Rule.COL)
         exp = Matrix([], nrows=0, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M2x3.copy().flip(by=Rule.ROW)
         exp = Matrix([
@@ -505,7 +505,7 @@ class TestMatrix(TestCase):
             0, 1, 2,
         ], nrows=2, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x2.copy().flip(by=Rule.COL)
         exp = Matrix([
@@ -514,7 +514,7 @@ class TestMatrix(TestCase):
             5, 4,
         ], nrows=3, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x3.copy().flip(by=Rule.ROW)
         exp = Matrix([
@@ -523,7 +523,7 @@ class TestMatrix(TestCase):
             0, 1, 2,
         ], nrows=3, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x3.copy().flip(by=Rule.COL)
         exp = Matrix([
@@ -532,7 +532,7 @@ class TestMatrix(TestCase):
             8, 7, 6,
         ], nrows=3, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
     def testStack(self) -> None:
         """Tests for `Matrix.stack()`"""
@@ -543,7 +543,7 @@ class TestMatrix(TestCase):
         )
         exp = Matrix([], nrows=3, ncols=0)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(ValueError):
             M2x0.copy().stack(
@@ -557,7 +557,7 @@ class TestMatrix(TestCase):
         )
         exp = Matrix([], nrows=0, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(ValueError):
             M0x2.copy().stack(
@@ -577,7 +577,7 @@ class TestMatrix(TestCase):
             6, 7, 8,
         ], nrows=3, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M2x3.copy().stack(
             Matrix([
@@ -593,7 +593,7 @@ class TestMatrix(TestCase):
             9, 10, 11,
         ], nrows=4, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x2.copy().stack(
             Matrix([
@@ -609,7 +609,7 @@ class TestMatrix(TestCase):
             4, 5, -3,
         ], nrows=3, ncols=3)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         res = M3x2.copy().stack(
             Matrix([
@@ -625,7 +625,7 @@ class TestMatrix(TestCase):
             4, 5, -5, -6,
         ], nrows=3, ncols=4)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
 
         with self.assertRaises(ValueError):
             M3x3.copy().stack(M3x2, by=Rule.ROW)
@@ -642,15 +642,15 @@ class TestMatrix(TestCase):
         exp1 = Matrix([], nrows=1, ncols=0)
         exp2 = Matrix([], nrows=1, ncols=0)
 
-        self.assertTrue(res1.equal(exp1))
-        self.assertTrue(res2.equal(exp2))
+        self.assertEqual(res1, exp1)
+        self.assertEqual(res2, exp2)
 
         res2 = res1.pull(by=Rule.ROW)
 
         exp1 = Matrix([], nrows=0, ncols=0)
 
-        self.assertTrue(res1.equal(exp1))
-        self.assertTrue(res2.equal(exp2))
+        self.assertEqual(res1, exp1)
+        self.assertEqual(res2, exp2)
 
         with self.assertRaises(IndexError):
             res1.pull(by=Rule.ROW)
@@ -666,8 +666,8 @@ class TestMatrix(TestCase):
             0, 1, 2,
         ], nrows=1, ncols=3)
 
-        self.assertTrue(res1.equal(exp1))
-        self.assertTrue(res2.equal(exp2))
+        self.assertEqual(res1, exp1)
+        self.assertEqual(res2, exp2)
 
         res1 = M3x3.copy()
         res2 = res1.pull(0, by=Rule.COL)
@@ -683,8 +683,8 @@ class TestMatrix(TestCase):
             6,
         ], nrows=3, ncols=1)
 
-        self.assertTrue(res1.equal(exp1))
-        self.assertTrue(res2.equal(exp2))
+        self.assertEqual(res1, exp1)
+        self.assertEqual(res2, exp2)
 
         with self.assertRaises(IndexError):
             M3x3.copy().pull(3, by=Rule.ROW)
@@ -710,7 +710,7 @@ class TestComplexMatrix(TestCase):
             6j, 8j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = 1j
@@ -721,7 +721,7 @@ class TestComplexMatrix(TestCase):
             4j, 5j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = RealMatrix([
@@ -735,7 +735,7 @@ class TestComplexMatrix(TestCase):
             3+3j, 4+4j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = 1.0
@@ -746,7 +746,7 @@ class TestComplexMatrix(TestCase):
             1+3j, 1+4j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = IntegralMatrix([
@@ -760,7 +760,7 @@ class TestComplexMatrix(TestCase):
             3+3j, 4+4j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = 1
@@ -771,7 +771,7 @@ class TestComplexMatrix(TestCase):
             1+3j, 1+4j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = Matrix([
@@ -785,7 +785,7 @@ class TestComplexMatrix(TestCase):
             3+3j, 4+4j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, Matrix))
 
 
@@ -806,7 +806,7 @@ class TestRealMatrix(TestCase):
             6.0, 8.0,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, RealMatrix))
 
         b = 1.0
@@ -817,7 +817,7 @@ class TestRealMatrix(TestCase):
             4.0, 5.0,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, RealMatrix))
 
         b = ComplexMatrix([
@@ -831,7 +831,7 @@ class TestRealMatrix(TestCase):
             3+3j, 4+4j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = 1j
@@ -842,7 +842,7 @@ class TestRealMatrix(TestCase):
             3+1j, 4+1j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = IntegralMatrix([
@@ -856,7 +856,7 @@ class TestRealMatrix(TestCase):
             6.0, 8.0,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, RealMatrix))
 
         b = 1
@@ -867,7 +867,7 @@ class TestRealMatrix(TestCase):
             4.0, 5.0,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, RealMatrix))
 
         b = Matrix([
@@ -881,7 +881,7 @@ class TestRealMatrix(TestCase):
             6.0, 8.0,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, Matrix))
 
 
@@ -902,7 +902,7 @@ class TestIntegralMatrix(TestCase):
             6, 8,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, IntegralMatrix))
 
         b = 1
@@ -913,7 +913,7 @@ class TestIntegralMatrix(TestCase):
             4, 5,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, IntegralMatrix))
 
         b = ComplexMatrix([
@@ -927,7 +927,7 @@ class TestIntegralMatrix(TestCase):
             3+3j, 4+4j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = 1j
@@ -938,7 +938,7 @@ class TestIntegralMatrix(TestCase):
             3+1j, 4+1j,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, ComplexMatrix))
 
         b = RealMatrix([
@@ -952,7 +952,7 @@ class TestIntegralMatrix(TestCase):
             6.0, 8.0,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, RealMatrix))
 
         b = 1.0
@@ -963,7 +963,7 @@ class TestIntegralMatrix(TestCase):
             4.0, 5.0,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, RealMatrix))
 
         b = Matrix([
@@ -977,5 +977,5 @@ class TestIntegralMatrix(TestCase):
             6, 8,
         ], nrows=2, ncols=2)
 
-        self.assertTrue(res.equal(exp))
+        self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, Matrix))
