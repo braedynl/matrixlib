@@ -26,28 +26,30 @@ class Shape(Collection):
 
     def __repr__(self):
         """Return a canonical representation of the shape"""
-        data = self.data
-        return f"Shape(nrows={data[0]!r}, ncols={data[1]!r})"
+        nrows, ncols = self.data
+        return f"Shape(nrows={nrows!r}, ncols={ncols!r})"
 
     def __str__(self):
         """Return a string representation of the shape"""
-        data = self.data
-        return f"{data[0]} × {data[1]}"
+        nrows, ncols = self.data
+        return f"{nrows} × {ncols}"
 
     def __eq__(self, other):
         """Return true if the two shapes are equal, otherwise false"""
         if not isinstance(other, ShapeLike):
             return NotImplemented
-        data = self.data
-        return data[0] == other[0] and data[1] == other[1]
+        nrows, ncols = self.data
+        return nrows == other[0] and ncols == other[1]
 
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
         key = operator.index(key)
         try:
-            return self.data[key]
+            value = self.data[key]
         except IndexError:
             raise IndexError("index out of range") from None
+        else:
+            return value
 
     def __setitem__(self, key, value):
         """Set the dimension corresponding to `key` with `value`"""

@@ -276,7 +276,7 @@ class Matrix(Sequence):
         try:
             result = data[key]
         except IndexError:
-            raise IndexError("index out of range") from None
+            raise IndexError(f"there are {h.size} items but index is {key}") from None
         else:
             return result
 
@@ -365,9 +365,7 @@ class Matrix(Sequence):
         try:
             data[key] = other
         except IndexError:
-            raise IndexError("index out of range") from None
-        else:
-            return
+            raise IndexError(f"there are {h.size} items but index is {key}") from None
 
     def __iter__(self):
         """Return an iterator over the elements of the matrix"""
