@@ -770,8 +770,7 @@ class ComplexMatrix(Matrix):
             return NotImplemented
         return cls(
             matrix_multiply(self, other),
-            nrows=self.nrows,
-            ncols=other.ncols,
+            *(self.nrows, other.ncols),
         )
 
     def __neg__(self, *, map=matrix_map):
@@ -818,8 +817,6 @@ class RealMatrix(Matrix):
     """Subclass of `Matrix` that adds operations for real-like objects"""
 
     __slots__ = ()
-
-    # TODO: Update comparison operator documentation
 
     def __lt__(self, other):
         """Return true if lexicographic `a < b`, otherwise false
@@ -944,8 +941,7 @@ class RealMatrix(Matrix):
             return NotImplemented
         return cls(
             matrix_multiply(self, other),
-            nrows=self.nrows,
-            ncols=other.ncols,
+            *(self.nrows, other.ncols),
         )
 
     def __floordiv__(self, other, *, map=matrix_map):
@@ -1193,8 +1189,7 @@ class IntegralMatrix(Matrix):
             return NotImplemented
         return cls(
             matrix_multiply(self, other),
-            nrows=self.nrows,
-            ncols=other.ncols,
+            *(self.nrows, other.ncols),
         )
 
     def __floordiv__(self, other, *, map=matrix_map):
