@@ -457,10 +457,8 @@ class ComplexMatrixLike(MatrixLike, Protocol):
         """Return the matrix product `a @ b`"""
         pass
 
-    @abstractmethod
-    def __rmatmul__(self, other):
-        """Return the matrix product `b @ a`"""
-        pass
+    # XXX: No abstract reverse equivalent for __matmul__, since it should be
+    # monomorphic - can be provided if necessary.
 
     @abstractmethod
     def __neg__(self):
@@ -510,8 +508,7 @@ class RealMatrixLike(ComplexMatrixLike, Protocol):
 
     @abstractmethod
     def __lt__(self, other):
-        """Return true if element-wise `a < b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a < b`, otherwise false
 
         For a matrix of each comparison result, use the `lt()` method.
         """
@@ -519,8 +516,7 @@ class RealMatrixLike(ComplexMatrixLike, Protocol):
 
     @abstractmethod
     def __le__(self, other):
-        """Return true if element-wise `a <= b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a <= b`, otherwise false
 
         For a matrix of each comparison result, use the `le()` method.
         """
@@ -528,8 +524,7 @@ class RealMatrixLike(ComplexMatrixLike, Protocol):
 
     @abstractmethod
     def __gt__(self, other):
-        """Return true if element-wise `a > b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a > b`, otherwise false
 
         For a matrix of each comparison result, use the `gt()` method.
         """
@@ -537,8 +532,7 @@ class RealMatrixLike(ComplexMatrixLike, Protocol):
 
     @abstractmethod
     def __ge__(self, other):
-        """Return true if element-wise `a >= b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a >= b`, otherwise false
 
         For a matrix of each comparison result, use the `ge()` method.
         """

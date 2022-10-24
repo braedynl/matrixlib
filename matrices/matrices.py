@@ -822,32 +822,28 @@ class RealMatrix(Matrix):
     # TODO: Update comparison operator documentation
 
     def __lt__(self, other):
-        """Return true if element-wise `a < b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a < b`, otherwise false
 
         For a matrix of each comparison result, use the `lt()` method.
         """
         return matrix_compare(self, other) is Ordering.LESSER
 
     def __le__(self, other):
-        """Return true if element-wise `a <= b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a <= b`, otherwise false
 
         For a matrix of each comparison result, use the `le()` method.
         """
         return matrix_compare(self, other) in Ordering.LESSER | Ordering.EQUAL
 
     def __gt__(self, other):
-        """Return true if element-wise `a > b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a > b`, otherwise false
 
         For a matrix of each comparison result, use the `gt()` method.
         """
         return matrix_compare(self, other) is Ordering.GREATER
 
     def __ge__(self, other):
-        """Return true if element-wise `a >= b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a >= b`, otherwise false
 
         For a matrix of each comparison result, use the `ge()` method.
         """
@@ -1067,32 +1063,28 @@ class IntegralMatrix(Matrix):
     __slots__ = ()
 
     def __lt__(self, other):
-        """Return true if element-wise `a < b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a < b`, otherwise false
 
         For a matrix of each comparison result, use the `lt()` method.
         """
         return matrix_compare(self, other) is Ordering.LESSER
 
     def __le__(self, other):
-        """Return true if element-wise `a <= b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a <= b`, otherwise false
 
         For a matrix of each comparison result, use the `le()` method.
         """
         return matrix_compare(self, other) in Ordering.LESSER | Ordering.EQUAL
 
     def __gt__(self, other):
-        """Return true if element-wise `a > b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a > b`, otherwise false
 
         For a matrix of each comparison result, use the `gt()` method.
         """
         return matrix_compare(self, other) is Ordering.GREATER
 
     def __ge__(self, other):
-        """Return true if element-wise `a >= b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        """Return true if lexicographic `a >= b`, otherwise false
 
         For a matrix of each comparison result, use the `ge()` method.
         """
