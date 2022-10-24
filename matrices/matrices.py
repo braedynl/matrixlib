@@ -760,7 +760,7 @@ class ComplexMatrix(Matrix):
         """Return element-wise `b ** a`"""
         return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other):
+    def __matmul__(self, other, *, mul=matrix_multiply):
         """Return the matrix product `a @ b`"""
         if isinstance(other, ComplexMatrixLike):
             cls = ComplexMatrix
@@ -769,7 +769,7 @@ class ComplexMatrix(Matrix):
         else:
             return NotImplemented
         return cls(
-            matrix_multiply(self, other),
+            mul(self, other),
             *(self.nrows, other.ncols),
         )
 
@@ -929,7 +929,7 @@ class RealMatrix(Matrix):
         """Return element-wise `b ** a`"""
         return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other):
+    def __matmul__(self, other, *, mul=matrix_multiply):
         """Return the matrix product `a @ b`"""
         if isinstance(other, RealMatrixLike):
             cls = RealMatrix
@@ -940,7 +940,7 @@ class RealMatrix(Matrix):
         else:
             return NotImplemented
         return cls(
-            matrix_multiply(self, other),
+            mul(self, other),
             *(self.nrows, other.ncols),
         )
 
@@ -1175,7 +1175,7 @@ class IntegralMatrix(Matrix):
         """Return element-wise `b ** a`"""
         return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other):
+    def __matmul__(self, other, *, mul=matrix_multiply):
         """Return the matrix product `a @ b`"""
         if isinstance(other, IntegralMatrixLike):
             cls = IntegralMatrix
@@ -1188,7 +1188,7 @@ class IntegralMatrix(Matrix):
         else:
             return NotImplemented
         return cls(
-            matrix_multiply(self, other),
+            mul(self, other),
             *(self.nrows, other.ncols),
         )
 
