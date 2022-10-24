@@ -1,6 +1,10 @@
-from typing import Any, Protocol, TypeVar
+from collections.abc import Iterator
+from typing import Any, Protocol, TypeVar, Union
+
+from .protocols import MatrixLike, ShapeLike
 
 __all__ = [
+    "shaped",
     "logical_and",
     "logical_or",
     "logical_xor",
@@ -14,6 +18,8 @@ T_co = TypeVar("T_co", covariant=True)
 class SupportsConjugate(Protocol[T_co]):
     def conjugate(self) -> T_co: ...
 
+
+def shaped(obj: Union[MatrixLike[T], T], shape: ShapeLike) -> Iterator[T]: ...
 
 def logical_and(a: Any, b: Any, /) -> bool: ...
 def logical_or(a: Any, b: Any, /) -> bool: ...

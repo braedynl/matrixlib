@@ -14,7 +14,7 @@ from .protocols import (ComplexLike, ComplexMatrixLike, IntegralLike,
 from .rule import Rule
 from .shape import Shape
 from .utilities import (conjugate, logical_and, logical_not, logical_or,
-                        logical_xor)
+                        logical_xor, shaped)
 
 __all__ = [
     "Matrix",
@@ -24,73 +24,20 @@ __all__ = [
 ]
 
 
-class Ordering(Flag):
-    LESSER  = enum.auto()
-    EQUAL   = enum.auto()
-    GREATER = enum.auto()
+def matrix_map(func, a, *bx):
+    bx = iter(bx)
+    return map(func, a, *(shaped(b, shape=a.shape) for b in bx))
 
 
-def itemize(self, other):
-    if isinstance(other, MatrixLike):
-        if (h := self.shape) != (k := other.shape):
-            raise ValueError(f"operating matrix has shape {h}, but operand has shape {k}")
-        it = iter(other)
-    else:
-        if 0 in self.shape:
-            raise ValueError("operand is a constant value, but operating matrix has size 0")
-        it = itertools.repeat(other)
-    return it
+def matrix_rmap(func, a, *bx):
+    bx = reversed(bx)
+    return map(func, *(shaped(b, shape=a.shape) for b in bx), a)
 
 
-def matrix_cmp(self, other):
-    for x, y in zip(self, itemize(self, other)):
-        if x < y:
-            return Ordering.LESSER
-        if x > y:
-            return Ordering.GREATER
-    return Ordering.EQUAL
-
-
-def scalar_map(func, self):
-    if (n := self.size) != 1:
-        raise ValueError(f"operating matrix must have size 1, but has size {n}")
-    return func(self[0])
-
-
-def matrix_map(func, self, *others):
-    others = (itemize(self, other) for other in others)
-    return map(func, self, *others)
-
-
-def matrix_rmap(func, self, *others):
-    others = (itemize(self, other) for other in reversed(others))
-    return map(func, *others, self)
-
-
-def matrix_mul(self, other):
-    (m, n), (p, q) = (self.shape, other.shape)
-
-    if n != p:
-        raise ValueError(f"left-hand side has {n} columns, but right-hand side has {p} rows")
-    if not n:
-        return itertools.repeat(0, times=m * q)  # Use int 0 here since it supports all numeric operations
-
-    ix = range(m)
-    jx = range(q)
-    kx = range(n)
-
-    return (
-        functools.reduce(
-            operator.add,
-            (self[i * n + k] * other[k * q + j] for k in kx),
-        )
-        for i in ix
-        for j in jx
-    )
-
-
-def matrix_rmul(self, other):
-    return matrix_mul(other, self)
+def scalar_map(func, a):
+    if (n := a.size) != 1:
+        raise ValueError(f"shape must have size 1, but has size {n}")
+    return func(a[0])
 
 
 class Matrix(Sequence):
@@ -696,6 +643,43 @@ class Matrix(Sequence):
         return copy.deepcopy(self) if deep else copy.copy(self)
 
 
+class Ordering(Flag):
+    LESSER  = enum.auto()
+    EQUAL   = enum.auto()
+    GREATER = enum.auto()
+
+
+def matrix_compare(a, b):
+    for x, y in zip(a, shaped(b, shape=a.shape)):
+        if x < y:
+            return Ordering.LESSER
+        if x > y:
+            return Ordering.GREATER
+    return Ordering.EQUAL
+
+
+def matrix_multiply(a, b):
+    (m, n), (p, q) = (a.shape, b.shape)
+
+    if n != p:
+        raise ValueError(f"left-hand side has {n} columns, but right-hand side has {p} rows")
+    if not n:
+        return itertools.repeat(0, times=m * q)  # Use int 0 here since it supports all numeric operations
+
+    ix = range(m)
+    jx = range(q)
+    kx = range(n)
+
+    return (
+        functools.reduce(
+            operator.add,
+            (a[i * n + k] * b[k * q + j] for k in kx),
+        )
+        for i in ix
+        for j in jx
+    )
+
+
 class ComplexMatrix(Matrix):
     """Subclass of `Matrix` that adds operations for complex-like objects"""
 
@@ -776,7 +760,7 @@ class ComplexMatrix(Matrix):
         """Return element-wise `b ** a`"""
         return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other, *, mul=matrix_mul):
+    def __matmul__(self, other):
         """Return the matrix product `a @ b`"""
         if isinstance(other, ComplexMatrixLike):
             cls = ComplexMatrix
@@ -784,16 +768,11 @@ class ComplexMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        h, k = (other.shape, self.shape) if mul is matrix_rmul else (self.shape, other.shape)
         return cls(
-            mul(self, other),
-            nrows=h.nrows,
-            ncols=k.ncols,
+            matrix_multiply(self, other),
+            nrows=self.nrows,
+            ncols=other.ncols,
         )
-
-    def __rmatmul__(self, other):
-        """Return the matrix product `b @ a`"""
-        return self.__matmul__(other, mul=matrix_rmul)
 
     def __neg__(self, *, map=matrix_map):
         """Return element-wise `-a`"""
@@ -848,7 +827,7 @@ class RealMatrix(Matrix):
 
         For a matrix of each comparison result, use the `lt()` method.
         """
-        return matrix_cmp(self, other) is Ordering.LESSER
+        return matrix_compare(self, other) is Ordering.LESSER
 
     def __le__(self, other):
         """Return true if element-wise `a <= b` is true for all element pairs,
@@ -856,7 +835,7 @@ class RealMatrix(Matrix):
 
         For a matrix of each comparison result, use the `le()` method.
         """
-        return matrix_cmp(self, other) in Ordering.LESSER | Ordering.EQUAL
+        return matrix_compare(self, other) in Ordering.LESSER | Ordering.EQUAL
 
     def __gt__(self, other):
         """Return true if element-wise `a > b` is true for all element pairs,
@@ -864,7 +843,7 @@ class RealMatrix(Matrix):
 
         For a matrix of each comparison result, use the `gt()` method.
         """
-        return matrix_cmp(self, other) is Ordering.GREATER
+        return matrix_compare(self, other) is Ordering.GREATER
 
     def __ge__(self, other):
         """Return true if element-wise `a >= b` is true for all element pairs,
@@ -872,7 +851,7 @@ class RealMatrix(Matrix):
 
         For a matrix of each comparison result, use the `ge()` method.
         """
-        return matrix_cmp(self, other) in Ordering.GREATER | Ordering.EQUAL
+        return matrix_compare(self, other) in Ordering.GREATER | Ordering.EQUAL
 
     def __add__(self, other, *, map=matrix_map):
         """Return element-wise `a + b`"""
@@ -957,7 +936,7 @@ class RealMatrix(Matrix):
         """Return element-wise `b ** a`"""
         return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other, *, mul=matrix_mul):
+    def __matmul__(self, other):
         """Return the matrix product `a @ b`"""
         if isinstance(other, RealMatrixLike):
             cls = RealMatrix
@@ -967,16 +946,11 @@ class RealMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        h, k = (other.shape, self.shape) if mul is matrix_rmul else (self.shape, other.shape)
         return cls(
-            mul(self, other),
-            nrows=h.nrows,
-            ncols=k.ncols,
+            matrix_multiply(self, other),
+            nrows=self.nrows,
+            ncols=other.ncols,
         )
-
-    def __rmatmul__(self, other):
-        """Return the matrix product `b @ a`"""
-        return self.__matmul__(other, mul=matrix_rmul)
 
     def __floordiv__(self, other, *, map=matrix_map):
         """Return element-wise `a // b`"""
@@ -1098,7 +1072,7 @@ class IntegralMatrix(Matrix):
 
         For a matrix of each comparison result, use the `lt()` method.
         """
-        return matrix_cmp(self, other) is Ordering.LESSER
+        return matrix_compare(self, other) is Ordering.LESSER
 
     def __le__(self, other):
         """Return true if element-wise `a <= b` is true for all element pairs,
@@ -1106,7 +1080,7 @@ class IntegralMatrix(Matrix):
 
         For a matrix of each comparison result, use the `le()` method.
         """
-        return matrix_cmp(self, other) in Ordering.LESSER | Ordering.EQUAL
+        return matrix_compare(self, other) in Ordering.LESSER | Ordering.EQUAL
 
     def __gt__(self, other):
         """Return true if element-wise `a > b` is true for all element pairs,
@@ -1114,7 +1088,7 @@ class IntegralMatrix(Matrix):
 
         For a matrix of each comparison result, use the `gt()` method.
         """
-        return matrix_cmp(self, other) is Ordering.GREATER
+        return matrix_compare(self, other) is Ordering.GREATER
 
     def __ge__(self, other):
         """Return true if element-wise `a >= b` is true for all element pairs,
@@ -1122,7 +1096,7 @@ class IntegralMatrix(Matrix):
 
         For a matrix of each comparison result, use the `ge()` method.
         """
-        return matrix_cmp(self, other) in Ordering.GREATER | Ordering.EQUAL
+        return matrix_compare(self, other) in Ordering.GREATER | Ordering.EQUAL
 
     def __add__(self, other, *, map=matrix_map):
         """Return element-wise `a + b`"""
@@ -1213,7 +1187,7 @@ class IntegralMatrix(Matrix):
         """Return element-wise `b ** a`"""
         return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other, *, mul=matrix_mul):
+    def __matmul__(self, other):
         """Return the matrix product `a @ b`"""
         if isinstance(other, IntegralMatrixLike):
             cls = IntegralMatrix
@@ -1225,16 +1199,11 @@ class IntegralMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        h, k = (other.shape, self.shape) if mul is matrix_rmul else (self.shape, other.shape)
         return cls(
-            mul(self, other),
-            nrows=h.nrows,
-            ncols=k.ncols,
+            matrix_multiply(self, other),
+            nrows=self.nrows,
+            ncols=other.ncols,
         )
-
-    def __rmatmul__(self, other):
-        """Return the matrix product `b @ a`"""
-        return self.__matmul__(other, mul=matrix_rmul)
 
     def __floordiv__(self, other, *, map=matrix_map):
         """Return element-wise `a // b`"""
