@@ -1,9 +1,11 @@
 import copy
+import enum
 import functools
 import itertools
 import operator
 import reprlib
 from collections.abc import Sequence
+from enum import Flag
 from io import StringIO
 
 from .protocols import (ComplexLike, ComplexMatrixLike, IntegralLike,
@@ -22,26 +24,73 @@ __all__ = [
 ]
 
 
-def scalar_map(func, a, /):
-    if (n := a.size) != 1:
-        raise ValueError(f"matrix of size {n} cannot be demoted to a scalar")
-    return func(a.data[0])
+class Ordering(Flag):
+    LESSER  = enum.auto()
+    EQUAL   = enum.auto()
+    GREATER = enum.auto()
 
 
-MISSING = object()  # In case user is operating with None
-
-def matrix_map(func, a, b=MISSING, /, *, reverse=False):
-    if b is MISSING:
-        return map(func, a.data)
-    if isinstance(b, MatrixLike):
-        if (h := a.shape) != (k := b.shape):
-            raise ValueError(f"matrix of shape {h} is incompatible with operand of shape {k}")
-        b = iter(b)
+def itemize(self, other):
+    if isinstance(other, MatrixLike):
+        if (h := self.shape) != (k := other.shape):
+            raise ValueError(f"operating matrix has shape {h}, but operand has shape {k}")
+        it = iter(other)
     else:
-        if 0 in a.shape:
-            raise ValueError("matrix of size 0 is incompatible with operand constant")
-        b = itertools.repeat(b)
-    return map(func, b, a.data) if reverse else map(func, a.data, b)
+        if 0 in self.shape:
+            raise ValueError("operand is a constant value, but operating matrix has size 0")
+        it = itertools.repeat(other)
+    return it
+
+
+def matrix_cmp(self, other):
+    for x, y in zip(self, itemize(self, other)):
+        if x < y:
+            return Ordering.LESSER
+        if x > y:
+            return Ordering.GREATER
+    return Ordering.EQUAL
+
+
+def scalar_map(func, self):
+    if (n := self.size) != 1:
+        raise ValueError(f"operating matrix must have size 1, but has size {n}")
+    return func(self[0])
+
+
+def matrix_map(func, self, *others):
+    others = (itemize(self, other) for other in others)
+    return map(func, self, *others)
+
+
+def matrix_rmap(func, self, *others):
+    others = (itemize(self, other) for other in reversed(others))
+    return map(func, *others, self)
+
+
+def matrix_mul(self, other):
+    (m, n), (p, q) = (self.shape, other.shape)
+
+    if n != p:
+        raise ValueError(f"left-hand side has {n} columns, but right-hand side has {p} rows")
+    if not n:
+        return itertools.repeat(0, times=m * q)  # Use int 0 here since it supports all numeric operations
+
+    ix = range(m)
+    jx = range(q)
+    kx = range(n)
+
+    return (
+        functools.reduce(
+            operator.add,
+            (self[i * n + k] * other[k * q + j] for k in kx),
+        )
+        for i in ix
+        for j in jx
+    )
+
+
+def matrix_rmul(self, other):
+    return matrix_mul(other, self)
 
 
 class Matrix(Sequence):
@@ -383,83 +432,59 @@ class Matrix(Sequence):
         """Return a deep copy of the matrix"""
         data = self.data
         h = self.shape
-        return type(self).wrap(
-            copy.deepcopy(data, memo=memo),
-            shape=h.copy(),
-        )
+        return type(self).wrap(copy.deepcopy(data, memo=memo), shape=h.copy())
 
     def __copy__(self):
         """Return a shallow copy of the matrix"""
         data = self.data
         h = self.shape
-        return type(self).wrap(
-            copy.copy(data),
-            shape=h.copy(),
-        )
+        return type(self).wrap(data.copy(), shape=h.copy())
 
-    def __eq__(self, other):
+    def __eq__(self, other, *, map=matrix_map):
         """Return true if element-wise `a == b` is true for all element pairs,
         `a` and `b`, otherwise false
 
         For a matrix of each comparison result, use the `eq()` method.
         """
-        return all(matrix_map(operator.eq, self, other))
+        return all(map(operator.eq, self, other))
 
-    def __and__(self, other, *, reverse=False):
+    def __and__(self, other, *, map=matrix_map):
         """Return element-wise `logical_and(a, b)`"""
         return IntegralMatrix(
-            matrix_map(
-                logical_and,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(logical_and, self, other),
             *self.shape,
         )
 
     def __rand__(self, other):
         """Return element-wise `logical_and(b, a)`"""
-        return self.__and__(other, reverse=True)
+        return self.__and__(other, map=matrix_rmap)
 
-    def __or__(self, other, *, reverse=False):
+    def __or__(self, other, *, map=matrix_map):
         """Return element-wise `logical_or(a, b)`"""
         return IntegralMatrix(
-            matrix_map(
-                logical_or,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(logical_or, self, other),
             *self.shape,
         )
 
     def __ror__(self, other):
         """Return element-wise `logical_or(b, a)`"""
-        return self.__or__(other, reverse=True)
+        return self.__or__(other, map=matrix_rmap)
 
-    def __xor__(self, other, *, reverse=False):
+    def __xor__(self, other, *, map=matrix_map):
         """Return element-wise `logical_xor(a, b)`"""
         return IntegralMatrix(
-            matrix_map(
-                logical_xor,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(logical_xor, self, other),
             *self.shape,
         )
 
     def __rxor__(self, other):
         """Return element-wise `logical_xor(b, a)`"""
-        return self.__xor__(other, reverse=True)
+        return self.__xor__(other, map=matrix_rmap)
 
-    def __invert__(self):
+    def __invert__(self, *, map=matrix_map):
         """Return element-wise `logical_not(a)`"""
         return IntegralMatrix(
-            matrix_map(
-                logical_not,
-                self,
-            ),
+            map(logical_not, self),
             *self.shape,
         )
 
@@ -499,25 +524,17 @@ class Matrix(Sequence):
         self.data.reverse()
         return self
 
-    def eq(self, other):
+    def eq(self, other, *, map=matrix_map):
         """Return element-wise `a == b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.eq,
-                self,
-                other,
-            ),
+            map(operator.eq, self, other),
             *self.shape,
         )
 
-    def ne(self, other):
+    def ne(self, other, *, map=matrix_map):
         """Return element-wise `a != b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.ne,
-                self,
-                other,
-            ),
+            map(operator.ne, self, other),
             *self.shape,
         )
 
@@ -679,136 +696,87 @@ class Matrix(Sequence):
         return copy.deepcopy(self) if deep else copy.copy(self)
 
 
-def multiply(a, b, /, *, reverse=False):
-    (m, n), (p, q) = (b.shape, a.shape) if reverse else (a.shape, b.shape)
-
-    if n != p:
-        raise ValueError(f"left-hand side matrix has {n} columns, but right-hand side has {p} rows")
-    if not n:
-        return itertools.repeat(0, m * q)  # Use int 0 here since it supports all numeric operations
-
-    a = a.data
-
-    ix = range(m)
-    jx = range(q)
-    kx = range(n)
-
-    return (
-        functools.reduce(
-            operator.add,
-            (a[i * n + k] * b[k * q + j] for k in kx),
-        )
-        for i in ix
-        for j in jx
-    )
-
-
 class ComplexMatrix(Matrix):
     """Subclass of `Matrix` that adds operations for complex-like objects"""
 
     __slots__ = ()
 
-    def __add__(self, other, *, reverse=False):
+    def __add__(self, other, *, map=matrix_map):
         """Return element-wise `a + b`"""
         if isinstance(other, ComplexLike):
             cls = ComplexMatrix
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.add,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.add, self, other),
             *self.shape,
         )
 
     def __radd__(self, other):
         """Return element-wise `b + a`"""
-        return self.__add__(other, reverse=True)
+        return self.__add__(other, map=matrix_rmap)
 
-    def __sub__(self, other, *, reverse=False):
+    def __sub__(self, other, *, map=matrix_map):
         """Return element-wise `a - b`"""
         if isinstance(other, ComplexLike):
             cls = ComplexMatrix
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.sub,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.sub, self, other),
             *self.shape,
         )
 
     def __rsub__(self, other):
         """Return element-wise `b - a`"""
-        return self.__sub__(other, reverse=True)
+        return self.__sub__(other, map=matrix_rmap)
 
-    def __mul__(self, other, *, reverse=False):
+    def __mul__(self, other, *, map=matrix_map):
         """Return element-wise `a * b`"""
         if isinstance(other, ComplexLike):
             cls = ComplexMatrix
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.mul,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.mul, self, other),
             *self.shape,
         )
 
     def __rmul__(self, other):
         """Return element-wise `b * a`"""
-        return self.__mul__(other, reverse=True)
+        return self.__mul__(other, map=matrix_rmap)
 
-    def __truediv__(self, other, *, reverse=False):
+    def __truediv__(self, other, *, map=matrix_map):
         """Return element-wise `a / b`"""
         if isinstance(other, ComplexLike):
             cls = ComplexMatrix
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.truediv,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.truediv, self, other),
             *self.shape,
         )
 
     def __rtruediv__(self, other):
         """Return element-wise `b / a`"""
-        return self.__truediv__(other, reverse=True)
+        return self.__truediv__(other, map=matrix_rmap)
 
-    def __pow__(self, other, *, reverse=False):
+    def __pow__(self, other, *, map=matrix_map):
         """Return element-wise `a ** b`"""
         if isinstance(other, ComplexLike):
             cls = ComplexMatrix
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.pow,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.pow, self, other),
             *self.shape,
         )
 
     def __rpow__(self, other):
         """Return element-wise `b ** a`"""
-        return self.__pow__(other, reverse=True)
+        return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other, *, reverse=False):
+    def __matmul__(self, other, *, mul=matrix_mul):
         """Return the matrix product `a @ b`"""
         if isinstance(other, ComplexMatrixLike):
             cls = ComplexMatrix
@@ -816,43 +784,35 @@ class ComplexMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        values = multiply(self, other, reverse=reverse)
-        if reverse:
-            return cls(values, nrows=other.nrows, ncols=self.ncols)
-        else:
-            return cls(values, nrows=self.nrows, ncols=other.ncols)
+        h, k = (other.shape, self.shape) if mul is matrix_rmul else (self.shape, other.shape)
+        return cls(
+            mul(self, other),
+            nrows=h.nrows,
+            ncols=k.ncols,
+        )
 
     def __rmatmul__(self, other):
         """Return the matrix product `b @ a`"""
-        return self.__matmul__(other, reverse=True)
+        return self.__matmul__(other, mul=matrix_rmul)
 
-    def __neg__(self):
+    def __neg__(self, *, map=matrix_map):
         """Return element-wise `-a`"""
         return ComplexMatrix(
-            matrix_map(
-                operator.neg,
-                self,
-            ),
+            map(operator.neg, self),
             *self.shape,
         )
 
-    def __pos__(self):
+    def __pos__(self, *, map=matrix_map):
         """Return element-wise `+a`"""
         return ComplexMatrix(
-            matrix_map(
-                operator.pos,
-                self,
-            ),
+            map(operator.pos, self),
             *self.shape,
         )
 
-    def __abs__(self):
+    def __abs__(self, *, map=matrix_map):
         """Return element-wise `abs(a)`"""
         return RealMatrix(
-            matrix_map(
-                abs,
-                self,
-            ),
+            map(abs, self),
             *self.shape,
         )
 
@@ -860,23 +820,17 @@ class ComplexMatrix(Matrix):
         """Return the matrix as a built-in `complex` instance"""
         return scalar_map(complex, self)
 
-    def conjugate(self):
+    def conjugate(self, *, map=matrix_map):
         """Return element-wise `conjugate(a)`"""
         return ComplexMatrix(
-            matrix_map(
-                conjugate,
-                self,
-            ),
+            map(conjugate, self),
             *self.shape,
         )
 
-    def complex(self):
+    def complex(self, *, map=matrix_map):
         """Return element-wise `complex(a)`"""
         return ComplexMatrix(
-            matrix_map(
-                complex,
-                self,
-            ),
+            map(complex, self),
             *self.shape,
         )
 
@@ -886,13 +840,15 @@ class RealMatrix(Matrix):
 
     __slots__ = ()
 
+    # TODO: Update comparison operator documentation
+
     def __lt__(self, other):
         """Return true if element-wise `a < b` is true for all element pairs,
         `a` and `b`, otherwise false
 
         For a matrix of each comparison result, use the `lt()` method.
         """
-        return all(matrix_map(operator.lt, self, other))
+        return matrix_cmp(self, other) is Ordering.LESSER
 
     def __le__(self, other):
         """Return true if element-wise `a <= b` is true for all element pairs,
@@ -900,7 +856,7 @@ class RealMatrix(Matrix):
 
         For a matrix of each comparison result, use the `le()` method.
         """
-        return all(matrix_map(operator.le, self, other))
+        return matrix_cmp(self, other) in Ordering.LESSER | Ordering.EQUAL
 
     def __gt__(self, other):
         """Return true if element-wise `a > b` is true for all element pairs,
@@ -908,7 +864,7 @@ class RealMatrix(Matrix):
 
         For a matrix of each comparison result, use the `gt()` method.
         """
-        return all(matrix_map(operator.gt, self, other))
+        return matrix_cmp(self, other) is Ordering.GREATER
 
     def __ge__(self, other):
         """Return true if element-wise `a >= b` is true for all element pairs,
@@ -916,9 +872,9 @@ class RealMatrix(Matrix):
 
         For a matrix of each comparison result, use the `ge()` method.
         """
-        return all(matrix_map(operator.ge, self, other))
+        return matrix_cmp(self, other) in Ordering.GREATER | Ordering.EQUAL
 
-    def __add__(self, other, *, reverse=False):
+    def __add__(self, other, *, map=matrix_map):
         """Return element-wise `a + b`"""
         if isinstance(other, RealLike):
             cls = RealMatrix
@@ -927,20 +883,15 @@ class RealMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.add,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.add, self, other),
             *self.shape,
         )
 
     def __radd__(self, other):
         """Return element-wise `b + a`"""
-        return self.__add__(other, reverse=True)
+        return self.__add__(other, map=matrix_rmap)
 
-    def __sub__(self, other, *, reverse=False):
+    def __sub__(self, other, *, map=matrix_map):
         """Return element-wise `a - b`"""
         if isinstance(other, RealLike):
             cls = RealMatrix
@@ -949,20 +900,15 @@ class RealMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.sub,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.sub, self, other),
             *self.shape,
         )
 
     def __rsub__(self, other):
         """Return element-wise `b - a`"""
-        return self.__sub__(other, reverse=True)
+        return self.__sub__(other, map=matrix_rmap)
 
-    def __mul__(self, other, *, reverse=False):
+    def __mul__(self, other, *, map=matrix_map):
         """Return element-wise `a * b`"""
         if isinstance(other, RealLike):
             cls = RealMatrix
@@ -971,20 +917,15 @@ class RealMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.mul,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.mul, self, other),
             *self.shape,
         )
 
     def __rmul__(self, other):
         """Return element-wise `b * a`"""
-        return self.__mul__(other, reverse=True)
+        return self.__mul__(other, map=matrix_rmap)
 
-    def __truediv__(self, other, *, reverse=False):
+    def __truediv__(self, other, *, map=matrix_map):
         """Return element-wise `a / b`"""
         if isinstance(other, RealLike):
             cls = RealMatrix
@@ -993,40 +934,30 @@ class RealMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.truediv,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.truediv, self, other),
             *self.shape,
         )
 
     def __rtruediv__(self, other):
         """Return element-wise `b / a`"""
-        return self.__truediv__(other, reverse=True)
+        return self.__truediv__(other, map=matrix_rmap)
 
-    def __pow__(self, other, *, reverse=False):
+    def __pow__(self, other, *, map=matrix_map):
         """Return element-wise `a ** b`"""
         if isinstance(other, ComplexLike):
             cls = ComplexMatrix
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.pow,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.pow, self, other),
             *self.shape,
         )
 
     def __rpow__(self, other):
         """Return element-wise `b ** a`"""
-        return self.__pow__(other, reverse=True)
+        return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other, *, reverse=False):
+    def __matmul__(self, other, *, mul=matrix_mul):
         """Return the matrix product `a @ b`"""
         if isinstance(other, RealMatrixLike):
             cls = RealMatrix
@@ -1036,83 +967,65 @@ class RealMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        values = multiply(self, other, reverse=reverse)
-        if reverse:
-            return cls(values, nrows=other.nrows, ncols=self.ncols)
-        else:
-            return cls(values, nrows=self.nrows, ncols=other.ncols)
+        h, k = (other.shape, self.shape) if mul is matrix_rmul else (self.shape, other.shape)
+        return cls(
+            mul(self, other),
+            nrows=h.nrows,
+            ncols=k.ncols,
+        )
 
     def __rmatmul__(self, other):
         """Return the matrix product `b @ a`"""
-        return self.__matmul__(other, reverse=True)
+        return self.__matmul__(other, mul=matrix_rmul)
 
-    def __floordiv__(self, other, *, reverse=False):
+    def __floordiv__(self, other, *, map=matrix_map):
         """Return element-wise `a // b`"""
         if isinstance(other, RealLike):
             cls = RealMatrix
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.floordiv,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.floordiv, self, other),
             *self.shape,
         )
 
     def __rfloordiv__(self, other):
         """Return element-wise `b // a`"""
-        return self.__floordiv__(other, reverse=True)
+        return self.__floordiv__(other, map=matrix_rmap)
 
-    def __mod__(self, other, *, reverse=False):
+    def __mod__(self, other, *, map=matrix_map):
         """Return element-wise `a % b`"""
         if isinstance(other, RealLike):
             cls = RealMatrix
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.mod,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.mod, self, other),
             *self.shape,
         )
 
     def __rmod__(self, other):
         """Return element-wise `b % a`"""
-        return self.__mod__(other, reverse=True)
+        return self.__mod__(other, map=matrix_rmap)
 
-    def __neg__(self):
+    def __neg__(self, *, map=matrix_map):
         """Return element-wise `-a`"""
         return RealMatrix(
-            matrix_map(
-                operator.neg,
-                self,
-            ),
+            map(operator.neg, self),
             *self.shape,
         )
 
-    def __pos__(self):
+    def __pos__(self, *, map=matrix_map):
         """Return element-wise `+a`"""
         return RealMatrix(
-            matrix_map(
-                operator.pos,
-                self,
-            ),
+            map(operator.pos, self),
             *self.shape,
         )
 
-    def __abs__(self):
+    def __abs__(self, *, map=matrix_map):
         """Return element-wise `abs(a)`"""
         return RealMatrix(
-            matrix_map(
-                abs,
-                self,
-            ),
+            map(abs, self),
             *self.shape,
         )
 
@@ -1124,77 +1037,52 @@ class RealMatrix(Matrix):
         """Return the matrix as a built-in `float` instance"""
         return scalar_map(float, self)
 
-    def lt(self, other):
+    def lt(self, other, *, map=matrix_map):
         """Return element-wise `a < b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.lt,
-                self,
-                other,
-            ),
+            map(operator.lt, self, other),
             *self.shape,
         )
 
-    def le(self, other):
+    def le(self, other, *, map=matrix_map):
         """Return element-wise `a <= b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.le,
-                self,
-                other,
-            ),
+            map(operator.le, self, other),
             *self.shape,
         )
 
-    def gt(self, other):
+    def gt(self, other, *, map=matrix_map):
         """Return element-wise `a > b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.gt,
-                self,
-                other,
-            ),
+            map(operator.gt, self, other),
             *self.shape,
         )
 
-    def ge(self, other):
+    def ge(self, other, *, map=matrix_map):
         """Return element-wise `a >= b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.ge,
-                self,
-                other,
-            ),
+            map(operator.ge, self, other),
             *self.shape,
         )
 
-    def conjugate(self):
+    def conjugate(self, *, map=matrix_map):
         """Return element-wise `conjugate(a)`"""
         return RealMatrix(
-            matrix_map(
-                conjugate,
-                self,
-            ),
+            map(conjugate, self),
             *self.shape,
         )
 
-    def complex(self):
+    def complex(self, *, map=matrix_map):
         """Return element-wise `complex(a)`"""
         return ComplexMatrix(
-            matrix_map(
-                complex,
-                self,
-            ),
+            map(complex, self),
             *self.shape,
         )
 
-    def float(self):
+    def float(self, *, map=matrix_map):
         """Return element-wise `float(a)`"""
         return RealMatrix(
-            matrix_map(
-                float,
-                self,
-            ),
+            map(float, self),
             *self.shape,
         )
 
@@ -1210,7 +1098,7 @@ class IntegralMatrix(Matrix):
 
         For a matrix of each comparison result, use the `lt()` method.
         """
-        return all(matrix_map(operator.lt, self, other))
+        return matrix_cmp(self, other) is Ordering.LESSER
 
     def __le__(self, other):
         """Return true if element-wise `a <= b` is true for all element pairs,
@@ -1218,7 +1106,7 @@ class IntegralMatrix(Matrix):
 
         For a matrix of each comparison result, use the `le()` method.
         """
-        return all(matrix_map(operator.le, self, other))
+        return matrix_cmp(self, other) in Ordering.LESSER | Ordering.EQUAL
 
     def __gt__(self, other):
         """Return true if element-wise `a > b` is true for all element pairs,
@@ -1226,7 +1114,7 @@ class IntegralMatrix(Matrix):
 
         For a matrix of each comparison result, use the `gt()` method.
         """
-        return all(matrix_map(operator.gt, self, other))
+        return matrix_cmp(self, other) is Ordering.GREATER
 
     def __ge__(self, other):
         """Return true if element-wise `a >= b` is true for all element pairs,
@@ -1234,9 +1122,9 @@ class IntegralMatrix(Matrix):
 
         For a matrix of each comparison result, use the `ge()` method.
         """
-        return all(matrix_map(operator.ge, self, other))
+        return matrix_cmp(self, other) in Ordering.GREATER | Ordering.EQUAL
 
-    def __add__(self, other, *, reverse=False):
+    def __add__(self, other, *, map=matrix_map):
         """Return element-wise `a + b`"""
         if isinstance(other, IntegralLike):
             cls = IntegralMatrix
@@ -1247,20 +1135,15 @@ class IntegralMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.add,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.add, self, other),
             *self.shape,
         )
 
     def __radd__(self, other):
         """Return element-wise `b + a`"""
-        return self.__add__(other, reverse=True)
+        return self.__add__(other, map=matrix_rmap)
 
-    def __sub__(self, other, *, reverse=False):
+    def __sub__(self, other, *, map=matrix_map):
         """Return element-wise `a - b`"""
         if isinstance(other, IntegralLike):
             cls = IntegralMatrix
@@ -1271,20 +1154,15 @@ class IntegralMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.sub,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.sub, self, other),
             *self.shape,
         )
 
     def __rsub__(self, other):
         """Return element-wise `b - a`"""
-        return self.__sub__(other, reverse=True)
+        return self.__sub__(other, map=matrix_rmap)
 
-    def __mul__(self, other, *, reverse=False):
+    def __mul__(self, other, *, map=matrix_map):
         """Return element-wise `a * b`"""
         if isinstance(other, IntegralLike):
             cls = IntegralMatrix
@@ -1295,20 +1173,15 @@ class IntegralMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.mul,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.mul, self, other),
             *self.shape,
         )
 
     def __rmul__(self, other):
         """Return element-wise `b * a`"""
-        return self.__mul__(other, reverse=True)
+        return self.__mul__(other, map=matrix_rmap)
 
-    def __truediv__(self, other, *, reverse=False):
+    def __truediv__(self, other, *, map=matrix_map):
         """Return element-wise `a / b`"""
         if isinstance(other, RealLike):
             cls = RealMatrix
@@ -1317,40 +1190,30 @@ class IntegralMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.truediv,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.truediv, self, other),
             *self.shape,
         )
 
     def __rtruediv__(self, other):
         """Return element-wise `b / a`"""
-        return self.__truediv__(other, reverse=True)
+        return self.__truediv__(other, map=matrix_rmap)
 
-    def __pow__(self, other, *, reverse=False):
+    def __pow__(self, other, *, map=matrix_map):
         """Return element-wise `a ** b`"""
         if isinstance(other, ComplexLike):
             cls = ComplexMatrix
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.pow,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.pow, self, other),
             *self.shape,
         )
 
     def __rpow__(self, other):
         """Return element-wise `b ** a`"""
-        return self.__pow__(other, reverse=True)
+        return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other, *, reverse=False):
+    def __matmul__(self, other, *, mul=matrix_mul):
         """Return the matrix product `a @ b`"""
         if isinstance(other, IntegralMatrixLike):
             cls = IntegralMatrix
@@ -1362,17 +1225,18 @@ class IntegralMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        values = multiply(self, other, reverse=reverse)
-        if reverse:
-            return cls(values, nrows=other.nrows, ncols=self.ncols)
-        else:
-            return cls(values, nrows=self.nrows, ncols=other.ncols)
+        h, k = (other.shape, self.shape) if mul is matrix_rmul else (self.shape, other.shape)
+        return cls(
+            mul(self, other),
+            nrows=h.nrows,
+            ncols=k.ncols,
+        )
 
     def __rmatmul__(self, other):
         """Return the matrix product `b @ a`"""
-        return self.__matmul__(other, reverse=True)
+        return self.__matmul__(other, mul=matrix_rmul)
 
-    def __floordiv__(self, other, *, reverse=False):
+    def __floordiv__(self, other, *, map=matrix_map):
         """Return element-wise `a // b`"""
         if isinstance(other, IntegralLike):
             cls = IntegralMatrix
@@ -1381,20 +1245,15 @@ class IntegralMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.floordiv,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.floordiv, self, other),
             *self.shape,
         )
 
     def __rfloordiv__(self, other):
         """Return element-wise `b // a`"""
-        return self.__floordiv__(other, reverse=True)
+        return self.__floordiv__(other, map=matrix_rmap)
 
-    def __mod__(self, other, *, reverse=False):
+    def __mod__(self, other, *, map=matrix_map):
         """Return element-wise `a % b`"""
         if isinstance(other, IntegralLike):
             cls = IntegralMatrix
@@ -1403,46 +1262,32 @@ class IntegralMatrix(Matrix):
         else:
             cls = Matrix
         return cls(
-            matrix_map(
-                operator.mod,
-                self,
-                other,
-                reverse=reverse,
-            ),
+            map(operator.mod, self, other),
             *self.shape,
         )
 
     def __rmod__(self, other):
         """Return element-wise `b % a`"""
-        return self.__mod__(other, reverse=True)
+        return self.__mod__(other, map=matrix_rmap)
 
-    def __neg__(self):
+    def __neg__(self, *, map=matrix_map):
         """Return element-wise `-a`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.neg,
-                self,
-            ),
+            map(operator.neg, self),
             *self.shape,
         )
 
-    def __pos__(self):
+    def __pos__(self, *, map=matrix_map):
         """Return element-wise `+a`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.pos,
-                self,
-            ),
+            map(operator.pos, self),
             *self.shape,
         )
 
-    def __abs__(self):
+    def __abs__(self, *, map=matrix_map):
         """Return element-wise `abs(a)`"""
         return IntegralMatrix(
-            matrix_map(
-                abs,
-                self,
-            ),
+            map(abs, self),
             *self.shape,
         )
 
@@ -1462,86 +1307,58 @@ class IntegralMatrix(Matrix):
         """Return the matrix as a built-in `int` instance, losslessly"""
         return scalar_map(operator.index, self)
 
-    def lt(self, other):
+    def lt(self, other, *, map=matrix_map):
         """Return element-wise `a < b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.lt,
-                self,
-                other,
-            ),
+            map(operator.lt, self, other),
             *self.shape,
         )
 
-    def le(self, other):
+    def le(self, other, *, map=matrix_map):
         """Return element-wise `a <= b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.le,
-                self,
-                other,
-            ),
+            map(operator.le, self, other),
             *self.shape,
         )
 
-    def gt(self, other):
+    def gt(self, other, *, map=matrix_map):
         """Return element-wise `a > b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.gt,
-                self,
-                other,
-            ),
+            map(operator.gt, self, other),
             *self.shape,
         )
 
-    def ge(self, other):
+    def ge(self, other, *, map=matrix_map):
         """Return element-wise `a >= b`"""
         return IntegralMatrix(
-            matrix_map(
-                operator.ge,
-                self,
-                other,
-            ),
+            map(operator.ge, self, other),
             *self.shape,
         )
 
-    def conjugate(self):
+    def conjugate(self, *, map=matrix_map):
         """Return element-wise `conjugate(a)`"""
         return IntegralMatrix(
-            matrix_map(
-                conjugate,
-                self,
-            ),
+            map(conjugate, self),
             *self.shape,
         )
 
-    def complex(self):
+    def complex(self, *, map=matrix_map):
         """Return element-wise `complex(a)`"""
         return ComplexMatrix(
-            matrix_map(
-                complex,
-                self,
-            ),
+            map(complex, self),
             *self.shape,
         )
 
-    def float(self):
+    def float(self, *, map=matrix_map):
         """Return element-wise `float(a)`"""
         return RealMatrix(
-            matrix_map(
-                float,
-                self,
-            ),
+            map(float, self),
             *self.shape,
         )
 
-    def int(self):
+    def int(self, *, map=matrix_map):
         """Return element-wise `int(a)`"""
         return IntegralMatrix(
-            matrix_map(
-                int,
-                self,
-            ),
+            map(int, self),
             *self.shape,
         )
