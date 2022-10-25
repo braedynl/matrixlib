@@ -704,7 +704,8 @@ class TestComplexMatrix(TestCase):
         ], nrows=2, ncols=2)
         b = a
 
-        res = a + b  # ComplexMatrix + ComplexMatrix -> ComplexMatrix
+        # ComplexMatrix + ComplexMatrix -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             2j, 4j,
             6j, 8j,
@@ -715,7 +716,8 @@ class TestComplexMatrix(TestCase):
 
         b = 1j
 
-        res = a + b  # ComplexMatrix + Complex -> ComplexMatrix
+        # ComplexMatrix + Complex -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             2j, 3j,
             4j, 5j,
@@ -729,7 +731,8 @@ class TestComplexMatrix(TestCase):
             3.0, 4.0,
         ], nrows=2, ncols=2)
 
-        res = a + b  # ComplexMatrix + RealMatrix -> ComplexMatrix
+        # ComplexMatrix + RealMatrix -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             1+1j, 2+2j,
             3+3j, 4+4j,
@@ -740,7 +743,8 @@ class TestComplexMatrix(TestCase):
 
         b = 1.0
 
-        res = a + b  # ComplexMatrix + Real -> ComplexMatrix
+        # ComplexMatrix + Real -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             1+1j, 1+2j,
             1+3j, 1+4j,
@@ -754,7 +758,8 @@ class TestComplexMatrix(TestCase):
             3, 4,
         ], nrows=2, ncols=2)
 
-        res = a + b  # ComplexMatrix + IntegralMatrix -> ComplexMatrix
+        # ComplexMatrix + IntegralMatrix -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             1+1j, 2+2j,
             3+3j, 4+4j,
@@ -765,7 +770,8 @@ class TestComplexMatrix(TestCase):
 
         b = 1
 
-        res = a + b  # ComplexMatrix + Integral -> ComplexMatrix
+        # ComplexMatrix + Integral -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             1+1j, 1+2j,
             1+3j, 1+4j,
@@ -779,7 +785,8 @@ class TestComplexMatrix(TestCase):
             3, 4,
         ], nrows=2, ncols=2)
 
-        res = a + b  # ComplexMatrix + (Matrix or Any) -> Matrix
+        # ComplexMatrix + (Matrix or Any) -> Matrix
+        res = a + b
         exp = Matrix([
             1+1j, 2+2j,
             3+3j, 4+4j,
@@ -800,7 +807,8 @@ class TestRealMatrix(TestCase):
         ], nrows=2, ncols=2)
         b = a
 
-        res = a + b  # RealMatrix + RealMatrix -> RealMatrix
+        # RealMatrix + RealMatrix -> RealMatrix
+        res = a + b
         exp = RealMatrix([
             2.0, 4.0,
             6.0, 8.0,
@@ -811,7 +819,8 @@ class TestRealMatrix(TestCase):
 
         b = 1.0
 
-        res = a + b  # RealMatrix + Real -> RealMatrix
+        # RealMatrix + Real -> RealMatrix
+        res = a + b
         exp = RealMatrix([
             2.0, 3.0,
             4.0, 5.0,
@@ -825,7 +834,8 @@ class TestRealMatrix(TestCase):
             3j, 4j,
         ], nrows=2, ncols=2)
 
-        res = a + b  # RealMatrix + ComplexMatrix -> ComplexMatrix
+        # RealMatrix + ComplexMatrix -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             1+1j, 2+2j,
             3+3j, 4+4j,
@@ -836,7 +846,8 @@ class TestRealMatrix(TestCase):
 
         b = 1j
 
-        res = a + b  # RealMatrix + Complex -> ComplexMatrix
+        # RealMatrix + Complex -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             1+1j, 2+1j,
             3+1j, 4+1j,
@@ -850,7 +861,8 @@ class TestRealMatrix(TestCase):
             3, 4,
         ], nrows=2, ncols=2)
 
-        res = a + b  # RealMatrix + IntegralMatrix -> RealMatrix
+        # RealMatrix + IntegralMatrix -> RealMatrix
+        res = a + b
         exp = RealMatrix([
             2.0, 4.0,
             6.0, 8.0,
@@ -861,7 +873,8 @@ class TestRealMatrix(TestCase):
 
         b = 1
 
-        res = a + b  # RealMatrix + Integral -> RealMatrix
+        # RealMatrix + Integral -> RealMatrix
+        res = a + b
         exp = RealMatrix([
             2.0, 3.0,
             4.0, 5.0,
@@ -875,7 +888,8 @@ class TestRealMatrix(TestCase):
             3, 4,
         ], nrows=2, ncols=2)
 
-        res = a + b  # RealMatrix + (Matrix or Any) -> Matrix
+        # RealMatrix + (Matrix or Any) -> Matrix
+        res = a + b
         exp = Matrix([
             2.0, 4.0,
             6.0, 8.0,
@@ -896,7 +910,8 @@ class TestIntegralMatrix(TestCase):
         ], nrows=2, ncols=2)
         b = a
 
-        res = a + b  # IntegralMatrix + IntegralMatrix -> IntegralMatrix
+        # IntegralMatrix + IntegralMatrix -> IntegralMatrix
+        res = a + b
         exp = IntegralMatrix([
             2, 4,
             6, 8,
@@ -907,7 +922,8 @@ class TestIntegralMatrix(TestCase):
 
         b = 1
 
-        res = a + b  # IntegralMatrix + Integral -> IntegralMatrix
+        # IntegralMatrix + Integral -> IntegralMatrix
+        res = a + b
         exp = IntegralMatrix([
             2, 3,
             4, 5,
@@ -921,7 +937,8 @@ class TestIntegralMatrix(TestCase):
             3j, 4j,
         ], nrows=2, ncols=2)
 
-        res = a + b  # IntegralMatrix + ComplexMatrix -> ComplexMatrix
+        # IntegralMatrix + ComplexMatrix -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             1+1j, 2+2j,
             3+3j, 4+4j,
@@ -932,7 +949,8 @@ class TestIntegralMatrix(TestCase):
 
         b = 1j
 
-        res = a + b  # IntegralMatrix + Complex -> ComplexMatrix
+        # IntegralMatrix + Complex -> ComplexMatrix
+        res = a + b
         exp = ComplexMatrix([
             1+1j, 2+1j,
             3+1j, 4+1j,
@@ -946,7 +964,8 @@ class TestIntegralMatrix(TestCase):
             3.0, 4.0,
         ], nrows=2, ncols=2)
 
-        res = a + b  # IntegralMatrix + RealMatrix -> RealMatrix
+        # IntegralMatrix + RealMatrix -> RealMatrix
+        res = a + b
         exp = RealMatrix([
             2.0, 4.0,
             6.0, 8.0,
@@ -957,7 +976,8 @@ class TestIntegralMatrix(TestCase):
 
         b = 1.0
 
-        res = a + b  # IntegralMatrix + Real -> RealMatrix
+        # IntegralMatrix + Real -> RealMatrix
+        res = a + b
         exp = RealMatrix([
             2.0, 3.0,
             4.0, 5.0,
@@ -971,7 +991,8 @@ class TestIntegralMatrix(TestCase):
             3, 4,
         ], nrows=2, ncols=2)
 
-        res = a + b  # IntegralMatrix + (Matrix or Any) -> Matrix
+        # IntegralMatrix + (Matrix or Any) -> Matrix
+        res = a + b
         exp = Matrix([
             2, 4,
             6, 8,
