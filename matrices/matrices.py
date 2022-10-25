@@ -13,8 +13,8 @@ from .protocols import (ComplexLike, ComplexMatrixLike, IntegralLike,
                         RealMatrixLike)
 from .rule import Rule
 from .shape import Shape
-from .utilities import (conjugate, logical_and, logical_not, logical_or,
-                        logical_xor, shaped)
+from .utilities import (conjugate, likewise, logical_and, logical_not,
+                        logical_or, logical_xor)
 
 __all__ = [
     "Matrix",
@@ -25,14 +25,12 @@ __all__ = [
 
 
 def matrix_map(func, a, *bx):
-    bx = iter(bx)
-    return map(func, a, *(shaped(b, shape=a.shape) for b in bx))
-
+    bx = (likewise(b, shape=a.shape) for b in bx)
+    return map(func, a, *bx)
 
 def matrix_rmap(func, a, *bx):
-    bx = reversed(bx)
-    return map(func, *(shaped(b, shape=a.shape) for b in bx), a)
-
+    bx = (likewise(b, shape=a.shape) for b in reversed(bx))
+    return map(func, *bx, a)
 
 def scalar_map(func, a):
     if (n := a.size) != 1:
@@ -300,7 +298,7 @@ class Matrix(Sequence):
                 n = h.ncols
                 for (i, j), x in zip(
                     keys,
-                    shaped(other, shape=Shape(nrows, ncols)),
+                    likewise(other, shape=Shape(nrows, ncols)),
                 ):
                     data[i * n + j] = x
 
@@ -347,7 +345,7 @@ class Matrix(Sequence):
             def setitems(keys, nrows, ncols):
                 for i, x in zip(
                     keys,
-                    shaped(other, shape=Shape(nrows, ncols)),
+                    likewise(other, shape=Shape(nrows, ncols)),
                 ):
                     data[i] = x
 
@@ -652,7 +650,8 @@ class Ordering(Flag):
 
 
 def matrix_compare(a, b):
-    for x, y in zip(a, shaped(b, shape=a.shape)):
+    b = likewise(b, shape=a.shape)
+    for x, y in zip(a, b):
         if x < y:
             return Ordering.LESSER
         if x > y:

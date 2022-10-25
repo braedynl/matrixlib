@@ -4,7 +4,7 @@ from typing import Any, Protocol, TypeVar, Union
 from .protocols import MatrixLike, ShapeLike
 
 __all__ = [
-    "shaped",
+    "likewise",
     "logical_and",
     "logical_or",
     "logical_xor",
@@ -19,7 +19,7 @@ class SupportsConjugate(Protocol[T_co]):
     def conjugate(self) -> T_co: ...
 
 
-def shaped(obj: Union[MatrixLike[T], T], shape: ShapeLike) -> Iterator[T]: ...
+def likewise(object: Union[MatrixLike[T], T], shape: ShapeLike) -> Iterator[T]: ...
 
 def logical_and(a: Any, b: Any, /) -> bool: ...
 def logical_or(a: Any, b: Any, /) -> bool: ...

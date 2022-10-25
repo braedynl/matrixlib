@@ -3,7 +3,7 @@ import itertools
 from .protocols import MatrixLike
 
 __all__ = [
-    "shaped",
+    "likewise",
     "logical_and",
     "logical_or",
     "logical_xor",
@@ -12,26 +12,27 @@ __all__ = [
 ]
 
 
-def shaped(obj, shape):
-    """Return an iterator of `obj` as if it were a matrix of `shape`
+def likewise(object, shape):
+    """Return an iterator of `object` as if it were a matrix of `shape`
 
     Raises `ValueError` under the following conditions:
-    - The shape of `obj` does not equal the input `shape` when `obj` is a
+    - The shape of `object` does not equal the input `shape` when `object` is a
       `MatrixLike`.
-    - The input `shape` has size 0 when `obj` is not a `MatrixLike`.
+    - The input `shape` has size 0 when `object` is not a `MatrixLike`.
 
-    Reason for the latter condition being that an object who fills a matrix
-    cannot be an empty matrix.
+    Non-`MatrixLike` objects conflict with size 0 shapes, since they are
+    treated as being equivalent to a matrix filled solely by the object (which
+    cannot have a size of 0).
     """
     h = shape
-    if isinstance(obj, MatrixLike):
-        if h != (k := obj.shape):
+    if isinstance(object, MatrixLike):
+        if h != (k := object.shape):
             raise ValueError(f"shape {h} is incompatible with operand shape {k}")
-        it = iter(obj)
+        it = iter(object)
     else:
         if 0 in h:
             raise ValueError(f"shape {h} is incompatible with operand of non-zero size")
-        it = itertools.repeat(obj, times=shape.size)
+        it = itertools.repeat(object, times=shape.size)
     return it
 
 
