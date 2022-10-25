@@ -597,7 +597,7 @@ class Matrix(Sequence):
         h, k = self.shape, other.shape
 
         dy = by.inverse
-        if (m := h[dy]) != (n := k[dy]):
+        if h[dy] != k[dy]:
             raise ValueError(f"shape {h} is incompatible with operand shape {k} by {dy.handle}")
 
         (m, n), (_, q) = (h, k)
