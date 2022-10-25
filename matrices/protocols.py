@@ -258,12 +258,6 @@ class ShapeLike(Protocol):
         """The second dimension of the shape"""
         return self[1]
 
-    @property
-    def size(self):
-        """The product of the shape's dimensions"""
-        nrows, ncols = self
-        return nrows * ncols
-
 
 @runtime_checkable
 class MatrixLike(Protocol):

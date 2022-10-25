@@ -96,15 +96,6 @@ class Matrix(Sequence):
         return cls.wrap(data, shape=Shape(nrows, ncols))
 
     @classmethod
-    def refer(cls, other):
-        """Construct a matrix from the contents of `other`, sharing the memory
-        between them
-
-        Can be used as a sort of "cast" to a different matrix subclass.
-        """
-        return cls.wrap(other.data, other.shape)
-
-    @classmethod
     def infer(cls, other):
         """Construct a matrix from a singly-nested iterable, using the
         shallowest iterable's length to deduce the number of rows, and the
@@ -152,9 +143,9 @@ class Matrix(Sequence):
         addition. For the time being, custom formatting must be done manually.
         The implementation for this method is subject to change.
         """
-        h = self.shape
+        m, n = h = self.shape
 
-        if not h.size:
+        if not (m and n):
             return f"Empty matrix ({h})"
 
         result = StringIO()
@@ -162,10 +153,10 @@ class Matrix(Sequence):
 
         max_width = 10
 
-        for _ in range(h.nrows):
+        for _ in range(m):
             result.write("| ")
 
-            for _ in range(h.ncols):
+            for _ in range(n):
                 chars = str(next(items))
                 if len(chars) > max_width:
                     result.write(f"{chars[:max_width - 1]}…")
@@ -250,6 +241,8 @@ class Matrix(Sequence):
 
             return result
 
+        n = h.nrows * h.ncols
+
         if isinstance(key, slice):
 
             def getitems(keys, nrows, ncols):
@@ -258,7 +251,7 @@ class Matrix(Sequence):
                     shape=Shape(nrows, ncols),
                 )
 
-            ix = range(*key.indices(h.size))
+            ix = range(*key.indices(n))
             result = getitems(
                 ix,
                 nrows=1,
@@ -270,7 +263,7 @@ class Matrix(Sequence):
         try:
             result = data[key]
         except IndexError:
-            raise IndexError(f"there are {h.size} items but index is {key}") from None
+            raise IndexError(f"there are {n} items but index is {key}") from None
         else:
             return result
 
@@ -340,6 +333,8 @@ class Matrix(Sequence):
 
             return
 
+        n = h.nrows * h.ncols
+
         if isinstance(key, slice):
 
             def setitems(keys, nrows, ncols):
@@ -349,7 +344,7 @@ class Matrix(Sequence):
                 ):
                     data[i] = x
 
-            ix = range(*key.indices(h.size))
+            ix = range(*key.indices(n))
             setitems(
                 ix,
                 nrows=1,
@@ -361,7 +356,7 @@ class Matrix(Sequence):
         try:
             data[key] = other
         except IndexError:
-            raise IndexError(f"there are {h.size} items but index is {key}") from None
+            raise IndexError(f"there are {n} items but index is {key}") from None
 
     def __iter__(self):
         """Return an iterator over the elements of the matrix"""
@@ -389,7 +384,7 @@ class Matrix(Sequence):
 
     def __eq__(self, other, *, map=matrix_map):
         """Return true if element-wise `a == b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        otherwise false
 
         For a matrix of each comparison result, use the `eq()` method.
         """
@@ -494,7 +489,7 @@ class Matrix(Sequence):
         h = self.shape
         if nrows < 0 or ncols < 0:
             raise ValueError("dimensions must be non-negative")
-        if (n := h.size) != (nrows * ncols):
+        if (n := (h.nrows * h.ncols)) != (nrows * ncols):
             raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × {ncols}")
         h.nrows = nrows
         h.ncols = ncols
@@ -574,7 +569,7 @@ class Matrix(Sequence):
         """
         if by: self.transpose()  # For column-major order
         h = self.shape
-        h[not by] = h.size
+        h[not by] = h.nrows * h.ncols
         h[by] = 1
         return self
 

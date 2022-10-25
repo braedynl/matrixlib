@@ -18,9 +18,9 @@ def likewise(object, shape):
     Raises `ValueError` under the following conditions:
     - The shape of `object` does not equal the input `shape` when `object` is a
       `MatrixLike`.
-    - The input `shape` has size 0 when `object` is not a `MatrixLike`.
+    - The input `shape` has a product of 0 when `object` is not a `MatrixLike`.
 
-    Non-`MatrixLike` objects conflict with size 0 shapes, since they are
+    Non-`MatrixLike` objects conflict with product 0 shapes, since they are
     treated as being equivalent to a matrix filled solely by the object (which
     cannot have a size of 0).
     """
@@ -32,7 +32,7 @@ def likewise(object, shape):
     else:
         if 0 in h:
             raise ValueError(f"shape {h} is incompatible with operand of non-zero size")
-        it = itertools.repeat(object, times=shape.size)
+        it = itertools.repeat(object, times=h.nrows * h.ncols)
     return it
 
 

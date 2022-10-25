@@ -75,8 +75,6 @@ class Matrix(Sequence[T]):
     @classmethod
     def fill(cls: type[Self], value: T, nrows: int, ncols: int) -> Self: ...
     @classmethod
-    def refer(cls: type[Self], other: Matrix[T]) -> Self: ...  # Can't be MatrixLike, since this method relies on internal data
-    @classmethod
     def infer(cls: type[Self], other: Iterable[Iterable[T]]) -> Self: ...
 
     @property
