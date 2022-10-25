@@ -32,7 +32,7 @@ def likewise(object, shape):
     else:
         if 0 in h:
             raise ValueError(f"shape {h} is incompatible with operand of non-zero size")
-        it = itertools.repeat(object, times=shape.size)
+        it = itertools.repeat(object, times=h.size)
     return it
 
 
