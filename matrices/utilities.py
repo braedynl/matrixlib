@@ -26,7 +26,7 @@ def shaped(obj, shape):
     h = shape
     if isinstance(obj, MatrixLike):
         if h != (k := obj.shape):
-            raise ValueError(f"shape {h} is incompatible with operand of shape {k}")
+            raise ValueError(f"shape {h} is incompatible with operand shape {k}")
         it = iter(obj)
     else:
         if 0 in h:

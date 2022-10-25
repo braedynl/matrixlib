@@ -133,7 +133,7 @@ class Matrix(Sequence):
             for k, val in enumerate(row, start=1):
                 data.append(val)
             if n != k:
-                raise ValueError(f"row {m} has length {k} but precedent rows have length {n}")
+                raise ValueError(f"row {m} has length {k}, but precedent rows have length {n}")
 
         return cls.wrap(data, shape=Shape(m, n))
 
@@ -297,10 +297,11 @@ class Matrix(Sequence):
         if isinstance(key, tuple):
 
             def setitems(keys, nrows, ncols):
-                if (h := Shape(nrows, ncols)) != (k := other.shape):
-                    raise ValueError(f"selection of shape {h} is incompatible with operand of shape {k}")
-                n = self.ncols
-                for (i, j), x in zip(keys, other):
+                n = h.ncols
+                for (i, j), x in zip(
+                    keys,
+                    shaped(other, shape=Shape(nrows, ncols)),
+                ):
                     data[i * n + j] = x
 
             rowkey, colkey = key
@@ -344,9 +345,10 @@ class Matrix(Sequence):
         if isinstance(key, slice):
 
             def setitems(keys, nrows, ncols):
-                if (h := Shape(nrows, ncols)) != (k := other.shape):
-                    raise ValueError(f"selection of shape {h} is incompatible with operand of shape {k}")
-                for i, x in zip(keys, other):
+                for i, x in zip(
+                    keys,
+                    shaped(other, shape=Shape(nrows, ncols)),
+                ):
                     data[i] = x
 
             ix = range(*key.indices(h.size))
@@ -518,7 +520,7 @@ class Matrix(Sequence):
         """
         data = self.data
         if (h := self.shape) != (k := selector.shape):
-            raise ValueError(f"matrix of shape {h} is incompatible with operand of shape {k}")
+            raise ValueError(f"shape {h} is incompatible with selector shape {k}")
         for i, x in enumerate(selector):
             if x: data[i] = null
         return self
@@ -603,7 +605,7 @@ class Matrix(Sequence):
 
         dy = by.inverse
         if (m := h[dy]) != (n := k[dy]):
-            raise ValueError(f"matrix has {m} {dy.handle}s but operand has {n}")
+            raise ValueError(f"shape {h} is incompatible with operand shape {k} by {dy.handle}")
 
         (m, n), (_, q) = (h, k)
 
@@ -659,10 +661,10 @@ def matrix_compare(a, b):
 
 
 def matrix_multiply(a, b):
-    (m, n), (p, q) = (a.shape, b.shape)
+    (m, n), (p, q) = (h, k) = (a.shape, b.shape)
 
     if n != p:
-        raise ValueError(f"left-hand side has {n} columns, but right-hand side has {p} rows")
+        raise ValueError(f"shape {h} is incompatible with operand shape {k} by their inner dimensions")
     if not n:
         return itertools.repeat(0, times=m * q)  # Use int 0 here since it supports all numeric operations
 
