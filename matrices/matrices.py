@@ -206,7 +206,7 @@ class Matrix(Sequence):
         if isinstance(key, tuple):
 
             def getitems(keys, nrows, ncols):
-                n = self.ncols
+                n = h.ncols
                 return type(self).wrap(
                     [data[i * n + j] for i, j in keys],
                     shape=Shape(nrows, ncols),
@@ -649,7 +649,7 @@ class Ordering(Flag):
     GREATER = enum.auto()
 
 
-def matrix_compare(a, b):
+def matrix_compare(a, b, /):
     b = likewise(b, shape=a.shape)
     for x, y in zip(a, b):
         if x < y:
@@ -659,7 +659,7 @@ def matrix_compare(a, b):
     return Ordering.EQUAL
 
 
-def matrix_multiply(a, b):
+def matrix_multiply(a, b, /):
     (m, n), (p, q) = (h, k) = (a.shape, b.shape)
 
     if n != p:
