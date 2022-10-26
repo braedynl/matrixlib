@@ -266,7 +266,7 @@ class MatrixLike(Protocol):
     @abstractmethod
     def __eq__(self, other):
         """Return true if element-wise `a == b` is true for all element pairs,
-        `a` and `b`, otherwise false
+        otherwise false
 
         For a matrix of each comparison result, use the `eq()` method.
         """
@@ -368,10 +368,12 @@ class MatrixLike(Protocol):
 
     @abstractmethod
     def eq(self, other):
+        """Return element-wise `a == b`"""
         pass
 
     @abstractmethod
     def ne(self, other):
+        """Return element-wise `a != b`"""
         pass
 
     # XXX: By convention, methods that can be interpreted for either direction
