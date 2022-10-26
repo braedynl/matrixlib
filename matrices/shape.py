@@ -11,7 +11,7 @@ class Shape(Collection):
     """A mutable collection type for storing matrix dimensions
 
     Instances of `Shape` support integer - but not slice - indexing. Negative
-    values are accepted during write operations, and is left up to the matrix
+    values are accepted by writing operations, and is left up to the matrix
     implementation to consider.
 
     Shapes should not be written-to when exposed by a matrix object, unless
@@ -41,6 +41,10 @@ class Shape(Collection):
         nrows, ncols = self.data
         return nrows == other[0] and ncols == other[1]
 
+    def __len__(self):
+        """Return literal 2"""
+        return 2
+
     def __getitem__(self, key):
         """Return the dimension corresponding to `key`"""
         key = operator.index(key)
@@ -58,10 +62,6 @@ class Shape(Collection):
             self.data[key] = value
         except IndexError:
             raise IndexError("index out of range") from None
-
-    def __len__(self):
-        """Return literal 2"""
-        return 2
 
     def __iter__(self):
         """Return an iterator over the dimensions of the shape"""
