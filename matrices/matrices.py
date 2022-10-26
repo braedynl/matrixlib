@@ -178,9 +178,7 @@ class Matrix(Sequence):
         """Return the element or sub-matrix corresponding to `key`
 
         If `key` is an integer or slice, it is treated as if it is indexing the
-        flattened matrix, returning the corresponding value(s). A slice will
-        always return a new matrix of shape `(1, N)`, where `N` is the length
-        of the slice's range.
+        flattened matrix, returning the corresponding value(s).
 
         If `key` is a tuple, the first index is applied against the rows, while
         the second is applied against the columns.

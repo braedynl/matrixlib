@@ -99,12 +99,6 @@ class Shape(Collection):
     def ncols(self, value):
         self.data[1] = value
 
-    @property
-    def size(self):
-        """The product of the shape's dimensions"""
-        nrows, ncols = self.data
-        return nrows * ncols
-
     def copy(self):
         """Return a copy of the shape"""
         return Shape(*self.data)
