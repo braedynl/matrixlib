@@ -54,7 +54,7 @@ class Matrix(Sequence):
 
     __slots__ = ("data", "shape")
 
-    def __init__(self, values, nrows, ncols):
+    def __init__(self, values, *, nrows, ncols):
         """Construct a matrix from the elements of `values`, interpreting it as
         shape `nrows` × `ncols`
         """
@@ -86,7 +86,7 @@ class Matrix(Sequence):
         return self
 
     @classmethod
-    def fill(cls, value, nrows, ncols):
+    def fill(cls, value, *, nrows, ncols):
         """Construct a matrix of shape `nrows` × `ncols`, comprised solely of
         `value`
         """
