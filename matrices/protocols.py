@@ -1,7 +1,7 @@
 import copy
 import sys
 from abc import abstractmethod
-from typing import Protocol, runtime_checkable
+from typing import Protocol, TypeVar, runtime_checkable
 
 from .rule import Rule
 
@@ -259,8 +259,10 @@ class ShapeLike(Protocol):
         return self[1]
 
 
+T_co = TypeVar("T_co", covariant=True)
+
 @runtime_checkable
-class MatrixLike(Protocol):
+class MatrixLike(Protocol[T_co]):
     """Protocol of operations defined for matrix-like objects"""
 
     @abstractmethod
@@ -393,8 +395,10 @@ class MatrixLike(Protocol):
         return copy.copy(self)
 
 
+ComplexLikeT_co = TypeVar("ComplexLikeT_co", bound=ComplexLike, covariant=True)
+
 @runtime_checkable
-class ComplexMatrixLike(MatrixLike, Protocol):
+class ComplexMatrixLike(MatrixLike[ComplexLikeT_co], Protocol[ComplexLikeT_co]):
     """Protocol of operations defined for matrix-like objects that contain
     complex-like values
 
@@ -495,8 +499,10 @@ class ComplexMatrixLike(MatrixLike, Protocol):
         pass
 
 
+RealLikeT_co = TypeVar("RealLikeT_co", bound=RealLike, covariant=True)
+
 @runtime_checkable
-class RealMatrixLike(ComplexMatrixLike, Protocol):
+class RealMatrixLike(ComplexMatrixLike[RealLikeT_co], Protocol[RealLikeT_co]):
     """Protocol of operations defined for matrix-like objects that contain
     real-like values
 
@@ -586,8 +592,10 @@ class RealMatrixLike(ComplexMatrixLike, Protocol):
         pass
 
 
+IntegralLikeT_co = TypeVar("IntegralLikeT_co", bound=ComplexLike, covariant=True)
+
 @runtime_checkable
-class IntegralMatrixLike(RealMatrixLike, Protocol):
+class IntegralMatrixLike(RealMatrixLike[IntegralLikeT_co], Protocol[IntegralLikeT_co]):
     """Protocol of operations defined for matrix-like objects that contain
     integral-like values
 
