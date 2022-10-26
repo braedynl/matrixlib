@@ -356,7 +356,8 @@ class MatrixLike(Protocol):
     @property
     def size(self):
         """The product of the matrix's number of rows and columns"""
-        return self.shape.size
+        nrows, ncols = self.shape
+        return nrows * ncols
 
     # XXX: For vectorized operations like eq() and ne(), a new matrix composed
     # of the results from the mapped operation should be returned. ValueError

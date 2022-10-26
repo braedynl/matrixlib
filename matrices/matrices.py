@@ -441,7 +441,8 @@ class Matrix(Sequence):
     @property
     def size(self):
         """The product of the number of rows and columns"""
-        return self.shape.size
+        nrows, ncols = self.shape
+        return nrows * ncols
 
     def index(self, value, start=0, stop=None):
         """Return the index of the first element equal to `value`
