@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "matrices-py"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
-  { name="Braedyn Lettinga", email="braedynlettinga@gmail.com" },
+  { name="Braedyn L" },
 ]
 description = "A basic set of utilities for storing and manipulating data in ≤ 2 dimensions."
 readme = "README.md"
