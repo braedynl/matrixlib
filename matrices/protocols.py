@@ -1,5 +1,4 @@
 import copy
-import sys
 from abc import abstractmethod
 from typing import Protocol, TypeVar, runtime_checkable
 
@@ -132,17 +131,6 @@ class ComplexLike(Protocol):
         """Return `abs(a)`"""
         pass
 
-    # XXX: this method is only defined for 3.11 or higher due to the built-in
-    # complex type not having it in prior versions (thus making it fail
-    # instance checks). Implementing this method is recommended.
-
-    if sys.version_info >= (3, 11):
-
-        @abstractmethod
-        def __complex__(self):
-            """Return an equivalent `complex` instance"""
-            pass
-
     @abstractmethod
     def conjugate(self):
         """Return `conjugate(a)`"""
@@ -186,11 +174,6 @@ class RealLike(ComplexLike, Protocol):
         """Return `b % a`"""
         pass
 
-    @abstractmethod
-    def __float__(self):
-        """Return an equivalent `float` instance"""
-        pass
-
 
 @runtime_checkable
 class IntegralLike(RealLike, Protocol):
@@ -200,13 +183,9 @@ class IntegralLike(RealLike, Protocol):
     """
 
     @abstractmethod
-    def __int__(self):
-        """Return an equivalent `int` instance"""
-        pass
-
     def __index__(self):
         """Return an equivalent `int` instance, losslessly"""
-        return int(self)
+        pass
 
 
 @runtime_checkable
@@ -456,7 +435,7 @@ class ComplexMatrixLike(MatrixLike[ComplexLikeT_co], Protocol[ComplexLikeT_co]):
         """Return the matrix product `a @ b`"""
         pass
 
-    # XXX: No abstract reverse equivalent for __matmul__, since it should be
+    # XXX: No abstract reverse equivalent for __matmul__(), since it should be
     # monomorphic - can be provided if necessary.
 
     @abstractmethod
@@ -605,9 +584,10 @@ class IntegralMatrixLike(RealMatrixLike[IntegralLikeT_co], Protocol[IntegralLike
         """Return an equivalent `int` instance"""
         pass
 
+    @abstractmethod
     def __index__(self):
         """Return an equivalent `int` instance, losslessly"""
-        return int(self)
+        pass
 
     @abstractmethod
     def int(self):

@@ -1,4 +1,3 @@
-import sys
 from abc import abstractmethod
 from collections.abc import Iterator
 from typing import Any, Literal, Protocol, TypeVar, overload, runtime_checkable
@@ -56,10 +55,6 @@ class ComplexLike(Protocol):
     @abstractmethod
     def __abs__(self: Self) -> RealLike: ...
 
-    if sys.version_info >= (3, 11):
-        @abstractmethod
-        def __complex__(self: Self) -> complex: ...
-
     @abstractmethod
     def conjugate(self: Self) -> ComplexLike: ...
 
@@ -89,9 +84,6 @@ class RealLike(ComplexLike, Protocol):
     def __abs__(self: Self) -> RealLike: ...
 
     @abstractmethod
-    def __float__(self: Self) -> float: ...
-
-    @abstractmethod
     def conjugate(self: Self) -> RealLike: ...
 
 
@@ -106,7 +98,6 @@ class IntegralLike(RealLike, Protocol):
     def __abs__(self: Self) -> IntegralLike: ...
 
     @abstractmethod
-    def __int__(self: Self) -> int: ...
     def __index__(self: Self) -> int: ...
 
     @abstractmethod
@@ -294,6 +285,7 @@ class IntegralMatrixLike(RealMatrixLike[IntegralLikeT_co], Protocol[IntegralLike
 
     @abstractmethod
     def __int__(self: Self) -> int: ...
+    @abstractmethod
     def __index__(self: Self) -> int: ...
 
     @abstractmethod
