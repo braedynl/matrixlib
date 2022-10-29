@@ -388,6 +388,14 @@ class Matrix(Sequence):
         """
         return all(map(operator.eq, self, other))
 
+    def __ne__(self, other, *, map=matrix_map):
+        """Return true if element-wise `a != b` is true for any element pair,
+        otherwise false
+
+        For a matrix of each comparison result, use the `ne()` method.
+        """
+        return any(map(operator.ne, self, other))
+
     def __and__(self, other, *, map=matrix_map):
         """Return element-wise `logical_and(a, b)`"""
         return IntegralMatrix(

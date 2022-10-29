@@ -214,9 +214,7 @@ class ShapeLike(Protocol):
     """Protocol of operations defined for shape-like objects
 
     Note that this protocol can match with matrix types through `isinstance()`,
-    though such a match is considered invalid. Matrices consider length and
-    size to be the same thing, whereas shapes have a constant length of 2, and
-    a size that is the product of its elements.
+    though such a match is considered invalid.
     """
 
     def __eq__(self, other):
@@ -480,7 +478,7 @@ class ComplexMatrixLike(MatrixLike[ComplexLikeT_co], Protocol[ComplexLikeT_co]):
     # 1. ValueError should be raised otherwise.
     # Unlike ComplexLike, this method is version-independent due to the complex
     # constructor having the ability to take complex instances as an argument
-    # (it's just that the complex type does not implement a special convering
+    # (it's just that the complex type does not implement a special converting
     # method for itself).
 
     @abstractmethod
