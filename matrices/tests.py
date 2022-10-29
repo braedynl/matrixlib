@@ -1,7 +1,14 @@
 import itertools
+from decimal import Decimal
+from fractions import Fraction
 from unittest import TestCase
 
-from . import ComplexMatrix, IntegralMatrix, Matrix, RealMatrix, Rule
+from .matrices import ComplexMatrix, IntegralMatrix, Matrix, RealMatrix
+from .protocols import (ComplexLike, ComplexMatrixLike, IntegralLike,
+                        IntegralMatrixLike, MatrixLike, RealLike,
+                        RealMatrixLike, ShapeLike)
+from .rule import Rule
+from .shape import Shape
 
 M0x0 = Matrix([], nrows=0, ncols=0)
 
@@ -46,17 +53,8 @@ M3x3 = Matrix([
 
 
 class TestMatrix(TestCase):
-    """Simple tests for methods of the `Matrix` class
 
-    These tests are not exhaustive, both in terms of coverage across methods
-    and for the tested methods themselves.
-
-    Most methods are wrappers around built-ins and/or call one another. These
-    tests are for methods that are a bit more "involved" or are heavily relied
-    on for building other methods.
-    """
-
-    def testGetItem(self) -> None:
+    def testGetItem(self):
         """Tests for `Matrix.__getitem__()`"""
 
         for (i, j), x in zip(
@@ -149,7 +147,7 @@ class TestMatrix(TestCase):
 
         self.assertEqual(res, exp)
 
-    def testSetItem(self) -> None:
+    def testSetItem(self):
         """Tests for `Matrix.__setitem__()`"""
 
         res = M2x3.copy()
@@ -309,7 +307,7 @@ class TestMatrix(TestCase):
 
         self.assertEqual(res, exp)
 
-    def testReshape(self) -> None:
+    def testReshape(self):
         """Tests for `Matrix.reshape()`"""
 
         res = M0x0.copy().reshape(0, 3)
@@ -334,7 +332,7 @@ class TestMatrix(TestCase):
         with self.assertRaises(ValueError):
             M2x3.copy().reshape(3, 4)
 
-    def testSlices(self) -> None:
+    def testSlices(self):
         """Tests for `Matrix.slices()`"""
 
         it = M0x0.slices(by=Rule.ROW)
@@ -410,7 +408,7 @@ class TestMatrix(TestCase):
         with self.assertRaises(StopIteration):
             next(it)
 
-    def testTranspose(self) -> None:
+    def testTranspose(self):
         """Tests for `Matrix.transpose()`"""
 
         res = M0x0.copy().transpose()
@@ -453,7 +451,7 @@ class TestMatrix(TestCase):
 
         self.assertEqual(res, exp)
 
-    def testSwap(self) -> None:
+    def testSwap(self):
         """Tests for `Matrix.swap()`"""
 
         res = M2x0.copy().swap(0, 1, by=Rule.ROW)
@@ -486,7 +484,7 @@ class TestMatrix(TestCase):
         with self.assertRaises(IndexError):
             M2x3.copy().swap(0, 3, by=Rule.COL)
 
-    def testFlip(self) -> None:
+    def testFlip(self):
         """Tests for `Matrix.flip()`"""
 
         res = M0x2.copy().flip(by=Rule.ROW)
@@ -534,7 +532,7 @@ class TestMatrix(TestCase):
 
         self.assertEqual(res, exp)
 
-    def testStack(self) -> None:
+    def testStack(self):
         """Tests for `Matrix.stack()`"""
 
         res = M2x0.copy().stack(
@@ -633,7 +631,7 @@ class TestMatrix(TestCase):
         with self.assertRaises(ValueError):
             M3x3.copy().stack(M2x3, by=Rule.COL)
 
-    def testPull(self) -> None:
+    def testPull(self):
         """Tests for `Matrix.pull()`"""
 
         res1 = M2x0.copy()
@@ -1000,3 +998,92 @@ class TestIntegralMatrix(TestCase):
 
         self.assertEqual(res, exp)
         self.assertTrue(isinstance(res, Matrix))
+
+
+class TestProtocols(TestCase):
+
+    def testNumeric(self):
+        """Tests for numeric-like protocols"""
+
+        a = 0j
+
+        self.assertTrue(isinstance(a, ComplexLike))
+        self.assertFalse(isinstance(a, RealLike))
+        self.assertFalse(isinstance(a, IntegralLike))
+
+        a = 0.0
+
+        self.assertTrue(isinstance(a, ComplexLike))
+        self.assertTrue(isinstance(a, RealLike))
+        self.assertFalse(isinstance(a, IntegralLike))
+
+        a = 0
+
+        self.assertTrue(isinstance(a, ComplexLike))
+        self.assertTrue(isinstance(a, RealLike))
+        self.assertTrue(isinstance(a, IntegralLike))
+
+        a = ComplexMatrix([], 0, 0)
+
+        self.assertTrue(isinstance(a, ComplexLike))
+        self.assertFalse(isinstance(a, RealLike))
+        self.assertFalse(isinstance(a, IntegralLike))
+
+        a = RealMatrix([], 0, 0)
+
+        self.assertTrue(isinstance(a, ComplexLike))
+        self.assertTrue(isinstance(a, RealLike))
+        self.assertFalse(isinstance(a, IntegralLike))
+
+        a = IntegralMatrix([], 0, 0)
+
+        self.assertTrue(isinstance(a, ComplexLike))
+        self.assertTrue(isinstance(a, RealLike))
+        self.assertTrue(isinstance(a, IntegralLike))
+
+        a = Fraction()
+
+        self.assertTrue(isinstance(a, ComplexLike))
+        self.assertTrue(isinstance(a, RealLike))
+        self.assertFalse(isinstance(a, IntegralLike))
+
+        a = Decimal()  # Should pass, but is heterogeneously unsafe
+
+        self.assertTrue(isinstance(a, ComplexLike))
+        self.assertTrue(isinstance(a, RealLike))
+        self.assertFalse(isinstance(a, IntegralLike))
+
+    def testShape(self):
+        """Tests for the `ShapeLike` protocol"""
+
+        a = Shape()
+
+        self.assertTrue(isinstance(a, ShapeLike))
+
+    def testMatrix(self):
+        """Tests for the `MatrixLike` protocol"""
+
+        a = Matrix([], 0, 0)
+
+        self.assertTrue(isinstance(a, MatrixLike))
+
+    def testNumericMatrix(self):
+        """Tests for numeric matrix-like protocols"""
+
+        a = ComplexMatrix([], 0, 0)
+
+        self.assertTrue(isinstance(a, ComplexMatrixLike))
+        self.assertFalse(isinstance(a, RealMatrixLike))
+        self.assertFalse(isinstance(a, IntegralMatrixLike))
+
+        a = RealMatrix([], 0, 0)
+
+        self.assertTrue(isinstance(a, ComplexMatrixLike))
+        self.assertTrue(isinstance(a, RealMatrixLike))
+        self.assertFalse(isinstance(a, IntegralMatrixLike))
+
+        a = IntegralMatrix([], 0, 0)
+
+        self.assertTrue(isinstance(a, ComplexMatrixLike))
+        self.assertTrue(isinstance(a, RealMatrixLike))
+        self.assertTrue(isinstance(a, IntegralMatrixLike))

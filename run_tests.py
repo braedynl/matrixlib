@@ -1,7 +1,7 @@
 import unittest
 
 from matrices.tests import (TestComplexMatrix, TestIntegralMatrix, TestMatrix,
-                            TestRealMatrix)
+                            TestProtocols, TestRealMatrix)
 
 if __name__ == "__main__":
     unittest.main()
