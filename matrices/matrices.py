@@ -34,7 +34,7 @@ def matrix_rmap(func, a, *bx):
 
 def scalar_map(func, a):
     if (n := a.size) != 1:
-        raise ValueError(f"shape must have size 1, but has size {n}")
+        raise ValueError(f"cannot demote size {n} matrix to scalar")
     return func(a[0])
 
 
@@ -62,7 +62,7 @@ class Matrix(Sequence):
             raise ValueError("dimensions must be non-negative")
         data, shape = list(values), Shape(nrows, ncols)
         if (n := len(data)) != (nrows * ncols):
-            raise ValueError(f"cannot interpret size {n} iterable as shape {shape}")
+            raise ValueError(f"cannot interpret size {n} iterable as shape {nrows} × {ncols}")
         self.data, self.shape = data, shape
 
     @classmethod
@@ -143,10 +143,10 @@ class Matrix(Sequence):
         addition. For the time being, custom formatting must be done manually.
         The implementation for this method is subject to change.
         """
-        m, n = h = self.shape
+        m, n = u = self.shape
 
         if not (m and n):
-            return f"Empty matrix ({h})"
+            return f"Empty matrix ({u})"
 
         result = StringIO()
         items  = iter(self)
@@ -166,7 +166,7 @@ class Matrix(Sequence):
 
             result.write("|\n")
 
-        result.write(f"({h})")
+        result.write(f"({u})")
 
         return result.getvalue()
 
@@ -190,12 +190,12 @@ class Matrix(Sequence):
         length 1 slices if mixed with at least one other slice.
         """
         data = self.data
-        h = self.shape
+        u = self.shape
 
         if isinstance(key, tuple):
 
             def getitems(keys, nrows, ncols):
-                n = h.ncols
+                n = u.ncols
                 return type(self).wrap(
                     [data[i * n + j] for i, j in keys],
                     shape=Shape(nrows, ncols),
@@ -204,10 +204,10 @@ class Matrix(Sequence):
             rowkey, colkey = key
 
             if isinstance(rowkey, slice):
-                ix = h.resolve_slice(rowkey, by=Rule.ROW)
+                ix = u.resolve_slice(rowkey, by=Rule.ROW)
 
                 if isinstance(colkey, slice):
-                    jx = h.resolve_slice(colkey, by=Rule.COL)
+                    jx = u.resolve_slice(colkey, by=Rule.COL)
                     result = getitems(
                         itertools.product(ix, jx),
                         nrows=len(ix),
@@ -215,7 +215,7 @@ class Matrix(Sequence):
                     )
 
                 else:
-                    j = h.resolve_index(colkey, by=Rule.COL)
+                    j = u.resolve_index(colkey, by=Rule.COL)
                     result = getitems(
                         zip(ix, itertools.repeat(j)),
                         nrows=len(ix),
@@ -223,10 +223,10 @@ class Matrix(Sequence):
                     )
 
             else:
-                i = h.resolve_index(rowkey, by=Rule.ROW)
+                i = u.resolve_index(rowkey, by=Rule.ROW)
 
                 if isinstance(colkey, slice):
-                    jx = h.resolve_slice(colkey, by=Rule.COL)
+                    jx = u.resolve_slice(colkey, by=Rule.COL)
                     result = getitems(
                         zip(itertools.repeat(i), jx),
                         nrows=1,
@@ -234,12 +234,12 @@ class Matrix(Sequence):
                     )
 
                 else:
-                    j = h.resolve_index(colkey, by=Rule.COL)
-                    result = data[i * h.ncols + j]
+                    j = u.resolve_index(colkey, by=Rule.COL)
+                    result = data[i * u.ncols + j]
 
             return result
 
-        n = h.nrows * h.ncols
+        n = u.nrows * u.ncols
 
         if isinstance(key, slice):
 
@@ -281,12 +281,12 @@ class Matrix(Sequence):
         treated as length 1 slices if mixed with at least one other slice.
         """
         data = self.data
-        h = self.shape
+        u = self.shape
 
         if isinstance(key, tuple):
 
             def setitems(keys, nrows, ncols):
-                n = h.ncols
+                n = u.ncols
                 for (i, j), x in zip(
                     keys,
                     likewise(other, shape=Shape(nrows, ncols)),
@@ -296,10 +296,10 @@ class Matrix(Sequence):
             rowkey, colkey = key
 
             if isinstance(rowkey, slice):
-                ix = h.resolve_slice(rowkey, by=Rule.ROW)
+                ix = u.resolve_slice(rowkey, by=Rule.ROW)
 
                 if isinstance(colkey, slice):
-                    jx = h.resolve_slice(colkey, by=Rule.COL)
+                    jx = u.resolve_slice(colkey, by=Rule.COL)
                     setitems(
                         itertools.product(ix, jx),
                         nrows=len(ix),
@@ -307,7 +307,7 @@ class Matrix(Sequence):
                     )
 
                 else:
-                    j = h.resolve_index(colkey, by=Rule.COL)
+                    j = u.resolve_index(colkey, by=Rule.COL)
                     setitems(
                         zip(ix, itertools.repeat(j)),
                         nrows=len(ix),
@@ -315,10 +315,10 @@ class Matrix(Sequence):
                     )
 
             else:
-                i = h.resolve_index(rowkey, by=Rule.ROW)
+                i = u.resolve_index(rowkey, by=Rule.ROW)
 
                 if isinstance(colkey, slice):
-                    jx = h.resolve_slice(colkey, by=Rule.COL)
+                    jx = u.resolve_slice(colkey, by=Rule.COL)
                     setitems(
                         zip(itertools.repeat(i), jx),
                         nrows=1,
@@ -326,12 +326,12 @@ class Matrix(Sequence):
                     )
 
                 else:
-                    j = h.resolve_index(colkey, by=Rule.COL)
-                    data[i * h.ncols + j] = other
+                    j = u.resolve_index(colkey, by=Rule.COL)
+                    data[i * u.ncols + j] = other
 
             return
 
-        n = h.nrows * h.ncols
+        n = u.nrows * u.ncols
 
         if isinstance(key, slice):
 
@@ -371,14 +371,14 @@ class Matrix(Sequence):
     def __deepcopy__(self, memo=None):
         """Return a deep copy of the matrix"""
         data = self.data
-        h = self.shape
-        return type(self).wrap(copy.deepcopy(data, memo=memo), shape=h.copy())
+        u = self.shape
+        return type(self).wrap(copy.deepcopy(data, memo=memo), shape=u.copy())
 
     def __copy__(self):
         """Return a shallow copy of the matrix"""
         data = self.data
-        h = self.shape
-        return type(self).wrap(data.copy(), shape=h.copy())
+        u = self.shape
+        return type(self).wrap(data.copy(), shape=u.copy())
 
     def __eq__(self, other, *, map=matrix_map):
         """Return true if element-wise `a == b` is true for all element pairs,
@@ -398,10 +398,7 @@ class Matrix(Sequence):
 
     def __and__(self, other, *, map=matrix_map):
         """Return element-wise `logical_and(a, b)`"""
-        return IntegralMatrix(
-            map(logical_and, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(logical_and, self, other), *self.shape)
 
     def __rand__(self, other):
         """Return element-wise `logical_and(b, a)`"""
@@ -409,10 +406,7 @@ class Matrix(Sequence):
 
     def __or__(self, other, *, map=matrix_map):
         """Return element-wise `logical_or(a, b)`"""
-        return IntegralMatrix(
-            map(logical_or, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(logical_or, self, other), *self.shape)
 
     def __ror__(self, other):
         """Return element-wise `logical_or(b, a)`"""
@@ -420,10 +414,7 @@ class Matrix(Sequence):
 
     def __xor__(self, other, *, map=matrix_map):
         """Return element-wise `logical_xor(a, b)`"""
-        return IntegralMatrix(
-            map(logical_xor, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(logical_xor, self, other), *self.shape)
 
     def __rxor__(self, other):
         """Return element-wise `logical_xor(b, a)`"""
@@ -431,10 +422,7 @@ class Matrix(Sequence):
 
     def __invert__(self, *, map=matrix_map):
         """Return element-wise `logical_not(a)`"""
-        return IntegralMatrix(
-            map(logical_not, self),
-            *self.shape,
-        )
+        return IntegralMatrix(map(logical_not, self), *self.shape)
 
     @property
     def nrows(self):
@@ -475,17 +463,11 @@ class Matrix(Sequence):
 
     def eq(self, other, *, map=matrix_map):
         """Return element-wise `a == b`"""
-        return IntegralMatrix(
-            map(operator.eq, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.eq, self, other), *self.shape)
 
     def ne(self, other, *, map=matrix_map):
         """Return element-wise `a != b`"""
-        return IntegralMatrix(
-            map(operator.ne, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.ne, self, other), *self.shape)
 
     def reshape(self, nrows, ncols):
         """Re-interpret the matrix's shape
@@ -493,24 +475,24 @@ class Matrix(Sequence):
         Raises `ValueError` if any of the given dimensions are negative, or if
         their product does not equal the matrix's current size.
         """
-        h = self.shape
+        u = self.shape
         if nrows < 0 or ncols < 0:
             raise ValueError("dimensions must be non-negative")
-        if (n := (h.nrows * h.ncols)) != (nrows * ncols):
+        if (n := (u.nrows * u.ncols)) != (nrows * ncols):
             raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × {ncols}")
-        h.nrows = nrows
-        h.ncols = ncols
+        u.nrows = nrows
+        u.ncols = ncols
         return self
 
     def slices(self, *, by=Rule.ROW):
         """Return an iterator that yields shallow copies of each row or column"""
         data = self.data
-        h = self.shape
-        k = h.subshape(by=by)
+        u = self.shape
+        v = u.subshape(by=by)
         cls = type(self)
-        for i in range(h[by]):
-            temp = data[h.slice(i, by=by)]
-            yield cls.wrap(temp, shape=k.copy())
+        for i in range(u[by]):
+            temp = data[u.slice(i, by=by)]
+            yield cls.wrap(temp, shape=v.copy())
 
     def mask(self, selector, null):
         """Replace the elements who have a true parallel value in `selector`
@@ -519,8 +501,8 @@ class Matrix(Sequence):
         Raises `ValueError` if operand matrices have incompatible shapes.
         """
         data = self.data
-        if (h := self.shape) != (k := selector.shape):
-            raise ValueError(f"shape {h} is incompatible with selector shape {k}")
+        if (u := self.shape) != (v := selector.shape):
+            raise ValueError(f"shape {u} is incompatible with selector shape {v}")
         for i, x in enumerate(selector):
             if x: data[i] = null
         return self
@@ -550,22 +532,22 @@ class Matrix(Sequence):
         in linear time with respect to the specified dimension.
         """
         data = self.data
-        h = self.shape
-        i = h.resolve_index(key1, by=by)
-        j = h.resolve_index(key2, by=by)
-        for x, y in zip(h.range(i, by=by), h.range(j, by=by)):
-            data[x], data[y] = data[y], data[x]
+        u = self.shape
+        i1 = u.resolve_index(key1, by=by)
+        j1 = u.resolve_index(key2, by=by)
+        for i2, j2 in zip(u.range(i1, by=by), u.range(j1, by=by)):
+            data[i2], data[j2] = data[j2], data[i2]
         return self
 
     def flip(self, *, by=Rule.ROW):
         """Reverse the matrix's rows or columns in place"""
         data = self.data
-        h = self.shape
-        n = h[by]
-        for i in range(n // 2):
-            j = n - i - 1
-            for x, y in zip(h.range(i, by=by), h.range(j, by=by)):
-                data[x], data[y] = data[y], data[x]
+        u = self.shape
+        n = u[by]
+        for i1 in range(n // 2):
+            j1 = n - i1 - 1
+            for i2, j2 in zip(u.range(i1, by=by), u.range(j1, by=by)):
+                data[i2], data[j2] = data[j2], data[i2]
         return self
 
     def flatten(self, *, by=Rule.ROW):
@@ -575,20 +557,20 @@ class Matrix(Sequence):
         column-major order.
         """
         if by: self.transpose()  # For column-major order
-        h = self.shape
-        h[not by] = h.nrows * h.ncols
-        h[by] = 1
+        u = self.shape
+        u[not by] = u.nrows * u.ncols
+        u[by] = 1
         return self
 
     def transpose(self):
         """Transpose the matrix in place"""
-        h = self.shape
-        if (m := h.nrows) > 1 and (n := h.ncols) > 1:
+        u = self.shape
+        if (m := u.nrows) > 1 and (n := u.ncols) > 1:
             data = self.data
             ix = range(m)
             jx = range(n)
             data[:] = (data[i * n + j] for j in jx for i in ix)
-        h.reverse()
+        u.reverse()
         return self
 
     def stack(self, other, *, by=Rule.ROW):
@@ -601,25 +583,25 @@ class Matrix(Sequence):
             other = other.copy()
 
         data = self.data
-        h, k = self.shape, other.shape
+        u, v = self.shape, other.shape
 
         dy = by.inverse
-        if h[dy] != k[dy]:
-            raise ValueError(f"shape {h} is incompatible with operand shape {k} by {dy.handle}")
+        if u[dy] != v[dy]:
+            raise ValueError(f"shape {u} is incompatible with operand shape {v} by {dy.handle}")
 
-        (m, n), (_, q) = (h, k)
+        (m, n), (_, q) = (u, v)
 
         if by and m > 1:
-            left, right = iter(self), iter(other)
+            it1, it2 = iter(self), iter(other)
             data[:] = (
                 x
                 for _ in range(m)
-                for x in itertools.chain(itertools.islice(left, n), itertools.islice(right, q))
+                for x in itertools.chain(itertools.islice(it1, n), itertools.islice(it2, q))
             )
         else:
             data.extend(other)
 
-        h[by] += k[by]
+        u[by] += v[by]
 
         return self
 
@@ -630,15 +612,15 @@ class Matrix(Sequence):
         range.
         """
         data = self.data
-        h = self.shape
+        u = self.shape
 
-        keys = h.slice(h.resolve_index(key, by=by), by=by)
+        keys = u.slice(u.resolve_index(key, by=by), by=by)
         temp = data[keys]
-        h[by] -= 1
+        u[by] -= 1
 
         del data[keys]
 
-        return type(self).wrap(temp, shape=h.subshape(by=by))
+        return type(self).wrap(temp, shape=u.subshape(by=by))
 
     def copy(self, *, deep=False):
         """Return a shallow or deep copy of the matrix"""
@@ -662,10 +644,10 @@ def matrix_compare(a, b, /):
 
 
 def matrix_multiply(a, b, /):
-    (m, n), (p, q) = (h, k) = (a.shape, b.shape)
+    (m, n), (p, q) = (u, v) = (a.shape, b.shape)
 
     if n != p:
-        raise ValueError(f"shape {h} is incompatible with operand shape {k} by their inner dimensions")
+        raise ValueError(f"shape {u} is incompatible with operand shape {v} by inner dimensions")
     if not n:
         return itertools.repeat(0, times=m * q)  # Use int 0 here since it supports all numeric operations
 
@@ -694,10 +676,7 @@ class ComplexMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.add, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.add, self, other), *self.shape)
 
     def __radd__(self, other):
         """Return element-wise `b + a`"""
@@ -709,10 +688,7 @@ class ComplexMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.sub, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.sub, self, other), *self.shape)
 
     def __rsub__(self, other):
         """Return element-wise `b - a`"""
@@ -724,10 +700,7 @@ class ComplexMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.mul, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.mul, self, other), *self.shape)
 
     def __rmul__(self, other):
         """Return element-wise `b * a`"""
@@ -739,10 +712,7 @@ class ComplexMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.truediv, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.truediv, self, other), *self.shape)
 
     def __rtruediv__(self, other):
         """Return element-wise `b / a`"""
@@ -754,16 +724,13 @@ class ComplexMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.pow, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.pow, self, other), *self.shape)
 
     def __rpow__(self, other):
         """Return element-wise `b ** a`"""
         return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other, *, mul=matrix_multiply):
+    def __matmul__(self, other):
         """Return the matrix product `a @ b`"""
         if isinstance(other, ComplexMatrixLike):
             cls = ComplexMatrix
@@ -771,31 +738,19 @@ class ComplexMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        return cls(
-            mul(self, other),
-            *(self.nrows, other.ncols),
-        )
+        return cls(matrix_multiply(self, other), self.nrows, other.ncols)
 
     def __neg__(self, *, map=matrix_map):
         """Return element-wise `-a`"""
-        return ComplexMatrix(
-            map(operator.neg, self),
-            *self.shape,
-        )
+        return ComplexMatrix(map(operator.neg, self), *self.shape)
 
     def __pos__(self, *, map=matrix_map):
         """Return element-wise `+a`"""
-        return ComplexMatrix(
-            map(operator.pos, self),
-            *self.shape,
-        )
+        return ComplexMatrix(map(operator.pos, self), *self.shape)
 
     def __abs__(self, *, map=matrix_map):
         """Return element-wise `abs(a)`"""
-        return RealMatrix(
-            map(abs, self),
-            *self.shape,
-        )
+        return RealMatrix(map(abs, self), *self.shape)
 
     def __complex__(self):
         """Return the matrix as a built-in `complex` instance"""
@@ -803,17 +758,11 @@ class ComplexMatrix(Matrix):
 
     def conjugate(self, *, map=matrix_map):
         """Return element-wise `conjugate(a)`"""
-        return ComplexMatrix(
-            map(conjugate, self),
-            *self.shape,
-        )
+        return ComplexMatrix(map(conjugate, self), *self.shape)
 
     def complex(self, *, map=matrix_map):
         """Return element-wise `complex(a)`"""
-        return ComplexMatrix(
-            map(complex, self),
-            *self.shape,
-        )
+        return ComplexMatrix(map(complex, self), *self.shape)
 
 
 class RealMatrix(Matrix):
@@ -857,10 +806,7 @@ class RealMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.add, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.add, self, other), *self.shape)
 
     def __radd__(self, other):
         """Return element-wise `b + a`"""
@@ -874,10 +820,7 @@ class RealMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.sub, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.sub, self, other), *self.shape)
 
     def __rsub__(self, other):
         """Return element-wise `b - a`"""
@@ -891,10 +834,7 @@ class RealMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.mul, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.mul, self, other), *self.shape)
 
     def __rmul__(self, other):
         """Return element-wise `b * a`"""
@@ -908,10 +848,7 @@ class RealMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.truediv, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.truediv, self, other), *self.shape)
 
     def __rtruediv__(self, other):
         """Return element-wise `b / a`"""
@@ -923,16 +860,13 @@ class RealMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.pow, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.pow, self, other), *self.shape)
 
     def __rpow__(self, other):
         """Return element-wise `b ** a`"""
         return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other, *, mul=matrix_multiply):
+    def __matmul__(self, other):
         """Return the matrix product `a @ b`"""
         if isinstance(other, RealMatrixLike):
             cls = RealMatrix
@@ -942,10 +876,7 @@ class RealMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        return cls(
-            mul(self, other),
-            *(self.nrows, other.ncols),
-        )
+        return cls(matrix_multiply(self, other), self.nrows, other.ncols)
 
     def __floordiv__(self, other, *, map=matrix_map):
         """Return element-wise `a // b`"""
@@ -953,10 +884,7 @@ class RealMatrix(Matrix):
             cls = RealMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.floordiv, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.floordiv, self, other), *self.shape)
 
     def __rfloordiv__(self, other):
         """Return element-wise `b // a`"""
@@ -968,10 +896,7 @@ class RealMatrix(Matrix):
             cls = RealMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.mod, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.mod, self, other), *self.shape)
 
     def __rmod__(self, other):
         """Return element-wise `b % a`"""
@@ -979,24 +904,15 @@ class RealMatrix(Matrix):
 
     def __neg__(self, *, map=matrix_map):
         """Return element-wise `-a`"""
-        return RealMatrix(
-            map(operator.neg, self),
-            *self.shape,
-        )
+        return RealMatrix(map(operator.neg, self), *self.shape)
 
     def __pos__(self, *, map=matrix_map):
         """Return element-wise `+a`"""
-        return RealMatrix(
-            map(operator.pos, self),
-            *self.shape,
-        )
+        return RealMatrix(map(operator.pos, self), *self.shape)
 
     def __abs__(self, *, map=matrix_map):
         """Return element-wise `abs(a)`"""
-        return RealMatrix(
-            map(abs, self),
-            *self.shape,
-        )
+        return RealMatrix(map(abs, self), *self.shape)
 
     def __complex__(self):
         """Return the matrix as a built-in `complex` instance"""
@@ -1008,52 +924,31 @@ class RealMatrix(Matrix):
 
     def lt(self, other, *, map=matrix_map):
         """Return element-wise `a < b`"""
-        return IntegralMatrix(
-            map(operator.lt, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.lt, self, other), *self.shape)
 
     def le(self, other, *, map=matrix_map):
         """Return element-wise `a <= b`"""
-        return IntegralMatrix(
-            map(operator.le, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.le, self, other), *self.shape)
 
     def gt(self, other, *, map=matrix_map):
         """Return element-wise `a > b`"""
-        return IntegralMatrix(
-            map(operator.gt, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.gt, self, other), *self.shape)
 
     def ge(self, other, *, map=matrix_map):
         """Return element-wise `a >= b`"""
-        return IntegralMatrix(
-            map(operator.ge, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.ge, self, other), *self.shape)
 
     def conjugate(self, *, map=matrix_map):
         """Return element-wise `conjugate(a)`"""
-        return RealMatrix(
-            map(conjugate, self),
-            *self.shape,
-        )
+        return RealMatrix(map(conjugate, self), *self.shape)
 
     def complex(self, *, map=matrix_map):
         """Return element-wise `complex(a)`"""
-        return ComplexMatrix(
-            map(complex, self),
-            *self.shape,
-        )
+        return ComplexMatrix(map(complex, self), *self.shape)
 
     def float(self, *, map=matrix_map):
         """Return element-wise `float(a)`"""
-        return RealMatrix(
-            map(float, self),
-            *self.shape,
-        )
+        return RealMatrix(map(float, self), *self.shape)
 
 
 class IntegralMatrix(Matrix):
@@ -1099,10 +994,7 @@ class IntegralMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.add, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.add, self, other), *self.shape)
 
     def __radd__(self, other):
         """Return element-wise `b + a`"""
@@ -1118,10 +1010,7 @@ class IntegralMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.sub, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.sub, self, other), *self.shape)
 
     def __rsub__(self, other):
         """Return element-wise `b - a`"""
@@ -1137,10 +1026,7 @@ class IntegralMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.mul, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.mul, self, other), *self.shape)
 
     def __rmul__(self, other):
         """Return element-wise `b * a`"""
@@ -1154,10 +1040,7 @@ class IntegralMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.truediv, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.truediv, self, other), *self.shape)
 
     def __rtruediv__(self, other):
         """Return element-wise `b / a`"""
@@ -1169,16 +1052,13 @@ class IntegralMatrix(Matrix):
             cls = ComplexMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.pow, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.pow, self, other), *self.shape)
 
     def __rpow__(self, other):
         """Return element-wise `b ** a`"""
         return self.__pow__(other, map=matrix_rmap)
 
-    def __matmul__(self, other, *, mul=matrix_multiply):
+    def __matmul__(self, other):
         """Return the matrix product `a @ b`"""
         if isinstance(other, IntegralMatrixLike):
             cls = IntegralMatrix
@@ -1190,10 +1070,7 @@ class IntegralMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        return cls(
-            mul(self, other),
-            *(self.nrows, other.ncols),
-        )
+        return cls(matrix_multiply(self, other), self.nrows, other.ncols)
 
     def __floordiv__(self, other, *, map=matrix_map):
         """Return element-wise `a // b`"""
@@ -1203,10 +1080,7 @@ class IntegralMatrix(Matrix):
             cls = RealMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.floordiv, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.floordiv, self, other), *self.shape)
 
     def __rfloordiv__(self, other):
         """Return element-wise `b // a`"""
@@ -1220,10 +1094,7 @@ class IntegralMatrix(Matrix):
             cls = RealMatrix
         else:
             cls = Matrix
-        return cls(
-            map(operator.mod, self, other),
-            *self.shape,
-        )
+        return cls(map(operator.mod, self, other), *self.shape)
 
     def __rmod__(self, other):
         """Return element-wise `b % a`"""
@@ -1231,24 +1102,15 @@ class IntegralMatrix(Matrix):
 
     def __neg__(self, *, map=matrix_map):
         """Return element-wise `-a`"""
-        return IntegralMatrix(
-            map(operator.neg, self),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.neg, self), *self.shape)
 
     def __pos__(self, *, map=matrix_map):
         """Return element-wise `+a`"""
-        return IntegralMatrix(
-            map(operator.pos, self),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.pos, self), *self.shape)
 
     def __abs__(self, *, map=matrix_map):
         """Return element-wise `abs(a)`"""
-        return IntegralMatrix(
-            map(abs, self),
-            *self.shape,
-        )
+        return IntegralMatrix(map(abs, self), *self.shape)
 
     def __complex__(self):
         """Return the matrix as a built-in `complex` instance"""
@@ -1268,56 +1130,32 @@ class IntegralMatrix(Matrix):
 
     def lt(self, other, *, map=matrix_map):
         """Return element-wise `a < b`"""
-        return IntegralMatrix(
-            map(operator.lt, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.lt, self, other), *self.shape)
 
     def le(self, other, *, map=matrix_map):
         """Return element-wise `a <= b`"""
-        return IntegralMatrix(
-            map(operator.le, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.le, self, other), *self.shape)
 
     def gt(self, other, *, map=matrix_map):
         """Return element-wise `a > b`"""
-        return IntegralMatrix(
-            map(operator.gt, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.gt, self, other), *self.shape)
 
     def ge(self, other, *, map=matrix_map):
         """Return element-wise `a >= b`"""
-        return IntegralMatrix(
-            map(operator.ge, self, other),
-            *self.shape,
-        )
+        return IntegralMatrix(map(operator.ge, self, other), *self.shape)
 
     def conjugate(self, *, map=matrix_map):
         """Return element-wise `conjugate(a)`"""
-        return IntegralMatrix(
-            map(conjugate, self),
-            *self.shape,
-        )
+        return IntegralMatrix(map(conjugate, self), *self.shape)
 
     def complex(self, *, map=matrix_map):
         """Return element-wise `complex(a)`"""
-        return ComplexMatrix(
-            map(complex, self),
-            *self.shape,
-        )
+        return ComplexMatrix(map(complex, self), *self.shape)
 
     def float(self, *, map=matrix_map):
         """Return element-wise `float(a)`"""
-        return RealMatrix(
-            map(float, self),
-            *self.shape,
-        )
+        return RealMatrix(map(float, self), *self.shape)
 
     def int(self, *, map=matrix_map):
         """Return element-wise `int(a)`"""
-        return IntegralMatrix(
-            map(int, self),
-            *self.shape,
-        )
+        return IntegralMatrix(map(int, self), *self.shape)

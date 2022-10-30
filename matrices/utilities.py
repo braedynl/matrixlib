@@ -24,15 +24,15 @@ def likewise(object, shape):
     treated as being equivalent to a matrix filled solely by the object (which
     cannot have a size of 0).
     """
-    h = shape
+    u = shape
     if isinstance(object, MatrixLike):
-        if h != (k := object.shape):
-            raise ValueError(f"shape {h} is incompatible with operand shape {k}")
+        if u != (v := object.shape):
+            raise ValueError(f"shape {u} is incompatible with operand shape {v}")
         it = iter(object)
     else:
-        if 0 in h:
-            raise ValueError(f"shape {h} is incompatible with operand of non-zero size")
-        it = itertools.repeat(object, times=h.nrows * h.ncols)
+        if 0 in u:
+            raise ValueError(f"shape {u} is incompatible with operand of non-zero size")
+        it = itertools.repeat(object, times=u.nrows * u.ncols)
     return it
 
 
