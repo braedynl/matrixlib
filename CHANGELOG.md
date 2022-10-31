@@ -35,7 +35,17 @@ All new matrix types ultimately derive from one: `Matrix`. It defines four alter
 
 What used to be `Matrix.new()` in 0.1.0 is now `Matrix.wrap()`. The functionality remains the same. An analogous class method for `Matrix.fill_like()` is now gone. Instead, use `Matrix.fill(value, *matrix.shape)`.
 
-Previously, there used to be two alternate constructors in the form of free functions: `matrix()` and `vector()`. With the addition of class extendability, having free functions do the job of a class method makes less sense. The `matrix()` function now exists as a class method called `Matrix.infer()` - its functionality remains identical. No analogous class method exists for `vector()` - using the constructor (and setting either of the two dimensions to 1) is now the recommended way to construct a vector-like matrix.
+Previously, there used to be two alternate constructors in the form of free functions: `matrix()` and `vector()`. With the addition of class extendability, having free functions do the job of a class method makes less sense. The `matrix()` function now exists as a class method called `Matrix.infer()` - its functionality remains identical. The default constructor, `__init__()`, now supports dimension inference, making it usable as a kind of `vector()` substitute when one of the two dimensions is set to 1:
+
+```python
+a = Matrix([1, 2, 3])           # Inferred shape is 1 × 3
+b = Matrix([1, 2, 3], nrows=1)  # Inferred shape is 1 × 3
+c = Matrix([1, 2, 3], ncols=1)  # Inferred shape is 3 × 1
+
+# Equivalent ways of creating matrices `b` and `c`:
+b = Matrix([1, 2, 3], ncols=3)
+c = Matrix([1, 2, 3], nrows=3)
+```
 
 #### A Variety of Rule Changes
 
@@ -71,6 +81,7 @@ The `inverse` property remains, and the `true_name` property (that's typically u
 - Comparison operators (both within `Matrix` and its sub-classes) will now reduce their return values to `bool`. An element-wise "un-reduced" version of each comparison operator is exposed as a separate method of the same name as the corresponding operator overload, but without the surrounding underscores (e.g., `__eq__()` is the reduced version, `eq()` is the un-reduced version).
 - The bitwise operators (interpreted as being logical) now narrow their matrix results to an `IntegralMatrix`.
 - `__setitem__()` now accepts a type `T` object during slice assignment, in which the object is repeated for each entry of the assignment selection.
+- `reshape()` now supports dimension inference, allowing one, or even both, dimensions to be omitted and interpreted automatically. This change also applies to `__init__()`, as mentioned in the major changes (`__init__()` simply calls `reshape()`, internally).
 
 #### Miscellaneous
 
