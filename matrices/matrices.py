@@ -185,7 +185,7 @@ class Matrix(Sequence):
 
         A tuple of two integers, `(i, j)`, will return the element at row `i`,
         column `j`. All other tuple variations will return a new sub-matrix of
-        shape `(M, N)`, where `M` is the length of the first slice's range, and
+        shape `M × N`, where `M` is the length of the first slice's range, and
         `N` is the length of the second slice's range - integers are treated as
         length 1 slices if mixed with at least one other slice.
         """
@@ -276,7 +276,7 @@ class Matrix(Sequence):
 
         A tuple of two integers, `(i, j)`, will overwrite the element at row
         `i`, column `j`. All other tuple variations will overwrite a sub-matrix
-        of shape `(M, N)`, where `M` is the length of the first slice's range,
+        of shape `M × N`, where `M` is the length of the first slice's range,
         and `N` is the length of the second slice's range - integers are
         treated as length 1 slices if mixed with at least one other slice.
         """
@@ -472,13 +472,12 @@ class Matrix(Sequence):
     def reshape(self, nrows=None, ncols=None):
         """Re-interpret the matrix's shape
 
-        If a dimension is `None`, its value will be inferred from the other,
-        non-`None` dimension by dividing through the matrix's size. If all
-        dimensions are `None`, the matrix will be re-shaped to a 1 × `N` row
-        vector.
+        If a single dimension is `None`, its value will be inferred from the
+        other, non-`None` dimension by dividing through the matrix's size. If
+        the non-`None` dimension is 0, the inferred dimension will also be 0.
 
-        If the matrix is empty in any of the cases above, inferred dimensions
-        will fallback to 0.
+        If both dimensions are `None`, the matrix will be re-shaped to a
+        `1 × N` row vector, where `N` is the size of the matrix.
 
         Raises `ValueError` if the matrix's size cannot be matched by the given
         dimensions, or if any of the given dimensions are negative.
@@ -489,7 +488,7 @@ class Matrix(Sequence):
 
         match (nrows, ncols):
             case (None, None):
-                nrows = 1 * (n > 0)
+                nrows = 1
                 ncols = n
             case (None, ncols) if ncols >= 0:
                 nrows, rem = divmod(n, ncols) if ncols else (0, n)
