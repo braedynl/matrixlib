@@ -54,16 +54,16 @@ class Matrix(Sequence):
 
     __slots__ = ("data", "shape")
 
-    def __init__(self, values, nrows, ncols):
+    def __init__(self, values=None, nrows=None, ncols=None):
         """Construct a matrix from the elements of `values`, interpreting it as
         shape `nrows` × `ncols`
+
+        Arguments `nrows` and `ncols` are passed to `reshape()`. See its
+        documentation for more details.
         """
-        if nrows < 0 or ncols < 0:
-            raise ValueError("dimensions must be non-negative")
-        data, shape = list(values), Shape(nrows, ncols)
-        if (n := len(data)) != (nrows * ncols):
-            raise ValueError(f"cannot interpret size {n} iterable as shape {nrows} × {ncols}")
-        self.data, self.shape = data, shape
+        self.data  = [] if values is None else list(values)
+        self.shape = Shape()
+        self.reshape(nrows, ncols)
 
     @classmethod
     def wrap(cls, data, shape):
@@ -469,19 +469,46 @@ class Matrix(Sequence):
         """Return element-wise `a != b`"""
         return IntegralMatrix(map(operator.ne, self, other), *self.shape)
 
-    def reshape(self, nrows, ncols):
+    def reshape(self, nrows=None, ncols=None):
         """Re-interpret the matrix's shape
 
-        Raises `ValueError` if any of the given dimensions are negative, or if
-        their product does not equal the matrix's current size.
+        If a dimension is `None`, its value will be inferred from the other,
+        non-`None` dimension by dividing through the matrix's size. If all
+        dimensions are `None`, the matrix will be re-shaped to a 1 × `N` row
+        vector.
+
+        If the matrix is empty in any of the cases above, inferred dimensions
+        will fallback to 0.
+
+        Raises `ValueError` if the matrix's size cannot be matched by the given
+        dimensions, or if any of the given dimensions are negative.
         """
         u = self.shape
-        if nrows < 0 or ncols < 0:
-            raise ValueError("dimensions must be non-negative")
-        if (n := (u.nrows * u.ncols)) != (nrows * ncols):
-            raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × {ncols}")
+
+        n = len(self.data)  # Use data's length in case the shape is improperly set
+
+        match (nrows, ncols):
+            case (None, None):
+                nrows = 1 * (n > 0)
+                ncols = n
+            case (None, ncols) if ncols >= 0:
+                nrows, rem = divmod(n, ncols) if ncols else (0, n)
+                if rem:
+                    raise ValueError(f"cannot re-shape size {n} matrix as shape M × {ncols}")
+            case (nrows, None) if nrows >= 0:
+                ncols, rem = divmod(n, nrows) if nrows else (0, n)
+                if rem:
+                    raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × N")
+            case (nrows, ncols) if nrows >= 0 and ncols >= 0:
+                m = nrows * ncols
+                if n != m:
+                    raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × {ncols}")
+            case _:
+                raise ValueError("dimensions must be non-negative")
+
         u.nrows = nrows
         u.ncols = ncols
+
         return self
 
     def slices(self, *, by=Rule.ROW):
