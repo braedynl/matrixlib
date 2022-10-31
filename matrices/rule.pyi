@@ -1,11 +1,7 @@
 from enum import IntEnum
 from typing import Literal, TypeVar, final
 
-__all__ = [
-    "Rule",
-    "ROW",
-    "COL",
-]
+__all__ = ["Rule", "ROW", "COL"]
 
 Self = TypeVar("Self")
 

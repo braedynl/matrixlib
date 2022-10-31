@@ -1,10 +1,6 @@
 from enum import IntEnum
 
-__all__ = [
-    "Rule",
-    "ROW",
-    "COL",
-]
+__all__ = ["Rule", "ROW", "COL"]
 
 
 class Rule(IntEnum):

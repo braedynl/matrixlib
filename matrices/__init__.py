@@ -1,8 +1,7 @@
-"""A basic set of utilities for storing and manipulating data in ≤ 2
-dimensions.
+"""Dynamic, vectorized sequence types in ≤ 2 dimensions.
 
-Contains the `Matrix` definition, along with its related utility classes and
-alternate constructors.
+Contains the `Matrix` definition, along with its related utilities and
+variants.
 
 Author: Braedyn L
 Version: 0.2.0
