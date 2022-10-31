@@ -486,24 +486,29 @@ class Matrix(Sequence):
 
         n = len(self.data)  # Use data's length in case the shape is improperly set
 
-        match (nrows, ncols):
-            case (None, None):
-                nrows = 1
-                ncols = n
-            case (None, ncols) if ncols >= 0:
-                nrows, rem = divmod(n, ncols) if ncols else (0, n)
-                if rem:
-                    raise ValueError(f"cannot re-shape size {n} matrix as shape M × {ncols}")
-            case (nrows, None) if nrows >= 0:
-                ncols, rem = divmod(n, nrows) if nrows else (0, n)
-                if rem:
-                    raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × N")
-            case (nrows, ncols) if nrows >= 0 and ncols >= 0:
-                m = nrows * ncols
-                if n != m:
-                    raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × {ncols}")
-            case _:
+        def infer(given):
+            if given < 0:
                 raise ValueError("dimensions must be non-negative")
+            return divmod(n, given) if given else (0, n)
+
+        if nrows is None and ncols is None:
+            nrows, ncols = (1, n)
+
+        elif nrows is None:
+            nrows, mod = infer(ncols)
+            if mod:
+                raise ValueError(f"cannot re-shape size {n} matrix as shape M × {ncols}")
+
+        elif ncols is None:
+            ncols, mod = infer(nrows)
+            if mod:
+                raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × N")
+
+        else:
+            if nrows < 0 or ncols < 0:
+                raise ValueError("dimensions must be non-negative")
+            if n != nrows * ncols:
+                raise ValueError(f"cannot re-shape size {n} matrix as shape {nrows} × {ncols}")
 
         u.nrows = nrows
         u.ncols = ncols
@@ -764,7 +769,7 @@ class ComplexMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        return cls(matrix_multiply(self, other), self.nrows, other.ncols)
+        return cls(matrix_multiply(self, other), nrows=self.nrows, ncols=other.ncols)
 
     def __neg__(self, *, map=matrix_map):
         """Return element-wise `-a`"""
@@ -902,7 +907,7 @@ class RealMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        return cls(matrix_multiply(self, other), self.nrows, other.ncols)
+        return cls(matrix_multiply(self, other), nrows=self.nrows, ncols=other.ncols)
 
     def __floordiv__(self, other, *, map=matrix_map):
         """Return element-wise `a // b`"""
@@ -1092,7 +1097,7 @@ class IntegralMatrix(Matrix):
             cls = Matrix
         else:
             return NotImplemented
-        return cls(matrix_multiply(self, other), self.nrows, other.ncols)
+        return cls(matrix_multiply(self, other), nrows=self.nrows, ncols=other.ncols)
 
     def __floordiv__(self, other, *, map=matrix_map):
         """Return element-wise `a // b`"""

@@ -26,8 +26,6 @@ __all__ = [
 # (either a new instance of the enclosing class, or a "built-in real" such as
 # float or int).
 #
-# The exception to this rule is true division and exponentiation.
-#
 # True division should follow the rule above in all subclasses up to (but not
 # including) IntegralLike. Subclasses of IntegralLike may produce a RealLike,
 # but are free to be more specific.
@@ -43,8 +41,9 @@ __all__ = [
 # subclassed protocol (a complex number's absolute value is its real distance,
 # real numbers' absolute value can be a new real number).
 #
-# All comparison operators should return instances of IntegralLike. Numeric
-# matrix types will return instances of IntegralMatrixLike.
+# All sub-classes should implement a built-in numeric conversion. At minimum,
+# complex-likes should implement __complex__(), real-likes should implement
+# __float__(), and integral-likes should implement __int__()
 
 
 # These protocols are implemented as a hierarchy, but note that the concrete
