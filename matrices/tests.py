@@ -332,6 +332,63 @@ class TestMatrix(TestCase):
         with self.assertRaises(ValueError):
             M2x3.copy().reshape(3, 4)
 
+        res = M1x0.copy().reshape(nrows=0)
+        exp = M0x0
+
+        self.assertEqual(res, exp)
+
+        res = M0x1.copy().reshape(ncols=0)
+        exp = M0x0
+
+        self.assertEqual(res, exp)
+
+        a = Matrix(range(6), nrows=1, ncols=6)
+
+        res = a.copy().reshape(nrows=1)
+        exp = a
+
+        self.assertEqual(res, exp)
+
+        res = a.copy().reshape(ncols=1)
+        exp = Matrix(range(6), nrows=6, ncols=1)
+
+        self.assertEqual(res, exp)
+
+        res = a.copy().reshape(nrows=2)
+        exp = Matrix(range(6), nrows=2, ncols=3)
+
+        self.assertEqual(res, exp)
+
+        res = a.copy().reshape(nrows=3)
+        exp = Matrix(range(6), nrows=3, ncols=2)
+
+        self.assertEqual(res, exp)
+
+        res = a.copy().reshape(ncols=2)
+        exp = Matrix(range(6), nrows=3, ncols=2)
+
+        self.assertEqual(res, exp)
+
+        res = a.copy().reshape(ncols=3)
+        exp = Matrix(range(6), nrows=2, ncols=3)
+
+        self.assertEqual(res, exp)
+
+        res = a.copy().reshape(nrows=6)
+        exp = Matrix(range(6), nrows=6, ncols=1)
+
+        self.assertEqual(res, exp)
+
+        res = a.copy().reshape(ncols=6)
+        exp = Matrix(range(6), nrows=1, ncols=6)
+
+        self.assertEqual(res, exp)
+
+        res = a.copy().reshape()
+        exp = a
+
+        self.assertEqual(res, exp)
+
     def testSlices(self):
         """Tests for `Matrix.slices()`"""
 
