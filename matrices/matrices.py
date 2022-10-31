@@ -779,7 +779,7 @@ class ComplexMatrix(Matrix):
         return RealMatrix(map(abs, self), *self.shape)
 
     def __complex__(self):
-        """Return the matrix as a built-in `complex` instance"""
+        """Return the matrix as a `complex` instance"""
         return scalar_map(complex, self)
 
     def conjugate(self, *, map=matrix_map):
@@ -940,12 +940,8 @@ class RealMatrix(Matrix):
         """Return element-wise `abs(a)`"""
         return RealMatrix(map(abs, self), *self.shape)
 
-    def __complex__(self):
-        """Return the matrix as a built-in `complex` instance"""
-        return scalar_map(complex, self)
-
     def __float__(self):
-        """Return the matrix as a built-in `float` instance"""
+        """Return the matrix as a `float` instance"""
         return scalar_map(float, self)
 
     def lt(self, other, *, map=matrix_map):
@@ -1138,20 +1134,12 @@ class IntegralMatrix(Matrix):
         """Return element-wise `abs(a)`"""
         return IntegralMatrix(map(abs, self), *self.shape)
 
-    def __complex__(self):
-        """Return the matrix as a built-in `complex` instance"""
-        return scalar_map(complex, self)
-
-    def __float__(self):
-        """Return the matrix as a built-in `float` instance"""
-        return scalar_map(float, self)
-
     def __int__(self):
-        """Return the matrix as a built-in `int` instance"""
+        """Return the matrix as an `int` instance"""
         return scalar_map(int, self)
 
     def __index__(self):
-        """Return the matrix as a built-in `int` instance, losslessly"""
+        """Return the matrix as an `int` instance, losslessly"""
         return scalar_map(operator.index, self)
 
     def lt(self, other, *, map=matrix_map):

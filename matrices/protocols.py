@@ -453,18 +453,6 @@ class ComplexMatrixLike(MatrixLike[ComplexLikeT_co], Protocol[ComplexLikeT_co]):
         """Return element-wise `abs(a)`"""
         pass
 
-    # XXX: Matrices may demote to a scalar object if, and only if, its size is
-    # 1. ValueError should be raised otherwise.
-    # Unlike ComplexLike, this method is version-independent due to the complex
-    # constructor having the ability to take complex instances as an argument
-    # (it's just that the complex type does not implement a special converting
-    # method for itself).
-
-    @abstractmethod
-    def __complex__(self):
-        """Return an equivalent `complex` instance"""
-        pass
-
     @abstractmethod
     def conjugate(self):
         """Return element-wise `conjugate(a)`"""
@@ -539,11 +527,6 @@ class RealMatrixLike(ComplexMatrixLike[RealLikeT_co], Protocol[RealLikeT_co]):
         pass
 
     @abstractmethod
-    def __float__(self):
-        """Return an equivalent `float` instance"""
-        pass
-
-    @abstractmethod
     def lt(self, other):
         """Return element-wise `a < b`"""
         pass
@@ -579,14 +562,12 @@ class IntegralMatrixLike(RealMatrixLike[IntegralLikeT_co], Protocol[IntegralLike
     Derives from `RealMatrixLike`.
     """
 
-    @abstractmethod
-    def __int__(self):
-        """Return an equivalent `int` instance"""
-        pass
+    # XXX: Demotion to a scalar object can only occur if, and only if, the
+    # matrix's size is 1
 
     @abstractmethod
     def __index__(self):
-        """Return an equivalent `int` instance, losslessly"""
+        """Return the matrix as an `int` instance, losslessly"""
         pass
 
     @abstractmethod
