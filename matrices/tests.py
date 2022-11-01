@@ -10,6 +10,14 @@ from .protocols import (ComplexLike, ComplexMatrixLike, IntegralLike,
 from .rule import Rule
 from .shape import Shape
 
+__all__ = [
+    "TestMatrix",
+    "TestComplexMatrix",
+    "TestRealMatrix",
+    "TestIntegralMatrix",
+    "TestProtocols",
+]
+
 M0x0 = Matrix([], nrows=0, ncols=0)
 
 M0x1 = Matrix([], nrows=0, ncols=1)
