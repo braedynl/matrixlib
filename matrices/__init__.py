@@ -4,7 +4,7 @@ Contains the `Matrix` definition, along with its related utilities and
 variants.
 
 Author: Braedyn L
-Version: 0.2.1
+Version: 0.2.2
 Documentation: https://github.com/braedynl/matrices-py/wiki
 """
 
