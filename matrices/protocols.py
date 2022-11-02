@@ -551,7 +551,7 @@ class RealMatrixLike(ComplexMatrixLike[RealLikeT_co], Protocol[RealLikeT_co]):
         pass
 
 
-IntegralLikeT_co = TypeVar("IntegralLikeT_co", bound=ComplexLike, covariant=True)
+IntegralLikeT_co = TypeVar("IntegralLikeT_co", bound=IntegralLike, covariant=True)
 
 @runtime_checkable
 class IntegralMatrixLike(RealMatrixLike[IntegralLikeT_co], Protocol[IntegralLikeT_co]):

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "matrices-py"
-version = "0.2.1"
+version = "0.2.2"
 authors = [
   { name="Braedyn L" },
 ]
@@ -28,4 +28,4 @@ keywords = ["matrices", "matrix", "vectors", "vector", "vectorization"]
 "Source" = "https://github.com/braedynl/matrices-py"
 
 [tool.setuptools.package-data]
-"*" = ["*.pyi"]
+"*" = ["*.pyi", "py.typed"]
