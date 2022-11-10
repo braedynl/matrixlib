@@ -52,7 +52,8 @@ class Matrix(Sequence):
     always done in row-major order unless stated otherwise.
     """
 
-    __slots__ = ("data", "shape")
+    __slots__      = ("data", "shape")
+    __match_args__ = ("data", "nrows", "ncols")
 
     def __init__(self, values=None, nrows=None, ncols=None):
         """Construct a matrix from the elements of `values`, interpreting it as

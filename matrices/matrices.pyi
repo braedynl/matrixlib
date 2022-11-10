@@ -26,6 +26,7 @@ Self = TypeVar("Self")
 class Matrix(Sequence[T]):
 
     __slots__: tuple[Literal["data"], Literal["shape"]]
+    __match_args__: tuple[Literal["data"], Literal["nrows"], Literal["ncols"]]
 
     def __init__(self: Self, values: Optional[Iterable[T]] = None, nrows: Optional[int] = None, ncols: Optional[int] = None) -> None: ...
     def __repr__(self: Self) -> str: ...
