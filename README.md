@@ -22,6 +22,8 @@ Documentation can be found [here](https://github.com/braedynl/matrices-py/wiki),
 
 This project is currently maintained by [Braedyn L](https://github.com/braedynl). Feel free to report bugs or make a pull request through this repository.
 
+Before making a feature request, please check out the [FAQ](https://github.com/braedynl/matrices-py/wiki/FAQ) that's found in the documentation. Parts of this API that differ from others are usually different for a reason, and some of those reasons may be found there.
+
 ## License
 
 Distributed under the MIT license. See the [LICENSE](https://github.com/braedynl/matrices-py/blob/main/LICENSE) file for more details.
