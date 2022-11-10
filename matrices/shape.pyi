@@ -12,6 +12,7 @@ Self = TypeVar("Self")
 class Shape(Collection[int]):
 
     __slots__: tuple[Literal["data"]]
+    __match_args__: tuple[Literal["nrows"], Literal["ncols"]]
 
     def __init__(self: Self, nrows: int = 0, ncols: int = 0) -> None: ...
     def __repr__(self: Self) -> str: ...

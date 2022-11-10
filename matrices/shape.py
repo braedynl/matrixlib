@@ -18,7 +18,8 @@ class Shape(Collection):
     stated otherwise by the matrix class' documentation.
     """
 
-    __slots__ = ("data",)
+    __slots__      = ("data",)
+    __match_args__ = ("nrows", "ncols")
 
     def __init__(self, nrows=0, ncols=0):
         """Construct a shape from its two dimensions"""
