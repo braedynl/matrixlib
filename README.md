@@ -6,6 +6,31 @@ This library aims to be a "natural" extension to the core Python tool set - simi
 
 The intent, here, is **not** to provide a substitute for [NumPy](https://numpy.org/). While there may be similarities in certain parts of the API, NumPy should always be the choice for efficient data storage and vectorization in larger applications - especially in more than two dimensions.
 
+```python
+>>> from math import isclose
+>>> from matrices import RealMatrix, RealMatrixLike, ROW
+>>>
+>>> def norm(a: RealMatrixLike[float]) -> float:
+...     return sum(a * a) ** 0.5
+...
+>>> a = RealMatrix[float]([
+...     1, 2, 3,
+...     4, 5, 6,
+...     7, 8, 9,
+... ], nrows=3, ncols=3)
+>>>
+>>> for i, row in enumerate(a.slices(by=ROW)):
+...     a[i, :] = row / norm(row)
+...
+>>> print(a)
+| 0.2672612… 0.5345224… 0.8017837… |
+| 0.4558423… 0.5698028… 0.6837634… |
+| 0.5025707… 0.5743665… 0.6461623… |
+(3 × 3)
+>>>
+>>> assert all(map(lambda row: isclose(norm(row), 1), a.slices(by=ROW)))
+```
+
 ## Getting Started
 
 This project is available through [pip](https://pip.pypa.io/en/stable/) (requires Python 3.10 or higher, 3.11 is recommended):
