@@ -3,6 +3,7 @@ import enum
 import functools
 import itertools
 import operator
+import re
 import reprlib
 from collections.abc import Sequence
 from enum import Flag
@@ -22,6 +23,8 @@ __all__ = [
     "RealMatrix",
     "IntegralMatrix",
 ]
+
+FORMAT_PATTERN = re.compile(r"(-?\d*)(?:,(-?\d*))?(?:,(-?\d*))?")
 
 
 def matrix_map(func, a, *bx):
@@ -133,41 +136,61 @@ class Matrix(Sequence):
         return f"{self.__class__.__name__}({self.data!r}, nrows={self.nrows!r}, ncols={self.ncols!r})"
 
     def __str__(self):
-        """Return a string representation of the matrix
+        """Return a string representation of the matrix"""
+        return self.__format__()
 
-        Elements of the matrix are organized into right-justified fields of
-        width 10. If an element's string representation goes beyond this width,
-        it will be truncated to 9 characters, using `…` as a suffix. A single
-        space is used to delineate elements.
-
-        Customizable string formatting (through `__format__()`) is a planned
-        addition. For the time being, custom formatting must be done manually.
-        The implementation for this method is subject to change.
-        """
+    def __format__(self, format_spec=""):
+        """Return a formatted string representation of the matrix"""  # TODO: better docs
         m, n = u = self.shape
-
         if not (m and n):
             return f"Empty matrix ({u})"
 
+        match = FORMAT_PATTERN.match(format_spec)
+        if not match:
+            raise ValueError("invalid format specification")
+
+        data = self.data
+
+        mb = int(group) if (group := match.group(1)) else 8
+        nb = int(group) if (group := match.group(2)) else 8
+        xb = int(group) if (group := match.group(3)) else 8
+
+        ml = m > mb > 0
+        nl = n > nb > 0
+        mt = mb - 1 if ml else m
+        nt = nb - 1 if nl else n
+
+        xb = xb if xb > 0 else 8
+
         result = StringIO()
-        items  = iter(self)
+        write  = functools.partial(print, end=" ", file=result)
 
-        max_width = 10
+        for i in range(mt):
+            write("|")
 
-        for _ in range(m):
-            result.write("| ")
-
-            for _ in range(n):
-                chars = str(next(items))
-                if len(chars) > max_width:
-                    result.write(f"{chars[:max_width - 1]}…")
+            for j in range(nt):
+                x = data[i * n + j]
+                if isinstance(x, Matrix):
+                    chars = repr(x)
                 else:
-                    result.write(chars.rjust(max_width))
-                result.write(" ")
+                    chars = str(x)
+                write(chars[:xb - 1] + "…" if len(chars) > xb else chars.rjust(xb))
 
-            result.write("|\n")
+            if nl:
+                write("…".rjust(xb))
+            write("|", end="\n")
 
-        result.write(f"({u})")
+        if ml:
+            write("|")
+
+            for j in range(nt):
+                write("⋮".rjust(xb))
+
+            if nl:
+                write("⋱".rjust(xb))
+            write("|", end="\n")
+
+        write(f"({u})", end="")
 
         return result.getvalue()
 
