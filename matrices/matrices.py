@@ -136,11 +136,25 @@ class Matrix(Sequence):
         return f"{self.__class__.__name__}({self.data!r}, nrows={self.nrows!r}, ncols={self.ncols!r})"
 
     def __str__(self):
-        """Return a string representation of the matrix"""
+        """Return a string representation of the matrix
+
+        Returns `self.__format__()` with the default specification.
+        """
         return self.__format__()
 
     def __format__(self, format_spec=""):
-        """Return a formatted string representation of the matrix"""  # TODO: better docs
+        """Return a formatted string representation of the matrix
+
+        The specification takes three comma-separated integers that corresponds
+        to the maximum amount of row, column, and item space. All fields
+        default to 8. If a row or column space is less than or equal to 0, all
+        rows and columns are written to the string. If the item space is less
+        than or equal to 0, it will fallback to the default of 8.
+
+        If a row, column, or item cannot fit within the given space, the last
+        row, column, or character is replaced with an ellipsis (`…`, `⋮`, or
+        `⋱`, depending on context).
+        """
         m, n = u = self.shape
         if not (m and n):
             return f"Empty matrix ({u})"
