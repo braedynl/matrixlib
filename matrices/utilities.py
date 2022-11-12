@@ -3,6 +3,7 @@ import itertools
 from .protocols import MatrixLike
 
 __all__ = [
+    "only",
     "likewise",
     "logical_and",
     "logical_or",
@@ -12,27 +13,37 @@ __all__ = [
 ]
 
 
-def likewise(object, shape):
-    """Return an iterator of `object` as if it were a matrix of `shape`
+def only(x):
+    """Return the only contained object of a length 1 collection
+
+    Raises `ValueError` if the collection does not have length 1.
+    """
+    if (n := len(x)) != 1:
+        raise ValueError(f"cannot demote size {n} collection to singular object")
+    return x[0]
+
+
+def likewise(x, shape):
+    """Return an iterator of `x` as if it were a matrix of `shape`
 
     Raises `ValueError` under the following conditions:
-    - The shape of `object` does not equal the input `shape` when `object` is a
+    - The shape of `x` does not equal the input `shape` when `x` is a
       `MatrixLike`.
-    - The input `shape` has a product of 0 when `object` is not a `MatrixLike`.
+    - The input `shape` has a product of 0 when `x` is not a `MatrixLike`.
 
     Non-`MatrixLike` objects conflict with product 0 shapes, since they are
     treated as being equivalent to a matrix filled solely by the object (which
     cannot have a size of 0).
     """
     u = shape
-    if isinstance(object, MatrixLike):
-        if u != (v := object.shape):
+    if isinstance(x, MatrixLike):
+        if u != (v := x.shape):
             raise ValueError(f"shape {u} is incompatible with operand shape {v}")
-        it = iter(object)
+        it = iter(x)
     else:
         if 0 in u:
             raise ValueError(f"shape {u} is incompatible with operand of non-zero size")
-        it = itertools.repeat(object, times=u.nrows * u.ncols)
+        it = itertools.repeat(x, times=u.nrows * u.ncols)
     return it
 
 

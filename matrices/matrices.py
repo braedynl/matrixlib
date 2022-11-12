@@ -15,7 +15,7 @@ from .protocols import (ComplexLike, ComplexMatrixLike, IntegralLike,
 from .rule import Rule
 from .shape import Shape
 from .utilities import (conjugate, likewise, logical_and, logical_not,
-                        logical_or, logical_xor)
+                        logical_or, logical_xor, only)
 
 __all__ = [
     "Matrix",
@@ -34,11 +34,6 @@ def matrix_map(func, a, *bx):
 def matrix_rmap(func, a, *bx):
     bx = map(likewise, reversed(bx), itertools.repeat(a.shape))
     return map(func, *bx, a)
-
-def scalar_map(func, a):
-    if (n := a.size) != 1:
-        raise ValueError(f"cannot demote size {n} matrix to scalar")
-    return func(a[0])
 
 
 class Matrix(Sequence):
@@ -885,7 +880,7 @@ class ComplexMatrix(Matrix):
 
     def __complex__(self):
         """Return the matrix as a `complex` instance"""
-        return scalar_map(complex, self)
+        return complex(only(self))
 
     def conjugate(self, *, map=matrix_map):
         """Return element-wise `conjugate(a)`"""
@@ -1099,7 +1094,7 @@ class RealMatrix(Matrix):
 
     def __float__(self):
         """Return the matrix as a `float` instance"""
-        return scalar_map(float, self)
+        return float(only(self))
 
     def lt(self, other, *, map=matrix_map):
         """Return element-wise `a < b`"""
@@ -1365,11 +1360,11 @@ class IntegralMatrix(Matrix):
 
     def __int__(self):
         """Return the matrix as an `int` instance"""
-        return scalar_map(int, self)
+        return int(only(self))
 
     def __index__(self):
         """Return the matrix as an `int` instance, losslessly"""
-        return scalar_map(operator.index, self)
+        return operator.index(only(self))
 
     def lt(self, other, *, map=matrix_map):
         """Return element-wise `a < b`"""
