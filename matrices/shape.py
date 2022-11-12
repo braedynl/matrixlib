@@ -57,7 +57,10 @@ class Shape(Collection):
             return value
 
     def __setitem__(self, key, value):
-        """Set the dimension corresponding to `key` with `value`"""
+        """Set the dimension corresponding to `key` with `value`
+
+        This method should only be used by matrix implementations.
+        """
         key = operator.index(key)
         try:
             self.data[key] = value
@@ -84,7 +87,10 @@ class Shape(Collection):
 
     @property
     def nrows(self):
-        """The first dimension of the shape"""
+        """The first dimension of the shape
+
+        This property's setter should be used by matrix implementations.
+        """
         return self.data[0]
 
     @nrows.setter
@@ -93,7 +99,10 @@ class Shape(Collection):
 
     @property
     def ncols(self):
-        """The second dimension of the shape"""
+        """The second dimension of the shape
+
+        This property's setter should be used by matrix implementations.
+        """
         return self.data[1]
 
     @ncols.setter
@@ -105,7 +114,10 @@ class Shape(Collection):
         return Shape(*self.data)
 
     def reverse(self):
-        """Reverse the shape's dimensions in place"""
+        """Reverse the shape's dimensions in place
+
+        This method should only be used by matrix implementations.
+        """
         self.data.reverse()
         return self
 
