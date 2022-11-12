@@ -58,14 +58,14 @@ class Matrix(Sequence):
     __slots__      = ("data", "shape")
     __match_args__ = ("data", "nrows", "ncols")
 
-    def __init__(self, values=None, nrows=None, ncols=None):
-        """Construct a matrix from the elements of `values`, interpreting it as
+    def __init__(self, data=None, nrows=None, ncols=None):
+        """Construct a matrix from the elements of `data`, interpreting it as
         shape `nrows` × `ncols`
 
         Arguments `nrows` and `ncols` are passed to `reshape()`. See its
         documentation for more details.
         """
-        self.data  = [] if values is None else list(values)
+        self.data  = [] if data is None else list(data)
         self.shape = Shape()
         self.reshape(nrows, ncols)
 
