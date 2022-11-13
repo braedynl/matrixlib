@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "matrices-py"
-version = "0.2.2"
+version = "0.2.3"
 authors = [
   { name="Braedyn L" },
 ]
@@ -24,8 +24,9 @@ keywords = ["matrices", "matrix", "vectors", "vector", "vectorization"]
 
 [project.urls]
 "Homepage" = "https://github.com/braedynl/matrices-py"
-"Bug Tracker" = "https://github.com/braedynl/matrices-py/issues"
 "Source" = "https://github.com/braedynl/matrices-py"
+"Documentation" = "https://github.com/braedynl/matrices-py/wiki"
+"Bug Tracker" = "https://github.com/braedynl/matrices-py/issues"
 
 [tool.setuptools.package-data]
 "*" = ["*.pyi", "py.typed"]

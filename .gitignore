@@ -130,3 +130,6 @@ dmypy.json
 
 # VSCode settings
 .vscode/
+
+# Testing script
+main.py

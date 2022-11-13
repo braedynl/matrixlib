@@ -21,7 +21,7 @@ class Rule(IntEnum):
     @property
     def handle(self):
         """The rule's non-Pythonized name"""
-        return ["row", "column"][self]
+        return ("row", "column")[self]
 
 
 ROW = Rule.ROW
