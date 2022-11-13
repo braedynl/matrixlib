@@ -141,14 +141,14 @@ class Matrix(Sequence):
         """Return a formatted string representation of the matrix
 
         The specification takes three comma-separated integers that corresponds
-        to the maximum amount of row, column, and item space. All fields
+        to the maximum amount of row, column, and character space. All fields
         default to 8. If a row or column space is less than or equal to 0, all
-        rows and columns are written to the string. If the item space is less
-        than or equal to 0, it will fallback to the default of 8.
+        rows and columns are written to the string. If the character space is
+        less than or equal to 0, it will fallback to the default of 8.
 
-        If a row, column, or item cannot fit within the given space, the last
-        row, column, or character is replaced with an ellipsis (`…`, `⋮`, or
-        `⋱`, depending on context).
+        If a row, column, or string cannot fit within the given space, the last
+        row, column, or character is replaced with an ellipsis (the horizontal
+        ellipsis character, `…` U+2026).
         """
         m, n = u = self.shape
         if not (m and n):
@@ -193,10 +193,10 @@ class Matrix(Sequence):
             write("|")
 
             for j in range(nt):
-                write("⋮".rjust(xb))
+                write("…".rjust(xb))
 
             if nl:
-                write("⋱".rjust(xb))
+                write("…".rjust(xb))
             write("|", end="\n")
 
         write(f"({u})", end="")
