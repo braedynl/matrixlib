@@ -23,9 +23,9 @@ The intent, here, is **not** to provide a substitute for [NumPy](https://numpy.o
 ...     a[i, :] = row / norm(row)
 ...
 >>> print(a)
-| 0.2672612… 0.5345224… 0.8017837… |
-| 0.4558423… 0.5698028… 0.6837634… |
-| 0.5025707… 0.5743665… 0.6461623… |
+| 0.26726… 0.53452… 0.80178… |
+| 0.45584… 0.56980… 0.68376… |
+| 0.50257… 0.57436… 0.64616… |
 (3 × 3)
 >>>
 >>> assert all(map(lambda row: isclose(norm(row), 1), a.slices(by=ROW)))
