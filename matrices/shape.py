@@ -7,7 +7,7 @@ from views import View
 from .protocols import ShapeLike
 from .rule import Rule
 
-__all__ = ["Shape"]
+__all__ = ["Shape", "ShapeView"]
 
 
 ShapeT = TypeVar("ShapeT", bound="Shape")
