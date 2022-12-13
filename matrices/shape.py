@@ -1,13 +1,18 @@
 import operator
-from collections.abc import Collection
+from collections.abc import Collection, Iterator
+from typing import Any, Optional, SupportsIndex, TypeVar
+
+from views import View
 
 from .protocols import ShapeLike
 from .rule import Rule
 
 __all__ = ["Shape"]
 
+Self = TypeVar("Self", bound="Shape")
 
-class Shape(Collection):
+
+class Shape(Collection[int], ShapeLike):
     """A mutable collection type for storing matrix dimensions
 
     Instances of `Shape` support integer - but not slice - indexing. Negative
@@ -18,146 +23,129 @@ class Shape(Collection):
     stated otherwise by the matrix class' documentation.
     """
 
-    __slots__      = ("data",)
+    __slots__ = ("_data",)
     __match_args__ = ("nrows", "ncols")
 
-    def __init__(self, nrows=0, ncols=0):
+    def __init__(self, nrows: int = 0, ncols: int = 0) -> None:
         """Construct a shape from its two dimensions"""
-        self.data = [nrows, ncols]
+        self._data = [nrows, ncols]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a canonical representation of the shape"""
-        nrows, ncols = self.data
-        return f"Shape(nrows={nrows!r}, ncols={ncols!r})"
+        nrows, ncols = self
+        return f"{self.__class__.__name__}(nrows={nrows!r}, ncols={ncols!r})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a string representation of the shape"""
-        nrows, ncols = self.data
+        nrows, ncols = self
         return f"{nrows} × {ncols}"
 
-    def __eq__(self, other):
-        """Return true if the two shapes are equal, otherwise false"""
-        if not isinstance(other, ShapeLike):
-            return NotImplemented
-        nrows, ncols = self.data
-        return nrows == other[0] and ncols == other[1]
-
-    def __len__(self):
-        """Return literal 2"""
-        return 2
-
-    def __getitem__(self, key):
+    def __getitem__(self, key: SupportsIndex) -> int:
         """Return the dimension corresponding to `key`"""
         key = operator.index(key)
         try:
-            value = self.data[key]
-        except IndexError:
-            raise IndexError("index out of range") from None
+            value = self._data[key]
+        except IndexError as error:
+            raise IndexError("index out of range") from error
         else:
             return value
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: SupportsIndex, value: int) -> None:
         """Set the dimension corresponding to `key` with `value`
 
         This method should only be used by matrix implementations.
         """
         key = operator.index(key)
         try:
-            self.data[key] = value
-        except IndexError:
-            raise IndexError("index out of range") from None
+            self._data[key] = value
+        except IndexError as error:
+            raise IndexError("index out of range") from error
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         """Return an iterator over the dimensions of the shape"""
-        yield from iter(self.data)
+        yield from self._data
 
-    def __reversed__(self):
+    def __reversed__(self) -> Iterator[int]:
         """Return a reversed iterator over the dimensions of the shape"""
-        yield from reversed(self.data)
+        yield from reversed(self._data)
 
-    def __contains__(self, value):
+    def __contains__(self, value: Any) -> bool:
         """Return true if the shape contains `value`, otherwise false"""
-        return value in self.data
+        return value in self._data
 
-    def __deepcopy__(self, memo=None):
+    def __deepcopy__(self: Self, memo: Optional[dict[int, Any]] = None) -> Self:
         """Return a copy of the shape"""
-        return Shape(*self.data)  # Our components are (hopefully) immutable
+        return self.__class__(*self)  # Our components are (hopefully) immutable
 
     __copy__ = __deepcopy__
 
     @property
-    def nrows(self):
-        """The first dimension of the shape
-
-        This property's setter should be used by matrix implementations.
-        """
-        return self.data[0]
-
-    @nrows.setter
-    def nrows(self, value):
-        self.data[0] = value
+    def data(self) -> View[int]:  # TODO: docstring
+        return View(self._data)
 
     @property
-    def ncols(self):
-        """The second dimension of the shape
+    def nrows(self) -> int:
+        """The first dimension of the shape"""
+        return self[0]
 
-        This property's setter should be used by matrix implementations.
-        """
-        return self.data[1]
+    @nrows.setter
+    def nrows(self, value: int) -> None:
+        self[0] = value
+
+    @property
+    def ncols(self) -> int:
+        """The second dimension of the shape"""
+        return self[1]
 
     @ncols.setter
-    def ncols(self, value):
-        self.data[1] = value
+    def ncols(self, value: int) -> None:
+        self[1] = value
 
-    def copy(self):
+    def copy(self: Self) -> Self:
         """Return a copy of the shape"""
-        return Shape(*self.data)
+        return self.__class__(*self)
 
-    def reverse(self):
-        """Reverse the shape's dimensions in place
-
-        This method should only be used by matrix implementations.
-        """
-        self.data.reverse()
+    def reverse(self: Self) -> Self:
+        """Reverse the shape's dimensions in place"""
+        self._data.reverse()
         return self
 
-    def subshape(self, *, by=Rule.ROW):
+    def subshape(self: Self, *, by: Rule = Rule.ROW) -> Self:
         """Return the shape of any sub-matrix in the given rule's form"""
         shape = self.copy()
-        shape.data[by] = 1
+        shape[by] = 1
         return shape
 
-    def resolve_index(self, key, *, by=Rule.ROW):
+    def resolve_index(self, key: SupportsIndex, *, by: Rule = Rule.ROW) -> int:
         """Return an index `key` as an equivalent integer, respective to a rule
 
         Raises `IndexError` if the key is out of range.
         """
-        n = self.data[by]
+        n = self[by]
         i = operator.index(key)
         i += n * (i < 0)
         if i < 0 or i >= n:
             raise IndexError(f"there are {n} {by.handle}s but index is {key}")
         return i
 
-    def resolve_slice(self, key, *, by=Rule.ROW):
+    def resolve_slice(self, key: slice, *, by: Rule = Rule.ROW) -> range:
         """Return a slice `key` as an equivalent sequence of indices,
         respective to a rule
         """
-        n = self.data[by]
+        n = self[by]
         return range(*key.indices(n))
 
-    def sequence(self, index, *, by=Rule.ROW):
+    def sequence(self, index: int, *, by: Rule = Rule.ROW) -> tuple[int, int, int]:
         """Return the start, stop, and step values required to create a range
         or slice object of the given rule's shape beginning at `index`
 
         The input `index` must be positive - negative indices may produce
         unexpected results. This requirement is not checked for.
         """
-        data = self.data
         dy = not by
 
-        major = data[by]
-        minor = data[dy]
+        major = self[by]
+        minor = self[dy]
 
         major_step = by * major + dy
         minor_step = dy * minor + by
@@ -167,13 +155,13 @@ class Shape(Collection):
 
         return start, stop, major_step
 
-    def range(self, index, *, by=Rule.ROW):
+    def range(self, index: int, *, by: Rule = Rule.ROW) -> range:
         """Return a range of indices that can be used to construct a sub-matrix
         of the rule's shape beginning at `index`
         """
         return range(*self.sequence(index, by=by))
 
-    def slice(self, index, *, by=Rule.ROW):
+    def slice(self, index: int, *, by: Rule = Rule.ROW) -> slice:
         """Return a slice that can be used to construct a sub-matrix of the
         rule's shape beginning at `index`
         """
