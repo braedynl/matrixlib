@@ -163,7 +163,7 @@ class ShapeView(Collection[int], ShapeLike):
 
     __slots__ = ("_target",)
 
-    def __init__(self, target: Shape) -> None:
+    def __init__(self, target: ShapeLike) -> None:
         self._target = target
 
     def __repr__(self) -> str:
@@ -173,6 +173,7 @@ class ShapeView(Collection[int], ShapeLike):
     __str__ = __repr__
 
     def __getitem__(self, key: SupportsIndex) -> int:
+        key = operator.index(key)
         return self._target[key]
 
     def __iter__(self) -> Iterator[int]:
