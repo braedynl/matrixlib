@@ -1,16 +1,11 @@
-from __future__ import annotations
-
 from enum import IntEnum
-from typing import Literal, final
+from typing import Literal, TypeVar
 
-__all__ = [
-    "Rule",
-    "ROW",
-    "COL",
-]
+__all__ = ["Rule", "ROW", "COL"]
 
 
-@final
+RuleT = TypeVar("RuleT", bound="Rule")
+
 class Rule(IntEnum):
     """The direction by which to operate within a matrix
 
@@ -22,9 +17,9 @@ class Rule(IntEnum):
     COL: Literal[1] = 1
 
     @property
-    def inverse(self) -> Rule:
+    def inverse(self: RuleT) -> RuleT:
         """The rule corresponding to the opposite dimension"""
-        return Rule(not self)
+        return self.__class__(not self)
 
     @property
     def handle(self) -> str:
