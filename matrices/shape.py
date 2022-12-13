@@ -9,8 +9,8 @@ from .rule import Rule
 
 __all__ = ["Shape"]
 
-Self = TypeVar("Self", bound="Shape")
 
+ShapeT = TypeVar("ShapeT", bound="Shape")
 
 class Shape(Collection[int], ShapeLike):
     """A mutable collection type for storing matrix dimensions
@@ -41,8 +41,6 @@ class Shape(Collection[int], ShapeLike):
         return f"{nrows} × {ncols}"
 
     def __getitem__(self, key: SupportsIndex) -> int:
-        """Return the dimension corresponding to `key`"""
-        key = operator.index(key)
         try:
             value = self._data[key]
         except IndexError as error:
@@ -51,29 +49,22 @@ class Shape(Collection[int], ShapeLike):
             return value
 
     def __setitem__(self, key: SupportsIndex, value: int) -> None:
-        """Set the dimension corresponding to `key` with `value`
-
-        This method should only be used by matrix implementations.
-        """
-        key = operator.index(key)
+        """Set the dimension corresponding to `key` with `value`"""
         try:
             self._data[key] = value
         except IndexError as error:
             raise IndexError("index out of range") from error
 
     def __iter__(self) -> Iterator[int]:
-        """Return an iterator over the dimensions of the shape"""
         yield from self._data
 
     def __reversed__(self) -> Iterator[int]:
-        """Return a reversed iterator over the dimensions of the shape"""
         yield from reversed(self._data)
 
     def __contains__(self, value: Any) -> bool:
-        """Return true if the shape contains `value`, otherwise false"""
         return value in self._data
 
-    def __deepcopy__(self: Self, memo: Optional[dict[int, Any]] = None) -> Self:
+    def __deepcopy__(self: ShapeT, memo: Optional[dict[int, Any]] = None) -> ShapeT:
         """Return a copy of the shape"""
         return self.__class__(*self)  # Our components are (hopefully) immutable
 
@@ -85,7 +76,6 @@ class Shape(Collection[int], ShapeLike):
 
     @property
     def nrows(self) -> int:
-        """The first dimension of the shape"""
         return self[0]
 
     @nrows.setter
@@ -94,23 +84,22 @@ class Shape(Collection[int], ShapeLike):
 
     @property
     def ncols(self) -> int:
-        """The second dimension of the shape"""
         return self[1]
 
     @ncols.setter
     def ncols(self, value: int) -> None:
         self[1] = value
 
-    def copy(self: Self) -> Self:
+    def copy(self: ShapeT) -> ShapeT:
         """Return a copy of the shape"""
         return self.__class__(*self)
 
-    def reverse(self: Self) -> Self:
+    def reverse(self: ShapeT) -> ShapeT:
         """Reverse the shape's dimensions in place"""
         self._data.reverse()
         return self
 
-    def subshape(self: Self, *, by: Rule = Rule.ROW) -> Self:
+    def subshape(self: ShapeT, *, by: Rule = Rule.ROW) -> ShapeT:
         """Return the shape of any sub-matrix in the given rule's form"""
         shape = self.copy()
         shape[by] = 1
@@ -166,3 +155,37 @@ class Shape(Collection[int], ShapeLike):
         rule's shape beginning at `index`
         """
         return slice(*self.sequence(index, by=by))
+
+
+ShapeViewT = TypeVar("ShapeViewT", bound="ShapeView")
+
+class ShapeView(Collection[int], ShapeLike):
+
+    __slots__ = ("_target",)
+
+    def __init__(self, target: Shape) -> None:
+        self._target = target
+
+    def __repr__(self) -> str:
+        """Return a canonical representation of the shape view"""
+        return f"{self.__class__.__name__}(target={self._target!r})"
+
+    __str__ = __repr__
+
+    def __getitem__(self, key: SupportsIndex) -> int:
+        return self._target[key]
+
+    def __iter__(self) -> Iterator[int]:
+        yield from self._target
+
+    def __reversed__(self) -> Iterator[int]:
+        yield from reversed(self._target)
+
+    def __contains__(self, value: Any) -> bool:
+        return value in self._target
+
+    def __deepcopy__(self: ShapeViewT, memo: Optional[dict[int, Any]] = None) -> ShapeViewT:
+        """Return the view"""
+        return self
+
+    __copy__ = __deepcopy__
