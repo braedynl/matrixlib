@@ -162,6 +162,7 @@ ShapeViewT = TypeVar("ShapeViewT", bound="ShapeView")
 class ShapeView(Collection[int], ShapeLike):
 
     __slots__ = ("_target",)
+    __match_args__ = ("nrows", "ncols")
 
     def __init__(self, target: ShapeLike) -> None:
         self._target = target
