@@ -15,9 +15,13 @@ class Rule(Enum):
     @overload
     def label(self: Literal[Rule.COL]) -> Literal["column"]: ...  # type: ignore[misc]
     @overload
+    def label(self) -> str: ...
+    @overload
     def invert(self: Literal[Rule.ROW]) -> Literal[Rule.COL]: ...  # type: ignore[misc]
     @overload
     def invert(self: Literal[Rule.COL]) -> Literal[Rule.ROW]: ...  # type: ignore[misc]
+    @overload
+    def invert(self) -> Rule: ...
 
 
 ROW: Literal[Rule.ROW]
