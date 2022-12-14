@@ -4,7 +4,7 @@ from typing import Any, Literal, Protocol, TypeVar, overload, runtime_checkable
 
 from .rule import Rule
 
-__all__ = ["ShapeLike", "AnyShape"]
+__all__ = ["ShapeLike"]
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -60,8 +60,9 @@ class SupportsConjugate(Protocol[T_co]):
 @runtime_checkable
 class ShapeLike(Protocol[NRows_co, NCols_co]):
 
-    def __eq__(self, other: Any) -> bool: ...
+    __match_args__: tuple[Literal["nrows"], Literal["ncols"]]
 
+    def __eq__(self, other: Any) -> bool: ...
     def __len__(self) -> Literal[2]: ...
     @abstractmethod
     def __getitem__(self, key: int) -> int: ...
@@ -73,9 +74,6 @@ class ShapeLike(Protocol[NRows_co, NCols_co]):
     def nrows(self) -> NRows_co: ...
     @property
     def ncols(self) -> NCols_co: ...
-
-
-AnyShape: ShapeLike[int, int]
 
 
 # @runtime_checkable

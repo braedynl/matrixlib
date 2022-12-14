@@ -5,7 +5,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 
 from .rule import Rule
 
-__all__ = ["ShapeLike", "AnyShape"]
+__all__ = ["ShapeLike"]
 
 NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
 NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
@@ -18,6 +18,8 @@ class ShapeLike(Protocol[NRows_co, NCols_co]):
     Note that this protocol can match with matrix types through `isinstance()`,
     though such a match is considered invalid.
     """
+
+    __match_args__ = ("nrows", "ncols")
 
     def __eq__(self, other):
         """Return true if the two shapes are equal, otherwise false"""
@@ -61,9 +63,6 @@ class ShapeLike(Protocol[NRows_co, NCols_co]):
     def ncols(self):
         """The second dimension of the shape"""
         return self[1]
-
-
-AnyShape = ShapeLike[int, int]
 
 
 # class Ordering(Flag):
