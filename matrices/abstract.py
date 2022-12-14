@@ -95,9 +95,9 @@ def matrix_map(func, a, b, /):
     return map(func, a, b)
 
 
-T_co = TypeVar("T_co", covariant=True)
+DType_co = TypeVar("DType_co", covariant=True)
 
-class MatrixLike(Sequence[T_co], Generic[T_co, NRows_co, NCols_co], metaclass=ABCMeta):
+class MatrixLike(Sequence[DType_co], Generic[DType_co, NRows_co, NCols_co], metaclass=ABCMeta):
 
     def __eq__(self, other):
         """Return true if element-wise `a is b or a == b` is true for all
