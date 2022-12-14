@@ -2,11 +2,18 @@ import enum
 from abc import ABCMeta, abstractmethod
 from collections.abc import Collection, Sequence
 from enum import Flag
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar
 
 from .rule import Rule
 
-__all__ = ["ShapeLike", "MatrixLike"]
+__all__ = [
+    "ShapeLike",
+    "MatrixLike",
+    "AnyShape",
+    "AnyRowVectorShape",
+    "AnyColVectorShape",
+    "AnyVectorShape",
+]
 
 
 NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
@@ -58,6 +65,11 @@ class ShapeLike(Collection[NRows_co | NCols_co], Generic[NRows_co, NCols_co], me
     def ncols(self):
         """The second dimension of the shape"""
         return self[1]
+
+AnyShape = ShapeLike[int, int]
+AnyRowVectorShape = ShapeLike[Literal[1], int]
+AnyColVectorShape = ShapeLike[int, Literal[1]]
+AnyVectorShape = AnyRowVectorShape | AnyColVectorShape
 
 
 class Ordering(Flag):

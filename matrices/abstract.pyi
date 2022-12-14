@@ -1,10 +1,18 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Collection, Iterator, Sequence
-from typing import Any, Generic, Literal, Protocol, TypeVar, overload
+from typing import (Any, Generic, Literal, Protocol, TypeAlias, TypeVar,
+                    overload)
 
 from .rule import Rule
 
-__all__ = ["ShapeLike", "MatrixLike"]
+__all__ = [
+    "ShapeLike",
+    "MatrixLike",
+    "AnyShape",
+    "AnyRowVectorShape",
+    "AnyColVectorShape",
+    "AnyVectorShape",
+]
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -80,6 +88,11 @@ class ShapeLike(Collection[NRows_co | NCols_co], Generic[NRows_co, NCols_co], me
     def nrows(self) -> NRows_co: ...
     @property
     def ncols(self) -> NCols_co: ...
+
+AnyShape: TypeAlias = ShapeLike[int, int]
+AnyRowVectorShape: TypeAlias = ShapeLike[Literal[1], int]
+AnyColVectorShape: TypeAlias = ShapeLike[int, Literal[1]]
+AnyVectorShape: TypeAlias = AnyRowVectorShape | AnyColVectorShape
 
 
 class MatrixLike(Sequence[T_co], Generic[T_co, NRows_co, NCols_co], metaclass=ABCMeta):
