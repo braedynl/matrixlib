@@ -1,7 +1,7 @@
 import operator
 from typing import TypeVar
 
-from .protocols import ShapeLike
+from .abstract import ShapeLike
 from .rule import Rule
 
 __all__ = ["Shape", "ShapeView"]

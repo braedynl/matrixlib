@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from typing import (Any, Literal, Optional, SupportsIndex, TypeVar, final,
                     overload)
 
-from .protocols import ShapeLike
+from .abstract import ShapeLike
 from .rule import Rule
 
 __all__ = ["Shape", "ShapeView"]
