@@ -1,5 +1,4 @@
 import operator
-from collections.abc import Collection
 from typing import TypeVar
 
 from .protocols import ShapeLike
@@ -11,7 +10,7 @@ __all__ = ["Shape", "ShapeView"]
 NRows = TypeVar("NRows", bound=int)
 NCols = TypeVar("NCols", bound=int)
 
-class Shape(ShapeLike[NRows, NCols], Collection[NRows | NCols]):
+class Shape(ShapeLike[NRows, NCols]):
     """A mutable collection type for storing matrix dimensions
 
     Instances of `Shape` support integer - but not slice - indexing. Negative
@@ -154,7 +153,7 @@ class Shape(ShapeLike[NRows, NCols], Collection[NRows | NCols]):
 NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
 NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
 
-class ShapeView(ShapeLike[NRows_co, NCols_co], Collection[NRows_co | NCols_co]):
+class ShapeView(ShapeLike[NRows_co, NCols_co]):
 
     __slots__ = ("_target",)
 

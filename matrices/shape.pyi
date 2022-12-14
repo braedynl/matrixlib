@@ -1,4 +1,4 @@
-from collections.abc import Collection, Iterator
+from collections.abc import Iterator
 from typing import (Any, Literal, Optional, SupportsIndex, TypeVar, final,
                     overload)
 
@@ -12,10 +12,9 @@ NRows = TypeVar("NRows", bound=int)
 NCols = TypeVar("NCols", bound=int)
 
 @final
-class Shape(ShapeLike[NRows, NCols], Collection[NRows | NCols]):
+class Shape(ShapeLike[NRows, NCols]):
 
     __slots__: tuple[Literal["_data"]]
-    __match_args__: tuple[Literal["nrows"], Literal["ncols"]]
 
     def __init__(self, nrows: NRows, ncols: NCols) -> None: ...
     def __repr__(self) -> str: ...
@@ -68,10 +67,9 @@ NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
 NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
 
 @final
-class ShapeView(ShapeLike[NRows_co, NCols_co], Collection[NRows_co | NCols_co]):
+class ShapeView(ShapeLike[NRows_co, NCols_co]):
 
     __slots__: tuple[Literal["_target"]]
-    __match_args__: tuple[Literal["nrows"], Literal["ncols"]]
 
     def __init__(self, target: ShapeLike[NRows_co, NCols_co]) -> None: ...
     def __repr__(self) -> str: ...
