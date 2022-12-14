@@ -1,23 +1,18 @@
 import enum
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
+from collections.abc import Collection
 from enum import Flag
-from typing import Protocol, TypeVar, runtime_checkable
+from typing import Generic, TypeVar
 
 from .rule import Rule
 
 __all__ = ["ShapeLike"]
 
+
 NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
 NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
 
-
-@runtime_checkable
-class ShapeLike(Protocol[NRows_co, NCols_co]):
-    """Protocol of operations defined for shape-like objects
-
-    Note that this protocol can match with matrix types through `isinstance()`,
-    though such a match is considered invalid.
-    """
+class ShapeLike(Collection[NRows_co | NCols_co], Generic[NRows_co, NCols_co], metaclass=ABCMeta):
 
     __match_args__ = ("nrows", "ncols")
 
@@ -72,7 +67,9 @@ class ShapeLike(Protocol[NRows_co, NCols_co]):
 
 
 # def matrix_ordering(a, b, /):
-#     for x, y in zip(a, likewise(b, a.shape)):
+#     if (u := a.shape) != (v := b.shape):
+#         raise ValueError(f"shape {u} is incompatible with operand shape {v}")
+#     for x, y in zip(a, b):
 #         if x < y:
 #             return Ordering.LESSER
 #         if x > y:
@@ -89,14 +86,12 @@ class ShapeLike(Protocol[NRows_co, NCols_co]):
 # T_co = TypeVar("T_co", covariant=True)
 
 # @runtime_checkable
-# class MatrixLike(Protocol[T_co]):
+# class MatrixLike(Protocol[T_co, NRows_co, NCols_co]):
 #     """Protocol of operations defined for matrix-like objects"""
 
 #     def __eq__(self, other):
-#         """Return true if element-wise `a == b` is true for all element pairs,
-#         otherwise false
-
-#         For a matrix of each comparison result, use the `eq()` method.
+#         """Return true if element-wise `a is b or a == b` is true for all
+#         element pairs, otherwise false
 #         """
 #         return all(matrix_map(lambda x, y: x is y or x == y, self, other))
 
