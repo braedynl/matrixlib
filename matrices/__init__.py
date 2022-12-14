@@ -9,8 +9,7 @@ Documentation: https://github.com/braedynl/matrices-py/wiki
 """
 
 # from .matrices import *
-# from .protocols import *
+from .protocols import *
 from .rule import *
-
-# from .shape import *
+from .shape import *
 # from .utilities import *
