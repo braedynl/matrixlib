@@ -15,9 +15,10 @@ __all__ = [
     "AnyVectorShape",
 ]
 
-
+DType_co = TypeVar("DType_co", covariant=True)
 NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
 NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
+
 
 class ShapeLike(Collection[NRows_co | NCols_co], Generic[NRows_co, NCols_co], metaclass=ABCMeta):
 
@@ -66,6 +67,7 @@ class ShapeLike(Collection[NRows_co | NCols_co], Generic[NRows_co, NCols_co], me
         """The second dimension of the shape"""
         return self[1]
 
+
 AnyShape = ShapeLike[int, int]
 AnyRowVectorShape = ShapeLike[Literal[1], int]
 AnyColVectorShape = ShapeLike[int, Literal[1]]
@@ -94,8 +96,6 @@ def matrix_map(func, a, b, /):
         raise ValueError(f"shape {u} is incompatible with operand shape {v}")
     return map(func, a, b)
 
-
-DType_co = TypeVar("DType_co", covariant=True)
 
 class MatrixLike(Sequence[DType_co], Generic[DType_co, NRows_co, NCols_co], metaclass=ABCMeta):
 

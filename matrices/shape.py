@@ -6,9 +6,11 @@ from .rule import Rule
 
 __all__ = ["Shape", "ShapeView"]
 
-
 NRows = TypeVar("NRows", bound=int)
 NCols = TypeVar("NCols", bound=int)
+NRows_co = TypeVar("NRows_co", covariant=True, bound=int)
+NCols_co = TypeVar("NCols_co", covariant=True, bound=int)
+
 
 class Shape(ShapeLike[NRows, NCols]):
     """A mutable collection type for storing matrix dimensions
@@ -95,7 +97,7 @@ class Shape(ShapeLike[NRows, NCols]):
     def subshape(self, *, by=Rule.ROW):
         """Return the shape of any sub-matrix in the given rule's form"""
         shape = self.copy()
-        shape[by] = 1
+        shape[by.value] = 1
         return shape
 
     def resolve_index(self, key, *, by=Rule.ROW):
@@ -103,18 +105,19 @@ class Shape(ShapeLike[NRows, NCols]):
 
         Raises `IndexError` if the key is out of range.
         """
-        n = self[by]
+        n = self[by.value]
         i = operator.index(key)
         i += n * (i < 0)
         if i < 0 or i >= n:
-            raise IndexError(f"there are {n} {by.handle}s but index is {key}")
+            handle = by.handle()
+            raise IndexError(f"there are {n} {handle}s but index is {key}")
         return i
 
     def resolve_slice(self, key, *, by=Rule.ROW):
         """Return a slice `key` as an equivalent sequence of indices,
         respective to a rule
         """
-        n = self[by]
+        n = self[by.value]
         return range(*key.indices(n))
 
     def sequence(self, index, *, by=Rule.ROW):
@@ -124,13 +127,16 @@ class Shape(ShapeLike[NRows, NCols]):
         The input `index` must be positive - negative indices may produce
         unexpected results. This requirement is not checked for.
         """
-        dy = not by
+        dy = by.invert()
 
-        major = self[by]
-        minor = self[dy]
+        i = by.value
+        j = dy.value
 
-        major_step = by * major + dy
-        minor_step = dy * minor + by
+        major = self[i]
+        minor = self[j]
+
+        major_step = i * major + j
+        minor_step = j * minor + i
 
         start = minor_step * index
         stop  = major_step * minor + start
@@ -149,9 +155,6 @@ class Shape(ShapeLike[NRows, NCols]):
         """
         return slice(*self.sequence(index, by=by))
 
-
-NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
-NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
 
 class ShapeView(ShapeLike[NRows_co, NCols_co]):
 

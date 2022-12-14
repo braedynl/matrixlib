@@ -21,6 +21,10 @@ T_contra = TypeVar("T_contra", contravariant=True)
 S = TypeVar("S")
 R = TypeVar("R")
 
+DType_co = TypeVar("DType_co", covariant=True)
+NRows_co = TypeVar("NRows_co", covariant=True, bound=int)
+NCols_co = TypeVar("NCols_co", covariant=True, bound=int)
+
 
 class SupportsAdd(Protocol[T_contra, T_co]):
     def __add__(self, other: T_contra) -> T_co: ...
@@ -62,9 +66,6 @@ class SupportsConjugate(Protocol[T_co]):
     def conjugate(self) -> T_co: ...
 
 
-NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
-NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
-
 class ShapeLike(Collection[NRows_co | NCols_co], Generic[NRows_co, NCols_co], metaclass=ABCMeta):
 
     __match_args__: tuple[Literal["nrows"], Literal["ncols"]]
@@ -89,13 +90,12 @@ class ShapeLike(Collection[NRows_co | NCols_co], Generic[NRows_co, NCols_co], me
     @property
     def ncols(self) -> NCols_co: ...
 
+
 AnyShape: TypeAlias = ShapeLike[int, int]
 AnyRowVectorShape: TypeAlias = ShapeLike[Literal[1], int]
 AnyColVectorShape: TypeAlias = ShapeLike[int, Literal[1]]
 AnyVectorShape: TypeAlias = AnyRowVectorShape | AnyColVectorShape
 
-
-DType_co = TypeVar("DType_co", covariant=True)
 
 class MatrixLike(Sequence[DType_co], Generic[DType_co, NRows_co, NCols_co], metaclass=ABCMeta):
 

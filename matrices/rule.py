@@ -13,7 +13,7 @@ class Rule(Enum):
     ROW = 0
     COL = 1
 
-    def label(self):
+    def handle(self):
         """Return the rule's non-Pythonized name"""
         return ("row", "column")[self.value]
 
