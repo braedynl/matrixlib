@@ -13,9 +13,6 @@ T_contra = TypeVar("T_contra", contravariant=True)
 S = TypeVar("S")
 R = TypeVar("R")
 
-NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
-NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
-
 
 class SupportsAdd(Protocol[T_contra, T_co]):
     def __add__(self, other: T_contra) -> T_co: ...
@@ -56,6 +53,9 @@ class SupportsAbs(Protocol[T_co]):
 class SupportsConjugate(Protocol[T_co]):
     def conjugate(self) -> T_co: ...
 
+
+NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
+NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
 
 @runtime_checkable
 class ShapeLike(Protocol[NRows_co, NCols_co]):

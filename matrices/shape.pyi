@@ -7,11 +7,9 @@ from .rule import Rule
 
 __all__ = ["Shape", "ShapeView"]
 
+
 NRows = TypeVar("NRows", bound=int)
 NCols = TypeVar("NCols", bound=int)
-NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
-NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
-
 
 @final
 class Shape(ShapeLike[NRows, NCols], Collection[NRows | NCols]):
@@ -65,6 +63,9 @@ class Shape(ShapeLike[NRows, NCols], Collection[NRows | NCols]):
     def range(self, index: int, *, by: Rule = Rule.ROW) -> range: ...
     def slice(self, index: int, *, by: Rule = Rule.ROW) -> slice: ...
 
+
+NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
+NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
 
 @final
 class ShapeView(ShapeLike[NRows_co, NCols_co], Collection[NRows_co | NCols_co]):
