@@ -7,11 +7,9 @@ from .rule import Rule
 
 __all__ = ["Shape", "ShapeView"]
 
+
 NRows = TypeVar("NRows", bound=int)
 NCols = TypeVar("NCols", bound=int)
-NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
-NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
-
 
 class Shape(ShapeLike[NRows, NCols], Collection[NRows | NCols]):
     """A mutable collection type for storing matrix dimensions
@@ -152,6 +150,9 @@ class Shape(ShapeLike[NRows, NCols], Collection[NRows | NCols]):
         """
         return slice(*self.sequence(index, by=by))
 
+
+NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
+NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
 
 class ShapeView(ShapeLike[NRows_co, NCols_co], Collection[NRows_co | NCols_co]):
 
