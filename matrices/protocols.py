@@ -5,14 +5,14 @@ from typing import Protocol, TypeVar, runtime_checkable
 
 from .rule import Rule
 
-__all__ = ["ShapeLike"]
+__all__ = ["ShapeLike", "AnyShape"]
 
-Nrows = TypeVar("Nrows", bound=int, covariant=True)
-Ncols = TypeVar("Ncols", bound=int, covariant=True)
+NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
+NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
 
 
 @runtime_checkable
-class ShapeLike(Protocol[Nrows, Ncols]):
+class ShapeLike(Protocol[NRows_co, NCols_co]):
     """Protocol of operations defined for shape-like objects
 
     Note that this protocol can match with matrix types through `isinstance()`,
@@ -61,6 +61,9 @@ class ShapeLike(Protocol[Nrows, Ncols]):
     def ncols(self):
         """The second dimension of the shape"""
         return self[1]
+
+
+AnyShape = ShapeLike[int, int]
 
 
 # class Ordering(Flag):
