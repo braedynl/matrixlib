@@ -5,6 +5,9 @@ __all__ = [
     "SupportsLE",
     "SupportsGT",
     "SupportsGE",
+    "SupportsLTAndGT",
+    "SupportsLEAndGE",
+    "SupportsComparison",
     "SupportsAdd",
     "SupportsSub",
     "SupportsMul",
@@ -38,6 +41,10 @@ class SupportsGT(Protocol[T_contra]):
     def __gt__(self, other: T_contra) -> bool: ...
 class SupportsGE(Protocol[T_contra]):
     def __ge__(self, other: T_contra) -> bool: ...
+
+class SupportsLTAndGT(SupportsLT[T_contra], SupportsGT[T_contra], Protocol[T_contra]): ...
+class SupportsLEAndGE(SupportsLE[T_contra], SupportsGE[T_contra], Protocol[T_contra]): ...
+class SupportsComparison(SupportsLTAndGT[T_contra], SupportsLEAndGE[T_contra], Protocol[T_contra]): ...
 
 class SupportsAdd(Protocol[T_contra, T_co]):
     def __add__(self, other: T_contra) -> T_co: ...

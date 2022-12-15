@@ -3,8 +3,8 @@ from enum import Flag
 
 __all__ = [
     "Ordering",
-    "order",
-    "apply",
+    "matrix_order",
+    "matrix_map",
     "logical_and",
     "logical_or",
     "logical_xor",
@@ -19,7 +19,7 @@ class Ordering(Flag):
     GREATER = enum.auto()
 
 
-def order(a, b, /):
+def matrix_order(a, b):
     if (u := a.shape) != (v := b.shape):
         raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
     for x, y in zip(a, b):
@@ -30,12 +30,12 @@ def order(a, b, /):
     return Ordering.EQUAL
 
 
-def apply(func, a, b=None, /):
-    if b is None:
-        return map(func, a)
-    if (u := a.shape) != (v := b.shape):
-        raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
-    return map(func, a, b)
+def matrix_map(func, a, *bx):
+    u = a.shape
+    for b in bx:
+        if u != (v := b.shape):
+            raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
+    return map(func, a, *bx)
 
 
 def logical_and(a, b, /):

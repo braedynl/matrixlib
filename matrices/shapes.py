@@ -2,7 +2,8 @@ import copy
 import operator
 from typing import TypeVar
 
-from .core import Rule, ShapeLike
+from .core.rule import Rule
+from .core.shapes import ShapeLike
 
 __all__ = ["Shape", "ShapeView"]
 
