@@ -1,18 +1,17 @@
 import operator
 from typing import TypeVar
 
-from .abstract import ShapeLike
-from .rule import Rule
+from .core import Rule, ShapeLike
 
 __all__ = ["Shape", "ShapeView"]
 
-NRows = TypeVar("NRows", bound=int)
-NCols = TypeVar("NCols", bound=int)
-NRows_co = TypeVar("NRows_co", covariant=True, bound=int)
-NCols_co = TypeVar("NCols_co", covariant=True, bound=int)
+NRowsT = TypeVar("NRowsT", bound=int)
+NColsT = TypeVar("NColsT", bound=int)
+NRowsT_co = TypeVar("NRowsT_co", covariant=True, bound=int)
+NColsT_co = TypeVar("NColsT_co", covariant=True, bound=int)
 
 
-class Shape(ShapeLike[NRows, NCols]):
+class Shape(ShapeLike[NRowsT, NColsT]):
     """A mutable collection type for storing matrix dimensions
 
     Instances of `Shape` support integer - but not slice - indexing. Negative
@@ -156,7 +155,7 @@ class Shape(ShapeLike[NRows, NCols]):
         return slice(*self.sequence(index, by=by))
 
 
-class ShapeView(ShapeLike[NRows_co, NCols_co]):
+class ShapeView(ShapeLike[NRowsT_co, NColsT_co]):
 
     __slots__ = ("_target",)
 

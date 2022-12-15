@@ -1,125 +1,42 @@
-import enum
 from abc import ABCMeta, abstractmethod
-from collections.abc import Collection, Sequence
-from enum import Flag
-from typing import Generic, Literal, TypeVar
+from collections.abc import Sequence
+from typing import Generic, TypeVar
 
 from .rule import Rule
+from .utilities import Ordering, apply, order
 
-__all__ = [
-    "ShapeLike",
-    "MatrixLike",
-    "AnyShape",
-    "AnyRowVectorShape",
-    "AnyColVectorShape",
-    "AnyVectorShape",
-]
+__all__ = ["MatrixLike"]
 
-DType_co = TypeVar("DType_co", covariant=True)
-NRows_co = TypeVar("NRows_co", bound=int, covariant=True)
-NCols_co = TypeVar("NCols_co", bound=int, covariant=True)
+DTypeT_co = TypeVar("DTypeT_co", covariant=True)
+NRowsT_co = TypeVar("NRowsT_co", covariant=True, bound=int)
+NColsT_co = TypeVar("NColsT_co", covariant=True, bound=int)
 
 
-class ShapeLike(Collection[NRows_co | NCols_co], Generic[NRows_co, NCols_co], metaclass=ABCMeta):
-
-    __match_args__ = ("nrows", "ncols")
-
-    def __eq__(self, other):
-        """Return true if the two shapes are equal, otherwise false"""
-        if isinstance(other, ShapeLike):
-            return (
-                self[0] == other[0]
-                and
-                self[1] == other[1]
-            )
-        return NotImplemented
-
-    def __len__(self):
-        """Return literal 2"""
-        return 2
-
-    @abstractmethod
-    def __getitem__(self, key):
-        """Return the dimension corresponding to `key`"""
-        pass
-
-    def __iter__(self):
-        """Return an iterator over the dimensions of the shape"""
-        yield self[0]
-        yield self[1]
-
-    def __reversed__(self):
-        """Return a reversed iterator over the dimensions of the shape"""
-        yield self[1]
-        yield self[0]
-
-    def __contains__(self, value):
-        """Return true if the shape contains `value`, otherwise false"""
-        return self[0] == value or self[1] == value
-
-    @property
-    def nrows(self):
-        """The first dimension of the shape"""
-        return self[0]
-
-    @property
-    def ncols(self):
-        """The second dimension of the shape"""
-        return self[1]
-
-
-AnyShape = ShapeLike[int, int]
-AnyRowVectorShape = ShapeLike[Literal[1], int]
-AnyColVectorShape = ShapeLike[int, Literal[1]]
-AnyVectorShape = AnyRowVectorShape | AnyColVectorShape
-
-
-class Ordering(Flag):
-    LESSER  = enum.auto()
-    EQUAL   = enum.auto()
-    GREATER = enum.auto()
-
-
-def matrix_ordering(a, b, /):
-    if (u := a.shape) != (v := b.shape):
-        raise ValueError(f"shape {u} is incompatible with operand shape {v}")
-    for x, y in zip(a, b):
-        if x < y:
-            return Ordering.LESSER
-        if x > y:
-            return Ordering.GREATER
-    return Ordering.EQUAL
-
-
-def matrix_map(func, a, b, /):
-    if (u := a.shape) != (v := b.shape):
-        raise ValueError(f"shape {u} is incompatible with operand shape {v}")
-    return map(func, a, b)
-
-
-class MatrixLike(Sequence[DType_co], Generic[DType_co, NRows_co, NCols_co], metaclass=ABCMeta):
+class MatrixLike(Sequence[DTypeT_co], Generic[DTypeT_co, NRowsT_co, NColsT_co], metaclass=ABCMeta):
 
     def __eq__(self, other):
         """Return true if element-wise `a is b or a == b` is true for all
         element pairs, otherwise false
         """
-        return all(matrix_map(lambda x, y: x is y or x == y, self, other))
+        if isinstance(other, MatrixLike):
+            return all(apply(lambda x, y: x is y or x == y, self, other))
+        return NotImplemented
 
     def __lt__(self, other):
         """Return true if lexicographic `a < b`, otherwise false"""
-        return matrix_ordering(self, other) is Ordering.LESSER
+        return order(self, other) is Ordering.LESSER
 
     def __le__(self, other):
         """Return true if lexicographic `a <= b`, otherwise false"""
-        return matrix_ordering(self, other) in Ordering.LESSER | Ordering.EQUAL
+        return order(self, other) in Ordering.LESSER | Ordering.EQUAL
 
     def __gt__(self, other):
         """Return true if lexicographic `a > b`, otherwise false"""
-        return matrix_ordering(self, other) is Ordering.GREATER
+        return order(self, other) is Ordering.GREATER
 
     def __ge__(self, other):
         """Return true if lexicographic `a >= b`, otherwise false"""
-        return matrix_ordering(self, other) in Ordering.GREATER | Ordering.EQUAL
+        return order(self, other) in Ordering.GREATER | Ordering.EQUAL
 
     def __len__(self):
         """Return the matrix's size"""
@@ -139,8 +56,8 @@ class MatrixLike(Sequence[DType_co], Generic[DType_co, NRows_co, NCols_co], meta
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
-        keys = reversed(range(self.size))
-        yield from map(self.__getitem__, keys)
+        keys = range(self.size)
+        yield from map(self.__getitem__, reversed(keys))
 
     def __contains__(self, value):
         """Return true if the matrix contains `value`, otherwise false"""

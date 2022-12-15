@@ -8,6 +8,6 @@ Version: 0.2.3
 Documentation: https://github.com/braedynl/matrices-py/wiki
 """
 
-from .abstract import *
-from .rule import *
-from .shape import *
+# from .matrices import *
+# from .rule import *
+from .shapes import *
