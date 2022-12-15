@@ -2,7 +2,8 @@ from collections.abc import Iterator
 from typing import (Any, Literal, Optional, SupportsIndex, TypeVar, final,
                     overload)
 
-from .core import Rule, ShapeLike
+from .core.rule import Rule
+from .core.shapes import ShapeLike
 
 __all__ = ["Shape", "ShapeView"]
 

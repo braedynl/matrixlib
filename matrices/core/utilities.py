@@ -30,7 +30,9 @@ def order(a, b, /):
     return Ordering.EQUAL
 
 
-def apply(func, a, b, /):
+def apply(func, a, b=None, /):
+    if b is None:
+        return map(func, a)
     if (u := a.shape) != (v := b.shape):
         raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
     return map(func, a, b)
