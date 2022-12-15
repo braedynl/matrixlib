@@ -2,10 +2,9 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from .rule import Rule
-from .utilities import matrix_map, matrix_order
+from .utilities import Rule
 
-__all__ = ["MatrixLike"]
+__all__ = ["MatrixLike", "matrix_map", "matrix_order"]
 
 DTypeT_co = TypeVar("DTypeT_co", covariant=True)
 NRowsT_co = TypeVar("NRowsT_co", covariant=True, bound=int)
@@ -194,3 +193,22 @@ class MatrixLike(Sequence[DTypeT_co], Generic[DTypeT_co, NRowsT_co, NColsT_co], 
     def slices(self, *, by=Rule.ROW):
         """Return an iterator that yields shallow copies of each row or column"""
         pass
+
+
+def matrix_order(a, b):
+    if (u := a.shape) != (v := b.shape):
+        raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
+    for x, y in zip(a, b):
+        if x < y:
+            return -1
+        if x > y:
+            return 1
+    return 0
+
+
+def matrix_map(func, a, *bx):
+    u = a.shape
+    for b in bx:
+        if u != (v := b.shape):
+            raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
+    return map(func, a, *bx)

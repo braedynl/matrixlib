@@ -1,8 +1,7 @@
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from typing import Any, Generic, Literal, TypeVar, overload
 
-from .rule import Rule
 from .shapes import ShapeLike
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsConjugate,
                        SupportsFloorDiv, SupportsMod, SupportsMul, SupportsNeg,
@@ -10,12 +9,22 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsConjugate,
                        SupportsRFloorDiv, SupportsRMod, SupportsRMul,
                        SupportsRPow, SupportsRSub, SupportsRTrueDiv,
                        SupportsSub, SupportsTrueDiv)
+from .utilities import Rule
 
-__all__ = ["MatrixLike"]
+__all__ = ["MatrixLike", "matrix_map", "matrix_order"]
 
-T  = TypeVar("T")
+T = TypeVar("T")
+S = TypeVar("S")
+
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
+T3 = TypeVar("T3")
+T4 = TypeVar("T4")
+T5 = TypeVar("T5")
+
+DTypeT = TypeVar("DTypeT")
+NRowsT = TypeVar("NRowsT", bound=int)
+NColsT = TypeVar("NColsT", bound=int)
 
 DTypeT_co = TypeVar("DTypeT_co", covariant=True)
 NRowsT_co = TypeVar("NRowsT_co", covariant=True, bound=int)
@@ -144,3 +153,18 @@ class MatrixLike(Sequence[DTypeT_co], Generic[DTypeT_co, NRowsT_co, NColsT_co], 
     @overload
     @abstractmethod
     def slices(self) -> Iterator[MatrixLike[DTypeT_co, Literal[1], NColsT_co]]: ...
+
+
+def matrix_order(a: MatrixLike[T, NRowsT, NColsT], b: MatrixLike[T, NRowsT, NColsT]) -> Literal[-1, 0, 1]: ...
+@overload
+def matrix_map(func: Callable[[T1], S], a: MatrixLike[T1, NRowsT, NColsT]) -> map[S]: ...
+@overload
+def matrix_map(func: Callable[[T1, T2], S], a: MatrixLike[T1, NRowsT, NColsT], b: MatrixLike[T2, NRowsT, NColsT]) -> map[S]: ...
+@overload
+def matrix_map(func: Callable[[T1, T2, T3], S], a: MatrixLike[T1, NRowsT, NColsT], b: MatrixLike[T2, NRowsT, NColsT], c: MatrixLike[T3, NRowsT, NColsT]) -> map[S]: ...
+@overload
+def matrix_map(func: Callable[[T1, T2, T3, T4], S], a: MatrixLike[T1, NRowsT, NColsT], b: MatrixLike[T2, NRowsT, NColsT], c: MatrixLike[T3, NRowsT, NColsT], d: MatrixLike[T4, NRowsT, NColsT]) -> map[S]: ...
+@overload
+def matrix_map(func: Callable[[T1, T2, T3, T4, T5], S], a: MatrixLike[T1, NRowsT, NColsT], b: MatrixLike[T2, NRowsT, NColsT], c: MatrixLike[T3, NRowsT, NColsT], d: MatrixLike[T4, NRowsT, NColsT], e: MatrixLike[T5, NRowsT, NColsT]) -> map[S]: ...
+@overload
+def matrix_map(func: Callable[..., S], a: MatrixLike[Any, NRowsT, NColsT], b: MatrixLike[Any, NRowsT, NColsT], c: MatrixLike[Any, NRowsT, NColsT], d: MatrixLike[Any, NRowsT, NColsT], e: MatrixLike[Any, NRowsT, NColsT], *fx: MatrixLike[Any, NRowsT, NColsT]) -> map[S]: ...

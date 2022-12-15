@@ -1,15 +1,15 @@
 from collections.abc import Iterable, Iterator, MutableSequence
 from typing import Any, Literal, Optional, SupportsIndex, TypeVar, overload
 
-from .core.matrices import MatrixLike
-from .core.rule import Rule
-from .core.typeshed import (SupportsAbs, SupportsAdd, SupportsConjugate,
-                            SupportsFloorDiv, SupportsMod, SupportsMul,
-                            SupportsNeg, SupportsPos, SupportsPow,
-                            SupportsRAdd, SupportsRFloorDiv, SupportsRMod,
-                            SupportsRMul, SupportsRPow, SupportsRSub,
-                            SupportsRTrueDiv, SupportsSub, SupportsTrueDiv)
+from .abstract import MatrixLike
 from .shapes import Shape, ShapeView
+from .typeshed import (SupportsAbs, SupportsAdd, SupportsConjugate,
+                       SupportsFloorDiv, SupportsMod, SupportsMul, SupportsNeg,
+                       SupportsPos, SupportsPow, SupportsRAdd,
+                       SupportsRFloorDiv, SupportsRMod, SupportsRMul,
+                       SupportsRPow, SupportsRSub, SupportsRTrueDiv,
+                       SupportsSub, SupportsTrueDiv)
+from .utilities import Rule
 
 T  = TypeVar("T")
 T1 = TypeVar("T1")

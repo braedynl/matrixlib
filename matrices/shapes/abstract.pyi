@@ -1,14 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Collection, Iterator
-from typing import Any, Generic, Literal, TypeAlias, TypeVar, overload
+from typing import Any, Generic, Literal, TypeVar, overload
 
-__all__ = [
-    "ShapeLike",
-    "AnyShape",
-    "AnyRowVectorShape",
-    "AnyColVectorShape",
-    "AnyVectorShape",
-]
+__all__ = ["ShapeLike"]
 
 NRowsT_co = TypeVar("NRowsT_co", covariant=True, bound=int)
 NColsT_co = TypeVar("NColsT_co", covariant=True, bound=int)
@@ -37,9 +31,3 @@ class ShapeLike(Collection[NRowsT_co | NColsT_co], Generic[NRowsT_co, NColsT_co]
     def nrows(self) -> NRowsT_co: ...
     @property
     def ncols(self) -> NColsT_co: ...
-
-
-AnyShape: TypeAlias = ShapeLike[int, int]
-AnyRowVectorShape: TypeAlias = ShapeLike[Literal[1], int]
-AnyColVectorShape: TypeAlias = ShapeLike[int, Literal[1]]
-AnyVectorShape: TypeAlias = AnyRowVectorShape | AnyColVectorShape
