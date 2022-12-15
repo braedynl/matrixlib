@@ -1,3 +1,4 @@
+import copy
 import operator
 from typing import TypeVar
 
@@ -12,20 +13,17 @@ NColsT_co = TypeVar("NColsT_co", covariant=True, bound=int)
 
 
 class Shape(ShapeLike[NRowsT, NColsT]):
-    """A mutable collection type for storing matrix dimensions
-
-    Instances of `Shape` support integer - but not slice - indexing. Negative
-    values are accepted by writing operations, and is left up to the matrix
-    implementation to consider.
-
-    Shapes should not be written-to when exposed by a matrix object, unless
-    stated otherwise by the matrix class' documentation.
-    """
+    """A mutable collection type for storing matrix dimensions"""
 
     __slots__ = ("_data",)
 
     def __init__(self, nrows, ncols):
-        """Construct a shape from its two dimensions"""
+        """Construct a shape from its two dimensions
+
+        Raises `ValueError` if either of the two dimensions are negative.
+        """
+        if nrows < 0 or ncols < 0:
+            raise ValueError("dimensions must be non-negative")
         self._data = [nrows, ncols]
 
     def __repr__(self):
@@ -48,6 +46,8 @@ class Shape(ShapeLike[NRowsT, NColsT]):
 
     def __setitem__(self, key, value):
         """Set the dimension corresponding to `key` with `value`"""
+        if value < 0:
+            raise ValueError("dimensions must be non-negative")
         try:
             self._data[key] = value
         except IndexError as error:
@@ -64,9 +64,50 @@ class Shape(ShapeLike[NRowsT, NColsT]):
 
     def __deepcopy__(self, memo=None):
         """Return a copy of the shape"""
-        return Shape(*self)  # Our components are (hopefully) immutable
+        cls = self.__class__
+
+        copy = cls.__new__(cls)
+        copy._data = self._data.copy()  # Our components are (hopefully) immutable
+
+        return copy
 
     __copy__ = __deepcopy__
+
+    @classmethod
+    def from_size(cls, size, nrows=None, ncols=None):
+        """Construct a shape whose product is `size`, inferring `nrows` and/or
+        `ncols` if `None`
+
+        If a single dimension is `None`, its value will be inferred from the
+        other, non-`None` dimension by dividing through the size. If the
+        non-`None` dimension is 0, the inferred dimension will also be 0.
+
+        If both dimensions are `None`, the shape will fallback to `1 × size`.
+
+        Raises `ValueError` if the size cannot be matched by the given
+        dimensions, or if any of the given dimensions are negative.
+        """
+
+        def infer_from(given):
+            return divmod(size, given) if given else (0, size)
+
+        if nrows is None and ncols is None:
+            nrows, ncols = (1, size)
+
+        elif nrows is None:
+            nrows, leftover = infer_from(ncols)
+            if leftover:
+                raise ValueError(f"cannot re-shape size {size} matrix as shape M × {ncols}")
+
+        elif ncols is None:
+            ncols, leftover = infer_from(nrows)
+            if leftover:
+                raise ValueError(f"cannot re-shape size {size} matrix as shape {nrows} × N")
+
+        elif nrows * ncols != size:
+            raise ValueError(f"cannot re-shape size {size} matrix as shape {nrows} × {ncols}")
+
+        return cls(nrows, ncols)
 
     @property
     def nrows(self):
@@ -91,7 +132,7 @@ class Shape(ShapeLike[NRowsT, NColsT]):
 
     def copy(self):
         """Return a copy of the shape"""
-        return Shape(*self)
+        return copy.deepcopy(self)
 
     def subshape(self, *, by=Rule.ROW):
         """Return the shape of any sub-matrix in the given rule's form"""
