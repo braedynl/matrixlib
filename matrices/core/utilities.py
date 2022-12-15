@@ -1,8 +1,4 @@
-import enum
-from enum import Flag
-
 __all__ = [
-    "Ordering",
     "matrix_order",
     "matrix_map",
     "logical_and",
@@ -13,21 +9,15 @@ __all__ = [
 ]
 
 
-class Ordering(Flag):
-    LESSER  = enum.auto()
-    EQUAL   = enum.auto()
-    GREATER = enum.auto()
-
-
 def matrix_order(a, b):
     if (u := a.shape) != (v := b.shape):
         raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
     for x, y in zip(a, b):
         if x < y:
-            return Ordering.LESSER
+            return -1
         if x > y:
-            return Ordering.GREATER
-    return Ordering.EQUAL
+            return 1
+    return 0
 
 
 def matrix_map(func, a, *bx):

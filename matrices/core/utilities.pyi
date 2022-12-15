@@ -1,13 +1,10 @@
-import enum
 from collections.abc import Callable
-from enum import Flag
 from typing import Any, Literal, TypeVar, overload
 
 from .matrices import MatrixLike
 from .typeshed import SupportsConjugate
 
 __all__ = [
-    "Ordering",
     "matrix_order",
     "matrix_map",
     "logical_and",
@@ -30,13 +27,7 @@ NRowsT = TypeVar("NRowsT", bound=int)
 NColsT = TypeVar("NColsT", bound=int)
 
 
-class Ordering(Flag):
-    LESSER  = enum.auto()
-    EQUAL   = enum.auto()
-    GREATER = enum.auto()
-
-
-def matrix_order(a: MatrixLike[T, NRowsT, NColsT], b: MatrixLike[T, NRowsT, NColsT]) -> Literal[Ordering.LESSER, Ordering.EQUAL, Ordering.GREATER]: ...
+def matrix_order(a: MatrixLike[T, NRowsT, NColsT], b: MatrixLike[T, NRowsT, NColsT]) -> Literal[-1, 0, 1]: ...
 @overload
 def matrix_map(func: Callable[[T1], S], a: MatrixLike[T1, NRowsT, NColsT]) -> map[S]: ...
 @overload

@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from typing import Generic, TypeVar
 
 from .rule import Rule
-from .utilities import Ordering, apply, order
+from .utilities import matrix_map, matrix_order
 
 __all__ = ["MatrixLike"]
 
@@ -19,24 +19,24 @@ class MatrixLike(Sequence[DTypeT_co], Generic[DTypeT_co, NRowsT_co, NColsT_co], 
         element pairs, otherwise false
         """
         if isinstance(other, MatrixLike):
-            return all(apply(lambda x, y: x is y or x == y, self, other))
+            return all(matrix_map(lambda x, y: x is y or x == y, self, other))
         return NotImplemented
 
     def __lt__(self, other):
         """Return true if lexicographic `a < b`, otherwise false"""
-        return order(self, other) is Ordering.LESSER
+        return matrix_order(self, other) < 0
 
     def __le__(self, other):
         """Return true if lexicographic `a <= b`, otherwise false"""
-        return order(self, other) in Ordering.LESSER | Ordering.EQUAL
+        return matrix_order(self, other) <= 0
 
     def __gt__(self, other):
         """Return true if lexicographic `a > b`, otherwise false"""
-        return order(self, other) is Ordering.GREATER
+        return matrix_order(self, other) > 0
 
     def __ge__(self, other):
         """Return true if lexicographic `a >= b`, otherwise false"""
-        return order(self, other) in Ordering.GREATER | Ordering.EQUAL
+        return matrix_order(self, other) >= 0
 
     def __len__(self):
         """Return the matrix's size"""
