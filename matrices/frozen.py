@@ -242,6 +242,37 @@ class FrozenMatrix(MatrixLike[DTypeT_co, NRowsT_co, NColsT_co]):
         self._shape = shape
         return self
 
+    @classmethod
+    def infer(cls, rows):
+        """Construct a matrix from a singly-nested iterable, using the
+        shallowest iterable's length to deduce the number of rows, and the
+        nested iterables' lengths to deduce the number of columns
+
+        Raises `ValueError` if the length of the nested iterables is
+        inconsistent (i.e., a representation of an irregular matrix).
+        """
+        array = []
+
+        rows = iter(rows)
+        try:
+            row = next(rows)
+        except StopIteration:
+            return cls.wrap(array, shape=Shape(0, 0))
+        else:
+            array.extend(row)
+
+        m = 1
+        n = len(array)
+
+        for m, row in enumerate(rows, start=2):
+            k = 0
+            for k, val in enumerate(row, start=1):
+                array.append(val)
+            if n != k:
+                raise ValueError(f"row {m} has length {k}, but precedent rows have length {n}")
+
+        return cls.wrap(array, shape=Shape(m, n))
+
     @property
     def shape(self):
         return ShapeView(self._shape)
