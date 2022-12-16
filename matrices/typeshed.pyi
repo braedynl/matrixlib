@@ -1,37 +1,8 @@
 from typing import Protocol, TypeVar
 
-__all__ = [
-    "SupportsLT",
-    "SupportsLE",
-    "SupportsGT",
-    "SupportsGE",
-    "SupportsLTAndGT",
-    "SupportsLEAndGE",
-    "SupportsComparison",
-    "SupportsAdd",
-    "SupportsSub",
-    "SupportsMul",
-    "SupportsTrueDiv",
-    "SupportsFloorDiv",
-    "SupportsMod",
-    "SupportsPow",
-    "SupportsRAdd",
-    "SupportsRSub",
-    "SupportsRMul",
-    "SupportsRTrueDiv",
-    "SupportsRFloorDiv",
-    "SupportsRMod",
-    "SupportsRPow",
-    "SupportsNeg",
-    "SupportsPos",
-    "SupportsAbs",
-    "SupportsConjugate",
-]
-
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 T_contra = TypeVar("T_contra", contravariant=True)
-
 
 class SupportsLT(Protocol[T_contra]):
     def __lt__(self, other: T_contra) -> bool: ...
@@ -58,8 +29,20 @@ class SupportsFloorDiv(Protocol[T_contra, T_co]):
     def __floordiv__(self, other: T_contra) -> T_co: ...
 class SupportsMod(Protocol[T_contra, T_co]):
     def __mod__(self, other: T_contra) -> T_co: ...
+class SupportsDivMod(Protocol[T_contra, T_co]):
+    def __divmod__(self, other: T_contra) -> T_co: ...
 class SupportsPow(Protocol[T_contra, T_co]):
     def __pow__(self, other: T_contra) -> T_co: ...
+class SupportsLShift(Protocol[T_contra, T_co]):
+    def __lshift__(self, other: T_contra) -> T_co: ...
+class SupportsRShift(Protocol[T_contra, T_co]):
+    def __rshift__(self, other: T_contra) -> T_co: ...
+class SupportsAnd(Protocol[T_contra, T_co]):
+    def __and__(self, other: T_contra) -> T_co: ...
+class SupportsXor(Protocol[T_contra, T_co]):
+    def __xor__(self, other: T_contra) -> T_co: ...
+class SupportsOr(Protocol[T_contra, T_co]):
+    def __or__(self, other: T_contra) -> T_co: ...
 
 class SupportsRAdd(Protocol[T_contra, T_co]):
     def __radd__(self, other: T_contra) -> T_co: ...
@@ -73,8 +56,20 @@ class SupportsRFloorDiv(Protocol[T_contra, T_co]):
     def __rfloordiv__(self, other: T_contra) -> T_co: ...
 class SupportsRMod(Protocol[T_contra, T_co]):
     def __rmod__(self, other: T_contra) -> T_co: ...
+class SupportsRDivMod(Protocol[T_contra, T_co]):
+    def __rdivmod__(self, other: T_contra) -> T_co: ...
 class SupportsRPow(Protocol[T_contra, T_co]):
     def __rpow__(self, other: T_contra) -> T_co: ...
+class SupportsRLShift(Protocol[T_contra, T_co]):
+    def __rlshift__(self, other: T_contra) -> T_co: ...
+class SupportsRRShift(Protocol[T_contra, T_co]):
+    def __rrshift__(self, other: T_contra) -> T_co: ...
+class SupportsRAnd(Protocol[T_contra, T_co]):
+    def __rand__(self, other: T_contra) -> T_co: ...
+class SupportsRXor(Protocol[T_contra, T_co]):
+    def __rxor__(self, other: T_contra) -> T_co: ...
+class SupportsROr(Protocol[T_contra, T_co]):
+    def __ror__(self, other: T_contra) -> T_co: ...
 
 class SupportsNeg(Protocol[T_co]):
     def __neg__(self) -> T_co: ...
@@ -82,5 +77,19 @@ class SupportsPos(Protocol[T_co]):
     def __pos__(self) -> T_co: ...
 class SupportsAbs(Protocol[T_co]):
     def __abs__(self) -> T_co: ...
+class SupportsInvert(Protocol[T_co]):
+    def __invert__(self) -> T_co: ...
 class SupportsConjugate(Protocol[T_co]):
     def conjugate(self) -> T_co: ...
+
+SupportsMonomorphicAddT = TypeVar("SupportsMonomorphicAddT", bound="SupportsMonomorphicAdd")
+
+class SupportsMonomorphicAdd(Protocol):
+    def __add__(self: SupportsMonomorphicAddT, other: SupportsMonomorphicAddT) -> SupportsMonomorphicAddT: ...
+
+SupportsMonomorphicAddT_co = TypeVar("SupportsMonomorphicAddT_co", bound="SupportsMonomorphicAdd", covariant=True)
+
+class SupportsDotProduct(Protocol[T_contra, SupportsMonomorphicAddT_co]):
+    def __mul__(self, other: T_contra) -> SupportsMonomorphicAddT_co: ...
+class SupportsRDotProduct(Protocol[T_contra, SupportsMonomorphicAddT_co]):
+    def __rmul__(self, other: T_contra) -> SupportsMonomorphicAddT_co: ...
