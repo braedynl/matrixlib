@@ -96,15 +96,15 @@ class Shape(ShapeLike[NRowsT, NColsT]):
         elif nrows is None:
             nrows, leftover = infer_from(ncols)
             if leftover:
-                raise ValueError(f"cannot re-shape size {size} matrix as shape M × {ncols}")
+                raise ValueError(f"cannot create shape M × {ncols} with size {size}")
 
         elif ncols is None:
             ncols, leftover = infer_from(nrows)
             if leftover:
-                raise ValueError(f"cannot re-shape size {size} matrix as shape {nrows} × N")
+                raise ValueError(f"cannot create shape {nrows} × N with size {size}")
 
         elif nrows * ncols != size:
-            raise ValueError(f"cannot re-shape size {size} matrix as shape {nrows} × {ncols}")
+            raise ValueError(f"cannot create shape {nrows} × {ncols} with size {size}")
 
         return cls(nrows, ncols)
 

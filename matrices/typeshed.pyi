@@ -82,12 +82,12 @@ class SupportsInvert(Protocol[T_co]):
 class SupportsConjugate(Protocol[T_co]):
     def conjugate(self) -> T_co: ...
 
-SupportsMonomorphicAddT = TypeVar("SupportsMonomorphicAddT", bound="SupportsMonomorphicAdd")
+SupportsMonomorphicAddT = TypeVar("SupportsMonomorphicAddT", bound=SupportsMonomorphicAdd)
 
 class SupportsMonomorphicAdd(Protocol):
     def __add__(self: SupportsMonomorphicAddT, other: SupportsMonomorphicAddT) -> SupportsMonomorphicAddT: ...
 
-SupportsMonomorphicAddT_co = TypeVar("SupportsMonomorphicAddT_co", bound="SupportsMonomorphicAdd", covariant=True)
+SupportsMonomorphicAddT_co = TypeVar("SupportsMonomorphicAddT_co", bound=SupportsMonomorphicAdd, covariant=True)
 
 class SupportsDotProduct(Protocol[T_contra, SupportsMonomorphicAddT_co]):
     def __mul__(self, other: T_contra) -> SupportsMonomorphicAddT_co: ...
