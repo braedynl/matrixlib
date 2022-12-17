@@ -155,8 +155,10 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def __invert__(self: MatrixLike[SupportsInvert[T], M_co, N_co]) -> MatrixLike[T, M_co, N_co]: ...
     @overload
+    @abstractmethod
     def __matmul__(self: MatrixLike[SupportsDotProduct[T, SupportsMonomorphicAddT], M_co, N_co], other: MatrixLike[T, N_co, P_co]) -> MatrixLike[SupportsMonomorphicAddT, M_co, P_co]: ...
     @overload
+    @abstractmethod
     def __matmul__(self: MatrixLike[T, M_co, N_co], other: MatrixLike[SupportsRDotProduct[T, SupportsMonomorphicAddT], N_co, P_co]) -> MatrixLike[SupportsMonomorphicAddT, M_co, P_co]: ...
 
     @property

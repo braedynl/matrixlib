@@ -249,7 +249,7 @@ def matrix_multiply(a, b):
     if n != p:
         raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
     if not n:
-        return itertools.repeat(0, times=m * q)
+        raise ValueError  # TODO: error message
     ix = range(m)
     jx = range(q)
     kx = range(n)
