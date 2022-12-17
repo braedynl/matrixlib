@@ -7,12 +7,12 @@ from .abstract import MatrixLike, matrix_map, matrix_multiply
 from .shapes import Shape, ShapeView
 from .utilities import COL, ROW, Rule
 
-DTypeT_co = TypeVar("DTypeT_co", covariant=True)
-NRowsT_co = TypeVar("NRowsT_co", covariant=True, bound=int)
-NColsT_co = TypeVar("NColsT_co", covariant=True, bound=int)
+T_co = TypeVar("T_co", covariant=True)
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class FrozenMatrix(MatrixLike[DTypeT_co, NRowsT_co, NColsT_co]):
+class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     __slots__ = ("_array", "_shape")
 

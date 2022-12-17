@@ -7,11 +7,11 @@ from .abstract import ShapeLike
 
 __all__ = ["Shape"]
 
-NRowsT = TypeVar("NRowsT", bound=int)
-NColsT = TypeVar("NColsT", bound=int)
+M = TypeVar("M", bound=int)
+N = TypeVar("N", bound=int)
 
 
-class Shape(ShapeLike[NRowsT, NColsT]):
+class Shape(ShapeLike[M, N]):
     """A mutable collection type for storing matrix dimensions"""
 
     __slots__ = ("_data",)

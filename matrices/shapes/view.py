@@ -5,11 +5,11 @@ from .abstract import ShapeLike
 
 __all__ = ["ShapeView"]
 
-NRowsT_co = TypeVar("NRowsT_co", covariant=True, bound=int)
-NColsT_co = TypeVar("NColsT_co", covariant=True, bound=int)
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class ShapeView(ShapeLike[NRowsT_co, NColsT_co]):
+class ShapeView(ShapeLike[M_co, N_co]):
 
     __slots__ = ("_target",)
 

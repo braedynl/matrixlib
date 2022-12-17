@@ -4,11 +4,11 @@ from typing import Generic, TypeVar
 
 __all__ = ["ShapeLike"]
 
-NRowsT_co = TypeVar("NRowsT_co", covariant=True, bound=int)
-NColsT_co = TypeVar("NColsT_co", covariant=True, bound=int)
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class ShapeLike(Collection[NRowsT_co | NColsT_co], Generic[NRowsT_co, NColsT_co], metaclass=ABCMeta):
+class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta):
 
     __match_args__ = ("nrows", "ncols")
 
