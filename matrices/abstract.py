@@ -1,10 +1,13 @@
+import functools
+import itertools
+import operator
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
 from .utilities import Rule
 
-__all__ = ["MatrixLike", "matrix_map", "matrix_order"]
+__all__ = ["MatrixLike", "matrix_order", "matrix_multiply", "matrix_map"]
 
 DTypeT_co = TypeVar("DTypeT_co", covariant=True)
 NRowsT_co = TypeVar("NRowsT_co", covariant=True, bound=int)
@@ -93,23 +96,38 @@ class MatrixLike(Sequence[DTypeT_co], Generic[DTypeT_co, NRowsT_co, NColsT_co], 
         pass
 
     @abstractmethod
+    def __divmod__(self, other):
+        """Return element-wise `divmod(a, b)`"""
+        pass
+
+    @abstractmethod
     def __pow__(self, other):
         """Return element-wise `a ** b`"""
         pass
 
     @abstractmethod
-    def __and__(self, other):
-        """Return element-wise `logical_and(a, b)`"""
+    def __lshift__(self, other):
+        """Return element-wise `a << b`"""
         pass
 
     @abstractmethod
-    def __or__(self, other):
-        """Return element-wise `logical_or(a, b)`"""
+    def __rshift__(self, other):
+        """Return element-wise `a >> b`"""
+        pass
+
+    @abstractmethod
+    def __and__(self, other):
+        """Return element-wise `a & b`"""
         pass
 
     @abstractmethod
     def __xor__(self, other):
-        """Return element-wise `logical_xor(a, b)`"""
+        """Return element-wise `a ^ b`"""
+        pass
+
+    @abstractmethod
+    def __or__(self, other):
+        """Return element-wise `a | b`"""
         pass
 
     @abstractmethod
@@ -129,7 +147,12 @@ class MatrixLike(Sequence[DTypeT_co], Generic[DTypeT_co, NRowsT_co, NColsT_co], 
 
     @abstractmethod
     def __invert__(self):
-        """Return element-wise `logical_not(a)`"""
+        """Return element-wise `~a`"""
+        pass
+
+    @abstractmethod
+    def __matmul__(self, other):
+        """Return the matrix product"""
         pass
 
     @property
@@ -204,6 +227,25 @@ def matrix_order(a, b):
         if x > y:
             return 1
     return 0
+
+
+def matrix_multiply(a, b):
+    (m, n), (p, q) = (u, v) = (a.shape, b.shape)
+    if n != p:
+        raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
+    if not n:
+        return itertools.repeat(0, times=m * q)
+    ix = range(m)
+    jx = range(q)
+    kx = range(n)
+    return (
+        functools.reduce(
+            operator.add,
+            map(lambda k: a[i * n + k] * b[k * q + j], kx),
+        )
+        for i in ix
+        for j in jx
+    )
 
 
 def matrix_map(func, a, *bx):
