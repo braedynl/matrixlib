@@ -208,6 +208,21 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def logical_and(self, other):
+        """Return element-wise `logical_and(a, b)`"""
+        pass
+
+    @abstractmethod
+    def logical_or(self, other):
+        """Return element-wise `logical_or(a, b)`"""
+        pass
+
+    @abstractmethod
+    def logical_not(self):
+        """Return element-wise `logical_not(a)`"""
+        pass
+
+    @abstractmethod
     def conjugate(self):
         """Return element-wise `conjugate(a)`"""
         pass

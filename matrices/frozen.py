@@ -382,6 +382,27 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             self.ncols,
         )
 
+    def logical_and(self, other):
+        return self.__class__(
+            matrix_map(lambda a, b: not not (a and b), self, other),
+            self.nrows,
+            self.ncols,
+        )
+
+    def logical_or(self, other):
+        return self.__class__(
+            matrix_map(lambda a, b: not not (a or b), self, other),
+            self.nrows,
+            self.ncols,
+        )
+
+    def logical_not(self):
+        return self.__class__(
+            matrix_map(lambda a: not a, self),
+            self.nrows,
+            self.ncols,
+        )
+
     def conjugate(self):
         return self.__class__(
             matrix_map(lambda x: x.conjugate(), self),
