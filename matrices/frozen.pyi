@@ -6,7 +6,7 @@ from .shapes import Shape, ShapeView
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsConjugate, SupportsDivMod, SupportsDotProduct,
                        SupportsFloorDiv, SupportsInvert, SupportsLShift,
-                       SupportsMod, SupportsMonomorphicAdd, SupportsMul,
+                       SupportsMod, SupportsClosedAdd, SupportsMul,
                        SupportsNeg, SupportsOr, SupportsPos, SupportsPow,
                        SupportsRAdd, SupportsRAnd, SupportsRDivMod,
                        SupportsRDotProduct, SupportsRFloorDiv, SupportsRLShift,
@@ -26,7 +26,7 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
 
-SupportsMonomorphicAddT = TypeVar("SupportsMonomorphicAddT", bound=SupportsMonomorphicAdd)
+SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
 
 
 FrozenMatrixT = TypeVar("FrozenMatrixT", bound=FrozenMatrix)
@@ -109,9 +109,9 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __abs__(self: MatrixLike[SupportsAbs[T], M_co, N_co]) -> FrozenMatrix[T, M_co, N_co]: ...
     def __invert__(self: MatrixLike[SupportsInvert[T], M_co, N_co]) -> FrozenMatrix[T, M_co, N_co]: ...
     @overload
-    def __matmul__(self: MatrixLike[SupportsDotProduct[T, SupportsMonomorphicAddT], M_co, N_co], other: MatrixLike[T, N_co, P_co]) -> FrozenMatrix[SupportsMonomorphicAddT, M_co, P_co]: ...
+    def __matmul__(self: MatrixLike[SupportsDotProduct[T, SupportsClosedAddT], M_co, N_co], other: MatrixLike[T, N_co, P_co]) -> FrozenMatrix[SupportsClosedAddT, M_co, P_co]: ...
     @overload
-    def __matmul__(self: MatrixLike[T, M_co, N_co], other: MatrixLike[SupportsRDotProduct[T, SupportsMonomorphicAddT], N_co, P_co]) -> FrozenMatrix[SupportsMonomorphicAddT, M_co, P_co]: ...
+    def __matmul__(self: MatrixLike[T, M_co, N_co], other: MatrixLike[SupportsRDotProduct[T, SupportsClosedAddT], N_co, P_co]) -> FrozenMatrix[SupportsClosedAddT, M_co, P_co]: ...
 
     @classmethod
     def wrap(cls: type[FrozenMatrixT], array: MutableSequence[T_co], shape: Shape[M_co, N_co]) -> FrozenMatrixT: ...

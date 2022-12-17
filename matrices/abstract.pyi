@@ -4,13 +4,13 @@ from typing import Any, Generic, Literal, TypeVar, overload
 
 from .shapes import ShapeLike
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
-                       SupportsConjugate, SupportsDivMod, SupportsDotProduct,
-                       SupportsFloorDiv, SupportsInvert, SupportsLShift,
-                       SupportsMod, SupportsMonomorphicAdd, SupportsMul,
-                       SupportsNeg, SupportsOr, SupportsPos, SupportsPow,
-                       SupportsRAdd, SupportsRAnd, SupportsRDivMod,
-                       SupportsRDotProduct, SupportsRFloorDiv, SupportsRLShift,
-                       SupportsRMod, SupportsRMul, SupportsROr, SupportsRPow,
+                       SupportsClosedAdd, SupportsConjugate, SupportsDivMod,
+                       SupportsDotProduct, SupportsFloorDiv, SupportsInvert,
+                       SupportsLShift, SupportsMod, SupportsMul, SupportsNeg,
+                       SupportsOr, SupportsPos, SupportsPow, SupportsRAdd,
+                       SupportsRAnd, SupportsRDivMod, SupportsRDotProduct,
+                       SupportsRFloorDiv, SupportsRLShift, SupportsRMod,
+                       SupportsRMul, SupportsROr, SupportsRPow,
                        SupportsRRShift, SupportsRShift, SupportsRSub,
                        SupportsRTrueDiv, SupportsRXor, SupportsSub,
                        SupportsTrueDiv, SupportsXor)
@@ -36,7 +36,7 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 P = TypeVar("P", bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
 
-SupportsMonomorphicAddT = TypeVar("SupportsMonomorphicAddT", bound=SupportsMonomorphicAdd)
+SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
 
 
 class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
@@ -156,10 +156,10 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def __invert__(self: MatrixLike[SupportsInvert[T], M_co, N_co]) -> MatrixLike[T, M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __matmul__(self: MatrixLike[SupportsDotProduct[T, SupportsMonomorphicAddT], M_co, N_co], other: MatrixLike[T, N_co, P_co]) -> MatrixLike[SupportsMonomorphicAddT, M_co, P_co]: ...
+    def __matmul__(self: MatrixLike[SupportsDotProduct[T, SupportsClosedAddT], M_co, N_co], other: MatrixLike[T, N_co, P_co]) -> MatrixLike[SupportsClosedAddT, M_co, P_co]: ...
     @overload
     @abstractmethod
-    def __matmul__(self: MatrixLike[T, M_co, N_co], other: MatrixLike[SupportsRDotProduct[T, SupportsMonomorphicAddT], N_co, P_co]) -> MatrixLike[SupportsMonomorphicAddT, M_co, P_co]: ...
+    def __matmul__(self: MatrixLike[T, M_co, N_co], other: MatrixLike[SupportsRDotProduct[T, SupportsClosedAddT], N_co, P_co]) -> MatrixLike[SupportsClosedAddT, M_co, P_co]: ...
 
     @property
     @abstractmethod
@@ -207,9 +207,9 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
 def matrix_order(a: MatrixLike[T, M, N], b: MatrixLike[T, M, N]) -> Literal[-1, 0, 1]: ...
 @overload
-def matrix_multiply(a: MatrixLike[SupportsDotProduct[T, SupportsMonomorphicAddT], M, N], b: MatrixLike[T, N, P]) -> Iterator[SupportsMonomorphicAddT]: ...
+def matrix_multiply(a: MatrixLike[SupportsDotProduct[T, SupportsClosedAddT], M, N], b: MatrixLike[T, N, P]) -> Iterator[SupportsClosedAddT]: ...
 @overload
-def matrix_multiply(a: MatrixLike[T, M, N], b: MatrixLike[SupportsRDotProduct[T, SupportsMonomorphicAddT], N, P]) -> Iterator[SupportsMonomorphicAddT]: ...
+def matrix_multiply(a: MatrixLike[T, M, N], b: MatrixLike[SupportsRDotProduct[T, SupportsClosedAddT], N, P]) -> Iterator[SupportsClosedAddT]: ...
 @overload
 def matrix_map(func: Callable[[T1], T], a: MatrixLike[T1, M, N]) -> Iterator[T]: ...
 @overload
