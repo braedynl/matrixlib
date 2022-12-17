@@ -340,42 +340,42 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         nrows, ncols = self._shape
         return nrows * ncols
 
-    def eq(self, other):
+    def equal(self, other):
         return self.__class__(
             matrix_map(operator.__eq__, self, other),
             self.nrows,
             self.ncols,
         )
 
-    def ne(self, other):
+    def not_equal(self, other):
         return self.__class__(
             matrix_map(operator.__ne__, self, other),
             self.nrows,
             self.ncols,
         )
 
-    def lt(self, other):
+    def lesser(self, other):
         return self.__class__(
             matrix_map(operator.__lt__, self, other),
             self.nrows,
             self.ncols,
         )
 
-    def le(self, other):
+    def lesser_equal(self, other):
         return self.__class__(
             matrix_map(operator.__le__, self, other),
             self.nrows,
             self.ncols,
         )
 
-    def gt(self, other):
+    def greater(self, other):
         return self.__class__(
             matrix_map(operator.__gt__, self, other),
             self.nrows,
             self.ncols,
         )
 
-    def ge(self, other):
+    def greater_equal(self, other):
         return self.__class__(
             matrix_map(operator.__ge__, self, other),
             self.nrows,

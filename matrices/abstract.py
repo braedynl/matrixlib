@@ -178,32 +178,32 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         return nrows * ncols
 
     @abstractmethod
-    def eq(self, other):
+    def equal(self, other):
         """Return element-wise `a == b`"""
         pass
 
     @abstractmethod
-    def ne(self, other):
+    def not_equal(self, other):
         """Return element-wise `a != b`"""
         pass
 
     @abstractmethod
-    def lt(self, other):
+    def lesser(self, other):
         """Return element-wise `a < b`"""
         pass
 
     @abstractmethod
-    def le(self, other):
+    def lesser_equal(self, other):
         """Return element-wise `a <= b`"""
         pass
 
     @abstractmethod
-    def gt(self, other):
+    def greater(self, other):
         """Return element-wise `a > b`"""
         pass
 
     @abstractmethod
-    def ge(self, other):
+    def greater_equal(self, other):
         """Return element-wise `a >= b`"""
         pass
 
