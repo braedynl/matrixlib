@@ -2,15 +2,15 @@ from collections.abc import Iterable, Iterator, MutableSequence
 from typing import Any, Literal, Optional, SupportsIndex, TypeVar, overload
 
 from .abstract import MatrixLike
-from .shapes import Shape, ShapeView
+from .shapes import Shape, ShapeLike, ShapeView
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
-                       SupportsConjugate, SupportsDivMod, SupportsDotProduct,
-                       SupportsFloorDiv, SupportsInvert, SupportsLShift,
-                       SupportsMod, SupportsClosedAdd, SupportsMul,
-                       SupportsNeg, SupportsOr, SupportsPos, SupportsPow,
-                       SupportsRAdd, SupportsRAnd, SupportsRDivMod,
-                       SupportsRDotProduct, SupportsRFloorDiv, SupportsRLShift,
-                       SupportsRMod, SupportsRMul, SupportsROr, SupportsRPow,
+                       SupportsClosedAdd, SupportsConjugate, SupportsDivMod,
+                       SupportsDotProduct, SupportsFloorDiv, SupportsInvert,
+                       SupportsLShift, SupportsMod, SupportsMul, SupportsNeg,
+                       SupportsOr, SupportsPos, SupportsPow, SupportsRAdd,
+                       SupportsRAnd, SupportsRDivMod, SupportsRDotProduct,
+                       SupportsRFloorDiv, SupportsRLShift, SupportsRMod,
+                       SupportsRMul, SupportsROr, SupportsRPow,
                        SupportsRRShift, SupportsRShift, SupportsRSub,
                        SupportsRTrueDiv, SupportsRXor, SupportsSub,
                        SupportsTrueDiv, SupportsXor)
@@ -35,7 +35,10 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     __slots__: tuple[Literal["_array"], Literal["_shape"]]
 
-    def __init__(self, data: Optional[Iterable[T_co]], nrows: Optional[M_co] = None, ncols: Optional[N_co] = None) -> None: ...
+    @overload
+    def __init__(self, array: Optional[Iterable[T_co]] = None, shape: Optional[tuple[Optional[M_co], Optional[N_co]]] = None) -> None: ...
+    @overload
+    def __init__(self, array: Optional[Iterable[T_co]] = None, shape: Optional[ShapeLike[M_co, N_co]] = None) -> None: ...
     def __repr__(self) -> str: ...
     @overload
     def __getitem__(self, key: SupportsIndex) -> T_co: ...
@@ -115,6 +118,12 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     @classmethod
     def wrap(cls: type[FrozenMatrixT], array: MutableSequence[T_co], shape: Shape[M_co, N_co]) -> FrozenMatrixT: ...
+    @overload
+    @classmethod
+    def fill(cls: type[FrozenMatrixT], value: T_co, shape: tuple[M_co, N_co]) -> FrozenMatrixT: ...  # type: ignore[misc]
+    @overload
+    @classmethod
+    def fill(cls: type[FrozenMatrixT], value: T_co, shape: ShapeLike[M_co, N_co]) -> FrozenMatrixT: ...  # type: ignore[misc]
     @classmethod
     def infer(cls: type[FrozenMatrixT], rows: Iterable[Iterable[T_co]]) -> FrozenMatrixT: ...
 
