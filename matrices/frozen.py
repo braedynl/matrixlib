@@ -56,12 +56,12 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         shape = self._shape
 
         if isinstance(key, tuple):
+            n = shape.ncols
 
-            def getitems(keys, nrows, ncols):
-                n = shape.ncols
+            def getitems(keys, shape):
                 return self.__class__.wrap(
                     [array[i * n + j] for i, j in keys],
-                    shape=Shape(nrows, ncols),
+                    shape=shape,
                 )
 
             rowkey, colkey = key
@@ -73,16 +73,14 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                     jx = shape.resolve_slice(colkey, by=COL)
                     result = getitems(
                         itertools.product(ix, jx),
-                        nrows=len(ix),
-                        ncols=len(jx),
+                        shape=Shape(len(ix), len(jx)),
                     )
 
                 else:
                     j = shape.resolve_index(colkey, by=COL)
                     result = getitems(
                         zip(ix, itertools.repeat(j)),
-                        nrows=len(ix),
-                        ncols=1,
+                        shape=Shape(len(ix), 1),
                     )
 
             else:
@@ -92,41 +90,35 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                     jx = shape.resolve_slice(colkey, by=COL)
                     result = getitems(
                         zip(itertools.repeat(i), jx),
-                        nrows=1,
-                        ncols=len(jx),
+                        shape=Shape(1, len(jx)),
                     )
 
                 else:
                     j = shape.resolve_index(colkey, by=COL)
-                    result = array[i * shape.ncols + j]
+                    result = array[i * n + j]
 
-            return result
+        elif isinstance(key, slice):
+            n = shape.nrows * shape.ncols
 
-        n = shape.nrows * shape.ncols
-
-        if isinstance(key, slice):
-
-            def getitems(keys, nrows, ncols):
+            def getitems(keys, shape):
                 return self.__class__.wrap(
                     [array[i] for i in keys],
-                    shape=Shape(nrows, ncols),
+                    shape=shape,
                 )
 
             ix = range(*key.indices(n))
             result = getitems(
                 ix,
-                nrows=1,
-                ncols=len(ix),
+                shape=Shape(1, len(ix)),
             )
 
-            return result
-
-        try:
-            result = array[key]
-        except IndexError:
-            raise IndexError(f"there are {n} items but index is {key}") from None
         else:
-            return result
+            try:
+                result = array[key]
+            except IndexError:
+                raise IndexError(f"there are {n} items but index is {key}") from None
+
+        return result
 
     def __iter__(self):
         yield from self._array
@@ -241,6 +233,14 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             )
         return NotImplemented
 
+    def __matmul__(self, other):
+        if isinstance(other, MatrixLike):
+            return self.__class__(
+                matrix_multiply(self, other),
+                shape=(self.nrows, other.ncols),
+            )
+        return NotImplemented
+
     def __neg__(self):
         return self.__class__(
             matrix_map(operator.__neg__, self),
@@ -264,14 +264,6 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             matrix_map(operator.__invert__, self),
             shape=self._shape,
         )
-
-    def __matmul__(self, other):
-        if isinstance(other, MatrixLike):
-            return self.__class__(
-                matrix_multiply(self, other),
-                shape=(self.nrows, other.ncols),
-            )
-        return NotImplemented
 
     @classmethod
     def wrap(cls, array, shape):

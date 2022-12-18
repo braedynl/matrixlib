@@ -133,6 +133,11 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def __matmul__(self, other):
+        """Return the matrix product"""
+        pass
+
+    @abstractmethod
     def __neg__(self):
         """Return element-wise `-a`"""
         pass
@@ -150,11 +155,6 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def __invert__(self):
         """Return element-wise `~a`"""
-        pass
-
-    @abstractmethod
-    def __matmul__(self, other):
-        """Return the matrix product"""
         pass
 
     @property
