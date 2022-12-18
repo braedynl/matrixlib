@@ -72,42 +72,6 @@ class Shape(ShapeLike[M, N]):
 
     __copy__ = __deepcopy__
 
-    @classmethod
-    def from_size(cls, size, nrows=None, ncols=None):
-        """Construct a shape whose product is `size`, inferring `nrows` and/or
-        `ncols` if `None`
-
-        If a single dimension is `None`, its value will be inferred from the
-        other, non-`None` dimension by dividing through the size. If the
-        non-`None` dimension is 0, the inferred dimension will also be 0.
-
-        If both dimensions are `None`, the shape will fallback to `1 × size`.
-
-        Raises `ValueError` if the size cannot be matched by the given
-        dimensions, or if any of the given dimensions are negative.
-        """
-
-        def infer_from(given):
-            return divmod(size, given) if given else (0, size)
-
-        if nrows is None and ncols is None:
-            nrows, ncols = (1, size)
-
-        elif nrows is None:
-            nrows, leftover = infer_from(ncols)
-            if leftover:
-                raise ValueError(f"cannot create shape M × {ncols} with size {size}")
-
-        elif ncols is None:
-            ncols, leftover = infer_from(nrows)
-            if leftover:
-                raise ValueError(f"cannot create shape {nrows} × N with size {size}")
-
-        elif nrows * ncols != size:
-            raise ValueError(f"cannot create shape {nrows} × {ncols} with size {size}")
-
-        return cls(nrows, ncols)
-
     @property
     def nrows(self):
         return self[0]
