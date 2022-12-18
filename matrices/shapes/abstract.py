@@ -14,6 +14,8 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
 
     def __eq__(self, other):
         """Return true if the two shapes are equal, otherwise false"""
+        if self is other:
+            return True
         if isinstance(other, ShapeLike):
             return (
                 self[0] == other[0]

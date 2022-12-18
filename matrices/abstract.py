@@ -20,6 +20,8 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Return true if element-wise `a is b or a == b` is true for all
         element pairs, otherwise false
         """
+        if self is other:
+            return True
         if isinstance(other, MatrixLike):
             return all(matrix_map(lambda x, y: x is y or x == y, self, other))
         return NotImplemented
