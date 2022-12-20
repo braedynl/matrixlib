@@ -1,5 +1,4 @@
 import functools
-import itertools
 import operator
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
@@ -7,7 +6,7 @@ from typing import Generic, TypeVar
 
 from .utilities import Rule
 
-__all__ = ["MatrixLike", "matrix_order", "matrix_multiply", "matrix_map"]
+__all__ = ["MatrixLike", "matcmp", "matmul", "matmap"]
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
@@ -23,24 +22,24 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         if self is other:
             return True
         if isinstance(other, MatrixLike):
-            return all(matrix_map(lambda x, y: x is y or x == y, self, other))
+            return all(matmap(lambda x, y: x is y or x == y, self, other))
         return NotImplemented
 
     def __lt__(self, other):
         """Return true if lexicographic `a < b`, otherwise false"""
-        return matrix_order(self, other) < 0
+        return matcmp(self, other) < 0
 
     def __le__(self, other):
         """Return true if lexicographic `a <= b`, otherwise false"""
-        return matrix_order(self, other) <= 0
+        return matcmp(self, other) <= 0
 
     def __gt__(self, other):
         """Return true if lexicographic `a > b`, otherwise false"""
-        return matrix_order(self, other) > 0
+        return matcmp(self, other) > 0
 
     def __ge__(self, other):
         """Return true if lexicographic `a >= b`, otherwise false"""
-        return matrix_order(self, other) >= 0
+        return matcmp(self, other) >= 0
 
     def __len__(self):
         """Return the matrix's size"""
@@ -234,8 +233,18 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Return an iterator that yields shallow copies of each row or column"""
         pass
 
+    @abstractmethod
+    def transpose(self):
+        """Return the transpose of the matrix"""
+        pass
 
-def matrix_order(a, b):
+
+def matcmp(a, b):
+    """Return -1 if `a < b`, 1 if `a > b`, or 0 if `a == b`, compared
+    lexicographically
+
+    Raises `ValueError` if the two matrices have unequal shapes.
+    """
     if (u := a.shape) != (v := b.shape):
         raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
     for x, y in zip(a, b):
@@ -246,7 +255,12 @@ def matrix_order(a, b):
     return 0
 
 
-def matrix_multiply(a, b):
+def matmul(a, b):
+    """Return an iterator that yields the elements of the matrix product
+
+    Raises `ValueError` if the two matrices have unequal inner dimensions, or
+    if the inner dimension is 0.
+    """
     (m, n), (p, q) = (u, v) = (a.shape, b.shape)
     if n != p:
         raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
@@ -265,9 +279,14 @@ def matrix_multiply(a, b):
     )
 
 
-def matrix_map(func, a, *bx):
-    u = a.shape
-    for b in bx:
-        if u != (v := b.shape):
-            raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
+def matmap(func, a, *bx):
+    """Return a mapping of `func` across one or more matrices
+
+    Raises `ValueError` if not all matrices have equal shapes.
+    """
+    if bx:
+        u = a.shape
+        for b in bx:
+            if u != (v := b.shape):
+                raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
     return map(func, a, *bx)
