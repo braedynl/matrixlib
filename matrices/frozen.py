@@ -3,7 +3,7 @@ import operator
 from reprlib import recursive_repr
 from typing import TypeVar
 
-from .abstract import MatrixLike, matrix_map, matrix_multiply
+from .abstract import MatrixLike, matmap, matmul
 from .shapes import Shape, ShapeLike, ShapeView
 from .utilities import COL, ROW, Rule
 
@@ -26,16 +26,16 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                 n = len(array)
                 nrows, loss = divmod(n, ncols) if ncols else (0, n)
                 if loss:
-                    raise ValueError(f"cannot infer shape M × {ncols} with array of size {n}")
+                    raise ValueError(f"cannot interpret array of size {n} as shape M × {ncols}")
             case (nrows, None):
                 n = len(array)
                 ncols, loss = divmod(n, nrows) if nrows else (0, n)
                 if loss:
-                    raise ValueError(f"cannot infer shape {nrows} × N with array of size {n}")
+                    raise ValueError(f"cannot interpret array of size {n} as shape {nrows} × N")
             case (nrows, ncols) | ShapeLike(nrows, ncols):
                 n = len(array)
                 if n != nrows * ncols:
-                    raise ValueError(f"cannot impose shape {nrows} × {ncols} onto array of size {n}")
+                    raise ValueError(f"cannot interpret array of size {n} as shape {nrows} × {ncols}")
             case _:
                 raise ValueError("shape must contain two dimensions")
 
@@ -56,14 +56,6 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         shape = self._shape
 
         if isinstance(key, tuple):
-            n = shape.ncols
-
-            def getitems(keys, shape):
-                return self.__class__.wrap(
-                    [array[i * n + j] for i, j in keys],
-                    shape=shape,
-                )
-
             rowkey, colkey = key
 
             if isinstance(rowkey, slice):
@@ -71,15 +63,17 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
                 if isinstance(colkey, slice):
                     jx = shape.resolve_slice(colkey, by=COL)
-                    result = getitems(
-                        itertools.product(ix, jx),
+                    n  = shape.ncols
+                    result = self.__class__.wrap(
+                        [array[i * n + j] for i, j in itertools.product(ix, jx)],
                         shape=Shape(len(ix), len(jx)),
                     )
 
                 else:
                     j = shape.resolve_index(colkey, by=COL)
-                    result = getitems(
-                        zip(ix, itertools.repeat(j)),
+                    n = shape.ncols
+                    result = self.__class__.wrap(
+                        [array[i * n + j] for i in ix],
                         shape=Shape(len(ix), 1),
                     )
 
@@ -88,35 +82,30 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
                 if isinstance(colkey, slice):
                     jx = shape.resolve_slice(colkey, by=COL)
-                    result = getitems(
-                        zip(itertools.repeat(i), jx),
+                    n  = shape.ncols
+                    result = self.__class__.wrap(
+                        [array[i * n + j] for j in jx],
                         shape=Shape(1, len(jx)),
                     )
 
                 else:
                     j = shape.resolve_index(colkey, by=COL)
+                    n = shape.ncols
                     result = array[i * n + j]
 
         elif isinstance(key, slice):
-            n = shape.nrows * shape.ncols
+            ix = range(*key.indices(shape.nrows * shape.ncols))
 
-            def getitems(keys, shape):
-                return self.__class__.wrap(
-                    [array[i] for i in keys],
-                    shape=shape,
-                )
-
-            ix = range(*key.indices(n))
-            result = getitems(
-                ix,
+            result = self.__class__.wrap(
+                [array[i] for i in ix],
                 shape=Shape(1, len(ix)),
             )
 
         else:
             try:
                 result = array[key]
-            except IndexError:
-                raise IndexError(f"there are {n} items but index is {key}") from None
+            except IndexError as error:
+                raise IndexError(f"there are {shape.nrows * shape.ncols} items but index is {key}") from error
 
         return result
 
@@ -132,7 +121,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __add__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__add__, self, other),
+                matmap(operator.__add__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -140,7 +129,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __sub__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__sub__, self, other),
+                matmap(operator.__sub__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -148,7 +137,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __mul__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__mul__, self, other),
+                matmap(operator.__mul__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -156,7 +145,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __truediv__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__truediv__, self, other),
+                matmap(operator.__truediv__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -164,7 +153,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __floordiv__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__floordiv__, self, other),
+                matmap(operator.__floordiv__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -172,7 +161,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __mod__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__mod__, self, other),
+                matmap(operator.__mod__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -180,7 +169,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __divmod__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(divmod, self, other),
+                matmap(divmod, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -188,7 +177,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __pow__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__pow__, self, other),
+                matmap(operator.__pow__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -196,7 +185,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __lshift__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__lshift__, self, other),
+                matmap(operator.__lshift__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -204,7 +193,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __rshift__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__rshift__, self, other),
+                matmap(operator.__rshift__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -212,7 +201,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __and__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__and__, self, other),
+                matmap(operator.__and__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -220,7 +209,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __xor__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__xor__, self, other),
+                matmap(operator.__xor__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -228,7 +217,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __or__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_map(operator.__or__, self, other),
+                matmap(operator.__or__, self, other),
                 shape=self._shape,
             )
         return NotImplemented
@@ -236,32 +225,32 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __matmul__(self, other):
         if isinstance(other, MatrixLike):
             return self.__class__(
-                matrix_multiply(self, other),
+                matmul(self, other),
                 shape=(self.nrows, other.ncols),
             )
         return NotImplemented
 
     def __neg__(self):
         return self.__class__(
-            matrix_map(operator.__neg__, self),
+            matmap(operator.__neg__, self),
             shape=self._shape,
         )
 
     def __pos__(self):
         return self.__class__(
-            matrix_map(operator.__pos__, self),
+            matmap(operator.__pos__, self),
             shape=self._shape,
         )
 
     def __abs__(self):
         return self.__class__(
-            matrix_map(operator.__abs__, self),
+            matmap(operator.__abs__, self),
             shape=self._shape,
         )
 
     def __invert__(self):
         return self.__class__(
-            matrix_map(operator.__invert__, self),
+            matmap(operator.__invert__, self),
             shape=self._shape,
         )
 
@@ -344,61 +333,61 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def equal(self, other):
         return self.__class__(
-            matrix_map(operator.__eq__, self, other),
+            matmap(operator.__eq__, self, other),
             shape=self._shape,
         )
 
     def not_equal(self, other):
         return self.__class__(
-            matrix_map(operator.__ne__, self, other),
+            matmap(operator.__ne__, self, other),
             shape=self._shape,
         )
 
     def lesser(self, other):
         return self.__class__(
-            matrix_map(operator.__lt__, self, other),
+            matmap(operator.__lt__, self, other),
             shape=self._shape,
         )
 
     def lesser_equal(self, other):
         return self.__class__(
-            matrix_map(operator.__le__, self, other),
+            matmap(operator.__le__, self, other),
             shape=self._shape,
         )
 
     def greater(self, other):
         return self.__class__(
-            matrix_map(operator.__gt__, self, other),
+            matmap(operator.__gt__, self, other),
             shape=self._shape,
         )
 
     def greater_equal(self, other):
         return self.__class__(
-            matrix_map(operator.__ge__, self, other),
+            matmap(operator.__ge__, self, other),
             shape=self._shape,
         )
 
     def logical_and(self, other):
         return self.__class__(
-            matrix_map(lambda a, b: not not (a and b), self, other),
+            matmap(lambda a, b: not not (a and b), self, other),
             shape=self._shape,
         )
 
     def logical_or(self, other):
         return self.__class__(
-            matrix_map(lambda a, b: not not (a or b), self, other),
+            matmap(lambda a, b: not not (a or b), self, other),
             shape=self._shape,
         )
 
     def logical_not(self):
         return self.__class__(
-            matrix_map(lambda a: not a, self),
+            matmap(lambda a: not a, self),
             shape=self._shape,
         )
 
     def conjugate(self):
         return self.__class__(
-            matrix_map(lambda a: a.conjugate(), self),
+            matmap(lambda a: a.conjugate(), self),
             shape=self._shape,
         )
 
@@ -409,3 +398,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         for i in range(shape[by.value]):
             temp = array[shape.slice(i, by=by)]
             yield self.__class__.wrap(temp, shape=subshape.copy())
+
+    def transpose(self):
+        from .transpose import MatrixTranspose
+        return MatrixTranspose(self)
