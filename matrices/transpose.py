@@ -6,7 +6,7 @@ from typing import TypeVar
 from .abstract import MatrixLike, matmap, matmul
 from .frozen import FrozenMatrix
 from .shapes import Shape
-from .utilities import COL, ROW, Rule
+from .utilities import COL, ROW
 
 T = TypeVar("T")
 M = TypeVar("M", bound=int)
@@ -311,9 +311,6 @@ class MatrixTranspose(MatrixLike[T, M, N]):
             matmap(lambda a: a.conjugate(), self),
             shape=(self.nrows, self.ncols),
         )
-
-    def slices(self, *, by=Rule.ROW):  # TODO
-        ...
 
     def transpose(self):
         return self._target

@@ -228,10 +228,14 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise `conjugate(a)`"""
         pass
 
-    @abstractmethod
     def slices(self, *, by=Rule.ROW):
         """Return an iterator that yields shallow copies of each row or column"""
-        pass
+        if by is Rule.ROW:
+            for i in range(self.nrows):
+                yield self[i, :]
+        else:
+            for j in range(self.ncols):
+                yield self[:, j]
 
     @abstractmethod
     def transpose(self):
