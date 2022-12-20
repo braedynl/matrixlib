@@ -391,14 +391,6 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             shape=self._shape,
         )
 
-    def slices(self, *, by=Rule.ROW):
-        array = self._array
-        shape = self._shape
-        subshape = shape.subshape(by=by)
-        for i in range(shape[by.value]):
-            temp = array[shape.slice(i, by=by)]
-            yield self.__class__.wrap(temp, shape=subshape.copy())
-
     def transpose(self):
         from .transpose import MatrixTranspose
         return MatrixTranspose(self)
