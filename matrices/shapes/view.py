@@ -23,8 +23,7 @@ class ShapeView(ShapeLike[M_co, N_co]):
     __str__ = __repr__
 
     def __getitem__(self, key):
-        key = operator.index(key)
-        return self._target[key]
+        return self._target[operator.index(key)]
 
     def __iter__(self):
         yield from self._target

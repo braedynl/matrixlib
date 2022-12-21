@@ -249,10 +249,6 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def size(self):
         return self._target.size
 
-    @property
-    def target(self):
-        return self._target
-
     def equal(self, other):
         return FrozenMatrix(
             matmap(operator.__eq__, self, other),
@@ -319,7 +315,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
         The transpose of a transpose nets no change to the matrix. Thus, this
         method simply returns the target.
         """
-        return self._target
+        return self._target  # TODO: should be a view
 
     def permute_index(self, key):
         """Return an index `key` as its transposed equivalent with respect to

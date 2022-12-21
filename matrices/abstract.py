@@ -272,7 +272,7 @@ def matmul(a, b):
         raise ValueError  # TODO: error message
     ix = range(m)
     jx = range(q)
-    kx = range(n)
+    kx = range(n)  # TODO: custom iterator with shape information?
     for i in ix:
         for j in jx:
             yield functools.reduce(
