@@ -1,4 +1,3 @@
-import itertools
 import operator
 from reprlib import recursive_repr
 from typing import TypeVar
@@ -38,7 +37,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
                     jx = shape.resolve_slice(colkey, by=COL)
                     n  = shape.nrows
                     result = FrozenMatrix.wrap(
-                        [target[j * n + i] for i, j in itertools.product(ix, jx)],
+                        [target[j * n + i] for i in ix for j in jx],
                         shape=Shape(len(ix), len(jx)),
                     )
 
@@ -208,33 +207,35 @@ class MatrixTranspose(MatrixLike[T, M, N]):
 
     def __neg__(self):
         return FrozenMatrix(
-            matmap(operator.__neg__, self),
+            map(operator.__neg__, self),
             shape=(self.nrows, self.ncols),
         )
 
     def __pos__(self):
         return FrozenMatrix(
-            matmap(operator.__pos__, self),
+            map(operator.__pos__, self),
             shape=(self.nrows, self.ncols),
         )
 
     def __abs__(self):
         return FrozenMatrix(
-            matmap(operator.__abs__, self),
+            map(operator.__abs__, self),
             shape=(self.nrows, self.ncols),
         )
 
     def __invert__(self):
         return FrozenMatrix(
-            matmap(operator.__invert__, self),
+            map(operator.__invert__, self),
             shape=(self.nrows, self.ncols),
         )
 
     @property
     def shape(self):
-        nrows = self._target.nrows
-        ncols = self._target.ncols
-        return Shape(ncols, nrows)
+        target = self._target
+        return Shape(
+            nrows=target.ncols,
+            ncols=target.nrows,
+        )
 
     @property
     def nrows(self):
@@ -302,17 +303,22 @@ class MatrixTranspose(MatrixLike[T, M, N]):
 
     def logical_not(self):
         return FrozenMatrix(
-            matmap(lambda a: not a, self),
+            map(lambda a: not a, self),
             shape=(self.nrows, self.ncols),
         )
 
     def conjugate(self):
         return FrozenMatrix(
-            matmap(lambda a: a.conjugate(), self),
+            map(lambda a: a.conjugate(), self),
             shape=(self.nrows, self.ncols),
         )
 
     def transpose(self):
+        """Return the transpose of the matrix
+
+        The transpose of a transpose nets no change to the matrix. Thus, this
+        method simply returns the target.
+        """
         return self._target
 
     def permute_index(self, key):
@@ -321,8 +327,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
 
         Raises `IndexError` if the key is out of range.
         """
-        nrows = self._target.nrows
-        ncols = self._target.ncols
+        nrows, ncols = self._target.shape
         n = nrows * ncols
         i = operator.index(key)
         i += n * (i < 0)

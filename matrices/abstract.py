@@ -273,24 +273,19 @@ def matmul(a, b):
     ix = range(m)
     jx = range(q)
     kx = range(n)
-    return (
-        functools.reduce(
-            operator.add,
-            map(lambda k: a[i * n + k] * b[k * q + j], kx),
-        )
-        for i in ix
-        for j in jx
-    )
+    for i in ix:
+        for j in jx:
+            yield functools.reduce(
+                operator.add,
+                map(lambda k: a[i * n + k] * b[k * q + j], kx),
+            )
 
 
-def matmap(func, a, *bx):
-    """Return a mapping of `func` across one or more matrices
+def matmap(func, a, b):
+    """Return a mapping of `func` across two matrices
 
-    Raises `ValueError` if not all matrices have equal shapes.
+    Raises `ValueError` if the two matrices have unequal shapes.
     """
-    if bx:
-        u = a.shape
-        for b in bx:
-            if u != (v := b.shape):
-                raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
-    return map(func, a, *bx)
+    if (u := a.shape) != (v := b.shape):
+        raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
+    return map(func, a, b)

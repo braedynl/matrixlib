@@ -1,11 +1,10 @@
-import itertools
 import operator
 from reprlib import recursive_repr
 from typing import TypeVar
 
 from .abstract import MatrixLike, matmap, matmul
 from .shapes import Shape, ShapeLike, ShapeView
-from .utilities import COL, ROW, Rule
+from .utilities import COL, ROW
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
@@ -65,7 +64,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                     jx = shape.resolve_slice(colkey, by=COL)
                     n  = shape.ncols
                     result = self.__class__.wrap(
-                        [array[i * n + j] for i, j in itertools.product(ix, jx)],
+                        [array[i * n + j] for i in ix for j in jx],
                         shape=Shape(len(ix), len(jx)),
                     )
 
@@ -232,25 +231,25 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __neg__(self):
         return self.__class__(
-            matmap(operator.__neg__, self),
+            map(operator.__neg__, self),
             shape=self._shape,
         )
 
     def __pos__(self):
         return self.__class__(
-            matmap(operator.__pos__, self),
+            map(operator.__pos__, self),
             shape=self._shape,
         )
 
     def __abs__(self):
         return self.__class__(
-            matmap(operator.__abs__, self),
+            map(operator.__abs__, self),
             shape=self._shape,
         )
 
     def __invert__(self):
         return self.__class__(
-            matmap(operator.__invert__, self),
+            map(operator.__invert__, self),
             shape=self._shape,
         )
 
@@ -381,16 +380,27 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def logical_not(self):
         return self.__class__(
-            matmap(lambda a: not a, self),
+            map(lambda a: not a, self),
             shape=self._shape,
         )
 
     def conjugate(self):
         return self.__class__(
-            matmap(lambda a: a.conjugate(), self),
+            map(lambda a: a.conjugate(), self),
             shape=self._shape,
         )
 
     def transpose(self):
-        from .transpose import MatrixTranspose
+        """Return the transpose of the matrix
+
+        This method produces a `MatrixTranspose` object, which is a kind of
+        dynamic matrix view that permutes its indices before passing them
+        to the "target" matrix (i.e., the matrix that is being viewed, which
+        will be the enclosed instance).
+
+        Creation of a `MatrixTranspose` is extremely quick. Item access takes
+        a slight performance hit, but remains in constant time.
+        """
+        from .transpose import \
+            MatrixTranspose  # XXX: Avoids circular import - MatrixTranspose often returns frozen matrices
         return MatrixTranspose(self)
