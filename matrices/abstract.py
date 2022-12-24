@@ -1,12 +1,10 @@
-import functools
-import operator
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from .utilities import Rule
+from .utilities import Rule, checked_map, compare
 
-__all__ = ["MatrixLike", "matcmp", "matmul", "matmap"]
+__all__ = ["MatrixLike"]
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
@@ -22,24 +20,24 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         if self is other:
             return True
         if isinstance(other, MatrixLike):
-            return all(matmap(lambda x, y: x is y or x == y, self, other))
+            return all(checked_map(lambda x, y: x is y or x == y, self, other))
         return NotImplemented
 
     def __lt__(self, other):
         """Return true if lexicographic `a < b`, otherwise false"""
-        return matcmp(self, other) < 0
+        return compare(self, other) < 0
 
     def __le__(self, other):
         """Return true if lexicographic `a <= b`, otherwise false"""
-        return matcmp(self, other) <= 0
+        return compare(self, other) <= 0
 
     def __gt__(self, other):
         """Return true if lexicographic `a > b`, otherwise false"""
-        return matcmp(self, other) > 0
+        return compare(self, other) > 0
 
     def __ge__(self, other):
         """Return true if lexicographic `a >= b`, otherwise false"""
-        return matcmp(self, other) >= 0
+        return compare(self, other) >= 0
 
     def __len__(self):
         """Return the matrix's size"""
@@ -241,51 +239,3 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def transpose(self):
         """Return the transpose of the matrix"""
         pass
-
-
-def matcmp(a, b):
-    """Return -1 if `a < b`, 1 if `a > b`, or 0 if `a == b`, compared
-    lexicographically
-
-    Raises `ValueError` if the two matrices have unequal shapes.
-    """
-    if (u := a.shape) != (v := b.shape):
-        raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
-    for x, y in zip(a, b):
-        if x < y:
-            return -1
-        if x > y:
-            return 1
-    return 0
-
-
-def matmul(a, b):
-    """Return an iterator that yields the elements of the matrix product
-
-    Raises `ValueError` if the two matrices have unequal inner dimensions, or
-    if the inner dimension is 0.
-    """
-    (m, n), (p, q) = (u, v) = (a.shape, b.shape)
-    if n != p:
-        raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
-    if not n:
-        raise ValueError  # TODO: error message
-    ix = range(m)
-    jx = range(q)
-    kx = range(n)  # TODO: custom iterator with shape information?
-    for i in ix:
-        for j in jx:
-            yield functools.reduce(
-                operator.add,
-                map(lambda k: a[i * n + k] * b[k * q + j], kx),
-            )
-
-
-def matmap(func, a, b):
-    """Return a mapping of `func` across two matrices
-
-    Raises `ValueError` if the two matrices have unequal shapes.
-    """
-    if (u := a.shape) != (v := b.shape):
-        raise ValueError(f"matrix of shape {u} is incompatible with operand shape {v}")
-    return map(func, a, b)

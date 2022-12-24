@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Iterator, Sequence
 from typing import Any, Generic, Literal, TypeVar, overload
 
 from .shapes import ShapeLike
@@ -16,7 +16,7 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsTrueDiv, SupportsXor)
 from .utilities import Rule
 
-__all__ = ["MatrixLike", "matcmp", "matmul", "matmap"]
+__all__ = ["MatrixLike"]
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -201,11 +201,3 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def slices(self) -> Iterator[MatrixLike[T_co, Literal[1], N_co]]: ...
     @abstractmethod
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]: ...
-
-
-def matcmp(a: MatrixLike[T, M, N], b: MatrixLike[T, M, N]) -> Literal[-1, 0, 1]: ...
-@overload
-def matmul(a: MatrixLike[SupportsDotProduct[T, SupportsClosedAddT], M, N], b: MatrixLike[T, N, P]) -> Iterator[SupportsClosedAddT]: ...
-@overload
-def matmul(a: MatrixLike[T, M, N], b: MatrixLike[SupportsRDotProduct[T, SupportsClosedAddT], N, P]) -> Iterator[SupportsClosedAddT]: ...
-def matmap(func: Callable[[T1, T2], T], a: MatrixLike[T1, M, N], b: MatrixLike[T2, M, N]) -> Iterator[T]: ...
