@@ -28,7 +28,6 @@ P = TypeVar("P", bound=int)
 
 SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
 
-
 class MatrixTranspose(MatrixLike[T, M, N]):
 
     __slots__: tuple[Literal["_target"]]

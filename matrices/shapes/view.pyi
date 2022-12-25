@@ -9,7 +9,6 @@ __all__ = ["ShapeView"]
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
-
 @final
 class ShapeView(ShapeLike[M_co, N_co]):
 

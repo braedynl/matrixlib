@@ -28,8 +28,6 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
 
 SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
-
-
 FrozenMatrixT = TypeVar("FrozenMatrixT", bound=FrozenMatrix)
 
 class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):

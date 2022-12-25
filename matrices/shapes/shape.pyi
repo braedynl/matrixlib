@@ -10,7 +10,6 @@ __all__ = ["Shape"]
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
 
-
 @final
 class Shape(ShapeLike[M, N]):
 
