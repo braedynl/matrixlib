@@ -10,6 +10,7 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 
 class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta):
 
+    __slots__: tuple[()]
     __match_args__: tuple[Literal["nrows"], Literal["ncols"]]
 
     def __eq__(self, other: Any) -> bool: ...
