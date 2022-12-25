@@ -1,10 +1,11 @@
+import functools
 import operator
 from reprlib import recursive_repr
 from typing import TypeVar
 
 from .abstract import MatrixLike
 from .shapes import Shape, ShapeLike, ShapeView
-from .utilities import COL, ROW, checked_map, multiply
+from .utilities import COL, ROW, checked_map
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
@@ -18,21 +19,19 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __init__(self, array=None, shape=None):
         array = [] if array is None else list(array)
 
+        n = len(array)
         match shape:
             case None | (None, None):
-                nrows, ncols = (1, len(array))
+                nrows, ncols = (1, n)
             case (None, ncols):
-                n = len(array)
                 nrows, loss = divmod(n, ncols) if ncols else (0, n)
                 if loss:
                     raise ValueError(f"cannot interpret array of size {n} as shape M × {ncols}")
             case (nrows, None):
-                n = len(array)
                 ncols, loss = divmod(n, nrows) if nrows else (0, n)
                 if loss:
                     raise ValueError(f"cannot interpret array of size {n} as shape {nrows} × N")
             case (nrows, ncols) | ShapeLike(nrows, ncols):
-                n = len(array)
                 if n != nrows * ncols:
                     raise ValueError(f"cannot interpret array of size {n} as shape {nrows} × {ncols}")
             case _:
@@ -222,12 +221,39 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         return NotImplemented
 
     def __matmul__(self, other):
-        if isinstance(other, MatrixLike):
-            return self.__class__(
-                multiply(self, other),
-                shape=self._shape,
-            )
-        return NotImplemented
+        if not isinstance(other, MatrixLike):
+            return NotImplemented
+
+        u, v = (self._shape, other.shape)
+        m, n = u
+        p, q = v
+
+        if n != p:
+            raise ValueError
+        if not n:
+            raise ValueError
+
+        ix = range(m)
+        jx = range(q)
+        kx = range(n)
+
+        a = self._array
+        if isinstance(other, FrozenMatrix):
+            b = other._array
+        else:
+            b = other
+
+        return self.__class__.wrap(
+            [
+                functools.reduce(
+                    operator.add,
+                    map(lambda k: a[i * n + k] * b[k * q + j], kx),
+                )
+                for i in ix
+                for j in jx
+            ],
+            shape=Shape(m, q),
+        )
 
     def __neg__(self):
         return self.__class__(

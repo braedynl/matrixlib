@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from .utilities import Rule, checked_map, compare
+from .utilities import Rule, checked_map
 
 __all__ = ["MatrixLike"]
 
@@ -12,6 +12,8 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
 class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
+
+    __slots__ = ()
 
     def __eq__(self, other):
         """Return true if element-wise `a is b or a == b` is true for all
@@ -239,3 +241,15 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def transpose(self):
         """Return the transpose of the matrix"""
         pass
+
+
+def compare(a, b):
+    u, v = (a.shape, b.shape)
+    if u != v:
+        raise ValueError(f"incompatible shapes for comparison {u}, {v}")
+    for x, y in zip(a, b):
+        if x < y:
+            return -1
+        if x > y:
+            return 1
+    return 0
