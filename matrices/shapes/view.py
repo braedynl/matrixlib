@@ -20,8 +20,6 @@ class ShapeView(ShapeLike[M_co, N_co]):
         """Return a canonical representation of the view"""
         return f"{self.__class__.__name__}(target={self._target!r})"
 
-    __str__ = __repr__
-
     def __getitem__(self, key):
         return self._target[operator.index(key)]
 

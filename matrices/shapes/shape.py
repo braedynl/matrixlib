@@ -27,13 +27,8 @@ class Shape(ShapeLike[M, N]):
 
     def __repr__(self):
         """Return a canonical representation of the shape"""
-        nrows, ncols = self
+        nrows, ncols = self._data
         return f"{self.__class__.__name__}(nrows={nrows!r}, ncols={ncols!r})"
-
-    def __str__(self):
-        """Return a string representation of the shape"""
-        nrows, ncols = self
-        return f"{nrows} × {ncols}"
 
     def __getitem__(self, key):
         try:

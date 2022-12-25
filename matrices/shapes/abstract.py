@@ -13,6 +13,10 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
     __slots__ = ()
     __match_args__ = ("nrows", "ncols")
 
+    def __str__(self):
+        """Return a string representation of the shape"""
+        return f"{self[0]} × {self[1]}"
+
     def __eq__(self, other):
         """Return true if the two shapes are equal, otherwise false"""
         if self is other:
