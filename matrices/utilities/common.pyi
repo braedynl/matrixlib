@@ -16,7 +16,6 @@ Tx = TypeVar("Tx")
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
-P = TypeVar("P", bound=int)
 
 @overload
 def checked_map(func: Callable[[T1], T], a: MatrixLike[T1, M, N]) -> Iterator[T]: ...
