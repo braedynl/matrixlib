@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from .utilities import Rule, checked_map
+from .utilities import Rule
 
 __all__ = ["MatrixLike"]
 
@@ -27,13 +27,25 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     __slots__ = ()
 
     def __eq__(self, other):
-        """Return true if element-wise `a is b or a == b` is true for all
-        element pairs, otherwise false
-        """
         if self is other:
             return True
         if isinstance(other, MatrixLike):
-            return all(checked_map(lambda x, y: x is y or x == y, self, other))
+            return (
+                self.shape == other.shape
+                and
+                all(map(lambda x, y: x is y or x == y, self, other))
+            )
+        return NotImplemented
+
+    def __ne__(self, other):
+        if self is other:
+            return False
+        if isinstance(other, MatrixLike):
+            return (
+                self.shape != other.shape
+                or
+                any(map(lambda x, y: not (x is y or x == y), self, other))
+            )
         return NotImplemented
 
     def __lt__(self, other):
