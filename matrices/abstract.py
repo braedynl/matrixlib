@@ -11,6 +11,17 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
+def lexicographic_compare(a, b):
+    if (u := a.shape) != (v := b.shape):
+        raise ValueError(f"incompatible shapes {u}, {v}")
+    for x, y in zip(a, b):
+        if x < y:
+            return -1
+        if x > y:
+            return 1
+    return 0
+
+
 class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
@@ -27,19 +38,19 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     def __lt__(self, other):
         """Return true if lexicographic `a < b`, otherwise false"""
-        return compare(self, other) < 0
+        return lexicographic_compare(self, other) < 0
 
     def __le__(self, other):
         """Return true if lexicographic `a <= b`, otherwise false"""
-        return compare(self, other) <= 0
+        return lexicographic_compare(self, other) <= 0
 
     def __gt__(self, other):
         """Return true if lexicographic `a > b`, otherwise false"""
-        return compare(self, other) > 0
+        return lexicographic_compare(self, other) > 0
 
     def __ge__(self, other):
         """Return true if lexicographic `a >= b`, otherwise false"""
-        return compare(self, other) >= 0
+        return lexicographic_compare(self, other) >= 0
 
     def __len__(self):
         """Return the matrix's size"""
@@ -241,15 +252,3 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def transpose(self):
         """Return the transpose of the matrix"""
         pass
-
-
-def compare(a, b):
-    u, v = (a.shape, b.shape)
-    if u != v:
-        raise ValueError(f"incompatible shapes for comparison {u}, {v}")
-    for x, y in zip(a, b):
-        if x < y:
-            return -1
-        if x > y:
-            return 1
-    return 0
