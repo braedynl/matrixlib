@@ -7,6 +7,7 @@ __all__ = ["ShapeLike"]
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
+
 class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
