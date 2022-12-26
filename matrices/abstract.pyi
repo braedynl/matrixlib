@@ -23,9 +23,6 @@ T_co = TypeVar("T_co", covariant=True)
 
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
-T3 = TypeVar("T3")
-T4 = TypeVar("T4")
-T5 = TypeVar("T5")
 
 M = TypeVar("M", bound=int)
 M_co = TypeVar("M_co", covariant=True, bound=int)

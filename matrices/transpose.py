@@ -1,11 +1,12 @@
+import functools
 import operator
 from reprlib import recursive_repr
 from typing import TypeVar
 
-from .abstract import MatrixLike, matmap, matmul
+from .abstract import MatrixLike
 from .frozen import FrozenMatrix
 from .shapes import Shape
-from .utilities import COL, ROW
+from .utilities import COL, ROW, checked_map
 
 T = TypeVar("T")
 M = TypeVar("M", bound=int)
@@ -96,7 +97,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __add__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__add__, self, other),
+                checked_map(operator.__add__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -104,7 +105,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __sub__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__sub__, self, other),
+                checked_map(operator.__sub__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -112,7 +113,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __mul__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__mul__, self, other),
+                checked_map(operator.__mul__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -120,7 +121,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __truediv__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__truediv__, self, other),
+                checked_map(operator.__truediv__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -128,7 +129,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __floordiv__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__floordiv__, self, other),
+                checked_map(operator.__floordiv__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -136,7 +137,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __mod__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__mod__, self, other),
+                checked_map(operator.__mod__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -144,7 +145,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __divmod__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(divmod, self, other),
+                checked_map(divmod, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -152,7 +153,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __pow__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__pow__, self, other),
+                checked_map(operator.__pow__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -160,7 +161,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __lshift__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__lshift__, self, other),
+                checked_map(operator.__lshift__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -168,7 +169,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __rshift__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__rshift__, self, other),
+                checked_map(operator.__rshift__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -176,7 +177,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __and__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__and__, self, other),
+                checked_map(operator.__and__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -184,7 +185,7 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __xor__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__xor__, self, other),
+                checked_map(operator.__xor__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
@@ -192,18 +193,13 @@ class MatrixTranspose(MatrixLike[T, M, N]):
     def __or__(self, other):
         if isinstance(other, MatrixLike):
             return FrozenMatrix(
-                matmap(operator.__or__, self, other),
+                checked_map(operator.__or__, self, other),
                 shape=(self.nrows, self.ncols),
             )
         return NotImplemented
 
-    def __matmul__(self, other):
-        if isinstance(other, MatrixLike):
-            return FrozenMatrix(
-                matmul(self, other),
-                shape=(self.nrows, other.ncols),
-            )
-        return NotImplemented
+    def __matmul__(self, other):  # TODO
+        ...
 
     def __neg__(self):
         return FrozenMatrix(
@@ -251,49 +247,49 @@ class MatrixTranspose(MatrixLike[T, M, N]):
 
     def equal(self, other):
         return FrozenMatrix(
-            matmap(operator.__eq__, self, other),
+            checked_map(operator.__eq__, self, other),
             shape=(self.nrows, self.ncols),
         )
 
     def not_equal(self, other):
         return FrozenMatrix(
-            matmap(operator.__ne__, self, other),
+            checked_map(operator.__ne__, self, other),
             shape=(self.nrows, self.ncols),
         )
 
     def lesser(self, other):
         return FrozenMatrix(
-            matmap(operator.__lt__, self, other),
+            checked_map(operator.__lt__, self, other),
             shape=(self.nrows, self.ncols),
         )
 
     def lesser_equal(self, other):
         return FrozenMatrix(
-            matmap(operator.__le__, self, other),
+            checked_map(operator.__le__, self, other),
             shape=(self.nrows, self.ncols),
         )
 
     def greater(self, other):
         return FrozenMatrix(
-            matmap(operator.__gt__, self, other),
+            checked_map(operator.__gt__, self, other),
             shape=(self.nrows, self.ncols),
         )
 
     def greater_equal(self, other):
         return FrozenMatrix(
-            matmap(operator.__ge__, self, other),
+            checked_map(operator.__ge__, self, other),
             shape=(self.nrows, self.ncols),
         )
 
     def logical_and(self, other):
         return FrozenMatrix(
-            matmap(lambda a, b: not not (a and b), self, other),
+            checked_map(lambda a, b: not not (a and b), self, other),
             shape=(self.nrows, self.ncols),
         )
 
     def logical_or(self, other):
         return FrozenMatrix(
-            matmap(lambda a, b: not not (a or b), self, other),
+            checked_map(lambda a, b: not not (a or b), self, other),
             shape=(self.nrows, self.ncols),
         )
 
