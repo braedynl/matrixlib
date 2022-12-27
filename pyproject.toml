@@ -30,3 +30,6 @@ keywords = ["matrices", "matrix", "vectors", "vector", "vectorization"]
 
 [tool.setuptools.package-data]
 "*" = ["*.pyi", "py.typed"]
+
+[tool.pyright]
+reportShadowedImports = false
