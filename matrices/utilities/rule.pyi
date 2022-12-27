@@ -3,6 +3,7 @@ from typing import Literal, final, overload
 
 __all__ = ["Rule", "ROW", "COL"]
 
+
 @final
 class Rule(Enum):
 
@@ -21,6 +22,7 @@ class Rule(Enum):
     def invert(self: Literal[Rule.COL]) -> Literal[Rule.ROW]: ...  # type: ignore[misc]
     @overload
     def invert(self) -> Literal[Rule.ROW, Rule.COL]: ...
+
 
 ROW: Literal[Rule.ROW]
 COL: Literal[Rule.COL]

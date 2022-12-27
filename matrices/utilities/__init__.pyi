@@ -1,9 +1,13 @@
 from collections.abc import Callable, Iterator
 from typing import TypeVar, overload
 
-from ..abstract import MatrixLike
+from ..abc import MatrixLike
+from .rule import COL, ROW, Rule
 
-__all__ = ["checked_map"]
+__all__ = [
+    "Rule", "ROW", "COL",
+    "checked_map",
+]
 
 T = TypeVar("T")
 
@@ -16,6 +20,7 @@ Tx = TypeVar("Tx")
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
+
 
 @overload
 def checked_map(func: Callable[[T1], T], a: MatrixLike[T1, M, N]) -> Iterator[T]: ...
