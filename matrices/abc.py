@@ -233,22 +233,22 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @abstractmethod
     def logical_and(self, other):
-        """Return element-wise `logical_and(a, b)`"""
+        """Return element-wise `bool(a and b)`"""
         pass
 
     @abstractmethod
     def logical_or(self, other):
-        """Return element-wise `logical_or(a, b)`"""
+        """Return element-wise `bool(a or b)`"""
         pass
 
     @abstractmethod
     def logical_not(self):
-        """Return element-wise `logical_not(a)`"""
+        """Return element-wise `not a`"""
         pass
 
     @abstractmethod
     def conjugate(self):
-        """Return element-wise `conjugate(a)`"""
+        """Return element-wise `a.conjugate()`"""
         pass
 
     def slices(self, *, by=Rule.ROW):

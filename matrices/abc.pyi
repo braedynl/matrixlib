@@ -35,6 +35,7 @@ P_co = TypeVar("P_co", covariant=True, bound=int)
 
 SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
 
+
 class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     def __eq__(self, other: Any) -> bool: ...
