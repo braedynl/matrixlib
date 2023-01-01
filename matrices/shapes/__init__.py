@@ -1,4 +1,3 @@
-import copy
 import operator
 from typing import TypeVar
 
@@ -61,7 +60,7 @@ class Shape(ShapeLike[M, N]):
         cls = self.__class__
 
         copy = cls.__new__(cls)
-        copy._array = self._array.copy()  # Our components are (hopefully) immutable
+        copy._array = self._array.copy()
 
         return copy
 
@@ -90,7 +89,7 @@ class Shape(ShapeLike[M, N]):
 
     def copy(self):
         """Return a copy of the shape"""
-        return copy.deepcopy(self)
+        return self.__deepcopy__()
 
     def subshape(self, *, by=Rule.ROW):
         """Return the shape of any sub-matrix in the given rule's form"""
