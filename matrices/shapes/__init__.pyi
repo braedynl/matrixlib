@@ -3,9 +3,8 @@ from typing import Any, Literal, Optional, SupportsIndex, TypeVar, overload
 
 from ..utilities import Rule
 from .abc import ShapeLike
-from .views import ShapeView
 
-__all__ = ["ShapeLike", "ShapeView", "Shape"]
+__all__ = ["ShapeLike", "Shape"]
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)

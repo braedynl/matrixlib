@@ -4,9 +4,8 @@ from typing import TypeVar
 
 from ..utilities import Rule
 from .abc import ShapeLike
-from .views import ShapeView
 
-__all__ = ["ShapeLike", "ShapeView", "Shape"]
+__all__ = ["ShapeLike", "Shape"]
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
@@ -108,8 +107,7 @@ class Shape(ShapeLike[M, N]):
         i = operator.index(key)
         i += n * (i < 0)
         if i < 0 or i >= n:
-            handle = by.handle()
-            raise IndexError(f"there are {n} {handle}s but index is {key}")
+            raise IndexError(f"there are {n} {by.handle}s but index is {key}")
         return i
 
     def resolve_slice(self, key, *, by=Rule.ROW):
