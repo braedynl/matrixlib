@@ -13,8 +13,9 @@ class Rule(Enum):
     ROW = 0
     COL = 1
 
+    @property
     def handle(self):
-        """Return the rule's non-Pythonized name"""
+        """The rule's non-Pythonized name"""
         return ("row", "column")[self.value]
 
     def invert(self):

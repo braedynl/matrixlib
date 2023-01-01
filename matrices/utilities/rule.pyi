@@ -10,12 +10,9 @@ class Rule(Enum):
     ROW: Literal[0]
     COL: Literal[1]
 
-    @overload
-    def handle(self: Literal[Rule.ROW]) -> Literal["row"]: ...  # type: ignore[misc]
-    @overload
-    def handle(self: Literal[Rule.COL]) -> Literal["column"]: ...  # type: ignore[misc]
-    @overload
+    @property
     def handle(self) -> Literal["row", "column"]: ...
+
     @overload
     def invert(self: Literal[Rule.ROW]) -> Literal[Rule.COL]: ...  # type: ignore[misc]
     @overload
