@@ -14,10 +14,9 @@ def checked_map(func, a, *bx):
     others.
     """
     if not bx:
-        yield from map(func, a)
-        return
+        return map(func, a)
     u = a.shape
     for b in bx:
         if u != (v := b.shape):
             raise ValueError(f"incompatible shapes {u}, {v}")
-    yield from map(func, a, *bx)
+    return map(func, a, *bx)
