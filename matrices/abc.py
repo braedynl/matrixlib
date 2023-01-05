@@ -1,3 +1,4 @@
+import operator
 from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from typing import Generic, TypeVar
@@ -198,8 +199,7 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @property
     def size(self):
         """The product of the matrix's number of rows and columns"""
-        nrows, ncols = self.shape
-        return nrows * ncols
+        return self.nrows * self.ncols
 
     @abstractmethod
     def equal(self, other):
@@ -264,3 +264,15 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def transpose(self):
         """Return the transpose of the matrix"""
         pass
+
+    def _resolve_index(self, key, *, by=Rule.ROW):
+        n = self.shape[by.value]
+        i = operator.index(key)
+        i += n * (i < 0)
+        if i < 0 or i >= n:
+            raise IndexError(f"there are {n} {by.handle}s but index is {key}")
+        return i
+
+    def _resolve_slice(self, key, *, by=Rule.ROW):
+        n = self.shape[by.value]
+        return range(*key.indices(n))

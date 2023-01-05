@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterator, Sequence
-from typing import Any, Generic, Literal, TypeVar, overload
+from typing import Any, Generic, Literal, SupportsIndex, TypeVar, overload
 
 from .shapes import ShapeLike
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
@@ -198,3 +198,6 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def slices(self) -> Iterator[MatrixLike[T_co, Literal[1], N_co]]: ...
     @abstractmethod
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]: ...
+
+    def _resolve_index(self, key: SupportsIndex, *, by: Rule = Rule.ROW) -> int: ...
+    def _resolve_slice(self, key: slice, *, by: Rule = Rule.ROW) -> range: ...
