@@ -265,14 +265,15 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Return the transpose of the matrix"""
         pass
 
-    def _resolve_index(self, key, *, by=Rule.ROW):
-        n = self.shape[by.value]
+    def _resolve_index(self, key, *, by=None):
+        n = self.size if by is None else self.shape[by.value]
         i = operator.index(key)
         i += n * (i < 0)
         if i < 0 or i >= n:
-            raise IndexError(f"there are {n} {by.handle}s but index is {key}")
+            handle = "item" if by is None else by.handle
+            raise IndexError(f"there are {n} {handle}s but index is {key}")
         return i
 
-    def _resolve_slice(self, key, *, by=Rule.ROW):
-        n = self.shape[by.value]
+    def _resolve_slice(self, key, *, by=None):
+        n = self.size if by is None else self.shape[by.value]
         return range(*key.indices(n))
