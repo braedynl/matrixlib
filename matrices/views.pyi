@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from typing import Any, Literal, TypeVar, overload
 
-from .abstract import MatrixLike
+from .abc import MatrixLike
 from .shapes import ShapeLike
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsClosedAdd, SupportsConjugate, SupportsDivMod,
@@ -28,6 +28,7 @@ N = TypeVar("N", bound=int)
 P = TypeVar("P", bound=int)
 
 SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
+
 
 class MatrixView(MatrixLike[T, M, N]):
 
