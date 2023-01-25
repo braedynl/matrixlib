@@ -1,9 +1,8 @@
 from collections.abc import Iterable, Iterator, MutableSequence
 from typing import Any, Literal, Optional, SupportsIndex, TypeVar, overload
 
-from .abstract import MatrixLike
-from .shapes import Shape, ShapeLike, ShapeView
-from .transpose import MatrixTranspose
+from .abc import MatrixLike
+from .shapes import Shape, ShapeLike
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsClosedAdd, SupportsConjugate, SupportsDivMod,
                        SupportsDotProduct, SupportsFloorDiv, SupportsInvert,
@@ -29,6 +28,7 @@ P_co = TypeVar("P_co", covariant=True, bound=int)
 
 SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
 FrozenMatrixT = TypeVar("FrozenMatrixT", bound=FrozenMatrix)
+
 
 class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
@@ -127,7 +127,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def infer(cls: type[FrozenMatrixT], rows: Iterable[Iterable[T_co]]) -> FrozenMatrixT: ...
 
     @property
-    def shape(self) -> ShapeView[M_co, N_co]: ...
+    def shape(self) -> Shape[M_co, N_co]: ...
     @property
     def nrows(self) -> M_co: ...
     @property
@@ -153,4 +153,4 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def slices(self, *, by: Rule) -> Iterator[FrozenMatrix[T_co, int, int]]: ...
     @overload
     def slices(self) -> Iterator[FrozenMatrix[T_co, Literal[1], N_co]]: ...
-    def transpose(self) -> MatrixTranspose[T_co, N_co, M_co]: ...
+    def transpose(self) -> MatrixLike[T_co, N_co, M_co]: ...
