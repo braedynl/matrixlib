@@ -266,6 +266,14 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         pass
 
     def _resolve_index(self, key, *, by=None):
+        """Validate, sanitize, and return an index `key` as a built-in `int`
+        with respect to the matrix's number of items, rows, or columns
+
+        Raises `IndexError` if the `key` is out of range.
+
+        This method uses the extended `Rule` convention, where `by=None` (the
+        default) corresponds to a "flattened" interpretation of the method.
+        """
         bound = self.size if by is None else self.shape[by.value]
         index = operator.index(key)
         index += bound * (index < 0)
@@ -275,10 +283,26 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         return index
 
     def _resolve_slice(self, key, *, by=None):
+        """Validate, sanitize, and return a slice `key` as an iterable of
+        built-in `int`s with respect to the matrix's number of items, rows, or
+        columns
+
+        This method uses the extended `Rule` convention, where `by=None` (the
+        default) corresponds to a "flattened" interpretation of the method.
+        """
         bound = self.size if by is None else self.shape[by.value]
         return range(*key.indices(bound))
 
     def _permute_index(self, index):
+        """Return a singular or paired `index` as its one-dimensional
+        equivalent
+
+        Typically, this method is called post-resolution, and
+        pre-`array.__getitem__()`, where `array` is the one-dimensional
+        sequence wrapped by the matrix implementation. If your implementation
+        does not wrap a one-dimensional sequence, this method may not be
+        useful.
+        """
         if isinstance(index, tuple):
             return index[0] * self.ncols + index[1]
         return index
