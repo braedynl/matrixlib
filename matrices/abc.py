@@ -266,14 +266,19 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         pass
 
     def _resolve_index(self, key, *, by=None):
-        n = self.size if by is None else self.shape[by.value]
-        i = operator.index(key)
-        i += n * (i < 0)
-        if i < 0 or i >= n:
+        bound = self.size if by is None else self.shape[by.value]
+        index = operator.index(key)
+        index += bound * (index < 0)
+        if index < 0 or index >= bound:
             handle = "item" if by is None else by.handle
-            raise IndexError(f"there are {n} {handle}s but index is {key}")
-        return i
+            raise IndexError(f"there are {bound} {handle}s but index is {key}")
+        return index
 
     def _resolve_slice(self, key, *, by=None):
-        n = self.size if by is None else self.shape[by.value]
-        return range(*key.indices(n))
+        bound = self.size if by is None else self.shape[by.value]
+        return range(*key.indices(bound))
+
+    def _permute_index(self, index):
+        if isinstance(index, tuple):
+            return index[0] * self.ncols + index[1]
+        return index
