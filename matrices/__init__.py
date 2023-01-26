@@ -46,7 +46,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                 if m != n:
                     raise ValueError(f"cannot interpret array of size {n} as shape {nrows} × {ncols}")
             case _:
-                raise ValueError("shape must contain two dimensions")
+                raise RuntimeError("shape is not a size two tuple or ShapeLike")
 
         shape = Shape(nrows, ncols)
 
