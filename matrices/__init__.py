@@ -59,10 +59,8 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         return f"{self.__class__.__name__}({self._array!r}, shape=({self.nrows!r}, {self.ncols!r}))"
 
     def __getitem__(self, key):
-
         if isinstance(key, tuple):
             row_key, col_key = key
-            n = self.ncols
 
             if isinstance(row_key, slice):
                 ix = self._resolve_slice(row_key, by=ROW)
@@ -70,13 +68,20 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                 if isinstance(col_key, slice):
                     jx = self._resolve_slice(col_key, by=COL)
                     return self.__class__.wrap(
-                        [self._array[i * n + j] for i in ix for j in jx],
+                        [
+                            self._array[self._permute_index((i, j))]
+                            for i in ix
+                            for j in jx
+                        ],
                         shape=Shape(len(ix), len(jx)),
                     )
 
                 j = self._resolve_index(col_key, by=COL)
                 return self.__class__.wrap(
-                    [self._array[i * n + j] for i in ix],
+                    [
+                        self._array[self._permute_index((i, j))]
+                        for i in ix
+                    ],
                     shape=Shape(len(ix), 1),
                 )
 
@@ -85,25 +90,31 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             if isinstance(col_key, slice):
                 jx = self._resolve_slice(col_key, by=COL)
                 return self.__class__.wrap(
-                    [self._array[i * n + j] for j in jx],
+                    [
+                        self._array[self._permute_index((i, j))]
+                        for j in jx
+                    ],
                     shape=Shape(1, len(jx)),
                 )
 
             j = self._resolve_index(col_key, by=COL)
-            return self._array[i * n + j]
+            return self._array[self._permute_index((i, j))]
 
         if isinstance(key, slice):
             ix = self._resolve_slice(key)
             return self.__class__.wrap(
-                [self._array[i] for i in ix],
+                [
+                    self._array[self._permute_index(i)]
+                    for i in ix
+                ],
                 shape=Shape(1, len(ix)),
             )
 
         i = self._resolve_index(key)
-        return self._array[i]
+        return self._array[self._permute_index(i)]
 
     def __iter__(self):
-        yield from self._array
+        yield from iter(self._array)
 
     def __reversed__(self):
         yield from reversed(self._array)
