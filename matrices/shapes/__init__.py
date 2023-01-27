@@ -1,4 +1,3 @@
-import operator
 from typing import TypeVar
 
 from ..utilities import Rule
@@ -47,7 +46,7 @@ class Shape(ShapeLike[M, N]):
             raise IndexError("index out of range") from error
 
     def __iter__(self):
-        yield from self._array
+        yield from iter(self._array)
 
     def __reversed__(self):
         yield from reversed(self._array)
@@ -82,39 +81,15 @@ class Shape(ShapeLike[M, N]):
     def ncols(self, value):
         self[1] = value
 
-    def reverse(self):
-        """Reverse the shape's dimensions in place"""
-        self._array.reverse()
-        return self
-
     def copy(self):
         """Return a copy of the shape"""
-        return self.__deepcopy__()
+        return self.__copy__()
 
     def subshape(self, *, by=Rule.ROW):
         """Return the shape of any sub-matrix in the given rule's form"""
         shape = self.copy()
         shape[by.value] = 1
         return shape
-
-    def resolve_index(self, key, *, by=Rule.ROW):
-        """Return an index `key` as an equivalent integer, respective to a rule
-
-        Raises `IndexError` if the key is out of range.
-        """
-        n = self[by.value]
-        i = operator.index(key)
-        i += n * (i < 0)
-        if i < 0 or i >= n:
-            raise IndexError(f"there are {n} {by.handle}s but index is {key}")
-        return i
-
-    def resolve_slice(self, key, *, by=Rule.ROW):
-        """Return a slice `key` as an equivalent sequence of indices,
-        respective to a rule
-        """
-        n = self[by.value]
-        return range(*key.indices(n))
 
     def sequence(self, index, *, by=Rule.ROW):
         """Return the start, stop, and step values required to create a range
