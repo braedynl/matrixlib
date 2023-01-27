@@ -16,7 +16,7 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsTrueDiv, SupportsXor)
 from .utilities import Rule
 
-__all__ = ["MatrixView"]
+__all__ = ["MatrixView", "MatrixTranspose"]
 
 T = TypeVar("T")
 
@@ -139,3 +139,10 @@ class MatrixView(MatrixLike[T, M, N]):
     @overload
     def slices(self) -> Iterator[MatrixLike[T, Literal[1], N]]: ...
     def transpose(self) -> MatrixLike[T, N, M]: ...
+
+
+class MatrixTranspose(MatrixView[T, M, N]):
+
+    __slots__: tuple[()]
+
+    def __init__(self, target: MatrixLike[T, N, M]) -> None: ...  # NOTE: subtle change, MatrixLike[T, M, N] -> MatrixLike[T, N, M]

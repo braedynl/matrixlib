@@ -5,9 +5,9 @@ from typing import TypeVar
 from . import FrozenMatrix
 from .abc import MatrixLike
 from .shapes import Shape
-from .utilities import COL, ROW, Rule, checked_map
+from .utilities import COL, ROW, checked_map
 
-__all__ = ["MatrixView"]
+__all__ = ["MatrixView", "MatrixTranspose"]
 
 T = TypeVar("T")
 M = TypeVar("M", bound=int)
@@ -28,6 +28,15 @@ class MatrixView(MatrixLike[T, M, N]):
 
     def __getitem__(self, key):
         return self._target[key]
+
+    def __iter__(self):
+        yield from iter(self._target)
+
+    def __reversed__(self):
+        yield from reversed(self._target)
+
+    def __contains__(self, value):
+        return value in self._target
 
     def __add__(self, other):
         return self._target + other
@@ -95,6 +104,10 @@ class MatrixView(MatrixLike[T, M, N]):
     def ncols(self):
         return self._target.ncols
 
+    @property
+    def size(self):
+        return self._target.size
+
     def equal(self, other):
         return self._target.equal(other)
 
@@ -125,111 +138,100 @@ class MatrixView(MatrixLike[T, M, N]):
     def conjugate(self):
         return self._target.conjugate()
 
-    def transpose(self):  # TODO
-        pass
+    def transpose(self):
+        return self._target.transpose()
 
 
-# class MatrixTranspose(MatrixView[T, M, N]):
+class MatrixTranspose(MatrixView[T, M, N]):
 
-#     __slots__ = ()
+    __slots__ = ()
 
-#     def __getitem__(self, key):
-#         target = self._target
-#         shape  = self.shape
+    def __getitem__(self, key):
+        if isinstance(key, tuple):
+            row_key, col_key = key
 
-#         if isinstance(key, tuple):
-#             row_key, col_key = key
+            if isinstance(row_key, slice):
+                ix = self._resolve_slice(row_key, by=ROW)
 
-#             if isinstance(row_key, slice):
-#                 ix = shape.resolve_slice(row_key, by=ROW)
+                if isinstance(col_key, slice):
+                    jx = self._resolve_slice(col_key, by=COL)
+                    return FrozenMatrix.wrap(
+                        [
+                            self._target[self._permute_index((i, j))]
+                            for i in ix
+                            for j in jx
+                        ],
+                        shape=Shape(len(ix), len(jx)),
+                    )
 
-#                 if isinstance(col_key, slice):
-#                     jx = shape.resolve_slice(col_key, by=COL)
-#                     n  = shape.nrows
-#                     result = FrozenMatrix.wrap(
-#                         [target[j * n + i] for i in ix for j in jx],
-#                         shape=Shape(len(ix), len(jx)),
-#                     )
+                j = self._resolve_index(col_key, by=COL)
+                return FrozenMatrix.wrap(
+                    [
+                        self._target[self._permute_index((i, j))]
+                        for i in ix
+                    ],
+                    shape=Shape(len(ix), 1),
+                )
 
-#                 else:
-#                     j = shape.resolve_index(col_key, by=COL)
-#                     n = shape.nrows
-#                     result = FrozenMatrix.wrap(
-#                         [target[j * n + i] for i in ix],
-#                         shape=Shape(len(ix), 1),
-#                     )
+            i = self._resolve_index(row_key, by=ROW)
 
-#             else:
-#                 i = shape.resolve_index(row_key, by=ROW)
+            if isinstance(col_key, slice):
+                jx = self._resolve_slice(col_key, by=COL)
+                return FrozenMatrix.wrap(
+                    [
+                        self._target[self._permute_index((i, j))]
+                        for j in jx
+                    ],
+                    shape=Shape(1, len(jx)),
+                )
 
-#                 if isinstance(col_key, slice):
-#                     jx = shape.resolve_slice(col_key, by=COL)
-#                     n  = shape.nrows
-#                     result = FrozenMatrix.wrap(
-#                         [target[j * n + i] for j in jx],
-#                         shape=Shape(1, len(jx)),
-#                     )
+            j = self._resolve_index(col_key, by=COL)
+            return self._target[self._permute_index((i, j))]
 
-#                 else:
-#                     j = shape.resolve_index(col_key, by=COL)
-#                     n = shape.nrows
-#                     result = target[j * n + i]
+        if isinstance(key, slice):
+            ix = self._resolve_slice(key)
+            return FrozenMatrix.wrap(
+                [
+                    self._target[self._permute_index(i)]
+                    for i in ix
+                ],
+                shape=Shape(1, len(ix)),
+            )
 
-#         elif isinstance(key, slice):
-#             ix = range(*key.indices(shape.nrows * shape.ncols))
+        i = self._resolve_index(key)
+        return self._target[self._permute_index(i)]
 
-#             result = FrozenMatrix.wrap(
-#                 [target[self.permute_index(i)] for i in ix],
-#                 shape=Shape(1, len(ix)),
-#             )
+    def __iter__(self, *, iter=iter):
+        nrows = self.nrows
+        ncols = self.ncols
+        ix = range(nrows)
+        jx = range(ncols)
+        for i in iter(ix):
+            for j in iter(jx):
+                yield self._target[j * nrows + i]
 
-#         else:
-#             result = target[self.permute_index(key)]
+    def __reversed__(self):
+        yield from self.__iter__(iter=reversed)
 
-#         return result
+    @property
+    def shape(self):
+        return self._target.shape.reverse()
 
-#     def __iter__(self, *, iter=iter):
-#         target = self._target
-#         nrows, ncols = target.shape
-#         ix = range(nrows)
-#         jx = range(ncols)
-#         for j in iter(jx):
-#             for i in iter(ix):
-#                 yield target[i * ncols + j]
+    @property
+    def nrows(self):
+        return self._target.ncols
 
-#     def __reversed__(self):
-#         yield from self.__iter__(iter=reversed)
+    @property
+    def ncols(self):
+        return self._target.nrows
 
-#     @property
-#     def shape(self):
-#         target = self._target
-#         return Shape(
-#             nrows=target.ncols,
-#             ncols=target.nrows,
-#         )
+    # The transpose of a transpose nets no change to the matrix. Thus, we
+    # simply return a view on the target.
 
-#     @property
-#     def nrows(self):
-#         return self._target.ncols
+    def transpose(self):
+        return MatrixView(self._target)
 
-#     @property
-#     def ncols(self):
-#         return self._target.nrows
-
-#     def transpose(self):
-#         return MatrixView(self._target)
-
-#     def permute_index(self, key):
-#         """Return an index `key` as its transposed equivalent with respect to
-#         the target matrix
-
-#         Raises `IndexError` if the key is out of range.
-#         """
-#         nrows, ncols = self._target.shape
-#         n = nrows * ncols
-#         i = operator.index(key)
-#         i += n * (i < 0)
-#         if i < 0 or i >= n:
-#             raise IndexError(f"there are {n} items but index is {key}")
-#         j = n - 1
-#         return i if i == j else (i * ncols) % j
+    def _permute_index(self, index):
+        if isinstance(index, tuple):
+            return index[1] * self.nrows + index[0]
+        # TODO

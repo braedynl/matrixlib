@@ -409,7 +409,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             shape=self.shape,
         )
 
-    def transpose(self):
+    def transpose(self):  # TODO
         """Return the transpose of the matrix
 
         This method produces a `MatrixTranspose` object, which is a kind of
