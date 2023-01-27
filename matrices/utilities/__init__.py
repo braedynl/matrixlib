@@ -1,7 +1,9 @@
-from .rule import COL, ROW, Rule
+from .rule import *
 
 __all__ = [
-    "Rule", "ROW", "COL",
+    "Rule",
+    "ROW",
+    "COL",
     "checked_map",
 ]
 

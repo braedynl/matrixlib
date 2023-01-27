@@ -5,7 +5,9 @@ from ..abc import MatrixLike
 from .rule import COL, ROW, Rule
 
 __all__ = [
-    "Rule", "ROW", "COL",
+    "Rule",
+    "ROW",
+    "COL",
     "checked_map",
 ]
 
