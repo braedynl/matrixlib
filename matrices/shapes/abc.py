@@ -83,6 +83,14 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
         """The second dimension of the shape"""
         return self[1]
 
+    # Copying and reversal operations are required at the base level for use by
+    # matrix views. Your implementation may use an immutable shape - in which
+    # case, copying should simply return `self`, and reversal should be
+    # out-of-place.
+
+    # Do *not* expose a mutable reference to a shape. Doing so could make views
+    # mutate their target's shape unexpectedly.
+
     def copy(self):
         """Return a copy of the shape"""
         return self.__deepcopy__()
