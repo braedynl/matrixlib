@@ -1,7 +1,7 @@
 from typing import TypeVar
 
 from ..utilities import Rule
-from .abc import ShapeLike
+from .abc import *
 
 __all__ = ["ShapeLike", "Shape"]
 
@@ -10,7 +10,7 @@ N = TypeVar("N", bound=int)
 
 
 class Shape(ShapeLike[M, N]):
-    """A mutable collection type for storing matrix dimensions"""
+    """A mutable collection type for storing and manipulating matrix dimensions"""
 
     __slots__ = ("_array",)
 
