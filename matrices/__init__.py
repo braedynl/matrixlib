@@ -343,11 +343,11 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     @property
     def nrows(self):
-        return self._shape.nrows
+        return self._shape[0]
 
     @property
     def ncols(self):
-        return self._shape.ncols
+        return self._shape[1]
 
     def equal(self, other):
         return self.__class__.wrap(

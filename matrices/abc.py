@@ -189,12 +189,12 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @property
     def nrows(self):
         """The matrix's number of rows"""
-        return self.shape.nrows
+        return self.shape[0]
 
     @property
     def ncols(self):
         """The matrix's number of columns"""
-        return self.shape.ncols
+        return self.shape[1]
 
     @property
     def size(self):
