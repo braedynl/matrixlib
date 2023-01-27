@@ -55,15 +55,12 @@ class Shape(ShapeLike[M, N]):
         return value in self._array
 
     def __deepcopy__(self, memo=None):
-        """Return a copy of the shape"""
         cls = self.__class__
 
         copy = cls.__new__(cls)
         copy._array = self._array.copy()
 
         return copy
-
-    __copy__ = __deepcopy__
 
     @property
     def nrows(self):
@@ -81,9 +78,9 @@ class Shape(ShapeLike[M, N]):
     def ncols(self, value):
         self[1] = value
 
-    def copy(self):
-        """Return a copy of the shape"""
-        return self.__copy__()
+    def reverse(self):
+        self._array.reverse()
+        return self
 
     def subshape(self, *, by=Rule.ROW):
         """Return the shape of any sub-matrix in the given rule's form"""

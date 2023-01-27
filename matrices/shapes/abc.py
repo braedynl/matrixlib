@@ -29,6 +29,18 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
             )
         return NotImplemented
 
+    def __ne__(self, other):
+        """Return true if the two shapes are not equal, otherwise false"""
+        if self is other:
+            return False
+        if isinstance(other, ShapeLike):
+            return (
+                self[0] != other[0]
+                or
+                self[1] != other[1]
+            )
+        return NotImplemented
+
     def __len__(self):
         """Return literal 2"""
         return 2
@@ -52,6 +64,15 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
         """Return true if the shape contains `value`, otherwise false"""
         return self[0] == value or self[1] == value
 
+    @abstractmethod
+    def __deepcopy__(self, memo=None):
+        """Return a copy of the shape"""
+        pass
+
+    def __copy__(self):
+        """Return a copy of the shape"""
+        return self.__deepcopy__()
+
     @property
     def nrows(self):
         """The first dimension of the shape"""
@@ -61,3 +82,12 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
     def ncols(self):
         """The second dimension of the shape"""
         return self[1]
+
+    def copy(self):
+        """Return a copy of the shape"""
+        return self.__deepcopy__()
+
+    @abstractmethod
+    def reverse(self):
+        """Return the shape reversed"""
+        pass
