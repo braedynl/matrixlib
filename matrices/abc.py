@@ -13,6 +13,8 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
 def lexicographic_compare(a, b):
+    if a is b:
+        return 0
     if (u := a.shape) != (v := b.shape):
         raise ValueError(f"incompatible shapes {u}, {v}")
     for x, y in zip(a, b):
@@ -27,43 +29,41 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
-    def __eq__(self, other):
-        if self is other:
-            return True
-        if isinstance(other, MatrixLike):
-            return (
-                self.shape == other.shape
-                and
-                all(map(lambda x, y: x is y or x == y, self, other))
-            )
-        return NotImplemented
-
-    def __ne__(self, other):
-        if self is other:
-            return False
-        if isinstance(other, MatrixLike):
-            return (
-                self.shape != other.shape
-                or
-                any(map(lambda x, y: not (x is y or x == y), self, other))
-            )
-        return NotImplemented
-
     def __lt__(self, other):
         """Return true if lexicographic `a < b`, otherwise false"""
-        return lexicographic_compare(self, other) < 0
+        if isinstance(other, MatrixLike):
+            return lexicographic_compare(self, other) < 0
+        return NotImplemented
 
     def __le__(self, other):
         """Return true if lexicographic `a <= b`, otherwise false"""
-        return lexicographic_compare(self, other) <= 0
+        if isinstance(other, MatrixLike):
+            return lexicographic_compare(self, other) <= 0
+        return NotImplemented
+
+    def __eq__(self, other):
+        """Return true if lexicographic `a == b`, otherwise false"""
+        if isinstance(other, MatrixLike):
+            return lexicographic_compare(self, other) == 0
+        return NotImplemented
+
+    def __ne__(self, other):
+        """Return true if lexicographic `a != b`, otherwise false"""
+        if isinstance(other, MatrixLike):
+            return lexicographic_compare(self, other) != 0
+        return NotImplemented
 
     def __gt__(self, other):
         """Return true if lexicographic `a > b`, otherwise false"""
-        return lexicographic_compare(self, other) > 0
+        if isinstance(other, MatrixLike):
+            return lexicographic_compare(self, other) > 0
+        return NotImplemented
 
     def __ge__(self, other):
         """Return true if lexicographic `a >= b`, otherwise false"""
-        return lexicographic_compare(self, other) >= 0
+        if isinstance(other, MatrixLike):
+            return lexicographic_compare(self, other) >= 0
+        return NotImplemented
 
     def __len__(self):
         """Return the matrix's size"""
