@@ -15,8 +15,6 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 def lexicographic_compare(a, b):
     if a is b:
         return 0
-    if (u := a.shape) != (v := b.shape):
-        raise ValueError(f"incompatible shapes {u}, {v}")
     for x, y in zip(a, b):
         if x < y:
             return -1
@@ -44,13 +42,21 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def __eq__(self, other):
         """Return true if lexicographic `a == b`, otherwise false"""
         if isinstance(other, MatrixLike):
-            return lexicographic_compare(self, other) == 0
+            return (
+                self.shape == other.shape
+                and
+                lexicographic_compare(self, other) == 0
+            )
         return NotImplemented
 
     def __ne__(self, other):
         """Return true if lexicographic `a != b`, otherwise false"""
         if isinstance(other, MatrixLike):
-            return lexicographic_compare(self, other) != 0
+            return (
+                self.shape != other.shape
+                or
+                lexicographic_compare(self, other) != 0
+            )
         return NotImplemented
 
     def __gt__(self, other):
