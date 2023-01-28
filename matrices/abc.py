@@ -269,10 +269,10 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Validate, sanitize, and return an index `key` as a built-in `int`
         with respect to the matrix's number of items, rows, or columns
 
-        Raises `IndexError` if the `key` is out of range.
+        This method uses the extended `Rule` convention, where `by=None`
+        corresponds to a "flattened" interpretation of the method.
 
-        This method uses the extended `Rule` convention, where `by=None` (the
-        default) corresponds to a "flattened" interpretation of the method.
+        Raises `IndexError` if the `key` is out of range.
         """
         bound = self.size if by is None else self.shape[by.value]
         index = operator.index(key)
@@ -287,22 +287,28 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         built-in `int`s with respect to the matrix's number of items, rows, or
         columns
 
-        This method uses the extended `Rule` convention, where `by=None` (the
-        default) corresponds to a "flattened" interpretation of the method.
+        This method uses the extended `Rule` convention, where `by=None`
+        corresponds to a "flattened" interpretation of the method.
         """
         bound = self.size if by is None else self.shape[by.value]
         return range(*key.indices(bound))
 
-    def _permute_index(self, index):
-        """Return a singular or paired `index` as its one-dimensional
-        equivalent
+    def _permute_index_single(self, val_index):
+        """Permute and return the given singular index as its "canonical" form
 
-        Typically, this method is called post-resolution, and
-        pre-`array.__getitem__()`, where `array` is the one-dimensional
-        sequence wrapped by the matrix implementation. If your implementation
-        does not wrap a one-dimensional sequence, this method may not be
-        useful.
+        This method is typically called post-resolution, and pre-retrieval (the
+        return value of this function being the final index used in the
+        retrieval process). At the base level, this function simply returns
+        `val_index`.
         """
-        if isinstance(index, tuple):
-            return index[0] * self.ncols + index[1]
-        return index
+        return val_index
+
+    def _permute_index_double(self, row_index, col_index):
+        """Permute and return the given paired index as its "canonical" form
+
+        This method is typically called post-resolution, and pre-retrieval (the
+        return value of this function being the final index used in the
+        retrieval process). At the base level, this function simply returns
+        `row_index * self.ncols + col_index`.
+        """
+        return row_index * self.ncols + col_index

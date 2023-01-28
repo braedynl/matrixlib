@@ -151,64 +151,92 @@ class MatrixTranspose(MatrixView[T, M, N]):
             row_key, col_key = key
 
             if isinstance(row_key, slice):
-                ix = self._resolve_slice(row_key, by=ROW)
+                row_indices = self._resolve_slice(row_key, by=ROW)
 
                 if isinstance(col_key, slice):
-                    jx = self._resolve_slice(col_key, by=COL)
+                    col_indices = self._resolve_slice(col_key, by=COL)
                     return FrozenMatrix.wrap(
                         [
-                            self._target[self._permute_index((i, j))]
-                            for i in ix
-                            for j in jx
+                            self._target[
+                                self._permute_index_double(
+                                    row_index=row_index,
+                                    col_index=col_index,
+                                )
+                            ]
+                            for row_index in row_indices
+                            for col_index in col_indices
                         ],
-                        shape=Shape(len(ix), len(jx)),
+                        shape=Shape(len(row_indices), len(col_indices)),
                     )
 
-                j = self._resolve_index(col_key, by=COL)
+                col_index = self._resolve_index(col_key, by=COL)
                 return FrozenMatrix.wrap(
                     [
-                        self._target[self._permute_index((i, j))]
-                        for i in ix
+                        self._target[
+                            self._permute_index_double(
+                                row_index=row_index,
+                                col_index=col_index,
+                            )
+                        ]
+                        for row_index in row_indices
                     ],
-                    shape=Shape(len(ix), 1),
+                    shape=Shape(len(row_indices), 1),
                 )
 
-            i = self._resolve_index(row_key, by=ROW)
+            row_index = self._resolve_index(row_key, by=ROW)
 
             if isinstance(col_key, slice):
-                jx = self._resolve_slice(col_key, by=COL)
+                col_indices = self._resolve_slice(col_key, by=COL)
                 return FrozenMatrix.wrap(
                     [
-                        self._target[self._permute_index((i, j))]
-                        for j in jx
+                        self._target[
+                            self._permute_index_double(
+                                row_index=row_index,
+                                col_index=col_index,
+                            )
+                        ]
+                        for col_index in col_indices
                     ],
-                    shape=Shape(1, len(jx)),
+                    shape=Shape(1, len(col_indices)),
                 )
 
-            j = self._resolve_index(col_key, by=COL)
-            return self._target[self._permute_index((i, j))]
+            col_index = self._resolve_index(col_key, by=COL)
+            return self._target[
+                self._permute_index_double(
+                    row_index=row_index,
+                    col_index=col_index,
+                )
+            ]
 
         if isinstance(key, slice):
-            ix = self._resolve_slice(key)
+            val_indices = self._resolve_slice(key)
             return FrozenMatrix.wrap(
                 [
-                    self._target[self._permute_index(i)]
-                    for i in ix
+                    self._target[
+                        self._permute_index_single(
+                            val_index=val_index,
+                        )
+                    ]
+                    for val_index in val_indices
                 ],
-                shape=Shape(1, len(ix)),
+                shape=Shape(1, len(val_indices)),
             )
 
-        i = self._resolve_index(key)
-        return self._target[self._permute_index(i)]
+        val_index = self._resolve_index(key)
+        return self._target[
+            self._permute_index_single(
+                val_index=val_index,
+            )
+        ]
 
     def __iter__(self, *, iter=iter):
         nrows = self.nrows
         ncols = self.ncols
-        ix = range(nrows)
-        jx = range(ncols)
-        for i in iter(ix):
-            for j in iter(jx):
-                yield self._target[j * nrows + i]
+        row_indices = range(nrows)
+        col_indices = range(ncols)
+        for row_index in iter(row_indices):
+            for col_index in iter(col_indices):
+                yield self._target[col_index * nrows + row_index]
 
     def __reversed__(self):
         yield from self.__iter__(iter=reversed)
@@ -231,7 +259,12 @@ class MatrixTranspose(MatrixView[T, M, N]):
     def transpose(self):
         return MatrixView(self._target)
 
-    def _permute_index(self, index):
-        if isinstance(index, tuple):
-            return index[1] * self.nrows + index[0]
-        # TODO
+    def _permute_index_single(self, val_index):
+        row_index, col_index = divmod(val_index, self.ncols)
+        return self._permute_index_double(
+            row_index=row_index,
+            col_index=col_index,
+        )
+
+    def _permute_index_double(self, row_index, col_index):
+        return col_index * self.nrows + row_index

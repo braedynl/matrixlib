@@ -25,8 +25,7 @@ class Shape(ShapeLike[M, N]):
 
     def __repr__(self):
         """Return a canonical representation of the shape"""
-        nrows, ncols = self._array
-        return f"{self.__class__.__name__}(nrows={nrows!r}, ncols={ncols!r})"
+        return f"{self.__class__.__name__}(nrows={self._array[0]!r}, ncols={self._array[1]!r})"
 
     def __getitem__(self, key):
         try:

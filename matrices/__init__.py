@@ -63,55 +63,83 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             row_key, col_key = key
 
             if isinstance(row_key, slice):
-                ix = self._resolve_slice(row_key, by=ROW)
+                row_indices = self._resolve_slice(row_key, by=ROW)
 
                 if isinstance(col_key, slice):
-                    jx = self._resolve_slice(col_key, by=COL)
+                    col_indices = self._resolve_slice(col_key, by=COL)
                     return self.__class__.wrap(
                         [
-                            self._array[self._permute_index((i, j))]
-                            for i in ix
-                            for j in jx
+                            self._array[
+                                self._permute_index_double(
+                                    row_index=row_index,
+                                    col_index=col_index,
+                                )
+                            ]
+                            for row_index in row_indices
+                            for col_index in col_indices
                         ],
-                        shape=Shape(len(ix), len(jx)),
+                        shape=Shape(len(row_indices), len(col_indices)),
                     )
 
-                j = self._resolve_index(col_key, by=COL)
+                col_index = self._resolve_index(col_key, by=COL)
                 return self.__class__.wrap(
                     [
-                        self._array[self._permute_index((i, j))]
-                        for i in ix
+                        self._array[
+                            self._permute_index_double(
+                                row_index=row_index,
+                                col_index=col_index,
+                            )
+                        ]
+                        for row_index in row_indices
                     ],
-                    shape=Shape(len(ix), 1),
+                    shape=Shape(len(row_indices), 1),
                 )
 
-            i = self._resolve_index(row_key, by=ROW)
+            row_index = self._resolve_index(row_key, by=ROW)
 
             if isinstance(col_key, slice):
-                jx = self._resolve_slice(col_key, by=COL)
+                col_indices = self._resolve_slice(col_key, by=COL)
                 return self.__class__.wrap(
                     [
-                        self._array[self._permute_index((i, j))]
-                        for j in jx
+                        self._array[
+                            self._permute_index_double(
+                                row_index=row_index,
+                                col_index=col_index,
+                            )
+                        ]
+                        for col_index in col_indices
                     ],
-                    shape=Shape(1, len(jx)),
+                    shape=Shape(1, len(col_indices)),
                 )
 
-            j = self._resolve_index(col_key, by=COL)
-            return self._array[self._permute_index((i, j))]
+            col_index = self._resolve_index(col_key, by=COL)
+            return self._array[
+                self._permute_index_double(
+                    row_index=row_index,
+                    col_index=col_index,
+                )
+            ]
 
         if isinstance(key, slice):
-            ix = self._resolve_slice(key)
+            val_indices = self._resolve_slice(key)
             return self.__class__.wrap(
                 [
-                    self._array[self._permute_index(i)]
-                    for i in ix
+                    self._array[
+                        self._permute_index_single(
+                            val_index=val_index,
+                        )
+                    ]
+                    for val_index in val_indices
                 ],
-                shape=Shape(1, len(ix)),
+                shape=Shape(1, len(val_indices)),
             )
 
-        i = self._resolve_index(key)
-        return self._array[self._permute_index(i)]
+        val_index = self._resolve_index(key)
+        return self._array[
+            self._permute_index_single(
+                val_index=val_index,
+            )
+        ]
 
     def __iter__(self):
         yield from iter(self._array)
