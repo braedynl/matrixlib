@@ -55,12 +55,15 @@ class Shape(ShapeLike[M, N]):
         return value in self._array
 
     def __deepcopy__(self, memo=None):
+        """Return a copy of the shape"""
         cls = self.__class__
 
         copy = cls.__new__(cls)
         copy._array = self._array.copy()
 
         return copy
+
+    copy = __copy__ = __deepcopy__
 
     @property
     def nrows(self):

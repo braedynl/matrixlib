@@ -64,15 +64,6 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
         """Return true if the shape contains `value`, otherwise false"""
         return self[0] == value or self[1] == value
 
-    @abstractmethod
-    def __deepcopy__(self, memo=None):
-        """Return a copy of the shape"""
-        pass
-
-    def __copy__(self):
-        """Return a copy of the shape"""
-        return self.__deepcopy__()
-
     @property
     def nrows(self):
         """The first dimension of the shape"""
@@ -83,17 +74,13 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
         """The second dimension of the shape"""
         return self[1]
 
-    # Copying and reversal operations are required at the base level for use by
-    # matrix views. Your implementation may use an immutable shape - in which
-    # case, copying should simply return `self`, and reversal should be
-    # out-of-place.
+    # A reversal operation is required at the base level for use by matrix
+    # views - specifically `MatrixTranspose` and its sub-classes.
 
-    # Do *not* expose a mutable reference to a shape. Doing so could make views
-    # mutate their target's shape unexpectedly.
-
-    def copy(self):
-        """Return a copy of the shape"""
-        return self.__deepcopy__()
+    # Its implementation may be in-place or out-of-place. If in-place, ensure
+    # that a mutable reference to a composed shape *is not* exposed by the
+    # `shape` property. Doing otherwise could make views mutate the target
+    # shape unexpectedly.
 
     @abstractmethod
     def reverse(self):
