@@ -13,9 +13,9 @@ import operator
 from reprlib import recursive_repr
 from typing import TypeVar
 
-from .abc import MatrixLike
-from .shapes import Shape, ShapeLike
-from .utilities import COL, ROW, Rule, checked_map
+from .abc import *
+from .shapes import *
+from .utilities import *
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
@@ -56,11 +56,14 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     @recursive_repr("...")
     def __repr__(self):
         """Return a canonical representation of the matrix"""
-        return f"{self.__class__.__name__}({self._array!r}, shape=({self.nrows!r}, {self.ncols!r}))"
+        array = self._array
+        shape = self._shape
+        return f"{self.__class__.__name__}({array!r}, shape=({shape[0]!r}, {shape[1]!r}))"
 
     def __getitem__(self, key):
         if isinstance(key, tuple):
             row_key, col_key = key
+            ncols = self.ncols
 
             if isinstance(row_key, slice):
                 row_indices = self._resolve_slice(row_key, by=ROW)
@@ -69,12 +72,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                     col_indices = self._resolve_slice(col_key, by=COL)
                     return self.__class__.wrap(
                         [
-                            self._array[
-                                self._permute_index_double(
-                                    row_index=row_index,
-                                    col_index=col_index,
-                                )
-                            ]
+                            self._array[row_index * ncols + col_index]
                             for row_index in row_indices
                             for col_index in col_indices
                         ],
@@ -84,12 +82,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                 col_index = self._resolve_index(col_key, by=COL)
                 return self.__class__.wrap(
                     [
-                        self._array[
-                            self._permute_index_double(
-                                row_index=row_index,
-                                col_index=col_index,
-                            )
-                        ]
+                        self._array[row_index * ncols + col_index]
                         for row_index in row_indices
                     ],
                     shape=Shape(len(row_indices), 1),
@@ -101,45 +94,27 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                 col_indices = self._resolve_slice(col_key, by=COL)
                 return self.__class__.wrap(
                     [
-                        self._array[
-                            self._permute_index_double(
-                                row_index=row_index,
-                                col_index=col_index,
-                            )
-                        ]
+                        self._array[row_index * ncols + col_index]
                         for col_index in col_indices
                     ],
                     shape=Shape(1, len(col_indices)),
                 )
 
             col_index = self._resolve_index(col_key, by=COL)
-            return self._array[
-                self._permute_index_double(
-                    row_index=row_index,
-                    col_index=col_index,
-                )
-            ]
+            return self._array[row_index * ncols + col_index]
 
         if isinstance(key, slice):
             val_indices = self._resolve_slice(key)
             return self.__class__.wrap(
                 [
-                    self._array[
-                        self._permute_index_single(
-                            val_index=val_index,
-                        )
-                    ]
+                    self._array[val_index]
                     for val_index in val_indices
                 ],
                 shape=Shape(1, len(val_indices)),
             )
 
         val_index = self._resolve_index(key)
-        return self._array[
-            self._permute_index_single(
-                val_index=val_index,
-            )
-        ]
+        return self._array[val_index]
 
     def __contains__(self, value):
         return value in self._array
@@ -371,6 +346,11 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def ncols(self):
         return self._shape[1]
 
+    @property
+    def size(self):
+        shape = self._shape
+        return shape[0] * shape[1]
+
     def equal(self, other):
         return self.__class__.wrap(
             list(checked_map(operator.__eq__, self, other)),
@@ -431,21 +411,19 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             shape=self.shape,
         )
 
-    def transpose(self):  # TODO
-        pass
+    def transpose(self):
+        from .views import MatrixTranspose
+        return MatrixTranspose(self)
 
     def items(self, *, by=Rule.ROW, reverse=False):
         it = reversed if reverse else iter
         if by is Rule.ROW:  # Fast path
             yield from it(self._array)
             return
-        row_indices = range(self.nrows)
-        col_indices = range(self.ncols)
+        nrows = self.nrows
+        ncols = self.ncols
+        row_indices = range(nrows)
+        col_indices = range(ncols)
         for col_index in it(col_indices):
             for row_index in it(row_indices):
-                yield self._array[
-                    self._permute_index_double(
-                        row_index=row_index,
-                        col_index=col_index,
-                    )
-                ]
+                yield self._array[row_index * ncols + col_index]

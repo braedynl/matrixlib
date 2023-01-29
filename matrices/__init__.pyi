@@ -1,8 +1,8 @@
 from collections.abc import Iterable, Iterator, MutableSequence
 from typing import Any, Literal, Optional, SupportsIndex, TypeVar, overload
 
-from .abc import MatrixLike
-from .shapes import Shape, ShapeLike
+from .abc import *
+from .shapes import *
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsClosedAdd, SupportsConjugate, SupportsDivMod,
                        SupportsDotProduct, SupportsFloorDiv, SupportsInvert,
@@ -14,7 +14,7 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsRRShift, SupportsRShift, SupportsRSub,
                        SupportsRTrueDiv, SupportsRXor, SupportsSub,
                        SupportsTrueDiv, SupportsXor)
-from .utilities import Rule
+from .utilities import *
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
