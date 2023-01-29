@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Collection, Iterator
-from typing import Any, Generic, Literal, TypeVar, overload
+from typing import Any, Generic, Literal, TypeVar, Union, overload
 
 __all__ = ["ShapeLike"]
 
@@ -8,7 +8,7 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta):
+class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
     __match_args__: tuple[Literal["nrows"], Literal["ncols"]]
@@ -29,9 +29,9 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
     def __getitem__(self, key: Literal[1]) -> N_co: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: int) -> M_co | N_co: ...
-    def __iter__(self) -> Iterator[M_co | N_co]: ...
-    def __reversed__(self) -> Iterator[M_co | N_co]: ...
+    def __getitem__(self, key: int) -> Union[M_co, N_co]: ...
+    def __iter__(self) -> Iterator[Union[M_co, N_co]]: ...
+    def __reversed__(self) -> Iterator[Union[M_co, N_co]]: ...
     def __contains__(self, value: Any) -> bool: ...
 
     @property

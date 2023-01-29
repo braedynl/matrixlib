@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Collection
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Union
 
 __all__ = ["ShapeLike"]
 
@@ -8,7 +8,7 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta):
+class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
     __match_args__ = ("nrows", "ncols")
@@ -105,12 +105,12 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
         """
         if self is other:
             return 0
-        for x, y in zip(self, other):
-            if x == y:
+        for m, n in zip(self, other):
+            if m == n:
                 continue
-            if x < y:
+            if m < n:
                 return -1
-            if x > y:
+            if m > n:
                 return 1
             raise RuntimeError  # Unreachable
         return 0
