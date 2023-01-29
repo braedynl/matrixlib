@@ -5,7 +5,7 @@ from typing import TypeVar
 from . import FrozenMatrix
 from .abc import MatrixLike
 from .shapes import Shape
-from .utilities import COL, ROW, checked_map
+from .utilities import COL, ROW, Rule, checked_map
 
 __all__ = ["MatrixView", "MatrixTranspose"]
 
@@ -141,8 +141,17 @@ class MatrixView(MatrixLike[T, M, N]):
     def transpose(self):
         return self._target.transpose()
 
+    def compare(self, other):
+        return self._target.compare(other)
 
-class MatrixTranspose(MatrixView[T, M, N]):
+    def items(self, *, by=Rule.ROW, reverse=False):
+        yield from self._target.items(by=by, reverse=reverse)
+
+    def slices(self, *, by=Rule.ROW, reverse=False):
+        yield from self._target.slices(by=by, reverse=reverse)
+
+
+class MatrixTransform(MatrixView[T, M, N]):
 
     __slots__ = ()
 
@@ -228,6 +237,217 @@ class MatrixTranspose(MatrixView[T, M, N]):
                 val_index=val_index,
             )
         ]
+
+    def __iter__(self):
+        yield from super(MatrixView, self).__iter__()
+
+    def __reversed__(self):
+        yield from super(MatrixView, self).__reversed__()
+
+    def __add__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__add__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __sub__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__sub__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __mul__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__mul__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __truediv__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__truediv__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __floordiv__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__floordiv__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __mod__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__mod__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __divmod__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(divmod, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __pow__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__pow__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __lshift__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__lshift__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __rshift__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__rshift__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __and__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__and__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __xor__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__xor__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __or__(self, other):
+        if isinstance(other, MatrixLike):
+            return FrozenMatrix.wrap(
+                list(checked_map(operator.__or__, self, other)),
+                shape=self.shape,
+            )
+        return NotImplemented
+
+    def __matmul__(self, other):  # TODO
+        pass
+
+    def __neg__(self):
+        return FrozenMatrix.wrap(
+            list(map(operator.__neg__, self)),
+            shape=self.shape,
+        )
+
+    def __pos__(self):
+        return FrozenMatrix.wrap(
+            list(map(operator.__pos__, self)),
+            shape=self.shape,
+        )
+
+    def __abs__(self):
+        return FrozenMatrix.wrap(
+            list(map(operator.__abs__, self)),
+            shape=self.shape,
+        )
+
+    def __invert__(self):
+        return FrozenMatrix.wrap(
+            list(map(operator.__invert__, self)),
+            shape=self.shape,
+        )
+
+    def equal(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(operator.__eq__, self, other)),
+            shape=self.shape,
+        )
+
+    def not_equal(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(operator.__ne__, self, other)),
+            shape=self.shape,
+        )
+
+    def lesser(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(operator.__lt__, self, other)),
+            shape=self.shape,
+        )
+
+    def lesser_equal(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(operator.__le__, self, other)),
+            shape=self.shape,
+        )
+
+    def greater(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(operator.__gt__, self, other)),
+            shape=self.shape,
+        )
+
+    def greater_equal(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(operator.__ge__, self, other)),
+            shape=self.shape,
+        )
+
+    def logical_and(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(lambda x, y: not not (x and y), self, other)),
+            shape=self.shape,
+        )
+
+    def logical_or(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(lambda x, y: not not (x or y), self, other)),
+            shape=self.shape,
+        )
+
+    def logical_not(self):
+        return FrozenMatrix.wrap(
+            list(map(lambda x: not x, self)),
+            shape=self.shape,
+        )
+
+    def conjugate(self):
+        return FrozenMatrix.wrap(
+            list(map(lambda x: x.conjugate(), self)),
+            shape=self.shape,
+        )
+
+    def compare(self, other):
+        return super(MatrixView, self).compare(other)
+
+    def items(self, *, by=Rule.ROW, reverse=False):
+        yield from super(MatrixView, self).items(by=by, reverse=reverse)
+
+    def slices(self, *, by=Rule.ROW, reverse=False):
+        yield from super(MatrixView, self).slices(by=by, reverse=reverse)
+
+
+class MatrixTranspose(MatrixTransform[T, M, N]):
+
+    __slots__ = ()
 
     def __iter__(self, *, iter=iter):
         nrows = self.nrows
