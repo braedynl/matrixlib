@@ -489,10 +489,7 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
 
     def _permute_index_single(self, val_index):
         row_index, col_index = divmod(val_index, self.ncols)
-        return self._permute_index_double(
-            row_index=row_index,
-            col_index=col_index,
-        )
+        return col_index * self.nrows + row_index
 
     def _permute_index_double(self, row_index, col_index):
         return col_index * self.nrows + row_index

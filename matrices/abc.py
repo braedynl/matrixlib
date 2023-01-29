@@ -262,26 +262,26 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         column-major order
         """
         it = reversed if reverse else iter
-        ix = range(self.nrows)
-        jx = range(self.ncols)
+        row_indices = range(self.nrows)
+        col_indices = range(self.ncols)
         if by is Rule.ROW:
-            for i in it(ix):
-                for j in it(jx):
-                    yield self[i, j]
+            for row_index in it(row_indices):
+                for col_index in it(col_indices):
+                    yield self[row_index, col_index]
         else:
-            for j in it(jx):
-                for i in it(ix):
-                    yield self[i, j]
+            for col_index in it(col_indices):
+                for row_index in it(row_indices):
+                    yield self[row_index, col_index]
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator that yields shallow copies of each row or column"""
         it = reversed if reverse else iter
         if by is Rule.ROW:
-            for i in it(range(self.nrows)):
-                yield self[i, :]
+            for row_index in it(range(self.nrows)):
+                yield self[row_index, :]
         else:
-            for j in it(range(self.ncols)):
-                yield self[:, j]
+            for col_index in it(range(self.ncols)):
+                yield self[:, col_index]
 
     def _resolve_index(self, key, *, by=None):
         """Validate, sanitize, and return an index `key` as a built-in `int`
