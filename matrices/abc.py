@@ -12,17 +12,6 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-def lexicographic_compare(a, b):
-    if a is b:
-        return 0
-    for x, y in zip(a, b):
-        if x < y:
-            return -1
-        if x > y:
-            return 1
-    return 0
-
-
 class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
@@ -30,45 +19,37 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def __lt__(self, other):
         """Return true if lexicographic `a < b`, otherwise false"""
         if isinstance(other, MatrixLike):
-            return lexicographic_compare(self, other) < 0
+            return self.compare(other) < 0
         return NotImplemented
 
     def __le__(self, other):
         """Return true if lexicographic `a <= b`, otherwise false"""
         if isinstance(other, MatrixLike):
-            return lexicographic_compare(self, other) <= 0
+            return self.compare(other) <= 0
         return NotImplemented
 
     def __eq__(self, other):
         """Return true if lexicographic `a == b`, otherwise false"""
         if isinstance(other, MatrixLike):
-            return (
-                self.shape == other.shape
-                and
-                lexicographic_compare(self, other) == 0
-            )
+            return self.compare(other) == 0
         return NotImplemented
 
     def __ne__(self, other):
         """Return true if lexicographic `a != b`, otherwise false"""
         if isinstance(other, MatrixLike):
-            return (
-                self.shape != other.shape
-                or
-                lexicographic_compare(self, other) != 0
-            )
+            return self.compare(other) != 0
         return NotImplemented
 
     def __gt__(self, other):
         """Return true if lexicographic `a > b`, otherwise false"""
         if isinstance(other, MatrixLike):
-            return lexicographic_compare(self, other) > 0
+            return self.compare(other) > 0
         return NotImplemented
 
     def __ge__(self, other):
         """Return true if lexicographic `a >= b`, otherwise false"""
         if isinstance(other, MatrixLike):
-            return lexicographic_compare(self, other) >= 0
+            return self.compare(other) >= 0
         return NotImplemented
 
     def __len__(self):
@@ -257,6 +238,27 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise `a.conjugate()`"""
         pass
 
+    @abstractmethod
+    def transpose(self):
+        """Return the transpose of the matrix"""
+        pass
+
+    def compare(self, other):
+        """Return literal -1, 0, or 1 if lexicographic `a < b`, `a == b`, or
+        `a > b`, respectively
+        """
+        if self is other:
+            return 0
+        for x, y in zip(self, other):
+            if x == y:
+                continue
+            if x < y:
+                return -1
+            if x > y:
+                return 1
+            raise RuntimeError  # unreachable
+        return self.shape.compare(other.shape)
+
     def slices(self, *, by=Rule.ROW):
         """Return an iterator that yields shallow copies of each row or column"""
         if by is Rule.ROW:
@@ -265,11 +267,6 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         else:
             for j in range(self.ncols):
                 yield self[:, j]
-
-    @abstractmethod
-    def transpose(self):
-        """Return the transpose of the matrix"""
-        pass
 
     def _resolve_index(self, key, *, by=None):
         """Validate, sanitize, and return an index `key` as a built-in `int`

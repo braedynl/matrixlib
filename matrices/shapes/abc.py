@@ -17,28 +17,40 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
         """Return a string representation of the shape"""
         return f"{self[0]} × {self[1]}"
 
-    def __eq__(self, other):
-        """Return true if the two shapes are equal, otherwise false"""
-        if self is other:
-            return True
+    def __lt__(self, other):
+        """Return true if lexicographic `a < b`, otherwise false"""
         if isinstance(other, ShapeLike):
-            return (
-                self[0] == other[0]
-                and
-                self[1] == other[1]
-            )
+            return self.compare(other) < 0
+        return NotImplemented
+
+    def __le__(self, other):
+        """Return true if lexicographic `a <= b`, otherwise false"""
+        if isinstance(other, ShapeLike):
+            return self.compare(other) <= 0
+        return NotImplemented
+
+    def __eq__(self, other):
+        """Return true if lexicographic `a == b`, otherwise false"""
+        if isinstance(other, ShapeLike):
+            return self.compare(other) == 0
         return NotImplemented
 
     def __ne__(self, other):
-        """Return true if the two shapes are not equal, otherwise false"""
-        if self is other:
-            return False
+        """Return true if lexicographic `a != b`, otherwise false"""
         if isinstance(other, ShapeLike):
-            return (
-                self[0] != other[0]
-                or
-                self[1] != other[1]
-            )
+            return self.compare(other) != 0
+        return NotImplemented
+
+    def __gt__(self, other):
+        """Return true if lexicographic `a > b`, otherwise false"""
+        if isinstance(other, ShapeLike):
+            return self.compare(other) > 0
+        return NotImplemented
+
+    def __ge__(self, other):
+        """Return true if lexicographic `a >= b`, otherwise false"""
+        if isinstance(other, ShapeLike):
+            return self.compare(other) >= 0
         return NotImplemented
 
     def __len__(self):
@@ -86,3 +98,19 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
     def reverse(self):
         """Return the shape reversed"""
         pass
+
+    def compare(self, other):
+        """Return literal -1, 0, or 1 if lexicographic `a < b`, `a == b`, or
+        `a > b`, respectively
+        """
+        if self is other:
+            return 0
+        for x, y in zip(self, other):
+            if x == y:
+                continue
+            if x < y:
+                return -1
+            if x > y:
+                return 1
+            raise RuntimeError  # unreachable
+        return 0
