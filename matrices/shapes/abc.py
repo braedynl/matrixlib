@@ -112,5 +112,5 @@ class ShapeLike(Collection[M_co | N_co], Generic[M_co, N_co], metaclass=ABCMeta)
                 return -1
             if x > y:
                 return 1
-            raise RuntimeError  # unreachable
+            raise RuntimeError  # Unreachable
         return 0

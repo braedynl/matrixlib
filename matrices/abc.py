@@ -63,15 +63,13 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     def __iter__(self):
         """Return an iterator over the values of the matrix in row-major order"""
-        keys = range(self.size)
-        yield from map(self.__getitem__, keys)
+        yield from self.items()
 
     def __reversed__(self):
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
-        keys = range(self.size)
-        yield from map(self.__getitem__, reversed(keys))
+        yield from self.items(reverse=True)
 
     def __contains__(self, value):
         """Return true if the matrix contains `value`, otherwise false"""
@@ -256,16 +254,33 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
                 return -1
             if x > y:
                 return 1
-            raise RuntimeError  # unreachable
+            raise RuntimeError  # Unreachable
         return self.shape.compare(other.shape)
 
-    def slices(self, *, by=Rule.ROW):
-        """Return an iterator that yields shallow copies of each row or column"""
+    def items(self, *, by=Rule.ROW, reverse=False):
+        """Return an iterator that yields the matrix's items in row or
+        column-major order
+        """
+        it = reversed if reverse else iter
+        ix = range(self.nrows)
+        jx = range(self.ncols)
         if by is Rule.ROW:
-            for i in range(self.nrows):
+            for i in it(ix):
+                for j in it(jx):
+                    yield self[i, j]
+        else:
+            for j in it(jx):
+                for i in it(ix):
+                    yield self[i, j]
+
+    def slices(self, *, by=Rule.ROW, reverse=False):
+        """Return an iterator that yields shallow copies of each row or column"""
+        it = reversed if reverse else iter
+        if by is Rule.ROW:
+            for i in it(range(self.nrows)):
                 yield self[i, :]
         else:
-            for j in range(self.ncols):
+            for j in it(range(self.ncols)):
                 yield self[:, j]
 
     def _resolve_index(self, key, *, by=None):

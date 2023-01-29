@@ -15,7 +15,7 @@ from typing import TypeVar
 
 from .abc import MatrixLike
 from .shapes import Shape, ShapeLike
-from .utilities import COL, ROW, checked_map
+from .utilities import COL, ROW, Rule, checked_map
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
@@ -140,12 +140,6 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                 val_index=val_index,
             )
         ]
-
-    def __iter__(self):
-        yield from iter(self._array)
-
-    def __reversed__(self):
-        yield from reversed(self._array)
 
     def __contains__(self, value):
         return value in self._array
@@ -438,14 +432,20 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         )
 
     def transpose(self):  # TODO
-        """Return the transpose of the matrix
-
-        This method produces a `MatrixTranspose` object, which is a kind of
-        dynamic matrix view that permutes its indices before passing them
-        to the "target" matrix (i.e., the matrix that is being viewed, which
-        will be the enclosed instance).
-
-        Creation of a `MatrixTranspose` is extremely quick. Item access takes
-        a slight performance hit, but remains in constant time.
-        """
         pass
+
+    def items(self, *, by=Rule.ROW, reverse=False):
+        it = reversed if reverse else iter
+        if by is Rule.ROW:  # Fast path
+            yield from it(self._array)
+            return
+        row_indices = range(self.nrows)
+        col_indices = range(self.ncols)
+        for col_index in it(col_indices):
+            for row_index in it(row_indices):
+                yield self._array[
+                    self._permute_index_double(
+                        row_index=row_index,
+                        col_index=col_index,
+                    )
+                ]
