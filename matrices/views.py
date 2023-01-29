@@ -7,7 +7,7 @@ from .abc import MatrixLike
 from .shapes import Shape
 from .utilities import COL, ROW, Rule, checked_map
 
-__all__ = ["MatrixView", "MatrixTranspose"]
+__all__ = ["MatrixView", "MatrixTransform", "MatrixTranspose"]
 
 T = TypeVar("T")
 M = TypeVar("M", bound=int)
@@ -435,6 +435,9 @@ class MatrixTransform(MatrixView[T, M, N]):
             shape=self.shape,
         )
 
+    def transpose(self):
+        return MatrixTranspose(self)
+
     def compare(self, other):
         return super(MatrixView, self).compare(other)
 
@@ -444,22 +447,30 @@ class MatrixTransform(MatrixView[T, M, N]):
     def slices(self, *, by=Rule.ROW, reverse=False):
         yield from super(MatrixView, self).slices(by=by, reverse=reverse)
 
+    def _permute_index_single(self, val_index):
+        """Permute and return the given singular index as its "canonical" form
+
+        This method is typically called post-resolution, and pre-retrieval (the
+        return value of this function being the final index used in the
+        retrieval process). At the base level, this function simply returns
+        `val_index`.
+        """
+        return val_index
+
+    def _permute_index_double(self, row_index, col_index):
+        """Permute and return the given paired index as its "canonical" form
+
+        This method is typically called post-resolution, and pre-retrieval (the
+        return value of this function being the final index used in the
+        retrieval process). At the base level, this function simply returns
+        `row_index * self.ncols + col_index`.
+        """
+        return row_index * self.ncols + col_index
+
 
 class MatrixTranspose(MatrixTransform[T, M, N]):
 
     __slots__ = ()
-
-    def __iter__(self, *, iter=iter):
-        nrows = self.nrows
-        ncols = self.ncols
-        row_indices = range(nrows)
-        col_indices = range(ncols)
-        for row_index in iter(row_indices):
-            for col_index in iter(col_indices):
-                yield self._target[col_index * nrows + row_index]
-
-    def __reversed__(self):
-        yield from self.__iter__(iter=reversed)
 
     @property
     def shape(self):
@@ -472,9 +483,6 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
     @property
     def ncols(self):
         return self._target.nrows
-
-    # The transpose of a transpose nets no change to the matrix. Thus, we
-    # simply return a view on the target.
 
     def transpose(self):
         return MatrixView(self._target)

@@ -310,23 +310,3 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """
         bound = self.size if by is None else self.shape[by.value]
         return range(*key.indices(bound))
-
-    def _permute_index_single(self, val_index):
-        """Permute and return the given singular index as its "canonical" form
-
-        This method is typically called post-resolution, and pre-retrieval (the
-        return value of this function being the final index used in the
-        retrieval process). At the base level, this function simply returns
-        `val_index`.
-        """
-        return val_index
-
-    def _permute_index_double(self, row_index, col_index):
-        """Permute and return the given paired index as its "canonical" form
-
-        This method is typically called post-resolution, and pre-retrieval (the
-        return value of this function being the final index used in the
-        retrieval process). At the base level, this function simply returns
-        `row_index * self.ncols + col_index`.
-        """
-        return row_index * self.ncols + col_index
