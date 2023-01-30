@@ -422,7 +422,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def items(self, *, by=Rule.ROW, reverse=False):
         it = reversed if reverse else iter
-        if by is Rule.ROW:  # Fast path
+        if by is Rule.ROW:  # Fast path: the array is already in row-major order
             yield from it(self._array)
             return
         nrows = self.nrows

@@ -485,6 +485,9 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
 
     __slots__ = ()
 
+    # Our dimensions are reversed with respect to the target matrix - these
+    # overrides are *not* typos.
+
     @property
     def shape(self):
         return self._target.shape.reverse()
@@ -498,7 +501,7 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
         return self._target.nrows
 
     def transpose(self):
-        return MatrixView(self._target)
+        return MatrixView(self._target)  # Fast path: transpose of transpose -> original matrix
 
     def _permute_index_single(self, val_index):
         row_index, col_index = divmod(val_index, self.ncols)
@@ -516,7 +519,7 @@ class MatrixRowFlip(MatrixTransform[T, M, N]):
     __slots__ = ()
 
     def flip(self, *, by=Rule.ROW):
-        if by is Rule.ROW:
+        if by is Rule.ROW:  # Fast path: row-flip of row-flip -> original matrix
             return MatrixView(self._target)
         return MatrixColFlip(self)
 
@@ -539,7 +542,7 @@ class MatrixColFlip(MatrixTransform[T, M, N]):
     __slots__ = ()
 
     def flip(self, *, by=Rule.ROW):
-        if by is Rule.COL:
+        if by is Rule.COL:  # Fast path: col-flip of col-flip -> original matrix
             return MatrixView(self._target)
         return MatrixRowFlip(self)
 

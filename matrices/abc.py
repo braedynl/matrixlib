@@ -282,10 +282,12 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Return an iterator that yields shallow copies of each row or column"""
         it = reversed if reverse else iter
         if by is Rule.ROW:
-            for row_index in it(range(self.nrows)):
+            row_indices = range(self.nrows)
+            for row_index in it(row_indices):
                 yield self[row_index, :]
         else:
-            for col_index in it(range(self.ncols)):
+            col_indices = range(self.ncols)
+            for col_index in it(col_indices):
                 yield self[:, col_index]
 
     def _resolve_index(self, key, *, by=None):
