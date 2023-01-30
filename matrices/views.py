@@ -206,6 +206,27 @@ class MatrixTransform(MatrixView[T, M, N]):
 
     __slots__ = ()
 
+    def __lt__(self, other):
+        return super(MatrixView, self).__lt__(other)
+
+    def __le__(self, other):
+        return super(MatrixView, self).__le__(other)
+
+    def __eq__(self, other):
+        return super(MatrixView, self).__eq__(other)
+
+    def __ne__(self, other):
+        return super(MatrixView, self).__ne__(other)
+
+    def __gt__(self, other):
+        return super(MatrixView, self).__gt__(other)
+
+    def __ge__(self, other):
+        return super(MatrixView, self).__ge__(other)
+
+    def __len__(self):
+        return super(MatrixView, self).__len__()
+
     def __getitem__(self, key):
         if isinstance(key, tuple):
             row_key, col_key = key
@@ -289,14 +310,14 @@ class MatrixTransform(MatrixView[T, M, N]):
             )
         ]
 
-    # We can no longer refer to the target for iteration, since we're
-    # scrambling the order in some fashion.
-
     def __iter__(self):
         yield from super(MatrixView, self).__iter__()
 
     def __reversed__(self):
         yield from super(MatrixView, self).__reversed__()
+
+    def __contains__(self, value):
+        return super(MatrixView, self).__contains__(value)
 
     def __add__(self, other):
         if isinstance(other, MatrixLike):
@@ -515,6 +536,12 @@ class MatrixTransform(MatrixView[T, M, N]):
     def slices(self, *, by=Rule.ROW, reverse=False):
         yield from super(MatrixView, self).slices(by=by, reverse=reverse)
 
+    def _resolve_index(self, key, *, by=None):
+        return super(MatrixView, self)._resolve_index(key, by=by)
+
+    def _resolve_slice(self, key, *, by=None):
+        return super(MatrixView, self)._resolve_slice(key, by=by)
+
     def _permute_index_single(self, val_index):
         """Return a given `val_index` as its permuted form
 
@@ -548,6 +575,7 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
 
     # Our dimensions are reversed with respect to the target matrix - these
     # are *not* typo'd overrides.
+    # Multiplication is associative, so no override of `size` is necessary.
 
     @property
     def nrows(self):
