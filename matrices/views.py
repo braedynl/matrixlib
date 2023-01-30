@@ -13,6 +13,7 @@ __all__ = [
     "MatrixTranspose",
     "MatrixRowFlip",
     "MatrixColFlip",
+    "MatrixReverse",
 ]
 
 T = TypeVar("T")
@@ -140,6 +141,9 @@ class MatrixView(MatrixLike[T, M, N]):
     def size(self):
         return self._target.size
 
+    def ndims(self, by):
+        return self._target.ndims(by)
+
     def equal(self, other):
         return self._target.equal(other)
 
@@ -239,7 +243,7 @@ class MatrixTransform(MatrixView[T, M, N]):
                     return FrozenMatrix.wrap(
                         [
                             self._target[
-                                self._permute_index_double(
+                                self._permute_matrix_index(
                                     row_index=row_index,
                                     col_index=col_index,
                                 )
@@ -254,7 +258,7 @@ class MatrixTransform(MatrixView[T, M, N]):
                 return FrozenMatrix.wrap(
                     [
                         self._target[
-                            self._permute_index_double(
+                            self._permute_matrix_index(
                                 row_index=row_index,
                                 col_index=col_index,
                             )
@@ -271,7 +275,7 @@ class MatrixTransform(MatrixView[T, M, N]):
                 return FrozenMatrix.wrap(
                     [
                         self._target[
-                            self._permute_index_double(
+                            self._permute_matrix_index(
                                 row_index=row_index,
                                 col_index=col_index,
                             )
@@ -283,7 +287,7 @@ class MatrixTransform(MatrixView[T, M, N]):
 
             col_index = self._resolve_index(col_key, by=COL)
             return self._target[
-                self._permute_index_double(
+                self._permute_matrix_index(
                     row_index=row_index,
                     col_index=col_index,
                 )
@@ -294,7 +298,7 @@ class MatrixTransform(MatrixView[T, M, N]):
             return FrozenMatrix.wrap(
                 [
                     self._target[
-                        self._permute_index_single(
+                        self._permute_vector_index(
                             val_index=val_index,
                         )
                     ]
@@ -305,7 +309,7 @@ class MatrixTransform(MatrixView[T, M, N]):
 
         val_index = self._resolve_index(key)
         return self._target[
-            self._permute_index_single(
+            self._permute_vector_index(
                 val_index=val_index,
             )
         ]
@@ -527,6 +531,9 @@ class MatrixTransform(MatrixView[T, M, N]):
         MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
         return MatrixTransform(self)
 
+    def reverse(self):
+        return MatrixReverse(self)
+
     def compare(self, other):
         return super(MatrixView, self).compare(other)
 
@@ -542,20 +549,14 @@ class MatrixTransform(MatrixView[T, M, N]):
     def _resolve_slice(self, key, *, by=None):
         return super(MatrixView, self)._resolve_slice(key, by=by)
 
-    def _permute_index_single(self, val_index):
+    def _permute_vector_index(self, val_index):
         """Return a given `val_index` as its permuted form
 
-        By default, this method breaks `val_index` into a row and column index
-        pair, and calls `_permute_index_double()`. If your permutation can be
-        easier done in one dimension, overriding this method is recommended.
+        By default, this method simply returns `val_index`.
         """
-        row_index, col_index = divmod(val_index, self.ncols)
-        return self._permute_index_double(
-            row_index=row_index,
-            col_index=col_index,
-        )
+        return val_index
 
-    def _permute_index_double(self, row_index, col_index):
+    def _permute_matrix_index(self, row_index, col_index):
         """Return a given `row_index`, `col_index` pair as its permuted form
 
         By default, this method simply returns
@@ -585,10 +586,21 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
     def ncols(self):
         return self._target.nrows
 
+    def ndims(self, by):
+        dy = by.invert()
+        return self._target.ndims(dy)
+
     def transpose(self):
         return MatrixView(self._target)  # Fast path: transpose of transpose -> original matrix
 
-    def _permute_index_double(self, row_index, col_index):
+    def _permute_vector_index(self, val_index):
+        row_index, col_index = divmod(val_index, self.ncols)
+        return self._permute_matrix_index(
+            row_index=row_index,
+            col_index=col_index,
+        )
+
+    def _permute_matrix_index(self, row_index, col_index):
         return col_index * self.nrows + row_index
 
 
@@ -604,10 +616,17 @@ class MatrixRowFlip(MatrixTransform[T, M, N]):
     def flip(self, *, by=Rule.ROW):
         if by is Rule.ROW:
             return MatrixView(self._target)  # Fast path: row-flip of row-flip -> original matrix
-        return MatrixColFlip(self)
+        return super().flip(by=by)
 
-    def _permute_index_double(self, row_index, col_index):
-        return super()._permute_index_double(
+    def _permute_vector_index(self, val_index):
+        row_index, col_index = divmod(val_index, self.ncols)
+        return self._permute_matrix_index(
+            row_index=row_index,
+            col_index=col_index,
+        )
+
+    def _permute_matrix_index(self, row_index, col_index):
+        return super()._permute_matrix_index(
             row_index=self.nrows - row_index - 1,
             col_index=col_index,
         )
@@ -625,10 +644,41 @@ class MatrixColFlip(MatrixTransform[T, M, N]):
     def flip(self, *, by=Rule.ROW):
         if by is Rule.COL:
             return MatrixView(self._target)  # Fast path: col-flip of col-flip -> original matrix
-        return MatrixRowFlip(self)
+        return super().flip(by=by)
 
-    def _permute_index_double(self, row_index, col_index):
-        return super()._permute_index_double(
+    def _permute_vector_index(self, val_index):
+        row_index, col_index = divmod(val_index, self.ncols)
+        return self._permute_matrix_index(
+            row_index=row_index,
+            col_index=col_index,
+        )
+
+    def _permute_matrix_index(self, row_index, col_index):
+        return super()._permute_matrix_index(
             row_index=row_index,
             col_index=self.ncols - col_index - 1,
+        )
+
+
+class MatrixReverse(MatrixTransform[T, M, N]):
+    """A type of `MatrixTransform` that reverses its indices
+
+    Independent construction of a `MatrixReverse` is not recommended. Instead,
+    use the matrix's `reverse()` method (if provided).
+    """
+
+    __slots__ = ()
+
+    def reverse(self):
+        return MatrixView(self._target)  # Fast path: reverse of reverse -> original matrix
+
+    def _permute_vector_index(self, val_index):
+        return self.size - val_index - 1
+
+    def _permute_matrix_index(self, row_index, col_index):
+        return self._permute_vector_index(
+            val_index=super()._permute_matrix_index(
+                row_index=row_index,
+                col_index=col_index,
+            ),
         )

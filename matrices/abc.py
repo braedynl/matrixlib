@@ -204,6 +204,21 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         shape = self.shape
         return shape[0] * shape[1]
 
+    def ndims(self, by):
+        """Return the number of dimensions corresponding to the given rule
+
+        At the base level, this method is equivalent to `self.shape[by.value]`.
+        For some matrix implementations, however, retrieving a dimension from
+        this method may be faster than going through the `shape` property
+        (e.g., some implementations need to copy the shape before it's
+        returned, making the client have to pay a construction cost when
+        there's only a request for a specific dimension).
+
+        This is the recommended method to use for all rule-based dimension
+        retrievals.
+        """
+        return self.shape[by.value]
+
     @abstractmethod
     def equal(self, other):
         """Return element-wise `a == b`"""
@@ -256,12 +271,17 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @abstractmethod
     def transpose(self):
-        """Return the transpose of the matrix"""
+        """Return the matrix transpose"""
         pass
 
     @abstractmethod
     def flip(self, *, by=Rule.ROW):
         """Return the matrix flipped across the rows or columns"""
+        pass
+
+    @abstractmethod
+    def reverse(self):
+        """Return the matrix reversed"""
         pass
 
     def compare(self, other):
@@ -317,7 +337,7 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
         Raises `IndexError` if the `key` is out of range.
         """
-        bound = self.size if by is None else self.shape[by.value]
+        bound = self.size if by is None else self.ndims(by)
         index = operator.index(key)
         index += bound * (index < 0)
         if index < 0 or index >= bound:
@@ -333,5 +353,5 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         This method uses the extended `Rule` convention, where `by=None`
         corresponds to a "flattened" interpretation of the method.
         """
-        bound = self.size if by is None else self.shape[by.value]
+        bound = self.size if by is None else self.ndims(by)
         return range(*key.indices(bound))

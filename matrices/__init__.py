@@ -353,6 +353,9 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         shape = self._shape
         return shape[0] * shape[1]
 
+    def ndims(self, by):
+        return self._shape[by.value]
+
     def equal(self, other):
         return self.__class__.wrap(
             list(checked_map(operator.__eq__, self, other)),
@@ -421,6 +424,10 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         from .views import MatrixColFlip, MatrixRowFlip
         MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
         return MatrixTransform(self)
+
+    def reverse(self):
+        from .views import MatrixReverse
+        return MatrixReverse(self)
 
     def items(self, *, by=Rule.ROW, reverse=False):
         it = reversed if reverse else iter

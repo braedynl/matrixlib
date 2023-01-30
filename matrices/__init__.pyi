@@ -15,8 +15,7 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsRTrueDiv, SupportsRXor, SupportsSub,
                        SupportsTrueDiv, SupportsXor)
 from .utilities import *
-from .views import (MatrixColFlip, MatrixRowFlip, MatrixTransform,
-                    MatrixTranspose)
+from .views import MatrixColFlip, MatrixReverse, MatrixRowFlip, MatrixTranspose
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -154,3 +153,4 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def flip(self, *, by: Literal[Rule.COL]) -> MatrixColFlip[T_co, M_co, N_co]: ...
     @overload
     def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T_co, M_co, N_co]: ...
+    def reverse(self) -> MatrixReverse[T_co, M_co, N_co]: ...

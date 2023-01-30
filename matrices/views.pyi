@@ -21,6 +21,7 @@ __all__ = [
     "MatrixTranspose",
     "MatrixRowFlip",
     "MatrixColFlip",
+    "MatrixReverse",
 ]
 
 T = TypeVar("T")
@@ -129,21 +130,22 @@ class MatrixView(MatrixLike[T, M, N]):
     def conjugate(self: MatrixLike[SupportsConjugate[T1], M, N]) -> MatrixLike[T1, M, N]: ...
     def transpose(self) -> MatrixLike[T, N, M]: ...
     def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T, M, N]: ...
+    def reverse(self) -> MatrixLike[T, M, N]: ...
 
 
 class MatrixTransform(MatrixView[T, M, N]):
 
     __slots__: tuple[()]
 
-    def _permute_index_single(self, val_index: int) -> int: ...
-    def _permute_index_double(self, row_index: int, col_index: int) -> int: ...
+    def _permute_vector_index(self, val_index: int) -> int: ...
+    def _permute_matrix_index(self, row_index: int, col_index: int) -> int: ...
 
 
 class MatrixTranspose(MatrixTransform[T, M, N]):
 
     __slots__: tuple[()]
 
-    def __init__(self, target: MatrixLike[T, N, M]) -> None: ...
+    def __init__(self, target: MatrixLike[T, N, M]) -> None: ...  # Switches M, N -> N, M
 
 
 class MatrixRowFlip(MatrixTransform[T, M, N]):
@@ -152,5 +154,10 @@ class MatrixRowFlip(MatrixTransform[T, M, N]):
 
 
 class MatrixColFlip(MatrixTransform[T, M, N]):
+
+    __slots__: tuple[()]
+
+
+class MatrixReverse(MatrixTransform[T, M, N]):
 
     __slots__: tuple[()]
