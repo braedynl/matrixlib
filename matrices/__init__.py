@@ -30,23 +30,25 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         array = [] if array is None else list(array)
 
         n = len(array)
-        match shape:
-            case None | (None, None):
-                nrows, ncols = (1, n)
-            case (None, ncols):
+        if shape is None:
+            nrows, ncols = (1, n)
+        else:
+            nrows, ncols = shape
+            if nrows is None and ncols is None:
+                nrows = 1
+                ncols = n
+            elif nrows is None:
                 nrows, loss = divmod(n, ncols) if ncols else (0, n)
                 if loss:
                     raise ValueError(f"cannot interpret array of size {n} as shape M × {ncols}")
-            case (nrows, None):
+            elif ncols is None:
                 ncols, loss = divmod(n, nrows) if nrows else (0, n)
                 if loss:
                     raise ValueError(f"cannot interpret array of size {n} as shape {nrows} × N")
-            case (nrows, ncols) | ShapeLike(nrows, ncols):
+            else:
                 m = nrows * ncols
                 if m != n:
                     raise ValueError(f"cannot interpret array of size {n} as shape {nrows} × {ncols}")
-            case _:
-                raise RuntimeError("shape is not a size two tuple or ShapeLike")
 
         shape = Shape(nrows, ncols)
 
@@ -416,7 +418,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         return MatrixTranspose(self)
 
     def flip(self, *, by=Rule.ROW):
-        from .views import MatrixRowFlip, MatrixColFlip
+        from .views import MatrixColFlip, MatrixRowFlip
         MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
         return MatrixTransform(self)
 
