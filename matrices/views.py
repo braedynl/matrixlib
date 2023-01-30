@@ -32,10 +32,31 @@ class MatrixView(MatrixLike[T, M, N]):
     def __init__(self, target):
         self._target = target
 
+    def __lt__(self, other):
+        return self._target < other
+
+    def __le__(self, other):
+        return self._target <= other
+
+    def __eq__(self, other):
+        return self._target == other
+
+    def __ne__(self, other):
+        return self._target != other
+
+    def __gt__(self, other):
+        return self._target > other
+
+    def __ge__(self, other):
+        return self._target >= other
+
     @recursive_repr("...")
     def __repr__(self):
         """Return a canonical representation of the view"""
         return f"{self.__class__.__name__}(target={self._target!r})"
+
+    def __len__(self):
+        return len(self._target)
 
     def __getitem__(self, key):
         return self._target[key]
@@ -164,6 +185,12 @@ class MatrixView(MatrixLike[T, M, N]):
     def slices(self, *, by=Rule.ROW, reverse=False):
         yield from self._target.slices(by=by, reverse=reverse)
 
+    def _resolve_index(self, key, *, by=None):
+        return self._target._resolve_index(key, by=by)
+
+    def _resolve_slice(self, key, *, by=None):
+        return self._target.resolve_slice(key, by=by)
+
 
 class MatrixTransform(MatrixView[T, M, N]):
     """A type of `MatrixView` whose indices are "permuted" before retrieval of
@@ -261,6 +288,9 @@ class MatrixTransform(MatrixView[T, M, N]):
                 val_index=val_index,
             )
         ]
+
+    # We can no longer refer to the target for iteration, since we're
+    # scrambling the order in some fashion.
 
     def __iter__(self):
         yield from super(MatrixView, self).__iter__()
@@ -399,6 +429,13 @@ class MatrixTransform(MatrixView[T, M, N]):
             shape=self.shape,
         )
 
+    # We're not guaranteed a `Shape` by the target matrix, so we have to make
+    # one ourselves.
+
+    @property
+    def shape(self):
+        return Shape(self.nrows, self.ncols)
+
     def equal(self, other):
         return FrozenMatrix.wrap(
             list(checked_map(operator.__eq__, self, other)),
@@ -459,6 +496,9 @@ class MatrixTransform(MatrixView[T, M, N]):
             shape=self.shape,
         )
 
+    # If you're able to provide a view on the target, rather than on the view
+    # itself, you should. View "stacking" can cause significant slow downs.
+
     def transpose(self):
         return MatrixTranspose(self)
 
@@ -506,11 +546,7 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
     __slots__ = ()
 
     # Our dimensions are reversed with respect to the target matrix - these
-    # overrides are *not* typos.
-
-    @property
-    def shape(self):
-        return self._target.shape.reverse()
+    # are *not* typo'd overrides.
 
     @property
     def nrows(self):
@@ -544,8 +580,8 @@ class MatrixRowFlip(MatrixTransform[T, M, N]):
     __slots__ = ()
 
     def flip(self, *, by=Rule.ROW):
-        if by is Rule.ROW:  # Fast path: row-flip of row-flip -> original matrix
-            return MatrixView(self._target)
+        if by is Rule.ROW:
+            return MatrixView(self._target)  # Fast path: row-flip of row-flip -> original matrix
         return MatrixColFlip(self)
 
     def _permute_index_single(self, val_index):
@@ -572,8 +608,8 @@ class MatrixColFlip(MatrixTransform[T, M, N]):
     __slots__ = ()
 
     def flip(self, *, by=Rule.ROW):
-        if by is Rule.COL:  # Fast path: col-flip of col-flip -> original matrix
-            return MatrixView(self._target)
+        if by is Rule.COL:
+            return MatrixView(self._target)  # Fast path: col-flip of col-flip -> original matrix
         return MatrixRowFlip(self)
 
     def _permute_index_single(self, val_index):
