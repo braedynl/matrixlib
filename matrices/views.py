@@ -189,7 +189,7 @@ class MatrixView(MatrixLike[T, M, N]):
         return self._target._resolve_index(key, by=by)
 
     def _resolve_slice(self, key, *, by=None):
-        return self._target.resolve_slice(key, by=by)
+        return self._target._resolve_slice(key, by=by)
 
 
 class MatrixTransform(MatrixView[T, M, N]):
