@@ -7,7 +7,13 @@ from .abc import MatrixLike
 from .shapes import Shape
 from .utilities import COL, ROW, Rule, checked_map
 
-__all__ = ["MatrixView", "MatrixTransform", "MatrixTranspose"]
+__all__ = [
+    "MatrixView",
+    "MatrixTransform",
+    "MatrixTranspose",
+    "MatrixRowFlip",
+    "MatrixColFlip",
+]
 
 T = TypeVar("T")
 M = TypeVar("M", bound=int)
@@ -489,7 +495,46 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
 
     def _permute_index_single(self, val_index):
         row_index, col_index = divmod(val_index, self.ncols)
-        return col_index * self.nrows + row_index
+        return self._permute_index_double(
+            row_index=row_index,
+            col_index=col_index,
+        )
 
     def _permute_index_double(self, row_index, col_index):
         return col_index * self.nrows + row_index
+
+
+class MatrixRowFlip(MatrixTransform[T, M, N]):
+
+    __slots__ = ()
+
+    def _permute_index_single(self, val_index):
+        row_index, col_index = divmod(val_index, self.ncols)
+        return self._permute_index_double(
+            row_index=row_index,
+            col_index=col_index,
+        )
+
+    def _permute_index_double(self, row_index, col_index):
+        return super()._permute_index_double(
+            row_index=self.nrows - row_index - 1,
+            col_index=col_index,
+        )
+
+
+class MatrixColFlip(MatrixTransform[T, M, N]):
+
+    __slots__ = ()
+
+    def _permute_index_single(self, val_index):
+        row_index, col_index = divmod(val_index, self.ncols)
+        return self._permute_index_double(
+            row_index=row_index,
+            col_index=col_index,
+        )
+
+    def _permute_index_double(self, row_index, col_index):
+        return super()._permute_index_double(
+            row_index=row_index,
+            col_index=self.ncols - col_index - 1,
+        )

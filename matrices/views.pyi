@@ -14,7 +14,13 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsRTrueDiv, SupportsRXor, SupportsSub,
                        SupportsTrueDiv, SupportsXor)
 
-__all__ = ["MatrixView", "MatrixTransform", "MatrixTranspose"]
+__all__ = [
+    "MatrixView",
+    "MatrixTransform",
+    "MatrixTranspose",
+    "MatrixRowFlip",
+    "MatrixColFlip",
+]
 
 T = TypeVar("T")
 
@@ -136,3 +142,13 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
     __slots__: tuple[()]
 
     def __init__(self, target: MatrixLike[T, N, M]) -> None: ...
+
+
+class MatrixRowFlip(MatrixTransform[T, M, N]):
+
+    __slots__: tuple[()]
+
+
+class MatrixColFlip(MatrixTransform[T, M, N]):
+
+    __slots__: tuple[()]
