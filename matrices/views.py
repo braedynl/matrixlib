@@ -21,6 +21,11 @@ N = TypeVar("N", bound=int)
 
 
 class MatrixView(MatrixLike[T, M, N]):
+    """A dynamic view onto any `MatrixLike` instance
+
+    Views are capable of viewing mutable matrix instances, but views themselves
+    do not provide mutable operations (so as to avoid confusing side effects).
+    """
 
     __slots__ = ("_target",)
 
@@ -161,6 +166,16 @@ class MatrixView(MatrixLike[T, M, N]):
 
 
 class MatrixTransform(MatrixView[T, M, N]):
+    """A type of `MatrixView` whose indices are "permuted" before retrieval of
+    items from the target matrix occurs
+
+    A basic `MatrixTransform` does nothing on its own, other than be a slower
+    type of `MatrixView`. This class provides overrides and some utilities for
+    sub-classes to specify the permutation. If you wish to check that a view is
+    also one that permutes its indices, then performing an `isinstance()` check
+    with `MatrixTransform` is a viable means of doing so (for built-in
+    matrices, that is).
+    """
 
     __slots__ = ()
 
@@ -482,6 +497,11 @@ class MatrixTransform(MatrixView[T, M, N]):
 
 
 class MatrixTranspose(MatrixTransform[T, M, N]):
+    """A type of `MatrixTransform` that transposes its indices
+
+    Independent construction of a `MatrixTranspose` is not recommended.
+    Instead, use the matrix's `transpose()` method (if provided).
+    """
 
     __slots__ = ()
 
@@ -515,6 +535,11 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
 
 
 class MatrixRowFlip(MatrixTransform[T, M, N]):
+    """A type of `MatrixTransform` that reverses its row indices
+
+    Independent construction of a `MatrixRowFlip` is not recommended. Instead,
+    use the matrix's `flip()` method (if provided).
+    """
 
     __slots__ = ()
 
@@ -538,6 +563,11 @@ class MatrixRowFlip(MatrixTransform[T, M, N]):
 
 
 class MatrixColFlip(MatrixTransform[T, M, N]):
+    """A type of `MatrixTransform` that reverses its column indices
+
+    Independent construction of a `MatrixColFlip` is not recommended. Instead,
+    use the matrix's `flip()` method (if provided).
+    """
 
     __slots__ = ()
 

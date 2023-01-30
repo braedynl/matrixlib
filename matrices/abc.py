@@ -13,6 +13,23 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
 class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
+    """Abstract base class for matrix-like objects
+
+    A kind of "hybrid" generic sequence type that interfaces both one and two
+    dimensional methods, alongside a variety of vectorized operations.
+    """
+
+    # Implementation notes:
+    # The comparison operator overloads, `__lt__()`, `__le__()`, `__eq__()`,
+    # `__ne__()`, `__gt__()`, and `__ge__()`, all invoke the `compare()` method
+    # by default.
+    # The two iterator overloads, `__iter__()` and `__reversed__()`, invoke the
+    # `items()` method by default.
+    # The properties `nrows`, `ncols`, and `size`, all depend on the
+    # implementation of `shape` by default. If your matrix implementation does
+    # not compose a `ShapeLike`, it may be better to override the dependent
+    # properties to avoid having to pay a `ShapeLike` creation cost on each
+    # request for a specific dimension.
 
     __slots__ = ()
 
@@ -173,18 +190,19 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @property
     def nrows(self):
-        """The matrix's number of rows"""
+        """The number of rows"""
         return self.shape[0]
 
     @property
     def ncols(self):
-        """The matrix's number of columns"""
+        """The number of columns"""
         return self.shape[1]
 
     @property
     def size(self):
-        """The product of the matrix's number of rows and columns"""
-        return self.nrows * self.ncols
+        """The product of the number of rows and columns"""
+        shape = self.shape
+        return shape[0] * shape[1]
 
     @abstractmethod
     def equal(self, other):

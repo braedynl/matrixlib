@@ -10,7 +10,16 @@ N = TypeVar("N", bound=int)
 
 
 class Shape(ShapeLike[M, N]):
-    """A mutable collection type for storing and manipulating matrix dimensions"""
+    """A mutable `ShapeLike` intended for storing and manipulating dimensions
+    within a matrix class implementation
+    """
+
+    # Implementation notes:
+    # This is essentially just a wrapper around a built-in `list` instance. The
+    # methods `__iter__()`, `__reversed__()`, `__contains__()`, and `reverse()`
+    # all call the parallel method of the composed `list` instance to save on
+    # time costs (as opposed to going through its own `__getitem__()`
+    # implementation).
 
     __slots__ = ("_array",)
 

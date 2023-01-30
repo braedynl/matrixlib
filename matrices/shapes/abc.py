@@ -9,6 +9,12 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
 class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=ABCMeta):
+    """Abstract base class for shape-like objects
+
+    A shape is a two-item collection of positive integers that represent a
+    matrix's row and column count. The size of a matrix can be evaluated by
+    taking the product of its shape.
+    """
 
     __slots__ = ()
     __match_args__ = ("nrows", "ncols")
@@ -78,12 +84,12 @@ class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=AB
 
     @property
     def nrows(self):
-        """The first dimension of the shape"""
+        """The number of rows"""
         return self[0]
 
     @property
     def ncols(self):
-        """The second dimension of the shape"""
+        """The number of columns"""
         return self[1]
 
     # A reversal operation is required at the base level for use by matrix
