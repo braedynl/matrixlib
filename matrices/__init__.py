@@ -415,6 +415,11 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         from .views import MatrixTranspose
         return MatrixTranspose(self)
 
+    def flip(self, *, by=Rule.ROW):
+        from .views import MatrixRowFlip, MatrixColFlip
+        MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
+        return MatrixTransform(self)
+
     def items(self, *, by=Rule.ROW, reverse=False):
         it = reversed if reverse else iter
         if by is Rule.ROW:  # Fast path

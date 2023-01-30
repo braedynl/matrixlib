@@ -147,6 +147,9 @@ class MatrixView(MatrixLike[T, M, N]):
     def transpose(self):
         return self._target.transpose()
 
+    def flip(self, *, by=Rule.ROW):
+        return self._target.flip(by=by)
+
     def compare(self, other):
         return self._target.compare(other)
 
@@ -444,6 +447,10 @@ class MatrixTransform(MatrixView[T, M, N]):
     def transpose(self):
         return MatrixTranspose(self)
 
+    def flip(self, *, by=Rule.ROW):
+        MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
+        return MatrixTransform(self)
+
     def compare(self, other):
         return super(MatrixView, self).compare(other)
 
@@ -508,6 +515,11 @@ class MatrixRowFlip(MatrixTransform[T, M, N]):
 
     __slots__ = ()
 
+    def flip(self, *, by=Rule.ROW):
+        if by is Rule.ROW:
+            return MatrixView(self._target)
+        return MatrixColFlip(self)
+
     def _permute_index_single(self, val_index):
         row_index, col_index = divmod(val_index, self.ncols)
         return self._permute_index_double(
@@ -525,6 +537,11 @@ class MatrixRowFlip(MatrixTransform[T, M, N]):
 class MatrixColFlip(MatrixTransform[T, M, N]):
 
     __slots__ = ()
+
+    def flip(self, *, by=Rule.ROW):
+        if by is Rule.COL:
+            return MatrixView(self._target)
+        return MatrixRowFlip(self)
 
     def _permute_index_single(self, val_index):
         row_index, col_index = divmod(val_index, self.ncols)

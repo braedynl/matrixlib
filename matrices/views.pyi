@@ -13,6 +13,7 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsRRShift, SupportsRShift, SupportsRSub,
                        SupportsRTrueDiv, SupportsRXor, SupportsSub,
                        SupportsTrueDiv, SupportsXor)
+from .utilities import Rule
 
 __all__ = [
     "MatrixView",
@@ -127,6 +128,7 @@ class MatrixView(MatrixLike[T, M, N]):
     def logical_not(self) -> MatrixLike[bool, M, N]: ...
     def conjugate(self: MatrixLike[SupportsConjugate[T1], M, N]) -> MatrixLike[T1, M, N]: ...
     def transpose(self) -> MatrixLike[T, N, M]: ...
+    def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T, M, N]: ...
 
 
 class MatrixTransform(MatrixView[T, M, N]):

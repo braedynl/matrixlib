@@ -241,6 +241,11 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Return the transpose of the matrix"""
         pass
 
+    @abstractmethod
+    def flip(self, *, by=Rule.ROW):
+        """Return the matrix flipped across the rows or columns"""
+        pass
+
     def compare(self, other):
         """Return literal -1, 0, or 1 if lexicographic `a < b`, `a == b`, or
         `a > b`, respectively
