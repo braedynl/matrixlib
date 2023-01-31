@@ -1,4 +1,4 @@
-from typing import Any, Literal, TypeVar, overload
+from typing import Any, Literal, Optional, TypeVar, overload
 
 from .abc import MatrixLike
 from .shapes import ShapeLike
@@ -33,6 +33,7 @@ N = TypeVar("N", bound=int)
 P = TypeVar("P", bound=int)
 
 SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
+MatrixViewT = TypeVar("MatrixViewT", bound=MatrixView)
 
 
 class MatrixView(MatrixLike[T, M, N]):
@@ -113,6 +114,8 @@ class MatrixView(MatrixLike[T, M, N]):
     def __pos__(self: MatrixLike[SupportsPos[T1], M, N]) -> MatrixLike[T1, M, N]: ...
     def __abs__(self: MatrixLike[SupportsAbs[T1], M, N]) -> MatrixLike[T1, M, N]: ...
     def __invert__(self: MatrixLike[SupportsInvert[T1], M, N]) -> MatrixLike[T1, M, N]: ...
+    def __deepcopy__(self: MatrixViewT, memo: Optional[dict[int, Any]] = None) -> MatrixViewT: ...
+    def __copy__(self: MatrixViewT) -> MatrixViewT: ...
 
     @property
     def shape(self) -> ShapeLike[M, N]: ...

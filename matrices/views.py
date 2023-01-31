@@ -126,6 +126,12 @@ class MatrixView(MatrixLike[T, M, N]):
     def __invert__(self):
         return ~self._target
 
+    def __deepcopy__(self, memo=None):
+        """Return the view"""
+        return self
+
+    __copy__ = __deepcopy__
+
     @property
     def shape(self):
         return self._target.shape
