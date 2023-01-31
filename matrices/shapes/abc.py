@@ -92,19 +92,6 @@ class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=AB
         """The number of columns"""
         return self[1]
 
-    # A reversal operation is required at the base level for use by matrix
-    # views - specifically `MatrixTranspose` and its sub-classes.
-
-    # Its implementation may be in-place or out-of-place. If in-place, ensure
-    # that a mutable reference to a composed shape *is not* exposed by the
-    # `shape` property. Doing otherwise could make views mutate the target
-    # shape unexpectedly.
-
-    @abstractmethod
-    def reverse(self):
-        """Return the shape reversed"""
-        pass
-
     def compare(self, other):
         """Return literal -1, 0, or 1 if lexicographic `a < b`, `a == b`, or
         `a > b`, respectively

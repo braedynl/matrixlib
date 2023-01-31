@@ -16,10 +16,9 @@ class Shape(ShapeLike[M, N]):
 
     # Implementation notes:
     # This is essentially just a wrapper around a built-in `list` instance. The
-    # methods `__iter__()`, `__reversed__()`, `__contains__()`, and `reverse()`
-    # all call the parallel method of the composed `list` instance to save on
-    # time costs (as opposed to going through its own `__getitem__()`
-    # implementation).
+    # methods `__iter__()`, `__reversed__()`, and `__contains__()` all call the
+    # parallel method of the composed `list` instance to save on time costs (as
+    # opposed to going through its own `__getitem__()` implementation).
 
     __slots__ = ("_array",)
 
@@ -88,10 +87,6 @@ class Shape(ShapeLike[M, N]):
     @ncols.setter
     def ncols(self, value):
         self[1] = value
-
-    def reverse(self):
-        self._array.reverse()
-        return self
 
     def subshape(self, *, by=Rule.ROW):
         """Return the shape of any sub-matrix in the given rule's form"""
