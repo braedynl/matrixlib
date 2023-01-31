@@ -178,6 +178,9 @@ class MatrixView(MatrixLike[T, M, N]):
     def flip(self, *, by=Rule.ROW):
         return self._target.flip(by=by)
 
+    def reverse(self):
+        return self._target.reverse()
+
     def compare(self, other):
         return self._target.compare(other)
 
