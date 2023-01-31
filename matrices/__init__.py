@@ -276,6 +276,12 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             shape=self.shape,
         )
 
+    def __deepcopy__(self, memo=None):
+        """Return the matrix"""
+        return self
+
+    __copy__ = __deepcopy__
+
     @classmethod
     def wrap(cls, array, shape):
         """Construct a matrix directly from a mutable sequence and shape
