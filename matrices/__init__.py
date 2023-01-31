@@ -394,19 +394,19 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def logical_and(self, other):
         return FrozenMatrix.wrap(
-            list(checked_map(lambda x, y: not not (x and y), self, other)),
+            list(checked_map(logical_and, self, other)),
             shape=self.shape,
         )
 
     def logical_or(self, other):
         return FrozenMatrix.wrap(
-            list(checked_map(lambda x, y: not not (x or y), self, other)),
+            list(checked_map(logical_or, self, other)),
             shape=self.shape,
         )
 
     def logical_not(self):
         return FrozenMatrix.wrap(
-            list(map(lambda x: not x, self)),
+            list(map(logical_not, self)),
             shape=self.shape,
         )
 

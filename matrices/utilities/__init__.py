@@ -5,6 +5,9 @@ __all__ = [
     "ROW",
     "COL",
     "checked_map",
+    "logical_and",
+    "logical_or",
+    "logical_not",
 ]
 
 
@@ -22,3 +25,18 @@ def checked_map(func, a, *bx):
         if u != (v := b.shape):
             raise ValueError(f"incompatible shapes {u}, {v}")
     return map(func, a, *bx)
+
+
+def logical_and(a, b, /):
+    """Return the logical AND of `a` and `b`"""
+    return not not (a and b)
+
+
+def logical_or(a, b, /):
+    """Return the logical OR of `a` and `b`"""
+    return not not (a or b)
+
+
+def logical_not(a, /):
+    """Return the logical NOT of `a`"""
+    return not a
