@@ -575,10 +575,6 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
 
     __slots__ = ()
 
-    # Our dimensions are reversed with respect to the target matrix - these
-    # are *not* typo'd overrides.
-    # Multiplication is associative, so no override of `size` is necessary.
-
     @property
     def nrows(self):
         return self._target.ncols
