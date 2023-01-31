@@ -72,7 +72,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
                 if isinstance(col_key, slice):
                     col_indices = self._resolve_slice(col_key, by=COL)
-                    return self.__class__.wrap(
+                    return FrozenMatrix.wrap(
                         [
                             self._array[row_index * ncols + col_index]
                             for row_index in row_indices
@@ -82,7 +82,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                     )
 
                 col_index = self._resolve_index(col_key, by=COL)
-                return self.__class__.wrap(
+                return FrozenMatrix.wrap(
                     [
                         self._array[row_index * ncols + col_index]
                         for row_index in row_indices
@@ -94,7 +94,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
             if isinstance(col_key, slice):
                 col_indices = self._resolve_slice(col_key, by=COL)
-                return self.__class__.wrap(
+                return FrozenMatrix.wrap(
                     [
                         self._array[row_index * ncols + col_index]
                         for col_index in col_indices
@@ -107,7 +107,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
         if isinstance(key, slice):
             val_indices = self._resolve_slice(key)
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 [
                     self._array[val_index]
                     for val_index in val_indices
@@ -123,7 +123,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __add__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__add__, self, other)),
                 shape=self.shape,
             )
@@ -131,7 +131,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __sub__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__sub__, self, other)),
                 shape=self.shape,
             )
@@ -139,7 +139,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __mul__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__mul__, self, other)),
                 shape=self.shape,
             )
@@ -147,7 +147,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __truediv__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__truediv__, self, other)),
                 shape=self.shape,
             )
@@ -155,7 +155,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __floordiv__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__floordiv__, self, other)),
                 shape=self.shape,
             )
@@ -163,7 +163,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __mod__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__mod__, self, other)),
                 shape=self.shape,
             )
@@ -171,7 +171,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __divmod__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(divmod, self, other)),
                 shape=self.shape,
             )
@@ -179,7 +179,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __pow__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__pow__, self, other)),
                 shape=self.shape,
             )
@@ -187,7 +187,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __lshift__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__lshift__, self, other)),
                 shape=self.shape,
             )
@@ -195,7 +195,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __rshift__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__rshift__, self, other)),
                 shape=self.shape,
             )
@@ -203,7 +203,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __and__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__and__, self, other)),
                 shape=self.shape,
             )
@@ -211,7 +211,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __xor__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__xor__, self, other)),
                 shape=self.shape,
             )
@@ -219,7 +219,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     def __or__(self, other):
         if isinstance(other, MatrixLike):
-            return self.__class__.wrap(
+            return FrozenMatrix.wrap(
                 list(checked_map(operator.__or__, self, other)),
                 shape=self.shape,
             )
@@ -240,7 +240,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         jx = range(q)
         kx = range(n)
 
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             [
                 functools.reduce(
                     operator.add,
@@ -253,25 +253,25 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         )
 
     def __neg__(self):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(map(operator.__neg__, self)),
             shape=self.shape,
         )
 
     def __pos__(self):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(map(operator.__pos__, self)),
             shape=self.shape,
         )
 
     def __abs__(self):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(map(operator.__abs__, self)),
             shape=self.shape,
         )
 
     def __invert__(self):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(map(operator.__invert__, self)),
             shape=self.shape,
         )
@@ -357,61 +357,61 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         return self._shape[by.value]
 
     def equal(self, other):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(checked_map(operator.__eq__, self, other)),
             shape=self.shape,
         )
 
     def not_equal(self, other):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(checked_map(operator.__ne__, self, other)),
             shape=self.shape,
         )
 
     def lesser(self, other):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(checked_map(operator.__lt__, self, other)),
             shape=self.shape,
         )
 
     def lesser_equal(self, other):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(checked_map(operator.__le__, self, other)),
             shape=self.shape,
         )
 
     def greater(self, other):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(checked_map(operator.__gt__, self, other)),
             shape=self.shape,
         )
 
     def greater_equal(self, other):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(checked_map(operator.__ge__, self, other)),
             shape=self.shape,
         )
 
     def logical_and(self, other):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(checked_map(lambda x, y: not not (x and y), self, other)),
             shape=self.shape,
         )
 
     def logical_or(self, other):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(checked_map(lambda x, y: not not (x or y), self, other)),
             shape=self.shape,
         )
 
     def logical_not(self):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(map(lambda x: not x, self)),
             shape=self.shape,
         )
 
     def conjugate(self):
-        return self.__class__.wrap(
+        return FrozenMatrix.wrap(
             list(map(lambda x: x.conjugate(), self)),
             shape=self.shape,
         )

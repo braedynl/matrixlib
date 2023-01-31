@@ -1,5 +1,6 @@
-from collections.abc import Iterable, Iterator, MutableSequence
-from typing import Any, Literal, Optional, SupportsIndex, TypeVar, overload
+from collections.abc import Iterable, MutableSequence
+from typing import (Any, Literal, Optional, SupportsIndex, TypeVar, Union,
+                    overload)
 
 from .abc import *
 from .shapes import *
@@ -15,7 +16,8 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsRTrueDiv, SupportsRXor, SupportsSub,
                        SupportsTrueDiv, SupportsXor)
 from .utilities import *
-from .views import MatrixColFlip, MatrixReverse, MatrixRowFlip, MatrixTranspose
+from .views import (MatrixColFlip, MatrixReverse, MatrixRowFlip,
+                    MatrixTransform, MatrixTranspose)
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -52,9 +54,6 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def __getitem__(self, key: tuple[slice, SupportsIndex]) -> FrozenMatrix[T_co, int, Literal[1]]: ...
     @overload
     def __getitem__(self, key: tuple[slice, slice]) -> FrozenMatrix[T_co, int, int]: ...
-    def __iter__(self) -> Iterator[T_co]: ...
-    def __reversed__(self) -> Iterator[T_co]: ...
-    def __contains__(self, value: Any) -> bool: ...
     @overload
     def __add__(self: MatrixLike[SupportsAdd[T1, T2], M_co, N_co], other: MatrixLike[T1, M_co, N_co]) -> FrozenMatrix[T2, M_co, N_co]: ...
     @overload
@@ -118,23 +117,13 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
 
     @classmethod
     def wrap(cls: type[FrozenMatrixT], array: MutableSequence[T_co], shape: Shape[M_co, N_co]) -> FrozenMatrixT: ...
-    @overload
     @classmethod
-    def fill(cls: type[FrozenMatrixT], value: T_co, shape: tuple[M_co, N_co]) -> FrozenMatrixT: ...  # type: ignore[misc]
-    @overload
-    @classmethod
-    def fill(cls: type[FrozenMatrixT], value: T_co, shape: ShapeLike[M_co, N_co]) -> FrozenMatrixT: ...  # type: ignore[misc]
+    def fill(cls: type[FrozenMatrixT], value: T_co, shape: Union[tuple[M_co, N_co], ShapeLike[M_co, N_co]]) -> FrozenMatrixT: ...  # type: ignore[misc]
     @classmethod
     def infer(cls: type[FrozenMatrixT], rows: Iterable[Iterable[T_co]]) -> FrozenMatrixT: ...
 
     @property
     def shape(self) -> Shape[M_co, N_co]: ...
-    @property
-    def nrows(self) -> M_co: ...
-    @property
-    def ncols(self) -> N_co: ...
-    @property
-    def size(self) -> int: ...
 
     def equal(self, other: MatrixLike[Any, M_co, N_co]) -> FrozenMatrix[bool, M_co, N_co]: ...
     def not_equal(self, other: MatrixLike[Any, M_co, N_co]) -> FrozenMatrix[bool, M_co, N_co]: ...
@@ -152,5 +141,5 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     @overload
     def flip(self, *, by: Literal[Rule.COL]) -> MatrixColFlip[T_co, M_co, N_co]: ...
     @overload
-    def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T_co, M_co, N_co]: ...
+    def flip(self, *, by: Rule = Rule.ROW) -> MatrixTransform[T_co, M_co, N_co]: ...
     def reverse(self) -> MatrixReverse[T_co, M_co, N_co]: ...
