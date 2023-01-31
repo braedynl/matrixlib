@@ -5,16 +5,15 @@ from typing import (Any, Literal, Optional, SupportsIndex, TypeVar, Union,
 from .abc import *
 from .shapes import *
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
-                       SupportsClosedAdd, SupportsConjugate, SupportsDivMod,
-                       SupportsDotProduct, SupportsFloorDiv, SupportsInvert,
-                       SupportsLShift, SupportsMod, SupportsMul, SupportsNeg,
-                       SupportsOr, SupportsPos, SupportsPow, SupportsRAdd,
-                       SupportsRAnd, SupportsRDivMod, SupportsRDotProduct,
-                       SupportsRFloorDiv, SupportsRLShift, SupportsRMod,
-                       SupportsRMul, SupportsROr, SupportsRPow,
-                       SupportsRRShift, SupportsRShift, SupportsRSub,
-                       SupportsRTrueDiv, SupportsRXor, SupportsSub,
-                       SupportsTrueDiv, SupportsXor)
+                       SupportsClosedAdd, SupportsDivMod, SupportsDotProduct,
+                       SupportsFloorDiv, SupportsInvert, SupportsLShift,
+                       SupportsMod, SupportsMul, SupportsNeg, SupportsOr,
+                       SupportsPos, SupportsPow, SupportsRAdd, SupportsRAnd,
+                       SupportsRDivMod, SupportsRDotProduct, SupportsRFloorDiv,
+                       SupportsRLShift, SupportsRMod, SupportsRMul,
+                       SupportsROr, SupportsRPow, SupportsRRShift,
+                       SupportsRShift, SupportsRSub, SupportsRTrueDiv,
+                       SupportsRXor, SupportsSub, SupportsTrueDiv, SupportsXor)
 from .utilities import *
 from .views import (MatrixColFlip, MatrixReverse, MatrixRowFlip,
                     MatrixTransform, MatrixTranspose)
@@ -134,7 +133,6 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def logical_and(self, other: MatrixLike[Any, M_co, N_co]) -> FrozenMatrix[bool, M_co, N_co]: ...
     def logical_or(self, other: MatrixLike[Any, M_co, N_co]) -> FrozenMatrix[bool, M_co, N_co]: ...
     def logical_not(self) -> FrozenMatrix[bool, M_co, N_co]: ...
-    def conjugate(self: MatrixLike[SupportsConjugate[T1], M_co, N_co]) -> FrozenMatrix[T1, M_co, N_co]: ...
     def transpose(self) -> MatrixTranspose[T_co, N_co, M_co]: ...
     @overload
     def flip(self, *, by: Literal[Rule.ROW]) -> MatrixRowFlip[T_co, M_co, N_co]: ...

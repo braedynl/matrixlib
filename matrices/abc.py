@@ -265,11 +265,6 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def conjugate(self):
-        """Return element-wise `a.conjugate()`"""
-        pass
-
-    @abstractmethod
     def transpose(self):
         """Return the matrix transpose"""
         pass

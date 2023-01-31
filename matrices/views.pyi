@@ -3,16 +3,15 @@ from typing import Any, Literal, TypeVar, overload
 from .abc import MatrixLike
 from .shapes import ShapeLike
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
-                       SupportsClosedAdd, SupportsConjugate, SupportsDivMod,
-                       SupportsDotProduct, SupportsFloorDiv, SupportsInvert,
-                       SupportsLShift, SupportsMod, SupportsMul, SupportsNeg,
-                       SupportsOr, SupportsPos, SupportsPow, SupportsRAdd,
-                       SupportsRAnd, SupportsRDivMod, SupportsRDotProduct,
-                       SupportsRFloorDiv, SupportsRLShift, SupportsRMod,
-                       SupportsRMul, SupportsROr, SupportsRPow,
-                       SupportsRRShift, SupportsRShift, SupportsRSub,
-                       SupportsRTrueDiv, SupportsRXor, SupportsSub,
-                       SupportsTrueDiv, SupportsXor)
+                       SupportsClosedAdd, SupportsDivMod, SupportsDotProduct,
+                       SupportsFloorDiv, SupportsInvert, SupportsLShift,
+                       SupportsMod, SupportsMul, SupportsNeg, SupportsOr,
+                       SupportsPos, SupportsPow, SupportsRAdd, SupportsRAnd,
+                       SupportsRDivMod, SupportsRDotProduct, SupportsRFloorDiv,
+                       SupportsRLShift, SupportsRMod, SupportsRMul,
+                       SupportsROr, SupportsRPow, SupportsRRShift,
+                       SupportsRShift, SupportsRSub, SupportsRTrueDiv,
+                       SupportsRXor, SupportsSub, SupportsTrueDiv, SupportsXor)
 from .utilities import Rule
 
 __all__ = [
@@ -127,7 +126,6 @@ class MatrixView(MatrixLike[T, M, N]):
     def logical_and(self, other: MatrixLike[Any, M, N]) -> MatrixLike[bool, M, N]: ...
     def logical_or(self, other: MatrixLike[Any, M, N]) -> MatrixLike[bool, M, N]: ...
     def logical_not(self) -> MatrixLike[bool, M, N]: ...
-    def conjugate(self: MatrixLike[SupportsConjugate[T1], M, N]) -> MatrixLike[T1, M, N]: ...
     def transpose(self) -> MatrixLike[T, N, M]: ...
     def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T, M, N]: ...
     def reverse(self) -> MatrixLike[T, M, N]: ...

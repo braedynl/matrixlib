@@ -410,12 +410,6 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             shape=self.shape,
         )
 
-    def conjugate(self):
-        return FrozenMatrix.wrap(
-            list(map(lambda x: x.conjugate(), self)),
-            shape=self.shape,
-        )
-
     def transpose(self):
         from .views import MatrixTranspose
         return MatrixTranspose(self)

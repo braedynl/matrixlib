@@ -171,9 +171,6 @@ class MatrixView(MatrixLike[T, M, N]):
     def logical_not(self):
         return self._target.logical_not()
 
-    def conjugate(self):
-        return self._target.conjugate()
-
     def transpose(self):
         return self._target.transpose()
 
@@ -512,12 +509,6 @@ class MatrixTransform(MatrixView[T, M, N]):
     def logical_not(self):
         return FrozenMatrix.wrap(
             list(map(lambda x: not x, self)),
-            shape=self.shape,
-        )
-
-    def conjugate(self):
-        return FrozenMatrix.wrap(
-            list(map(lambda x: x.conjugate(), self)),
             shape=self.shape,
         )
 

@@ -5,16 +5,15 @@ from typing import (Any, Generic, Literal, Optional, SupportsIndex, TypeVar,
 
 from .shapes import ShapeLike
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
-                       SupportsClosedAdd, SupportsConjugate, SupportsDivMod,
-                       SupportsDotProduct, SupportsFloorDiv, SupportsInvert,
-                       SupportsLShift, SupportsMod, SupportsMul, SupportsNeg,
-                       SupportsOr, SupportsPos, SupportsPow, SupportsRAdd,
-                       SupportsRAnd, SupportsRDivMod, SupportsRDotProduct,
-                       SupportsRFloorDiv, SupportsRLShift, SupportsRMod,
-                       SupportsRMul, SupportsROr, SupportsRPow,
-                       SupportsRRShift, SupportsRShift, SupportsRSub,
-                       SupportsRTrueDiv, SupportsRXor, SupportsSub,
-                       SupportsTrueDiv, SupportsXor)
+                       SupportsClosedAdd, SupportsDivMod, SupportsDotProduct,
+                       SupportsFloorDiv, SupportsInvert, SupportsLShift,
+                       SupportsMod, SupportsMul, SupportsNeg, SupportsOr,
+                       SupportsPos, SupportsPow, SupportsRAdd, SupportsRAnd,
+                       SupportsRDivMod, SupportsRDotProduct, SupportsRFloorDiv,
+                       SupportsRLShift, SupportsRMod, SupportsRMul,
+                       SupportsROr, SupportsRPow, SupportsRRShift,
+                       SupportsRShift, SupportsRSub, SupportsRTrueDiv,
+                       SupportsRXor, SupportsSub, SupportsTrueDiv, SupportsXor)
 from .utilities import Rule
 
 __all__ = ["MatrixLike"]
@@ -194,8 +193,6 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def logical_or(self, other: MatrixLike[Any, M_co, N_co]) -> MatrixLike[bool, M_co, N_co]: ...
     @abstractmethod
     def logical_not(self) -> MatrixLike[bool, M_co, N_co]: ...
-    @abstractmethod
-    def conjugate(self: MatrixLike[SupportsConjugate[T1], M_co, N_co]) -> MatrixLike[T1, M_co, N_co]: ...
     @abstractmethod
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]: ...
     @abstractmethod
