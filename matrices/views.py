@@ -618,8 +618,9 @@ class MatrixRowFlip(MatrixTransform[T, M, N]):
         )
 
     def _permute_matrix_index(self, row_index, col_index):
+        row_index = self.nrows - row_index - 1
         return super()._permute_matrix_index(
-            row_index=self.nrows - row_index - 1,
+            row_index=row_index,
             col_index=col_index,
         )
 
@@ -646,9 +647,10 @@ class MatrixColFlip(MatrixTransform[T, M, N]):
         )
 
     def _permute_matrix_index(self, row_index, col_index):
+        col_index = self.ncols - col_index - 1
         return super()._permute_matrix_index(
             row_index=row_index,
-            col_index=self.ncols - col_index - 1,
+            col_index=col_index,
         )
 
 
