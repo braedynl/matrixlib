@@ -579,8 +579,7 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
         return self._target.nrows
 
     def ndims(self, by):
-        dy = by.invert()
-        return self._target.ndims(dy)
+        return self._target.ndims(~by)
 
     def transpose(self):
         return MatrixView(self._target)  # Fast path: transpose of transpose -> original matrix

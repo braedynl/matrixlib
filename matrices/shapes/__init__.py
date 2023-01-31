@@ -101,7 +101,7 @@ class Shape(ShapeLike[M, N]):
         The input `index` must be positive - negative indices may produce
         unexpected results. This requirement is not checked for.
         """
-        dy = by.invert()
+        dy = ~by
 
         i = by.value
         j = dy.value

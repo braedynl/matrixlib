@@ -13,14 +13,14 @@ class Rule(Enum):
     ROW = 0
     COL = 1
 
+    def __invert__(self):
+        """Return the rule corresponding to the opposite dimension"""
+        return Rule(not self.value)
+
     @property
     def handle(self):
         """The rule's non-Pythonized name"""
         return ("row", "column")[self.value]
-
-    def invert(self):
-        """Return the rule corresponding to the opposite dimension"""
-        return Rule(not self.value)
 
 
 ROW = Rule.ROW

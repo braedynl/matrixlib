@@ -10,15 +10,15 @@ class Rule(Enum):
     ROW: Literal[0]
     COL: Literal[1]
 
+    @overload
+    def __invert__(self: Literal[Rule.ROW]) -> Literal[Rule.COL]: ...  # type: ignore[misc]
+    @overload
+    def __invert__(self: Literal[Rule.COL]) -> Literal[Rule.ROW]: ...  # type: ignore[misc]
+    @overload
+    def __invert__(self) -> Literal[Rule.ROW, Rule.COL]: ...
+
     @property
     def handle(self) -> Literal["row", "column"]: ...
-
-    @overload
-    def invert(self: Literal[Rule.ROW]) -> Literal[Rule.COL]: ...  # type: ignore[misc]
-    @overload
-    def invert(self: Literal[Rule.COL]) -> Literal[Rule.ROW]: ...  # type: ignore[misc]
-    @overload
-    def invert(self) -> Literal[Rule.ROW, Rule.COL]: ...
 
 
 ROW: Literal[Rule.ROW]
