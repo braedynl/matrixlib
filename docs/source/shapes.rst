@@ -1,9 +1,6 @@
 Shapes
 ======
 
-Abstract
---------
-
 .. autoclass:: matrices.shapes.ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=ABCMeta)
 
     .. automethod:: __str__() -> str
@@ -33,9 +30,6 @@ Abstract
     .. autoproperty:: ncols() -> N_co
 
     .. automethod:: compare(other: ShapeLike[int, int]) -> Literal[-1, 0, 1]
-
-Concrete
---------
 
 .. autoclass:: matrices.shapes.Shape(ShapeLike[M, N])
 

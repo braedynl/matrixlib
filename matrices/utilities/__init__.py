@@ -15,7 +15,7 @@ def checked_map(func, a, *bx):
     """Return an iterator that computes a function from the arguments of
     equally-shaped matrices
 
-    Raises `ValueError` if there exists a matrix whose shape differs from the
+    Raises ``ValueError`` if there exists a matrix whose shape differs from the
     others.
     """
     if not bx:
@@ -28,15 +28,15 @@ def checked_map(func, a, *bx):
 
 
 def logical_and(a, b, /):
-    """Return the logical AND of `a` and `b`"""
+    """Return the logical AND of ``a`` and ``b``"""
     return not not (a and b)
 
 
 def logical_or(a, b, /):
-    """Return the logical OR of `a` and `b`"""
+    """Return the logical OR of ``a`` and ``b``"""
     return not not (a or b)
 
 
 def logical_not(a, /):
-    """Return the logical NOT of `a`"""
+    """Return the logical NOT of ``a``"""
     return not a

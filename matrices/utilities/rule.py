@@ -10,8 +10,8 @@ class Rule(Enum):
     dimension from a matrix's shape (or any two-element sequence type).
     """
 
-    ROW = 0
-    COL = 1
+    ROW = 0  #: Retrieves the item at the zeroth index
+    COL = 1  #: Retrieves the item at the first index
 
     def __invert__(self):
         """Return the rule corresponding to the opposite dimension"""
