@@ -38,6 +38,7 @@ Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl
     :hidden:
     :caption: api reference
 
+    matrices
     shapes
     utilities
 

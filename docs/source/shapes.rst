@@ -3,46 +3,62 @@ Shapes
 
 .. autoclass:: matrices.shapes.ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=ABCMeta)
 
-    .. automethod:: __str__() -> str
+    .. automethod:: __str__(self) -> str
 
-    .. automethod:: __lt__(other: ShapeLike[int, int]) -> bool
+    .. automethod:: __lt__(self, other: ShapeLike[int, int]) -> bool
 
-    .. automethod:: __le__(other: ShapeLike[int, int]) -> bool
+    .. automethod:: __le__(self, other: ShapeLike[int, int]) -> bool
 
-    .. automethod:: __eq__(other: Any) -> bool
+    .. automethod:: __eq__(self, other: Any) -> bool
 
-    .. automethod:: __ne__(other: Any) -> bool
+    .. automethod:: __ne__(self, other: Any) -> bool
 
-    .. automethod:: __gt__(other: ShapeLike[int, int]) -> bool
+    .. automethod:: __gt__(self, other: ShapeLike[int, int]) -> bool
 
-    .. automethod:: __ge__(other: ShapeLike[int, int]) -> bool
+    .. automethod:: __ge__(self, other: ShapeLike[int, int]) -> bool
 
-    .. automethod:: __getitem__(key: int) -> Union[M_co, N_co]
+    .. automethod:: __len__(self) -> Literal[2]
 
-    .. automethod:: __iter__() -> Iterator[Union[M_co, N_co]]
+    .. py:method:: __getitem__(self, key: Literal[0]) -> M_co
+        :abstractmethod:
+        :noindex:
+    .. py:method:: __getitem__(self, key: Literal[1]) -> N_co
+        :abstractmethod:
+        :noindex:
+    .. automethod:: __getitem__(self, key: int) -> Union[M_co, N_co]
 
-    .. automethod:: __reversed__() -> Iterator[Union[M_co, N_co]]
+    .. automethod:: __iter__(self) -> Iterator[Union[M_co, N_co]]
 
-    .. automethod:: __contains__(value: Any) -> bool
+    .. automethod:: __reversed__(self) -> Iterator[Union[M_co, N_co]]
 
-    .. autoproperty:: nrows() -> M_co
+    .. automethod:: __contains__(self, value: Any) -> bool
 
-    .. autoproperty:: ncols() -> N_co
+    .. autoproperty:: nrows(self) -> M_co
 
-    .. automethod:: compare(other: ShapeLike[int, int]) -> Literal[-1, 0, 1]
+    .. autoproperty:: ncols(self) -> N_co
+
+    .. automethod:: compare(self, other: ShapeLike[int, int]) -> Literal[-1, 0, 1]
 
 .. autoclass:: matrices.shapes.Shape(ShapeLike[M, N])
 
-    .. automethod:: __init__(nrows: M, ncols: N) -> None
+    .. automethod:: __init__(self, nrows: M, ncols: N) -> None
 
-    .. automethod:: __repr__() -> str
+    .. automethod:: __repr__(self) -> str
 
-    .. automethod:: __getitem__(key: SupportsIndex) -> Union[M, N]
+    .. py:method:: __getitem__(self, key: Literal[0]) -> M
+        :noindex:
+    .. py:method:: __getitem__(self, key: Literal[1]) -> N
+        :noindex:
+    .. automethod:: __getitem__(self, key: SupportsIndex) -> Union[M, N]
 
-    .. automethod:: __setitem__(key: SupportsIndex, value: Union[M, N]) -> None
+    .. py:method:: __setitem__(self, key: Literal[0], value: M) -> None
+        :noindex:
+    .. py:method:: __setitem__(self, key: Literal[1], value: N) -> None
+        :noindex:
+    .. automethod:: __setitem__(self, key: SupportsIndex, value: Union[M, N]) -> None
 
-    .. automethod:: __deepcopy__(memo: Optional[dict[int, Any]] = None) -> ShapeT
+    .. automethod:: __deepcopy__(self: ShapeT, memo: Optional[dict[int, Any]] = None) -> ShapeT
 
-    .. automethod:: __copy__() -> ShapeT
+    .. automethod:: __copy__(self: ShapeT) -> ShapeT
 
-    .. automethod:: copy() -> ShapeT
+    .. automethod:: copy(self: ShapeT) -> ShapeT
