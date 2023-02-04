@@ -10,7 +10,7 @@ N = TypeVar("N", bound=int)
 
 
 class Shape(ShapeLike[M, N]):
-    """A mutable `ShapeLike` intended for storing and manipulating dimensions
+    """A mutable ``ShapeLike`` intended for storing and manipulating dimensions
     within a matrix class implementation
     """
 
@@ -25,7 +25,7 @@ class Shape(ShapeLike[M, N]):
     def __init__(self, nrows, ncols):
         """Construct a shape from its two dimensions
 
-        Raises `ValueError` if either of the two dimensions are negative.
+        Raises ``ValueError`` if either of the two dimensions are negative.
         """
         if nrows < 0 or ncols < 0:
             raise ValueError("dimensions must be non-negative")
@@ -44,7 +44,7 @@ class Shape(ShapeLike[M, N]):
             return value
 
     def __setitem__(self, key, value):
-        """Set the dimension corresponding to `key` with `value`"""
+        """Set the dimension corresponding to ``key`` with ``value``"""
         if value < 0:
             raise ValueError("dimensions must be non-negative")
         try:

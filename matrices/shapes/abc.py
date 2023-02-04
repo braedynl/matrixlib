@@ -24,37 +24,37 @@ class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=AB
         return f"{self[0]} × {self[1]}"
 
     def __lt__(self, other):
-        """Return true if lexicographic `a < b`, otherwise false"""
+        """Return true if lexicographic ``a < b``, otherwise false"""
         if isinstance(other, ShapeLike):
             return self.compare(other) < 0
         return NotImplemented
 
     def __le__(self, other):
-        """Return true if lexicographic `a <= b`, otherwise false"""
+        """Return true if lexicographic ``a <= b``, otherwise false"""
         if isinstance(other, ShapeLike):
             return self.compare(other) <= 0
         return NotImplemented
 
     def __eq__(self, other):
-        """Return true if lexicographic `a == b`, otherwise false"""
+        """Return true if lexicographic ``a == b``, otherwise false"""
         if isinstance(other, ShapeLike):
             return self.compare(other) == 0
         return NotImplemented
 
     def __ne__(self, other):
-        """Return true if lexicographic `a != b`, otherwise false"""
+        """Return true if lexicographic ``a != b``, otherwise false"""
         if isinstance(other, ShapeLike):
             return self.compare(other) != 0
         return NotImplemented
 
     def __gt__(self, other):
-        """Return true if lexicographic `a > b`, otherwise false"""
+        """Return true if lexicographic ``a > b``, otherwise false"""
         if isinstance(other, ShapeLike):
             return self.compare(other) > 0
         return NotImplemented
 
     def __ge__(self, other):
-        """Return true if lexicographic `a >= b`, otherwise false"""
+        """Return true if lexicographic ``a >= b``, otherwise false"""
         if isinstance(other, ShapeLike):
             return self.compare(other) >= 0
         return NotImplemented
@@ -65,7 +65,7 @@ class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=AB
 
     @abstractmethod
     def __getitem__(self, key):
-        """Return the dimension corresponding to `key`"""
+        """Return the dimension corresponding to ``key``"""
         pass
 
     def __iter__(self):
@@ -79,7 +79,7 @@ class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=AB
         yield self[0]
 
     def __contains__(self, value):
-        """Return true if the shape contains `value`, otherwise false"""
+        """Return true if the shape contains ``value``, otherwise false"""
         return self[0] == value or self[1] == value
 
     @property
@@ -93,8 +93,8 @@ class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=AB
         return self[1]
 
     def compare(self, other):
-        """Return literal -1, 0, or 1 if lexicographic `a < b`, `a == b`, or
-        `a > b`, respectively
+        """Return literal -1, 0, or 1 if lexicographic ``a < b``, ``a == b``,
+        or ``a > b``, respectively
         """
         if self is other:
             return 0

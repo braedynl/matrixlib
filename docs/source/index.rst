@@ -36,6 +36,12 @@ Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl
 
 .. toctree::
     :hidden:
+    :caption: api reference
+
+    shapes
+
+.. toctree::
+    :hidden:
     :caption: meta
 
     changelog
