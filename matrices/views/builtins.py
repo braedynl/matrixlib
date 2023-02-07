@@ -221,7 +221,7 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
                             for row_index in row_indices
                             for col_index in col_indices
                         ],
-                        shape=Shape.wrap([len(row_indices), len(col_indices)]),
+                        shape=Shape(len(row_indices), len(col_indices)),
                     )
 
                 col_index = self._resolve_index(col_key, by=COL)
@@ -235,7 +235,7 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
                         ]
                         for row_index in row_indices
                     ],
-                    shape=Shape.wrap([len(row_indices), 1]),
+                    shape=Shape(len(row_indices), 1),
                 )
 
             row_index = self._resolve_index(row_key, by=ROW)
@@ -252,7 +252,7 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
                         ]
                         for col_index in col_indices
                     ],
-                    shape=Shape.wrap([1, len(col_indices)]),
+                    shape=Shape(1, len(col_indices)),
                 )
 
             col_index = self._resolve_index(col_key, by=COL)
@@ -274,7 +274,7 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
                     ]
                     for val_index in val_indices
                 ],
-                shape=Shape.wrap([1, len(val_indices)]),
+                shape=Shape(1, len(val_indices)),
             )
 
         val_index = self._resolve_index(key)
@@ -417,7 +417,7 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
 
     @property
     def shape(self):
-        return Shape.wrap([self.nrows, self.ncols])
+        return Shape(self.nrows, self.ncols)
 
     @property
     def nrows(self):

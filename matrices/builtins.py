@@ -72,7 +72,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                             for row_index in row_indices
                             for col_index in col_indices
                         ],
-                        shape=Shape.wrap([len(row_indices), len(col_indices)]),
+                        shape=Shape(len(row_indices), len(col_indices)),
                     )
 
                 col_index = self._resolve_index(col_key, by=COL)
@@ -81,7 +81,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                         self._array[row_index * ncols + col_index]
                         for row_index in row_indices
                     ],
-                    shape=Shape.wrap([len(row_indices), 1]),
+                    shape=Shape(len(row_indices), 1),
                 )
 
             row_index = self._resolve_index(row_key, by=ROW)
@@ -93,7 +93,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                         self._array[row_index * ncols + col_index]
                         for col_index in col_indices
                     ],
-                    shape=Shape.wrap([1, len(col_indices)]),
+                    shape=Shape(1, len(col_indices)),
                 )
 
             col_index = self._resolve_index(col_key, by=COL)
@@ -106,7 +106,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                     self._array[val_index]
                     for val_index in val_indices
                 ],
-                shape=Shape.wrap([1, len(val_indices)]),
+                shape=Shape(1, len(val_indices)),
             )
 
         val_index = self._resolve_index(key)
@@ -279,7 +279,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         `value`
         """
         nrows, ncols = shape
-        return cls.wrap([value] * (nrows * ncols), shape=shape)
+        return cls.wrap([value] * (nrows * ncols), shape=Shape(nrows, ncols))
 
     @classmethod
     def infer(cls, rows):
@@ -296,7 +296,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         try:
             row = next(rows)
         except StopIteration:
-            return cls.wrap(array, shape=Shape.wrap([0, 0]))
+            return cls.wrap(array, shape=Shape(0, 0))
         else:
             array.extend(row)
 
@@ -310,7 +310,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             if n != k:
                 raise ValueError(f"row {m} has length {k}, but precedent rows have length {n}")
 
-        return cls.wrap(array, shape=Shape.wrap([m, n]))
+        return cls.wrap(array, shape=Shape(m, n))
 
     @property
     def shape(self):

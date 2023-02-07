@@ -1,4 +1,5 @@
 import copy
+from array import array as Array
 from typing import TypeVar
 
 from ..rule import Rule
@@ -16,42 +17,50 @@ class Shape(ShapeLike[M, N]):
     """
 
     # Implementation notes:
-    # This is essentially just a wrapper around a built-in `list` instance. The
+    #
+    # This is essentially just a wrapper around an `array.array` instance. The
     # methods `__iter__()`, `__reversed__()`, and `__contains__()` all call the
-    # parallel method of the composed `list` instance to save on time costs (as
+    # parallel method of the composed instance to save on time costs (as
     # opposed to going through its own `__getitem__()` implementation).
+    #
+    # An array is used for two reasons:
+    # - Arrays consume less memory
+    # - Checks for negative values are performed faster when constrained to an
+    #   unsigned integer type (since the check happens in C)
+    #
+    # The biggest drawback to using an array is slower access time, since the
+    # `int` instance has to be recreated when asked for. The difference is
+    # considered to be marginal, however.
+    #
+    # We use an unsigned long long (typecode "Q"), since the API doesn't
+    # provide a size type. It's a bit overkill, but still consumes less memory
+    # than an equivalent `list` instance.
 
     __slots__ = ("_array",)
 
     def __init__(self, nrows, ncols):
-        """Construct a shape from its two dimensions
-
-        Raises ``ValueError`` if either of the two dimensions are negative.
-        """
-        if nrows < 0 or ncols < 0:
-            raise ValueError("dimensions must be non-negative")
-        self._array = [nrows, ncols]
+        """Construct a shape from its dimensions"""
+        self._array = Array("Q", (nrows, ncols))
 
     def __repr__(self):
         """Return a canonical representation of the shape"""
-        return f"{self.__class__.__name__}(nrows={self._array[0]!r}, ncols={self._array[1]!r})"
+        array = self._array
+        return f"{self.__class__.__name__}(nrows={array[0]!r}, ncols={array[1]!r})"
 
     def __getitem__(self, key):
         try:
             value = self._array[key]
         except IndexError as error:
-            raise IndexError("index out of range") from error
+            raise IndexError("shape index out of range") from error
         else:
             return value
 
     def __setitem__(self, key, value):
         """Set the dimension corresponding to ``key`` with ``value``"""
-        if value < 0:
-            raise ValueError("dimensions must be non-negative")
         try:
             self._array[key] = value
         except IndexError as error:
-            raise IndexError("index out of range") from error
+            raise IndexError("shape index out of range") from error
 
     def __iter__(self):
         yield from iter(self._array)
@@ -64,29 +73,14 @@ class Shape(ShapeLike[M, N]):
 
     def __deepcopy__(self, memo=None):
         """Return a copy of the shape"""
-        return self.__class__.wrap(
-            array=copy.copy(self._array),
-        )
+        cls = self.__class__
+
+        new = cls.__new__(cls)
+        new._array = copy.copy(self._array)  # We're holding ints - no need to deep copy
+
+        return new
 
     copy = __copy__ = __deepcopy__
-
-    @classmethod
-    def wrap(cls, array):
-        """Construct a shape directly from a mutable sequence
-
-        This method exists primarily for the benefit of shape-producing
-        functions that have "pre-validated" the dimensions. Should be used with
-        caution - this method is not marked as internal because its usage is
-        not entirely discouraged if you're aware of the dangers.
-
-        The following properties are required to construct a valid shape:
-        - `array` must be a `MutableSequence` of length 2, comprised solely of
-          positive integer values. The zeroth element maps to the number of
-          rows, while the first element maps to the number of columns.
-        """
-        self = cls.__new__(cls)
-        self._array = array
-        return self
 
     @property
     def nrows(self):
