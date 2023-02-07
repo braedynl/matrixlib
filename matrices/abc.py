@@ -204,20 +204,15 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         shape = self.shape
         return shape[0] * shape[1]
 
-    def ndims(self, by):
-        """Return the number of dimensions corresponding to the given rule
+    @abstractmethod
+    def lesser(self, other):
+        """Return element-wise `a < b`"""
+        pass
 
-        At the base level, this method is equivalent to `self.shape[by.value]`.
-        For some matrix implementations, however, retrieving a dimension from
-        this method may be faster than going through the `shape` property
-        (e.g., some implementations need to copy the shape before it's
-        returned, making the client have to pay a construction cost when
-        there's only a request for a specific dimension).
-
-        This is the recommended method to use for all rule-based dimension
-        retrievals.
-        """
-        return self.shape[by.value]
+    @abstractmethod
+    def lesser_equal(self, other):
+        """Return element-wise `a <= b`"""
+        pass
 
     @abstractmethod
     def equal(self, other):
@@ -227,16 +222,6 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def not_equal(self, other):
         """Return element-wise `a != b`"""
-        pass
-
-    @abstractmethod
-    def lesser(self, other):
-        """Return element-wise `a < b`"""
-        pass
-
-    @abstractmethod
-    def lesser_equal(self, other):
-        """Return element-wise `a <= b`"""
         pass
 
     @abstractmethod
@@ -294,6 +279,21 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
                 return 1
             raise RuntimeError  # Unreachable
         return self.shape.compare(other.shape)
+
+    def ndims(self, by):
+        """Return the number of dimensions corresponding to the given rule
+
+        At the base level, this method is equivalent to `self.shape[by.value]`.
+        For some matrix implementations, however, retrieving a dimension from
+        this method may be faster than going through the `shape` property
+        (e.g., some implementations need to copy the shape before it's
+        returned, making the client have to pay a construction cost when
+        there's only a request for a specific dimension).
+
+        This is the recommended method to use for all rule-based dimension
+        retrievals.
+        """
+        return self.shape[by.value]
 
     def items(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator that yields the matrix's items in row or

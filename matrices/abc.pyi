@@ -18,20 +18,20 @@ from .utilities import Rule
 
 __all__ = ["MatrixLike"]
 
-T = TypeVar("T")
-T_co = TypeVar("T_co", covariant=True)
-
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 
+T = TypeVar("T")
+
 M = TypeVar("M", bound=int)
-M_co = TypeVar("M_co", covariant=True, bound=int)
-
 N = TypeVar("N", bound=int)
-N_co = TypeVar("N_co", covariant=True, bound=int)
-
 P = TypeVar("P", bound=int)
-P_co = TypeVar("P_co", covariant=True, bound=int)
+
+T_co = TypeVar("T_co", covariant=True)
+
+M_co = TypeVar("M_co", bound=int, covariant=True)
+N_co = TypeVar("N_co", bound=int, covariant=True)
+P_co = TypeVar("P_co", bound=int, covariant=True)
 
 SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
 
@@ -169,20 +169,14 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @property
     def size(self) -> int: ...
 
-    @overload
-    def ndims(self, by: Literal[Rule.ROW]) -> M_co: ...
-    @overload
-    def ndims(self, by: Literal[Rule.COL]) -> N_co: ...
-    @overload
-    def ndims(self, by: Rule) -> Union[M_co, N_co]: ...
-    @abstractmethod
-    def equal(self, other: MatrixLike[Any, M_co, N_co]) -> MatrixLike[bool, M_co, N_co]: ...
-    @abstractmethod
-    def not_equal(self, other: MatrixLike[Any, M_co, N_co]) -> MatrixLike[bool, M_co, N_co]: ...
     @abstractmethod
     def lesser(self, other: MatrixLike[T_co, M_co, N_co]) -> MatrixLike[bool, M_co, N_co]: ...
     @abstractmethod
     def lesser_equal(self, other: MatrixLike[T_co, M_co, N_co]) -> MatrixLike[bool, M_co, N_co]: ...
+    @abstractmethod
+    def equal(self, other: MatrixLike[Any, M_co, N_co]) -> MatrixLike[bool, M_co, N_co]: ...
+    @abstractmethod
+    def not_equal(self, other: MatrixLike[Any, M_co, N_co]) -> MatrixLike[bool, M_co, N_co]: ...
     @abstractmethod
     def greater(self, other: MatrixLike[T_co, M_co, N_co]) -> MatrixLike[bool, M_co, N_co]: ...
     @abstractmethod
@@ -200,6 +194,12 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def reverse(self) -> MatrixLike[T_co, M_co, N_co]: ...
     def compare(self, other: MatrixLike[T_co, int, int]) -> Literal[-1, 0, 1]: ...
+    @overload
+    def ndims(self, by: Literal[Rule.ROW]) -> M_co: ...
+    @overload
+    def ndims(self, by: Literal[Rule.COL]) -> N_co: ...
+    @overload
+    def ndims(self, by: Rule) -> Union[M_co, N_co]: ...
     def items(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]: ...
     @overload
     def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[MatrixLike[T_co, Literal[1], N_co]]: ...
