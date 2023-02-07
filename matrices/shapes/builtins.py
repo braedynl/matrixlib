@@ -1,6 +1,6 @@
 from typing import TypeVar
 
-from ..utilities.rule import Rule
+from ..rule import Rule
 from .abc import ShapeLike
 
 __all__ = ["Shape"]
