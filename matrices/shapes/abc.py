@@ -25,37 +25,37 @@ class ShapeLike(Collection[Union[M_co, N_co]], Generic[M_co, N_co], metaclass=AB
 
     def __lt__(self, other):
         """Return true if lexicographic ``a < b``, otherwise false"""
-        if isinstance(other, ShapeLike):
+        if isinstance(other, (ShapeLike, tuple)):
             return self.compare(other) < 0
         return NotImplemented
 
     def __le__(self, other):
         """Return true if lexicographic ``a <= b``, otherwise false"""
-        if isinstance(other, ShapeLike):
+        if isinstance(other, (ShapeLike, tuple)):
             return self.compare(other) <= 0
         return NotImplemented
 
     def __eq__(self, other):
         """Return true if lexicographic ``a == b``, otherwise false"""
-        if isinstance(other, ShapeLike):
+        if isinstance(other, (ShapeLike, tuple)):
             return self.compare(other) == 0
         return NotImplemented
 
     def __ne__(self, other):
         """Return true if lexicographic ``a != b``, otherwise false"""
-        if isinstance(other, ShapeLike):
+        if isinstance(other, (ShapeLike, tuple)):
             return self.compare(other) != 0
         return NotImplemented
 
     def __gt__(self, other):
         """Return true if lexicographic ``a > b``, otherwise false"""
-        if isinstance(other, ShapeLike):
+        if isinstance(other, (ShapeLike, tuple)):
             return self.compare(other) > 0
         return NotImplemented
 
     def __ge__(self, other):
         """Return true if lexicographic ``a >= b``, otherwise false"""
-        if isinstance(other, ShapeLike):
+        if isinstance(other, (ShapeLike, tuple)):
             return self.compare(other) >= 0
         return NotImplemented
 
