@@ -2,10 +2,9 @@ from collections.abc import Iterator, MutableSequence
 from typing import (Any, Literal, Optional, SupportsIndex, TypeVar, Union,
                     overload)
 
-from ..utilities import Rule
-from .abc import *
+from .abc import ShapeLike
 
-__all__ = ["ShapeLike", "Shape"]
+__all__ = ["Shape"]
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
@@ -50,14 +49,3 @@ class Shape(ShapeLike[M, N]):
     def ncols(self, value: N) -> None: ...
 
     def copy(self: ShapeT) -> ShapeT: ...
-    @overload
-    def subshape(self, *, by: Literal[Rule.ROW]) -> Shape[Literal[1], N]: ...  # type: ignore[misc]
-    @overload
-    def subshape(self, *, by: Literal[Rule.COL]) -> Shape[M, Literal[1]]: ...  # type: ignore[misc]
-    @overload
-    def subshape(self, *, by: Rule) -> Shape[int, int]: ...
-    @overload
-    def subshape(self) -> Shape[Literal[1], N]: ...
-    def sequence(self, index: int, *, by: Rule = Rule.ROW) -> tuple[int, int, int]: ...
-    def range(self, index: int, *, by: Rule = Rule.ROW) -> range: ...
-    def slice(self, index: int, *, by: Rule = Rule.ROW) -> slice: ...
