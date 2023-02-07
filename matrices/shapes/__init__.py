@@ -72,6 +72,24 @@ class Shape(ShapeLike[M, N]):
 
     copy = __copy__ = __deepcopy__
 
+    @classmethod
+    def wrap(cls, array):
+        """Construct a shape directly from a mutable sequence
+
+        This method exists primarily for the benefit of shape-producing
+        functions that have "pre-validated" the dimensions. Should be used with
+        caution - this method is not marked as internal because its usage is
+        not entirely discouraged if you're aware of the dangers.
+
+        The following properties are required to construct a valid shape:
+        - `array` must be a `MutableSequence` of length 2, comprised solely of
+          positive integer values. The zeroth element maps to the number of
+          rows, while the first element maps to the number of columns.
+        """
+        self = cls.__new__(cls)
+        self._array = array
+        return self
+
     @property
     def nrows(self):
         return self[0]
