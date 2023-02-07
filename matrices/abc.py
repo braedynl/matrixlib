@@ -8,6 +8,7 @@ from .utilities import Rule
 __all__ = ["MatrixLike"]
 
 T_co = TypeVar("T_co", covariant=True)
+
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
