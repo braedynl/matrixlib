@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Sequence
 from typing import Generic, TypeVar
 
-from .utilities import Rule
+from .rule import Rule
 
 __all__ = ["MatrixLike"]
 

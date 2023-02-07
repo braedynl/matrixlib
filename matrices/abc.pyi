@@ -3,6 +3,7 @@ from collections.abc import Iterable, Iterator, Sequence
 from typing import (Any, Generic, Literal, Optional, SupportsIndex, TypeVar,
                     Union, overload)
 
+from .rule import Rule
 from .shapes import ShapeLike
 from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsClosedAdd, SupportsDivMod, SupportsDotProduct,
@@ -14,7 +15,6 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsROr, SupportsRPow, SupportsRRShift,
                        SupportsRShift, SupportsRSub, SupportsRTrueDiv,
                        SupportsRXor, SupportsSub, SupportsTrueDiv, SupportsXor)
-from .utilities import Rule
 
 __all__ = ["MatrixLike"]
 

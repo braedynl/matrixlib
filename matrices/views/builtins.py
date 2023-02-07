@@ -1,12 +1,13 @@
 import operator
-from reprlib import recursive_repr
 from typing import TypeVar
 
-from . import FrozenMatrix
-from .abc import MatrixLike
-from .shapes import Shape
-from .utilities import (COL, ROW, Rule, checked_map, logical_and, logical_not,
-                        logical_or)
+from ..abc import MatrixLike
+from ..builtins import FrozenMatrix
+from ..rule import COL, ROW, Rule
+from ..shapes.builtins import Shape
+from ..utilities.checked_map import checked_map
+from ..utilities.logical_operator import logical_and, logical_not, logical_or
+from .abc import MatrixLikeView
 
 __all__ = [
     "MatrixView",
@@ -18,21 +19,14 @@ __all__ = [
 ]
 
 T = TypeVar("T")
+
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
 
 
-class MatrixView(MatrixLike[T, M, N]):
-    """A dynamic view onto any `MatrixLike` instance
+class MatrixView(MatrixLikeView[T, M, N]):
 
-    Views are capable of viewing mutable matrix instances, but views themselves
-    do not provide mutable operations (so as to avoid confusing side effects).
-    """
-
-    __slots__ = ("_target",)
-
-    def __init__(self, target):
-        self._target = target
+    __slots__ = ()
 
     def __lt__(self, other):
         return self._target < other
@@ -51,11 +45,6 @@ class MatrixView(MatrixLike[T, M, N]):
 
     def __ge__(self, other):
         return self._target >= other
-
-    @recursive_repr("...")
-    def __repr__(self):
-        """Return a canonical representation of the view"""
-        return f"{self.__class__.__name__}(target={self._target!r})"
 
     def __len__(self):
         return len(self._target)
@@ -126,12 +115,6 @@ class MatrixView(MatrixLike[T, M, N]):
     def __invert__(self):
         return ~self._target
 
-    def __deepcopy__(self, memo=None):
-        """Return the view"""
-        return self
-
-    __copy__ = __deepcopy__
-
     @property
     def shape(self):
         return self._target.shape
@@ -148,20 +131,17 @@ class MatrixView(MatrixLike[T, M, N]):
     def size(self):
         return self._target.size
 
-    def ndims(self, by):
-        return self._target.ndims(by)
+    def lesser(self, other):
+        return self._target.lesser(other)
+
+    def lesser_equal(self, other):
+        return self._target.lesser_equal(other)
 
     def equal(self, other):
         return self._target.equal(other)
 
     def not_equal(self, other):
         return self._target.not_equal(other)
-
-    def lesser(self, other):
-        return self._target.lesser(other)
-
-    def lesser_equal(self, other):
-        return self._target.lesser_equal(other)
 
     def greater(self, other):
         return self._target.greater(other)
@@ -190,6 +170,9 @@ class MatrixView(MatrixLike[T, M, N]):
     def compare(self, other):
         return self._target.compare(other)
 
+    def ndims(self, by):
+        return self._target.ndims(by)
+
     def items(self, *, by=Rule.ROW, reverse=False):
         yield from self._target.items(by=by, reverse=reverse)
 
@@ -203,40 +186,20 @@ class MatrixView(MatrixLike[T, M, N]):
         return self._target._resolve_slice(key, by=by)
 
 
-class MatrixTransform(MatrixView[T, M, N]):
-    """A type of `MatrixView` whose indices are "permuted" before retrieval of
-    items from the target matrix occurs
+class MatrixTransform(MatrixLikeView[T, M, N]):
+    """A type of `MatrixLikeView` whose indices are "permuted" before retrieval
+    of items from the target matrix occurs
 
-    A basic `MatrixTransform` does nothing on its own, other than be a slower
-    type of `MatrixView`. This class provides overrides and some utilities for
-    sub-classes to specify the permutation. If you wish to check that a view is
-    also one that permutes its indices, then performing an `isinstance()` check
-    with `MatrixTransform` is a viable means of doing so (for built-in
-    matrices, that is).
+    A basic `MatrixTransform` does nothing on its own. This class simply
+    provides overrides and some utilities for sub-classes to specify the
+    permutation function.
+
+    If you wish to check that a view is also one that permutes its indices,
+    then performing an `isinstance()` check with `MatrixTransform` is a viable
+    means of doing so (for built-in matrices, that is).
     """
 
     __slots__ = ()
-
-    def __lt__(self, other):
-        return super(MatrixView, self).__lt__(other)
-
-    def __le__(self, other):
-        return super(MatrixView, self).__le__(other)
-
-    def __eq__(self, other):
-        return super(MatrixView, self).__eq__(other)
-
-    def __ne__(self, other):
-        return super(MatrixView, self).__ne__(other)
-
-    def __gt__(self, other):
-        return super(MatrixView, self).__gt__(other)
-
-    def __ge__(self, other):
-        return super(MatrixView, self).__ge__(other)
-
-    def __len__(self):
-        return super(MatrixView, self).__len__()
 
     def __getitem__(self, key):
         if isinstance(key, tuple):
@@ -258,7 +221,7 @@ class MatrixTransform(MatrixView[T, M, N]):
                             for row_index in row_indices
                             for col_index in col_indices
                         ],
-                        shape=Shape(len(row_indices), len(col_indices)),
+                        shape=Shape.wrap([len(row_indices), len(col_indices)]),
                     )
 
                 col_index = self._resolve_index(col_key, by=COL)
@@ -272,7 +235,7 @@ class MatrixTransform(MatrixView[T, M, N]):
                         ]
                         for row_index in row_indices
                     ],
-                    shape=Shape(len(row_indices), 1),
+                    shape=Shape.wrap([len(row_indices), 1]),
                 )
 
             row_index = self._resolve_index(row_key, by=ROW)
@@ -289,7 +252,7 @@ class MatrixTransform(MatrixView[T, M, N]):
                         ]
                         for col_index in col_indices
                     ],
-                    shape=Shape(1, len(col_indices)),
+                    shape=Shape.wrap([1, len(col_indices)]),
                 )
 
             col_index = self._resolve_index(col_key, by=COL)
@@ -311,7 +274,7 @@ class MatrixTransform(MatrixView[T, M, N]):
                     ]
                     for val_index in val_indices
                 ],
-                shape=Shape(1, len(val_indices)),
+                shape=Shape.wrap([1, len(val_indices)]),
             )
 
         val_index = self._resolve_index(key)
@@ -320,15 +283,6 @@ class MatrixTransform(MatrixView[T, M, N]):
                 val_index=val_index,
             )
         ]
-
-    def __iter__(self):
-        yield from super(MatrixView, self).__iter__()
-
-    def __reversed__(self):
-        yield from super(MatrixView, self).__reversed__()
-
-    def __contains__(self, value):
-        return super(MatrixView, self).__contains__(value)
 
     def __add__(self, other):
         if isinstance(other, MatrixLike):
@@ -451,7 +405,7 @@ class MatrixTransform(MatrixView[T, M, N]):
 
     def __abs__(self):
         return FrozenMatrix.wrap(
-            list(map(operator.__abs__, self)),
+            list(map(abs, self)),
             shape=self.shape,
         )
 
@@ -461,24 +415,21 @@ class MatrixTransform(MatrixView[T, M, N]):
             shape=self.shape,
         )
 
-    # We're not guaranteed a `Shape` by the target matrix, so we have to make
-    # one ourselves.
-
     @property
     def shape(self):
-        return Shape(self.nrows, self.ncols)
+        return Shape.wrap([self.nrows, self.ncols])
 
-    def equal(self, other):
-        return FrozenMatrix.wrap(
-            list(checked_map(operator.__eq__, self, other)),
-            shape=self.shape,
-        )
+    @property
+    def nrows(self):
+        return self._target.nrows
 
-    def not_equal(self, other):
-        return FrozenMatrix.wrap(
-            list(checked_map(operator.__ne__, self, other)),
-            shape=self.shape,
-        )
+    @property
+    def ncols(self):
+        return self._target.ncols
+
+    @property
+    def size(self):
+        return self._target.size
 
     def lesser(self, other):
         return FrozenMatrix.wrap(
@@ -489,6 +440,18 @@ class MatrixTransform(MatrixView[T, M, N]):
     def lesser_equal(self, other):
         return FrozenMatrix.wrap(
             list(checked_map(operator.__le__, self, other)),
+            shape=self.shape,
+        )
+
+    def equal(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(operator.__eq__, self, other)),
+            shape=self.shape,
+        )
+
+    def not_equal(self, other):
+        return FrozenMatrix.wrap(
+            list(checked_map(operator.__ne__, self, other)),
             shape=self.shape,
         )
 
@@ -535,20 +498,8 @@ class MatrixTransform(MatrixView[T, M, N]):
     def reverse(self):
         return MatrixReverse(self)
 
-    def compare(self, other):
-        return super(MatrixView, self).compare(other)
-
-    def items(self, *, by=Rule.ROW, reverse=False):
-        yield from super(MatrixView, self).items(by=by, reverse=reverse)
-
-    def slices(self, *, by=Rule.ROW, reverse=False):
-        yield from super(MatrixView, self).slices(by=by, reverse=reverse)
-
-    def _resolve_index(self, key, *, by=None):
-        return super(MatrixView, self)._resolve_index(key, by=by)
-
-    def _resolve_slice(self, key, *, by=None):
-        return super(MatrixView, self)._resolve_slice(key, by=by)
+    def ndims(self, by):
+        return self._target.ndims(by)
 
     def _permute_vector_index(self, val_index):
         """Return a given `val_index` as its permuted form
@@ -583,11 +534,11 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
     def ncols(self):
         return self._target.nrows
 
-    def ndims(self, by):
-        return self._target.ndims(~by)
-
     def transpose(self):
         return MatrixView(self._target)  # Fast path: transpose of transpose -> original matrix
+
+    def ndims(self, by):
+        return self._target.ndims(~by)
 
     def _permute_vector_index(self, val_index):
         row_index, col_index = divmod(val_index, self.ncols)
