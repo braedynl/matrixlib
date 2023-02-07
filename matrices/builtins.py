@@ -296,10 +296,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         try:
             row = next(rows)
         except StopIteration:
-            return cls.wrap(
-                array,
-                shape=Shape.wrap([0, 0]),
-            )
+            return cls.wrap(array, shape=Shape.wrap([0, 0]))
         else:
             array.extend(row)
 
@@ -313,10 +310,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             if n != k:
                 raise ValueError(f"row {m} has length {k}, but precedent rows have length {n}")
 
-        return cls.wrap(
-            array,
-            shape=Shape.wrap([m, n]),
-        )
+        return cls.wrap(array, shape=Shape.wrap([m, n]))
 
     @property
     def shape(self):
