@@ -1,3 +1,4 @@
+import copy
 from typing import TypeVar
 
 from ..rule import Rule
@@ -63,12 +64,9 @@ class Shape(ShapeLike[M, N]):
 
     def __deepcopy__(self, memo=None):
         """Return a copy of the shape"""
-        cls = self.__class__
-
-        copy = cls.__new__(cls)
-        copy._array = self._array.copy()
-
-        return copy
+        return self.__class__.wrap(
+            array=copy.copy(self._array),
+        )
 
     copy = __copy__ = __deepcopy__
 
