@@ -170,8 +170,8 @@ class MatrixView(MatrixLikeView[T, M, N]):
     def compare(self, other):
         return self._target.compare(other)
 
-    def ndims(self, by):
-        return self._target.ndims(by)
+    def n(self, by):
+        return self._target.n(by)
 
     def items(self, *, by=Rule.ROW, reverse=False):
         yield from self._target.items(by=by, reverse=reverse)
@@ -498,8 +498,8 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
     def reverse(self):
         return MatrixReverse(self)
 
-    def ndims(self, by):
-        return self._target.ndims(by)
+    def n(self, by):
+        return self._target.n(by)
 
     def _permute_vector_index(self, val_index):
         """Return a given `val_index` as its permuted form
@@ -537,8 +537,8 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
     def transpose(self):
         return MatrixView(self._target)  # Fast path: transpose of transpose -> original matrix
 
-    def ndims(self, by):
-        return self._target.ndims(~by)
+    def n(self, by):
+        return self._target.n(~by)
 
     def _permute_vector_index(self, val_index):
         row_index, col_index = divmod(val_index, self.ncols)

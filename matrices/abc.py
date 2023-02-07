@@ -281,8 +281,8 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
             raise RuntimeError  # Unreachable
         return self.shape.compare(other.shape)
 
-    def ndims(self, by):
-        """Return the number of dimensions corresponding to the given rule
+    def n(self, by):
+        """Return the dimension corresponding to the given rule
 
         At the base level, this method is equivalent to `self.shape[by.value]`.
         For some matrix implementations, however, retrieving a dimension from
@@ -333,7 +333,7 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
         Raises `IndexError` if the `key` is out of range.
         """
-        bound = self.size if by is None else self.ndims(by)
+        bound = self.size if by is None else self.n(by)
         index = operator.index(key)
         index += bound * (index < 0)
         if index < 0 or index >= bound:
@@ -349,5 +349,5 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         This method uses the extended `Rule` convention, where `by=None`
         corresponds to a "flattened" interpretation of the method.
         """
-        bound = self.size if by is None else self.ndims(by)
+        bound = self.size if by is None else self.n(by)
         return range(*key.indices(bound))

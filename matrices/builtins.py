@@ -396,7 +396,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         from .views.builtins import MatrixReverse
         return MatrixReverse(self)
 
-    def ndims(self, by):
+    def n(self, by):
         return self._shape[by.value]
 
     def items(self, *, by=Rule.ROW, reverse=False):
