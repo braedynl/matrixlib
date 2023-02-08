@@ -324,30 +324,26 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
             for col_index in it(col_indices):
                 yield self[:, col_index]
 
-    def _resolve_index(self, key, *, by=None):
-        """Validate, sanitize, and return an index `key` as a built-in `int`
-        with respect to the matrix's number of items, rows, or columns
-
-        This method uses the extended `Rule` convention, where `by=None`
-        corresponds to a "flattened" interpretation of the method.
-
-        Raises `IndexError` if the `key` is out of range.
-        """
-        bound = self.size if by is None else self.n(by)
+    def _resolve_vector_index(self, key):
         index = operator.index(key)
+        bound = self.size
         index += bound * (index < 0)
         if index < 0 or index >= bound:
-            handle = "item" if by is None else by.handle
-            raise IndexError(f"there are {bound} {handle}s but index is {key}")
+            raise IndexError(f"there are {bound} items but index is {key}")
         return index
 
-    def _resolve_slice(self, key, *, by=None):
-        """Validate, sanitize, and return a slice `key` as an iterable of
-        built-in `int`s with respect to the matrix's number of items, rows, or
-        columns
+    def _resolve_matrix_index(self, key, *, by=Rule.ROW):
+        index = operator.index(key)
+        bound = self.n(by)
+        index += bound * (index < 0)
+        if index < 0 or index >= bound:
+            raise IndexError(f"there are {bound} {by.handle}s but index is {key}")
+        return index
 
-        This method uses the extended `Rule` convention, where `by=None`
-        corresponds to a "flattened" interpretation of the method.
-        """
-        bound = self.size if by is None else self.n(by)
+    def _resolve_vector_slice(self, key):
+        bound = self.size
+        return range(*key.indices(bound))
+
+    def _resolve_matrix_slice(self, key, *, by=Rule.ROW):
+        bound = self.n(by)
         return range(*key.indices(bound))

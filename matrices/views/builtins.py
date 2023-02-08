@@ -179,11 +179,17 @@ class MatrixView(MatrixLikeView[T, M, N]):
     def slices(self, *, by=Rule.ROW, reverse=False):
         yield from self._target.slices(by=by, reverse=reverse)
 
-    def _resolve_index(self, key, *, by=None):
-        return self._target._resolve_index(key, by=by)
+    def _resolve_vector_index(self, key):
+        return self._target._resolve_vector_index(key)
 
-    def _resolve_slice(self, key, *, by=None):
-        return self._target._resolve_slice(key, by=by)
+    def _resolve_matrix_index(self, key, *, by=Rule.ROW):
+        return self._target._resolve_matrix_index(key, by=by)
+
+    def _resolve_vector_slice(self, key):
+        return self._target._resolve_vector_slice(key)
+
+    def _resolve_matrix_slice(self, key, *, by=Rule.ROW):
+        return self._target._resolve_matrix_slice(key, by=by)
 
 
 class MatrixTransform(MatrixLikeView[T, M, N]):
@@ -206,10 +212,10 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
             row_key, col_key = key
 
             if isinstance(row_key, slice):
-                row_indices = self._resolve_slice(row_key, by=ROW)
+                row_indices = self._resolve_matrix_slice(row_key, by=ROW)
 
                 if isinstance(col_key, slice):
-                    col_indices = self._resolve_slice(col_key, by=COL)
+                    col_indices = self._resolve_matrix_slice(col_key, by=COL)
                     return FrozenMatrix.wrap(
                         [
                             self._target[
@@ -224,7 +230,7 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
                         shape=Shape(len(row_indices), len(col_indices)),
                     )
 
-                col_index = self._resolve_index(col_key, by=COL)
+                col_index = self._resolve_matrix_index(col_key, by=COL)
                 return FrozenMatrix.wrap(
                     [
                         self._target[
@@ -238,10 +244,10 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
                     shape=Shape(len(row_indices), 1),
                 )
 
-            row_index = self._resolve_index(row_key, by=ROW)
+            row_index = self._resolve_matrix_index(row_key, by=ROW)
 
             if isinstance(col_key, slice):
-                col_indices = self._resolve_slice(col_key, by=COL)
+                col_indices = self._resolve_matrix_slice(col_key, by=COL)
                 return FrozenMatrix.wrap(
                     [
                         self._target[
@@ -255,7 +261,7 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
                     shape=Shape(1, len(col_indices)),
                 )
 
-            col_index = self._resolve_index(col_key, by=COL)
+            col_index = self._resolve_matrix_index(col_key, by=COL)
             return self._target[
                 self._permute_matrix_index(
                     row_index=row_index,
@@ -264,7 +270,7 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
             ]
 
         if isinstance(key, slice):
-            val_indices = self._resolve_slice(key)
+            val_indices = self._resolve_vector_slice(key)
             return FrozenMatrix.wrap(
                 [
                     self._target[
@@ -277,7 +283,7 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
                 shape=Shape(1, len(val_indices)),
             )
 
-        val_index = self._resolve_index(key)
+        val_index = self._resolve_vector_index(key)
         return self._target[
             self._permute_vector_index(
                 val_index=val_index,

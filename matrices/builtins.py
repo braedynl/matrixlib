@@ -62,10 +62,10 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
             ncols = self.ncols
 
             if isinstance(row_key, slice):
-                row_indices = self._resolve_slice(row_key, by=ROW)
+                row_indices = self._resolve_matrix_slice(row_key, by=ROW)
 
                 if isinstance(col_key, slice):
-                    col_indices = self._resolve_slice(col_key, by=COL)
+                    col_indices = self._resolve_matrix_slice(col_key, by=COL)
                     return FrozenMatrix.wrap(
                         [
                             self._array[row_index * ncols + col_index]
@@ -75,7 +75,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                         shape=Shape(len(row_indices), len(col_indices)),
                     )
 
-                col_index = self._resolve_index(col_key, by=COL)
+                col_index = self._resolve_matrix_index(col_key, by=COL)
                 return FrozenMatrix.wrap(
                     [
                         self._array[row_index * ncols + col_index]
@@ -84,10 +84,10 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                     shape=Shape(len(row_indices), 1),
                 )
 
-            row_index = self._resolve_index(row_key, by=ROW)
+            row_index = self._resolve_matrix_index(row_key, by=ROW)
 
             if isinstance(col_key, slice):
-                col_indices = self._resolve_slice(col_key, by=COL)
+                col_indices = self._resolve_matrix_slice(col_key, by=COL)
                 return FrozenMatrix.wrap(
                     [
                         self._array[row_index * ncols + col_index]
@@ -96,11 +96,11 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                     shape=Shape(1, len(col_indices)),
                 )
 
-            col_index = self._resolve_index(col_key, by=COL)
+            col_index = self._resolve_matrix_index(col_key, by=COL)
             return self._array[row_index * ncols + col_index]
 
         if isinstance(key, slice):
-            val_indices = self._resolve_slice(key)
+            val_indices = self._resolve_vector_slice(key)
             return FrozenMatrix.wrap(
                 [
                     self._array[val_index]
@@ -109,7 +109,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                 shape=Shape(1, len(val_indices)),
             )
 
-        val_index = self._resolve_index(key)
+        val_index = self._resolve_vector_index(key)
         return self._array[val_index]
 
     def __contains__(self, value):
