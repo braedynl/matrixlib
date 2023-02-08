@@ -1,3 +1,5 @@
+import copy
+import itertools
 import operator
 from reprlib import recursive_repr
 from typing import TypeVar
@@ -8,7 +10,12 @@ from .shapes.builtins import Shape
 from .utilities.checked_map import checked_map
 from .utilities.logical_operator import logical_and, logical_not, logical_or
 
-__all__ = ["FrozenMatrix"]
+__all__ = ["FrozenMatrix", "Matrix"]
+
+T = TypeVar("T")
+
+M = TypeVar("M", bound=int)
+N = TypeVar("N", bound=int)
 
 T_co = TypeVar("T_co", covariant=True)
 
@@ -411,3 +418,57 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         for col_index in it(col_indices):
             for row_index in it(row_indices):
                 yield self._array[row_index * ncols + col_index]
+
+
+class Matrix(FrozenMatrix[T, M, N]):
+
+    __slots__ = ()
+
+    # TODO: __setitem__()
+
+    def __deepcopy__(self, memo=None):
+        """Return a deep copy of the matrix"""
+        return self.__class__.wrap(
+            array=copy.deepcopy(self._array, memo=memo),
+            shape=copy.deepcopy(self._shape, memo=memo),
+        )
+
+    def __copy__(self):
+        """Return a shallow copy of the matrix"""
+        return self.__class__.wrap(
+            array=copy.copy(self._array),
+            shape=copy.copy(self._shape),
+        )
+
+    copy = __copy__
+
+    def stack(self, other, *, by=Rule.ROW):
+        """Return the matrix with ``other`` stacked by row or column"""
+        if self is other:
+            other = copy.copy(other)
+
+        dy = ~by
+
+        if self.n(dy) != other.n(dy):
+            raise ValueError
+
+        nrows_l, ncols_l =  self.shape
+        _      , ncols_r = other.shape
+
+        if by is Rule.COL and nrows_l > 1:
+            values_l =  self.items()
+            values_r = other.items()
+            self._array = [
+                value
+                for _ in range(nrows_l)
+                for value in itertools.chain(
+                    itertools.islice(values_l, ncols_l),
+                    itertools.islice(values_r, ncols_r),
+                )
+            ]
+        else:
+            self._array.extend(other)
+
+        self._shape[by.value] += other.n(by)
+
+        return self

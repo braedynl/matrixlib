@@ -17,7 +17,7 @@ from .typeshed import (SupportsAbs, SupportsAdd, SupportsAnd,
                        SupportsRShift, SupportsRSub, SupportsRTrueDiv,
                        SupportsRXor, SupportsSub, SupportsTrueDiv, SupportsXor)
 
-__all__ = ["FrozenMatrix"]
+__all__ = ["FrozenMatrix", "Matrix"]
 
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
@@ -36,6 +36,7 @@ P_co = TypeVar("P_co", covariant=True, bound=int)
 
 SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
 FrozenMatrixT = TypeVar("FrozenMatrixT", bound=FrozenMatrix)
+MatrixT = TypeVar("MatrixT", bound=Matrix)
 
 
 class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
@@ -144,3 +145,18 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]: ...
     def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T_co, M_co, N_co]: ...
     def reverse(self) -> MatrixLike[T_co, M_co, N_co]: ...
+
+
+class Matrix(FrozenMatrix[T, M, N]):
+
+    __slots__: tuple[()]
+
+    def copy(self: MatrixT) -> MatrixT: ...
+    @overload
+    def stack(self, other: MatrixLike[T, int, N], *, by: Literal[Rule.ROW]) -> Matrix[T, int, N]: ...  # type: ignore[misc]
+    @overload
+    def stack(self, other: MatrixLike[T, M, int], *, by: Literal[Rule.COL]) -> Matrix[T, M, int]: ...  # type: ignore[misc]
+    @overload
+    def stack(self, other: MatrixLike[T, int, int], *, by: Rule) -> Matrix[T, int, int]: ...
+    @overload
+    def stack(self, other: MatrixLike[T, int, N]) -> Matrix[T, int, N]: ...
