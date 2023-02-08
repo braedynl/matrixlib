@@ -21,16 +21,13 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     """
 
     # Implementation notes:
+    #
     # The comparison operator overloads, `__lt__()`, `__le__()`, `__eq__()`,
     # `__ne__()`, `__gt__()`, and `__ge__()`, all invoke the `compare()` method
     # by default.
+    #
     # The two iterator overloads, `__iter__()` and `__reversed__()`, invoke the
-    # `items()` method by default.
-    # The properties `nrows`, `ncols`, and `size`, all depend on the
-    # implementation of `shape` by default. If your matrix implementation does
-    # not compose a `ShapeLike`, it may be better to override the dependent
-    # properties to avoid having to pay a `ShapeLike` creation cost on each
-    # request for a specific dimension.
+    # `values()` method by default.
 
     __slots__ = ()
 
@@ -81,13 +78,13 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     def __iter__(self):
         """Return an iterator over the values of the matrix in row-major order"""
-        yield from self.items()
+        yield from self.values()
 
     def __reversed__(self):
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
-        yield from self.items(reverse=True)
+        yield from self.values(reverse=True)
 
     def __contains__(self, value):
         """Return true if the matrix contains `value`, otherwise false"""
@@ -296,7 +293,7 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """
         return self.shape[by.value]
 
-    def items(self, *, by=Rule.ROW, reverse=False):
+    def values(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator that yields the matrix's items in row or
         column-major order
         """

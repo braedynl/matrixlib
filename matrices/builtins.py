@@ -406,7 +406,7 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     def n(self, by):
         return self._shape[by.value]
 
-    def items(self, *, by=Rule.ROW, reverse=False):
+    def values(self, *, by=Rule.ROW, reverse=False):
         it = reversed if reverse else iter
         if by is Rule.ROW:
             yield from it(self._array)  # Fast path: the array is already in row-major order
@@ -459,8 +459,8 @@ class Matrix(FrozenMatrix[T, M, N]):
         _      , ncols_r = shape_r
 
         if by is Rule.COL and nrows_l > 1:
-            values_l =  self.items()
-            values_r = other.items()
+            values_l =  self.values()
+            values_r = other.values()
             self._array = [
                 value
                 for _ in range(nrows_l)

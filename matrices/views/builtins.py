@@ -173,8 +173,8 @@ class MatrixView(MatrixLikeView[T, M, N]):
     def n(self, by):
         return self._target.n(by)
 
-    def items(self, *, by=Rule.ROW, reverse=False):
-        yield from self._target.items(by=by, reverse=reverse)
+    def values(self, *, by=Rule.ROW, reverse=False):
+        yield from self._target.values(by=by, reverse=reverse)
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         yield from self._target.slices(by=by, reverse=reverse)
