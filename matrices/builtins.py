@@ -447,13 +447,16 @@ class Matrix(FrozenMatrix[T, M, N]):
         if self is other:
             other = copy.copy(other)
 
+        shape_l =  self.shape
+        shape_r = other.shape
+
         dy = ~by
 
         if self.n(dy) != other.n(dy):
-            raise ValueError
+            raise ValueError(f"incompatible shapes {shape_l}, {shape_r} by {dy.handle}")
 
-        nrows_l, ncols_l =  self.shape
-        _      , ncols_r = other.shape
+        nrows_l, ncols_l = shape_l
+        _      , ncols_r = shape_r
 
         if by is Rule.COL and nrows_l > 1:
             values_l =  self.items()
