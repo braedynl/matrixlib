@@ -197,12 +197,12 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
     of items from the target matrix occurs
 
     A basic `MatrixTransform` does nothing on its own. This class simply
-    provides overrides and some utilities for sub-classes to specify the
-    permutation function.
+    provides overrides and utilities for sub-classes to specify the
+    permutation.
 
     If you wish to check that a view is also one that permutes its indices,
     then performing an `isinstance()` check with `MatrixTransform` is a viable
-    means of doing so (for built-in matrices, that is).
+    means of doing so (at least for sub-classes that come with the library).
     """
 
     __slots__ = ()

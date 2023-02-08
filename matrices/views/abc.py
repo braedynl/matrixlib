@@ -13,6 +13,17 @@ N_co = TypeVar("N_co", bound=int, covariant=True)
 
 
 class MatrixLikeView(MatrixLike[T_co, M_co, N_co], metaclass=ABCMeta):
+    """Abstract base class for views on ``MatrixLike`` objects
+
+    This class is an extension to ``MatrixLike`` that simply adds default
+    implementations for ``__init__()``, ``__repr__()``, ``__deepcopy__()``, and
+    ``__copy__()``.
+
+    In addition to these methods, a slot for a reference to some ``MatrixLike``
+    object is reserved (called the ``_target``). This attribute is the matrix
+    currently being "viewed" by the matrix view, and should only be manipulated
+    by the sub-class implementation.
+    """
 
     __slots__ = ("_target",)
 
