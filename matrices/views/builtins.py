@@ -117,6 +117,10 @@ class MatrixView(MatrixLikeView[T, M, N]):
         return ~self._target
 
     @property
+    def array(self):
+        return self._target.array
+
+    @property
     def shape(self):
         return self._target.shape
 
@@ -421,6 +425,10 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
             list(map(operator.__invert__, self)),
             shape=self.shape,
         )
+
+    @property
+    def array(self):
+        return list(self.values())
 
     @property
     def shape(self):

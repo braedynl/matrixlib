@@ -30,6 +30,7 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     # `values()` method by default.
 
     __slots__ = ()
+    __match_args__ = ("array", "shape")
 
     def __lt__(self, other):
         """Return true if lexicographic `a < b`, otherwise false"""
@@ -182,8 +183,14 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @property
     @abstractmethod
+    def array(self):
+        """A sequence of the matrix's elements"""
+        pass
+
+    @property
+    @abstractmethod
     def shape(self):
-        """A collection of the matrix's dimensions"""
+        """A sequence of the matrix's dimensions"""
         pass
 
     @property

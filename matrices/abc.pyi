@@ -39,6 +39,7 @@ SupportsClosedAddT = TypeVar("SupportsClosedAddT", bound=SupportsClosedAdd)
 class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
+    __match_args__: tuple[Literal["array"], Literal["shape"]]
 
     def __lt__(self, other: MatrixLike[T_co, Any, Any]) -> bool: ...
     def __le__(self, other: MatrixLike[T_co, Any, Any]) -> bool: ...
@@ -161,6 +162,9 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def __invert__(self: MatrixLike[SupportsInvert[T1], M_co, N_co]) -> MatrixLike[T1, M_co, N_co]: ...
 
+    @property
+    @abstractmethod
+    def array(self) -> Sequence[T_co]: ...
     @property
     @abstractmethod
     def shape(self) -> ShapeLike[M_co, N_co]: ...

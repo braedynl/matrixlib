@@ -5,6 +5,7 @@ from reprlib import recursive_repr
 from typing import TypeVar
 
 import logical_operator
+from views import SequenceView
 
 from .abc import MatrixLike
 from .rule import COL, ROW, Rule
@@ -319,6 +320,10 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
                 raise ValueError(f"row {m} has length {k}, but precedent rows have length {n}")
 
         return cls.wrap(array, shape=Shape(m, n))
+
+    @property
+    def array(self):
+        return SequenceView(self._array)
 
     @property
     def shape(self):

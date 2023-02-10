@@ -1,6 +1,8 @@
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Iterable, MutableSequence, Sequence
 from typing import (Any, Literal, Optional, SupportsIndex, TypeVar, Union,
                     overload)
+
+from views import SequenceView
 
 from .abc import MatrixLike
 from .rule import Rule
@@ -130,6 +132,8 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
     @classmethod
     def infer(cls: type[FrozenMatrixT], rows: Iterable[Iterable[T_co]]) -> FrozenMatrixT: ...
 
+    @property
+    def array(self) -> SequenceView[T_co]: ...
     @property
     def shape(self) -> Shape[M_co, N_co]: ...
 
