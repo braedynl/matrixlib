@@ -18,14 +18,49 @@ N = TypeVar("N", bound=int)
 
 
 @overload
-def checked_map(func: Callable[[T1], T], a: MatrixLike[T1, M, N]) -> Iterator[T]: ...
+def checked_map(
+    func: Callable[[T1], T],
+    matrix1: MatrixLike[T1, M, N],
+    /,
+) -> Iterator[T]: ...
 @overload
-def checked_map(func: Callable[[T1, T2], T], a: MatrixLike[T1, M, N], b: MatrixLike[T2, M, N]) -> Iterator[T]: ...
+def checked_map(
+    func: Callable[[T1, T2], T],
+    matrix1: MatrixLike[T1, M, N],
+    matrix2: MatrixLike[T2, M, N],
+    /,
+) -> Iterator[T]: ...
 @overload
-def checked_map(func: Callable[[T1, T2, T3], T], a: MatrixLike[T1, M, N], b: MatrixLike[T2, M, N], c: MatrixLike[T3, M, N]) -> Iterator[T]: ...
+def checked_map(
+    func: Callable[[T1, T2, T3], T],
+    matrix1: MatrixLike[T1, M, N],
+    matrix2: MatrixLike[T2, M, N],
+    matrix3: MatrixLike[T3, M, N],
+    /,
+) -> Iterator[T]: ...
 @overload
-def checked_map(func: Callable[[T1, T2, T3, T4], T], a: MatrixLike[T1, M, N], b: MatrixLike[T2, M, N], c: MatrixLike[T3, M, N], d: MatrixLike[T4, M, N]) -> Iterator[T]: ...
+def checked_map(
+    func: Callable[[T1, T2, T3, T4], T],
+    matrix1: MatrixLike[T1, M, N],
+    matrix2: MatrixLike[T2, M, N],
+    matrix3: MatrixLike[T3, M, N],
+    matrix4: MatrixLike[T4, M, N],
+    /,
+) -> Iterator[T]: ...
 @overload
-def checked_map(func: Callable[[T1, T2, T3, T4, T5], T], a: MatrixLike[T1, M, N], b: MatrixLike[T2, M, N], c: MatrixLike[T3, M, N], d: MatrixLike[T4, M, N], e: MatrixLike[T5, M, N]) -> Iterator[T]: ...
+def checked_map(
+    func: Callable[[T1, T2, T3, T4, T5], T],
+    matrix1: MatrixLike[T1, M, N],
+    matrix2: MatrixLike[T2, M, N],
+    matrix3: MatrixLike[T3, M, N],
+    matrix4: MatrixLike[T4, M, N],
+    matrix5: MatrixLike[T5, M, N],
+    /,
+) -> Iterator[T]: ...
 @overload
-def checked_map(func: Callable[..., T], a: MatrixLike[Any, M, N], *bx: MatrixLike[Any, M, N]) -> Iterator[T]: ...
+def checked_map(
+    func: Callable[..., T],
+    matrix: MatrixLike[Any, M, N],
+    /,
+    *matrices: MatrixLike[Any, M, N],
+) -> Iterator[T]: ...

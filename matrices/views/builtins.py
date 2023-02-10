@@ -1,12 +1,13 @@
 import operator
 from typing import TypeVar
 
+import logical_operator
+
 from ..abc import MatrixLike
 from ..builtins import FrozenMatrix
 from ..rule import COL, ROW, Rule
 from ..shapes.builtins import Shape
 from ..utilities.checked_map import checked_map
-from ..utilities.logical_operator import logical_and, logical_not, logical_or
 from .abc import MatrixLikeView
 
 __all__ = [
@@ -475,19 +476,19 @@ class MatrixTransform(MatrixLikeView[T, M, N]):
 
     def logical_and(self, other):
         return FrozenMatrix.wrap(
-            list(checked_map(logical_and, self, other)),
+            list(checked_map(logical_operator.logical_and, self, other)),
             shape=self.shape,
         )
 
     def logical_or(self, other):
         return FrozenMatrix.wrap(
-            list(checked_map(logical_or, self, other)),
+            list(checked_map(logical_operator.logical_or, self, other)),
             shape=self.shape,
         )
 
     def logical_not(self):
         return FrozenMatrix.wrap(
-            list(map(logical_not, self)),
+            list(map(logical_operator.logical_not, self)),
             shape=self.shape,
         )
 
