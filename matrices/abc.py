@@ -20,53 +20,8 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     dimensional methods, alongside a variety of vectorized operations.
     """
 
-    # Implementation notes:
-    #
-    # The comparison operator overloads, `__lt__()`, `__le__()`, `__eq__()`,
-    # `__ne__()`, `__gt__()`, and `__ge__()`, all invoke the `compare()` method
-    # by default.
-    #
-    # The two iterator overloads, `__iter__()` and `__reversed__()`, invoke the
-    # `values()` method by default.
-
     __slots__ = ()
     __match_args__ = ("array", "shape")
-
-    def __lt__(self, other):
-        """Return true if lexicographic `a < b`, otherwise false"""
-        if isinstance(other, MatrixLike):
-            return self.compare(other) < 0
-        return NotImplemented
-
-    def __le__(self, other):
-        """Return true if lexicographic `a <= b`, otherwise false"""
-        if isinstance(other, MatrixLike):
-            return self.compare(other) <= 0
-        return NotImplemented
-
-    def __eq__(self, other):
-        """Return true if lexicographic `a == b`, otherwise false"""
-        if isinstance(other, MatrixLike):
-            return self.compare(other) == 0
-        return NotImplemented
-
-    def __ne__(self, other):
-        """Return true if lexicographic `a != b`, otherwise false"""
-        if isinstance(other, MatrixLike):
-            return self.compare(other) != 0
-        return NotImplemented
-
-    def __gt__(self, other):
-        """Return true if lexicographic `a > b`, otherwise false"""
-        if isinstance(other, MatrixLike):
-            return self.compare(other) > 0
-        return NotImplemented
-
-    def __ge__(self, other):
-        """Return true if lexicographic `a >= b`, otherwise false"""
-        if isinstance(other, MatrixLike):
-            return self.compare(other) >= 0
-        return NotImplemented
 
     def __len__(self):
         """Return the matrix's size"""
@@ -74,7 +29,7 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @abstractmethod
     def __getitem__(self, key):
-        """Return the element or sub-matrix corresponding to `key`"""
+        """Return the element or sub-matrix corresponding to ``key``"""
         pass
 
     def __iter__(self):
@@ -88,98 +43,8 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         yield from self.values(reverse=True)
 
     def __contains__(self, value):
-        """Return true if the matrix contains `value`, otherwise false"""
-        return any(map(lambda x: x is value or x == value, self))
-
-    @abstractmethod
-    def __add__(self, other):
-        """Return element-wise `a + b`"""
-        pass
-
-    @abstractmethod
-    def __sub__(self, other):
-        """Return element-wise `a - b`"""
-        pass
-
-    @abstractmethod
-    def __mul__(self, other):
-        """Return element-wise `a * b`"""
-        pass
-
-    @abstractmethod
-    def __truediv__(self, other):
-        """Return element-wise `a / b`"""
-        pass
-
-    @abstractmethod
-    def __floordiv__(self, other):
-        """Return element-wise `a // b`"""
-        pass
-
-    @abstractmethod
-    def __mod__(self, other):
-        """Return element-wise `a % b`"""
-        pass
-
-    @abstractmethod
-    def __divmod__(self, other):
-        """Return element-wise `divmod(a, b)`"""
-        pass
-
-    @abstractmethod
-    def __pow__(self, other):
-        """Return element-wise `a ** b`"""
-        pass
-
-    @abstractmethod
-    def __lshift__(self, other):
-        """Return element-wise `a << b`"""
-        pass
-
-    @abstractmethod
-    def __rshift__(self, other):
-        """Return element-wise `a >> b`"""
-        pass
-
-    @abstractmethod
-    def __and__(self, other):
-        """Return element-wise `a & b`"""
-        pass
-
-    @abstractmethod
-    def __xor__(self, other):
-        """Return element-wise `a ^ b`"""
-        pass
-
-    @abstractmethod
-    def __or__(self, other):
-        """Return element-wise `a | b`"""
-        pass
-
-    @abstractmethod
-    def __matmul__(self, other):
-        """Return the matrix product"""
-        pass
-
-    @abstractmethod
-    def __neg__(self):
-        """Return element-wise `-a`"""
-        pass
-
-    @abstractmethod
-    def __pos__(self):
-        """Return element-wise `+a`"""
-        pass
-
-    @abstractmethod
-    def __abs__(self):
-        """Return element-wise `abs(a)`"""
-        pass
-
-    @abstractmethod
-    def __invert__(self):
-        """Return element-wise `~a`"""
-        pass
+        """Return true if the matrix contains ``value``, otherwise false"""
+        return any(map(lambda x: x is value or x == value, self.values()))
 
     @property
     @abstractmethod
@@ -205,53 +70,33 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @property
     def size(self):
-        """The product of the number of rows and columns"""
+        """The product of the matrix's shape"""
         shape = self.shape
         return shape[0] * shape[1]
 
     @abstractmethod
-    def lesser(self, other):
-        """Return element-wise `a < b`"""
-        pass
-
-    @abstractmethod
-    def lesser_equal(self, other):
-        """Return element-wise `a <= b`"""
-        pass
-
-    @abstractmethod
     def equal(self, other):
-        """Return element-wise `a == b`"""
+        """Return element-wise ``a == b``"""
         pass
 
     @abstractmethod
     def not_equal(self, other):
-        """Return element-wise `a != b`"""
-        pass
-
-    @abstractmethod
-    def greater(self, other):
-        """Return element-wise `a > b`"""
-        pass
-
-    @abstractmethod
-    def greater_equal(self, other):
-        """Return element-wise `a >= b`"""
+        """Return element-wise ``a != b``"""
         pass
 
     @abstractmethod
     def logical_and(self, other):
-        """Return element-wise `bool(a and b)`"""
+        """Return element-wise ``logical_and(a, b)``"""
         pass
 
     @abstractmethod
     def logical_or(self, other):
-        """Return element-wise `bool(a or b)`"""
+        """Return element-wise ``logical_or(a, b)``"""
         pass
 
     @abstractmethod
     def logical_not(self):
-        """Return element-wise `not a`"""
+        """Return element-wise ``logical_not(a)``"""
         pass
 
     @abstractmethod
@@ -269,31 +114,12 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Return the matrix reversed"""
         pass
 
-    def compare(self, other):
-        """Return literal -1, 0, or 1 if lexicographic `a < b`, `a == b`, or
-        `a > b`, respectively
-        """
-        if self is other:
-            return 0
-        for x, y in zip(self, other):
-            if x == y:
-                continue
-            if x < y:
-                return -1
-            if x > y:
-                return 1
-            raise RuntimeError  # Unreachable
-        return self.shape.compare(other.shape)
-
     def n(self, by):
         """Return the dimension corresponding to the given rule
 
         At the base level, this method is equivalent to `self.shape[by.value]`.
         For some matrix implementations, however, retrieving a dimension from
-        this method may be faster than going through the `shape` property
-        (e.g., some implementations need to copy the shape before it's
-        returned, making the client have to pay a construction cost when
-        there's only a request for a specific dimension).
+        this method may be faster than going through the `shape` property.
 
         This is the recommended method to use for all rule-based dimension
         retrievals.
@@ -304,28 +130,28 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         """Return an iterator that yields the matrix's items in row or
         column-major order
         """
-        it = reversed if reverse else iter
+        values = reversed if reverse else iter
         row_indices = range(self.nrows)
         col_indices = range(self.ncols)
         if by is Rule.ROW:
-            for row_index in it(row_indices):
-                for col_index in it(col_indices):
+            for row_index in values(row_indices):
+                for col_index in values(col_indices):
                     yield self[row_index, col_index]
         else:
-            for col_index in it(col_indices):
-                for row_index in it(row_indices):
+            for col_index in values(col_indices):
+                for row_index in values(row_indices):
                     yield self[row_index, col_index]
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator that yields shallow copies of each row or column"""
-        it = reversed if reverse else iter
+        values = reversed if reverse else iter
         if by is Rule.ROW:
             row_indices = range(self.nrows)
-            for row_index in it(row_indices):
+            for row_index in values(row_indices):
                 yield self[row_index, :]
         else:
             col_indices = range(self.ncols)
-            for col_index in it(col_indices):
+            for col_index in values(col_indices):
                 yield self[:, col_index]
 
     def _resolve_vector_index(self, key):
