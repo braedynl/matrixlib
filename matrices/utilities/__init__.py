@@ -1,5 +1,31 @@
 from .checked_map import *
+from .operator import *
 
 __all__ = [
     "checked_map",
+    "checked_rmap",
+    "add",
+    "bitwise_and",
+    "eq",
+    "floordiv",
+    "ge",
+    "gt",
+    "invert",
+    "le",
+    "lshift",
+    "lt",
+    "mod",
+    "mul",
+    "ne",
+    "neg",
+    "bitwise_or",
+    "pos",
+    "pow",
+    "rshift",
+    "sub",
+    "truediv",
+    "bitwise_xor",
+    "logical_and",
+    "logical_not",
+    "logical_or",
 ]
