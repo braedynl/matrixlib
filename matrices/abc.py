@@ -5,12 +5,21 @@ from typing import Generic, TypeVar
 
 from .rule import Rule
 
-__all__ = ["MatrixLike"]
+__all__ = [
+    "MatrixLike",
+    "ComplexMatrixLike",
+    "RealMatrixLike",
+    "IntegralMatrixLike",
+]
 
 T_co = TypeVar("T_co", covariant=True)
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
+
+ComplexT_co = TypeVar("ComplexT_co", covariant=True, bound=complex)
+RealT_co = TypeVar("RealT_co", covariant=True, bound=float)
+IntegralT_co = TypeVar("IntegralT_co", covariant=True, bound=int)
 
 
 class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
@@ -177,3 +186,343 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     def _resolve_matrix_slice(self, key, *, by=Rule.ROW):
         bound = self.n(by)
         return range(*key.indices(bound))
+
+
+class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
+
+    __slots__ = ()
+
+    @abstractmethod
+    def __add__(self, other):
+        """Return element-wise ``a + b``"""
+        pass
+
+    @abstractmethod
+    def __sub__(self, other):
+        """Return element-wise ``a - b``"""
+        pass
+
+    @abstractmethod
+    def __mul__(self, other):
+        """Return element-wise ``a * b``"""
+        pass
+
+    @abstractmethod
+    def __matmul__(self, other):
+        """Return the matrix product"""
+        pass
+
+    @abstractmethod
+    def __truediv__(self, other):
+        """Return element-wise ``a / b``"""
+        pass
+
+    @abstractmethod
+    def __radd__(self, other):
+        """Return element-wise ``b + a``"""
+        pass
+
+    @abstractmethod
+    def __rsub__(self, other):
+        """Return element-wise ``b - a``"""
+        pass
+
+    @abstractmethod
+    def __rmul__(self, other):
+        """Return element-wise ``b * a``"""
+        pass
+
+    @abstractmethod
+    def __rmatmul__(self, other):
+        """Return the reverse matrix product"""
+        pass
+
+    @abstractmethod
+    def __rtruediv__(self, other):
+        """Return element-wise ``b / a``"""
+        pass
+
+    @abstractmethod
+    def __neg__(self):
+        """Return element-wise ``-a``"""
+        pass
+
+    @abstractmethod
+    def __pos__(self):
+        """Return element-wise ``+a``"""
+        pass
+
+    @abstractmethod
+    def __abs__(self):
+        """Return element-wise ``abs(a)``"""
+        pass
+
+    @abstractmethod
+    def conjugate(self):
+        """Return element-wise ``a.conjugate()``"""
+        pass
+
+
+class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
+
+    __slots__ = ()
+
+    @abstractmethod
+    def __add__(self, other):
+        """Return element-wise ``a + b``"""
+        pass
+
+    @abstractmethod
+    def __sub__(self, other):
+        """Return element-wise ``a - b``"""
+        pass
+
+    @abstractmethod
+    def __mul__(self, other):
+        """Return element-wise ``a * b``"""
+        pass
+
+    @abstractmethod
+    def __matmul__(self, other):
+        """Return the matrix product"""
+        pass
+
+    @abstractmethod
+    def __truediv__(self, other):
+        """Return element-wise ``a / b``"""
+        pass
+
+    @abstractmethod
+    def __floordiv__(self, other):
+        """Return element-wise ``a // b``"""
+        pass
+
+    @abstractmethod
+    def __mod__(self, other):
+        """Return element-wise ``a % b``"""
+        pass
+
+    @abstractmethod
+    def __divmod__(self, other):
+        """Return element-wise ``divmod(a, b)``"""
+        pass
+
+    @abstractmethod
+    def __radd__(self, other):
+        """Return element-wise ``b + a``"""
+        pass
+
+    @abstractmethod
+    def __rsub__(self, other):
+        """Return element-wise ``b - a``"""
+        pass
+
+    @abstractmethod
+    def __rmul__(self, other):
+        """Return element-wise ``b * a``"""
+        pass
+
+    @abstractmethod
+    def __rmatmul__(self, other):
+        """Return the reverse matrix product"""
+        pass
+
+    @abstractmethod
+    def __rtruediv__(self, other):
+        """Return element-wise ``b / a``"""
+        pass
+
+    @abstractmethod
+    def __rfloordiv__(self, other):
+        """Return element-wise ``b // a``"""
+        pass
+
+    @abstractmethod
+    def __rmod__(self, other):
+        """Return element-wise ``b % a``"""
+        pass
+
+    @abstractmethod
+    def __rdivmod__(self, other):
+        """Return element-wise ``divmod(b, a)``"""
+        pass
+
+    @abstractmethod
+    def __neg__(self):
+        """Return element-wise ``-a``"""
+        pass
+
+    @abstractmethod
+    def __pos__(self):
+        """Return element-wise ``+a``"""
+        pass
+
+    @abstractmethod
+    def __abs__(self):
+        """Return element-wise ``abs(a)``"""
+        pass
+
+    @abstractmethod
+    def conjugate(self):
+        """Return element-wise ``a.conjugate()``"""
+        pass
+
+
+class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
+
+    __slots__ = ()
+
+    @abstractmethod
+    def __add__(self, other):
+        """Return element-wise ``a + b``"""
+        pass
+
+    @abstractmethod
+    def __sub__(self, other):
+        """Return element-wise ``a - b``"""
+        pass
+
+    @abstractmethod
+    def __mul__(self, other):
+        """Return element-wise ``a * b``"""
+        pass
+
+    @abstractmethod
+    def __matmul__(self, other):
+        """Return the matrix product"""
+        pass
+
+    @abstractmethod
+    def __truediv__(self, other):
+        """Return element-wise ``a / b``"""
+        pass
+
+    @abstractmethod
+    def __floordiv__(self, other):
+        """Return element-wise ``a // b``"""
+        pass
+
+    @abstractmethod
+    def __mod__(self, other):
+        """Return element-wise ``a % b``"""
+        pass
+
+    @abstractmethod
+    def __divmod__(self, other):
+        """Return element-wise ``divmod(a, b)``"""
+        pass
+
+    @abstractmethod
+    def __lshift__(self, other):
+        """Return element-wise ``a << b``"""
+        pass
+
+    @abstractmethod
+    def __rshift__(self, other):
+        """Return element-wise ``a >> b``"""
+        pass
+
+    @abstractmethod
+    def __and__(self, other):
+        """Return element-wise ``a & b``"""
+        pass
+
+    @abstractmethod
+    def __xor__(self, other):
+        """Return element-wise ``a ^ b``"""
+        pass
+
+    @abstractmethod
+    def __or__(self, other):
+        """Return element-wise ``a | b``"""
+        pass
+
+    @abstractmethod
+    def __radd__(self, other):
+        """Return element-wise ``b + a``"""
+        pass
+
+    @abstractmethod
+    def __rsub__(self, other):
+        """Return element-wise ``b - a``"""
+        pass
+
+    @abstractmethod
+    def __rmul__(self, other):
+        """Return element-wise ``b * a``"""
+        pass
+
+    @abstractmethod
+    def __rmatmul__(self, other):
+        """Return the reverse matrix product"""
+        pass
+
+    @abstractmethod
+    def __rtruediv__(self, other):
+        """Return element-wise ``b / a``"""
+        pass
+
+    @abstractmethod
+    def __rfloordiv__(self, other):
+        """Return element-wise ``b // a``"""
+        pass
+
+    @abstractmethod
+    def __rmod__(self, other):
+        """Return element-wise ``b % a``"""
+        pass
+
+    @abstractmethod
+    def __rdivmod__(self, other):
+        """Return element-wise ``divmod(b, a)``"""
+        pass
+
+    @abstractmethod
+    def __rlshift__(self, other):
+        """Return element-wise ``b << a``"""
+        pass
+
+    @abstractmethod
+    def __rrshift__(self, other):
+        """Return element-wise ``b >> a``"""
+        pass
+
+    @abstractmethod
+    def __rand__(self, other):
+        """Return element-wise ``b & a``"""
+        pass
+
+    @abstractmethod
+    def __rxor__(self, other):
+        """Return element-wise ``b ^ a``"""
+        pass
+
+    @abstractmethod
+    def __ror__(self, other):
+        """Return element-wise ``b | a``"""
+        pass
+
+    @abstractmethod
+    def __neg__(self):
+        """Return element-wise ``-a``"""
+        pass
+
+    @abstractmethod
+    def __pos__(self):
+        """Return element-wise ``+a``"""
+        pass
+
+    @abstractmethod
+    def __abs__(self):
+        """Return element-wise ``abs(a)``"""
+        pass
+
+    @abstractmethod
+    def __invert__(self):
+        """Return element-wise ``~a``"""
+        pass
+
+    @abstractmethod
+    def conjugate(self):
+        """Return element-wise ``a.conjugate()``"""
+        pass

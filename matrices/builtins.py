@@ -3,13 +3,21 @@ from typing import TypeVar
 
 from views import SequenceView
 
-from .abc import MatrixLike
+from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
+                  RealMatrixLike)
 from .rule import COL, ROW, Rule
-from .utilities.checked_map import checked_map
-from .utilities.operator import (equal, logical_and, logical_not, logical_or,
-                                 not_equal)
+from .utilities.checked_map import checked_map, checked_rmap
+from .utilities.operator import (add, bitwise_and, bitwise_or, bitwise_xor, eq,
+                                 floordiv, invert, logical_and, logical_not,
+                                 logical_or, lshift, mod, mul, ne, neg, pos,
+                                 rshift, sub, truediv)
 
-__all__ = ["FrozenMatrix"]
+__all__ = [
+    "Matrix",
+    "ComplexMatrix",
+    "RealMatrix",
+    "IntegralMatrix",
+]
 
 T = TypeVar("T")
 
@@ -21,8 +29,12 @@ T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
+ComplexT_co = TypeVar("ComplexT_co", covariant=True, bound=complex)
+RealT_co = TypeVar("RealT_co", covariant=True, bound=float)
+IntegralT_co = TypeVar("IntegralT_co", covariant=True, bound=int)
 
-class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
+
+class Matrix(MatrixLike[T_co, M_co, N_co]):
 
     __slots__ = ("_array", "_shape")
 
@@ -197,31 +209,31 @@ class FrozenMatrix(MatrixLike[T_co, M_co, N_co]):
         return self._shape
 
     def equal(self, other):
-        return FrozenMatrix.wrap(
-            array=list(checked_map(equal, self, other)),
+        return Matrix.wrap(
+            array=list(checked_map(eq, self, other)),
             shape=self.shape,
         )
 
     def not_equal(self, other):
-        return FrozenMatrix.wrap(
-            array=list(checked_map(not_equal, self, other)),
+        return Matrix.wrap(
+            array=list(checked_map(ne, self, other)),
             shape=self.shape,
         )
 
     def logical_and(self, other):
-        return FrozenMatrix.wrap(
+        return Matrix.wrap(
             array=list(checked_map(logical_and, self, other)),
             shape=self.shape,
         )
 
     def logical_or(self, other):
-        return FrozenMatrix.wrap(
+        return Matrix.wrap(
             array=list(checked_map(logical_or, self, other)),
             shape=self.shape,
         )
 
     def logical_not(self):
-        return FrozenMatrix.wrap(
+        return Matrix.wrap(
             array=list(map(logical_not, self)),
             shape=self.shape,
         )
