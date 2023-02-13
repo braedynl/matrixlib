@@ -6,7 +6,7 @@ from views import SequenceView
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike)
 from .rule import COL, ROW, Rule
-from .utilities.checked_map import checked_map, checked_rmap
+from .utilities.checked_map import checked_map
 from .utilities.operator import (add, bitwise_and, bitwise_or, bitwise_xor, eq,
                                  floordiv, ge, gt, invert, le, logical_and,
                                  logical_not, logical_or, lshift, lt, mod, mul,
