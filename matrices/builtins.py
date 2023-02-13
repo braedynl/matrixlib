@@ -150,19 +150,21 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
     @classmethod
     def from_raw_parts(cls, array, shape):
-        """Construct a matrix directly from a mutable sequence and shape
+        """Construct a matrix directly from its ``array`` and ``shape`` parts
 
         This method exists primarily for the benefit of matrix-producing
-        functions that have "pre-validated" the data and its dimensions. Should
-        be used with caution - this method is not marked as internal because
-        its usage is not entirely discouraged if you're aware of the dangers.
+        functions that have "pre-validated" the array and shape. Should be used
+        with caution.
 
         The following properties are required to construct a valid matrix:
-        - `array` must be a flattened `MutableSequence`. That is, the elements
-          of the matrix must be on the shallowest depth. A nested sequence
-          would imply a matrix that contains sequence instances.
-        - `shape` must be a `Shape`, where the product of its values must equal
-          the length of the sequence.
+        - ``array`` must be a flattened ``list``. That is, the elements of the
+          matrix must be contained within the shallowest depth of the ``list``
+          instance.
+        - ``shape`` must be a ``tuple`` of two positive integers, where the
+          product of its values equals the length of ``array``.
+
+        Direct references to the given parts are kept. It is up to the caller
+        to guarantee that the above criteria is met.
         """
         self = cls.__new__(cls)
         self._array = array
@@ -175,7 +177,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         shallowest iterable's length to deduce the number of rows, and the
         nested iterables' lengths to deduce the number of columns
 
-        Raises `ValueError` if the length of the nested iterables is
+        Raises ``ValueError`` if the length of the nested iterables is
         inconsistent.
         """
         array = []
