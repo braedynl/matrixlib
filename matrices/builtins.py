@@ -93,7 +93,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
                 if isinstance(col_key, slice):
                     col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                    return self.__class__.wrap(
+                    return self.__class__.from_raw_parts(
                         array=[
                             self._array[row_index * ncols + col_index]
                             for row_index in row_indices
@@ -103,7 +103,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
                     )
 
                 col_index = self._resolve_matrix_index(col_key, by=COL)
-                return self.__class__.wrap(
+                return self.__class__.from_raw_parts(
                     array=[
                         self._array[row_index * ncols + col_index]
                         for row_index in row_indices
@@ -115,7 +115,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
             if isinstance(col_key, slice):
                 col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                return self.__class__.wrap(
+                return self.__class__.from_raw_parts(
                     array=[
                         self._array[row_index * ncols + col_index]
                         for col_index in col_indices
@@ -128,7 +128,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
         if isinstance(key, slice):
             val_indices = self._resolve_vector_slice(key)
-            return self.__class__.wrap(
+            return self.__class__.from_raw_parts(
                 array=[
                     self._array[val_index]
                     for val_index in val_indices
@@ -149,7 +149,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     __copy__ = __deepcopy__
 
     @classmethod
-    def wrap(cls, array, shape):
+    def from_raw_parts(cls, array, shape):
         """Construct a matrix directly from a mutable sequence and shape
 
         This method exists primarily for the benefit of matrix-producing
@@ -170,7 +170,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         return self
 
     @classmethod
-    def fold(cls, rows):
+    def from_nested(cls, nested):
         """Construct a matrix from a singly-nested iterable, using the
         shallowest iterable's length to deduce the number of rows, and the
         nested iterables' lengths to deduce the number of columns
@@ -180,11 +180,11 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         """
         array = []
 
-        rows = iter(rows)
+        rows = iter(nested)
         try:
             row = next(rows)
         except StopIteration:
-            return cls.wrap(array=array, shape=(0, 0))
+            return cls.from_raw_parts(array=array, shape=(0, 0))
         else:
             array.extend(row)
 
@@ -198,7 +198,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
             if ncols1 != ncols2:
                 raise ValueError(f"row {nrows1} has length {ncols2}, but precedent rows have length {ncols1}")
 
-        return cls.wrap(array=array, shape=(nrows1, ncols1))
+        return cls.from_raw_parts(array=array, shape=(nrows1, ncols1))
 
     @property
     def array(self):
@@ -209,31 +209,31 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         return self._shape
 
     def equal(self, other):
-        return Matrix.wrap(
+        return Matrix.from_raw_parts(
             array=list(checked_map(eq, self, other)),
             shape=self.shape,
         )
 
     def not_equal(self, other):
-        return Matrix.wrap(
+        return Matrix.from_raw_parts(
             array=list(checked_map(ne, self, other)),
             shape=self.shape,
         )
 
     def logical_and(self, other):
-        return Matrix.wrap(
+        return Matrix.from_raw_parts(
             array=list(checked_map(logical_and, self, other)),
             shape=self.shape,
         )
 
     def logical_or(self, other):
-        return Matrix.wrap(
+        return Matrix.from_raw_parts(
             array=list(checked_map(logical_or, self, other)),
             shape=self.shape,
         )
 
     def logical_not(self):
-        return Matrix.wrap(
+        return Matrix.from_raw_parts(
             array=list(map(logical_not, self)),
             shape=self.shape,
         )
