@@ -105,6 +105,8 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
 
+    COMPARABLE_TYPES: tuple[type[ComplexMatrixLike], type[RealMatrixLike], type[IntegralMatrixLike]]
+
     @overload
     @abstractmethod
     def __getitem__(self, key: int) -> ComplexT_co: ...
@@ -241,6 +243,8 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
+
+    COMPARABLE_TYPES: tuple[type[RealMatrixLike], type[IntegralMatrixLike]]
 
     def __lt__(self, other: Union[RealMatrixLike, IntegralMatrixLike]) -> bool: ...
     def __le__(self, other: Union[RealMatrixLike, IntegralMatrixLike]) -> bool: ...
@@ -412,6 +416,8 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
+
+    COMPARABLE_TYPES: tuple[type[IntegralMatrixLike]]
 
     def __lt__(self, other: IntegralMatrixLike) -> bool: ...
     def __le__(self, other: IntegralMatrixLike) -> bool: ...

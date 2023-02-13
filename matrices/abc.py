@@ -289,25 +289,25 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     def __lt__(self, other):
         """Return true if lexicographic ``a < b``, otherwise false"""
-        if isinstance(other, (RealMatrixLike, IntegralMatrixLike)):
+        if isinstance(other, self.COMPARABLE_TYPES):
             return matrix_compare(self, other) < 0
         return NotImplemented
 
     def __le__(self, other):
         """Return true if lexicographic ``a <= b``, otherwise false"""
-        if isinstance(other, (RealMatrixLike, IntegralMatrixLike)):
+        if isinstance(other, self.COMPARABLE_TYPES):
             return matrix_compare(self, other) <= 0
         return NotImplemented
 
     def __gt__(self, other):
         """Return true if lexicographic ``a > b``, otherwise false"""
-        if isinstance(other, (RealMatrixLike, IntegralMatrixLike)):
+        if isinstance(other, self.COMPARABLE_TYPES):
             return matrix_compare(self, other) > 0
         return NotImplemented
 
     def __ge__(self, other):
         """Return true if lexicographic ``a >= b``, otherwise false"""
-        if isinstance(other, (RealMatrixLike, IntegralMatrixLike)):
+        if isinstance(other, self.COMPARABLE_TYPES):
             return matrix_compare(self, other) >= 0
         return NotImplemented
 
@@ -438,25 +438,25 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
 
     def __lt__(self, other):
         """Return true if lexicographic ``a < b``, otherwise false"""
-        if isinstance(other, IntegralMatrixLike):
+        if isinstance(other, self.COMPARABLE_TYPES):
             return matrix_compare(self, other) < 0
         return NotImplemented
 
     def __le__(self, other):
         """Return true if lexicographic ``a <= b``, otherwise false"""
-        if isinstance(other, IntegralMatrixLike):
+        if isinstance(other, self.COMPARABLE_TYPES):
             return matrix_compare(self, other) <= 0
         return NotImplemented
 
     def __gt__(self, other):
         """Return true if lexicographic ``a > b``, otherwise false"""
-        if isinstance(other, IntegralMatrixLike):
+        if isinstance(other, self.COMPARABLE_TYPES):
             return matrix_compare(self, other) > 0
         return NotImplemented
 
     def __ge__(self, other):
         """Return true if lexicographic ``a >= b``, otherwise false"""
-        if isinstance(other, IntegralMatrixLike):
+        if isinstance(other, self.COMPARABLE_TYPES):
             return matrix_compare(self, other) >= 0
         return NotImplemented
 
@@ -634,6 +634,11 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
     def conjugate(self):
         """Return element-wise ``a.conjugate()``"""
         pass
+
+
+ComplexMatrixLike.COMPARABLE_TYPES = (ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike)
+RealMatrixLike.COMPARABLE_TYPES = (RealMatrixLike, IntegralMatrixLike)
+IntegralMatrixLike.COMPARABLE_TYPES = (IntegralMatrixLike,)
 
 
 def matrix_compare(a, b):
