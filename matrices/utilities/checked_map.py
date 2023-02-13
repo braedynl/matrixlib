@@ -1,23 +1,22 @@
 
-__all__ = ["checked_map", "checked_rmap"]
+__all__ = ["checked_map"]
 
 
-def checked_map(func, matrix, /, *matrices):
+def checked_map(func, matrix, /, *matrices, reverse=False):
     """Return a ``map`` across one or more matrices, raising ``ValueError`` if
     not all of the input matrices have equal shapes
+
+    If ``reverse=True``, the input matrices are passed to the ``map``
+    constructor in reverse order (equivalent to reversing the arguments of
+    ``func``).
     """
     if not matrices:
         return map(func, matrix)
-    shape1 = matrix.shape
+    u = matrix.shape
     for other_matrix in matrices:
-        shape2 = other_matrix.shape
-        if shape1 != shape2:
-            raise ValueError(f"incompatible shapes {shape1}, {shape2}")
+        v = other_matrix.shape
+        if u != v:
+            raise ValueError(f"incompatible shapes {u}, {v}")
+    if reverse:
+        return map(func, *reversed(matrices), matrix)
     return map(func, matrix, *matrices)
-
-
-def checked_rmap(func, matrix, /, *matrices):
-    """Return a ``map`` across one or more matrices in reverse order, raising
-    ``ValueError`` if not all of the input matrices have equal shapes
-    """
-    return checked_map(func, *reversed(matrices), matrix)

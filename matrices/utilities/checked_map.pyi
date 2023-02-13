@@ -1,9 +1,9 @@
 from collections.abc import Callable, Iterator
-from typing import Any, TypeVar, overload
+from typing import Any, Literal, TypeVar, overload
 
 from ..abc import MatrixLike
 
-__all__ = ["checked_map", "checked_rmap"]
+__all__ = ["checked_map"]
 
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
@@ -22,6 +22,66 @@ def checked_map(
     func: Callable[[T1], T],
     matrix1: MatrixLike[T1, M, N],
     /,
+    *,
+    reverse: Literal[True],
+) -> Iterator[T]: ...
+@overload
+def checked_map(
+    func: Callable[[T1, T2], T],
+    matrix1: MatrixLike[T2, M, N],
+    matrix2: MatrixLike[T1, M, N],
+    /,
+    *,
+    reverse: Literal[True],
+) -> Iterator[T]: ...
+@overload
+def checked_map(
+    func: Callable[[T1, T2, T3], T],
+    matrix1: MatrixLike[T3, M, N],
+    matrix2: MatrixLike[T2, M, N],
+    matrix3: MatrixLike[T1, M, N],
+    /,
+    *,
+    reverse: Literal[True],
+) -> Iterator[T]: ...
+@overload
+def checked_map(
+    func: Callable[[T1, T2, T3, T4], T],
+    matrix1: MatrixLike[T4, M, N],
+    matrix2: MatrixLike[T3, M, N],
+    matrix3: MatrixLike[T2, M, N],
+    matrix4: MatrixLike[T1, M, N],
+    /,
+    *,
+    reverse: Literal[True],
+) -> Iterator[T]: ...
+@overload
+def checked_map(
+    func: Callable[[T1, T2, T3, T4, T5], T],
+    matrix1: MatrixLike[T5, M, N],
+    matrix2: MatrixLike[T4, M, N],
+    matrix3: MatrixLike[T3, M, N],
+    matrix4: MatrixLike[T2, M, N],
+    matrix5: MatrixLike[T1, M, N],
+    /,
+    *,
+    reverse: Literal[True],
+) -> Iterator[T]: ...
+@overload
+def checked_map(
+    func: Callable[..., T],
+    matrix: MatrixLike[Any, M, N],
+    /,
+    *matrices: MatrixLike[Any, M, N],
+    reverse: Literal[True],
+) -> Iterator[T]: ...
+@overload
+def checked_map(
+    func: Callable[[T1], T],
+    matrix1: MatrixLike[T1, M, N],
+    /,
+    *,
+    reverse: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -29,6 +89,8 @@ def checked_map(
     matrix1: MatrixLike[T1, M, N],
     matrix2: MatrixLike[T2, M, N],
     /,
+    *,
+    reverse: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -37,6 +99,8 @@ def checked_map(
     matrix2: MatrixLike[T2, M, N],
     matrix3: MatrixLike[T3, M, N],
     /,
+    *,
+    reverse: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -46,6 +110,8 @@ def checked_map(
     matrix3: MatrixLike[T3, M, N],
     matrix4: MatrixLike[T4, M, N],
     /,
+    *,
+    reverse: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -56,6 +122,8 @@ def checked_map(
     matrix4: MatrixLike[T4, M, N],
     matrix5: MatrixLike[T5, M, N],
     /,
+    *,
+    reverse: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -63,52 +131,5 @@ def checked_map(
     matrix: MatrixLike[Any, M, N],
     /,
     *matrices: MatrixLike[Any, M, N],
-) -> Iterator[T]: ...
-
-@overload
-def checked_rmap(
-    func: Callable[[T1], T],
-    matrix1: MatrixLike[T1, M, N],
-    /,
-) -> Iterator[T]: ...
-@overload
-def checked_rmap(
-    func: Callable[[T1, T2], T],
-    matrix1: MatrixLike[T2, M, N],
-    matrix2: MatrixLike[T1, M, N],
-    /,
-) -> Iterator[T]: ...
-@overload
-def checked_rmap(
-    func: Callable[[T1, T2, T3], T],
-    matrix1: MatrixLike[T3, M, N],
-    matrix2: MatrixLike[T2, M, N],
-    matrix3: MatrixLike[T1, M, N],
-    /,
-) -> Iterator[T]: ...
-@overload
-def checked_rmap(
-    func: Callable[[T1, T2, T3, T4], T],
-    matrix1: MatrixLike[T4, M, N],
-    matrix2: MatrixLike[T3, M, N],
-    matrix3: MatrixLike[T2, M, N],
-    matrix4: MatrixLike[T1, M, N],
-    /,
-) -> Iterator[T]: ...
-@overload
-def checked_rmap(
-    func: Callable[[T1, T2, T3, T4, T5], T],
-    matrix1: MatrixLike[T5, M, N],
-    matrix2: MatrixLike[T4, M, N],
-    matrix3: MatrixLike[T3, M, N],
-    matrix4: MatrixLike[T2, M, N],
-    matrix5: MatrixLike[T1, M, N],
-    /,
-) -> Iterator[T]: ...
-@overload
-def checked_rmap(
-    func: Callable[..., T],
-    matrix: MatrixLike[Any, M, N],
-    /,
-    *matrices: MatrixLike[Any, M, N],
+    reverse: Literal[False] = False,
 ) -> Iterator[T]: ...
