@@ -23,7 +23,7 @@ def checked_map(
     matrix1: MatrixLike[T1, M, N],
     /,
     *,
-    reverse: Literal[True],
+    reverse_args: Literal[True],
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -32,7 +32,7 @@ def checked_map(
     matrix2: MatrixLike[T1, M, N],
     /,
     *,
-    reverse: Literal[True],
+    reverse_args: Literal[True],
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -42,7 +42,7 @@ def checked_map(
     matrix3: MatrixLike[T1, M, N],
     /,
     *,
-    reverse: Literal[True],
+    reverse_args: Literal[True],
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -53,7 +53,7 @@ def checked_map(
     matrix4: MatrixLike[T1, M, N],
     /,
     *,
-    reverse: Literal[True],
+    reverse_args: Literal[True],
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -65,7 +65,7 @@ def checked_map(
     matrix5: MatrixLike[T1, M, N],
     /,
     *,
-    reverse: Literal[True],
+    reverse_args: Literal[True],
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -73,7 +73,7 @@ def checked_map(
     matrix: MatrixLike[Any, M, N],
     /,
     *matrices: MatrixLike[Any, M, N],
-    reverse: Literal[True],
+    reverse_args: Literal[True],
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -81,7 +81,7 @@ def checked_map(
     matrix1: MatrixLike[T1, M, N],
     /,
     *,
-    reverse: Literal[False] = False,
+    reverse_args: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -90,7 +90,7 @@ def checked_map(
     matrix2: MatrixLike[T2, M, N],
     /,
     *,
-    reverse: Literal[False] = False,
+    reverse_args: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -100,7 +100,7 @@ def checked_map(
     matrix3: MatrixLike[T3, M, N],
     /,
     *,
-    reverse: Literal[False] = False,
+    reverse_args: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -111,7 +111,7 @@ def checked_map(
     matrix4: MatrixLike[T4, M, N],
     /,
     *,
-    reverse: Literal[False] = False,
+    reverse_args: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -123,7 +123,7 @@ def checked_map(
     matrix5: MatrixLike[T5, M, N],
     /,
     *,
-    reverse: Literal[False] = False,
+    reverse_args: Literal[False] = False,
 ) -> Iterator[T]: ...
 @overload
 def checked_map(
@@ -131,5 +131,5 @@ def checked_map(
     matrix: MatrixLike[Any, M, N],
     /,
     *matrices: MatrixLike[Any, M, N],
-    reverse: Literal[False] = False,
+    reverse_args: Literal[False] = False,
 ) -> Iterator[T]: ...
