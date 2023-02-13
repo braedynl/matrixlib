@@ -32,6 +32,26 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     __slots__ = ()
     __match_args__ = ("array", "shape")
 
+    def __eq__(self, other):
+        """Return true if the two matrices are equal, otherwise false"""
+        if isinstance(other, MatrixLike):
+            return (
+                self.shape == other.shape
+                and
+                all(map(lambda x, y: (x is y) or (x == y), self, other))
+            )
+        return NotImplemented
+
+    def __ne__(self, other):
+        """Return true if the two matrices are not equal, otherwise false"""
+        if isinstance(other, MatrixLike):
+            return (
+                self.shape != other.shape
+                or
+                any(map(lambda x, y: (x is not y) and (x != y), self, other))
+            )
+        return NotImplemented
+
     def __len__(self):
         """Return the matrix's size"""
         return self.size
@@ -267,6 +287,30 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
+    def __lt__(self, other):
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        if isinstance(other, (RealMatrixLike, IntegralMatrixLike)):
+            return matrix_compare(self, other) < 0
+        return NotImplemented
+
+    def __le__(self, other):
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        if isinstance(other, (RealMatrixLike, IntegralMatrixLike)):
+            return matrix_compare(self, other) <= 0
+        return NotImplemented
+
+    def __gt__(self, other):
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        if isinstance(other, (RealMatrixLike, IntegralMatrixLike)):
+            return matrix_compare(self, other) > 0
+        return NotImplemented
+
+    def __ge__(self, other):
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        if isinstance(other, (RealMatrixLike, IntegralMatrixLike)):
+            return matrix_compare(self, other) >= 0
+        return NotImplemented
+
     @abstractmethod
     def __add__(self, other):
         """Return element-wise ``a + b``"""
@@ -363,6 +407,26 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def lesser(self, other):
+        """Return element-wise ``a < b``"""
+        pass
+
+    @abstractmethod
+    def lesser_equal(self, other):
+        """Return element-wise ``a <= b``"""
+        pass
+
+    @abstractmethod
+    def greater(self, other):
+        """Return element-wise ``a > b``"""
+        pass
+
+    @abstractmethod
+    def greater_equal(self, other):
+        """Return element-wise ``a >= b``"""
+        pass
+
+    @abstractmethod
     def conjugate(self):
         """Return element-wise ``a.conjugate()``"""
         pass
@@ -371,6 +435,30 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
+
+    def __lt__(self, other):
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        if isinstance(other, IntegralMatrixLike):
+            return matrix_compare(self, other) < 0
+        return NotImplemented
+
+    def __le__(self, other):
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        if isinstance(other, IntegralMatrixLike):
+            return matrix_compare(self, other) <= 0
+        return NotImplemented
+
+    def __gt__(self, other):
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        if isinstance(other, IntegralMatrixLike):
+            return matrix_compare(self, other) > 0
+        return NotImplemented
+
+    def __ge__(self, other):
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        if isinstance(other, IntegralMatrixLike):
+            return matrix_compare(self, other) >= 0
+        return NotImplemented
 
     @abstractmethod
     def __add__(self, other):
@@ -523,6 +611,48 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
         pass
 
     @abstractmethod
+    def lesser(self, other):
+        """Return element-wise ``a < b``"""
+        pass
+
+    @abstractmethod
+    def lesser_equal(self, other):
+        """Return element-wise ``a <= b``"""
+        pass
+
+    @abstractmethod
+    def greater(self, other):
+        """Return element-wise ``a > b``"""
+        pass
+
+    @abstractmethod
+    def greater_equal(self, other):
+        """Return element-wise ``a >= b``"""
+        pass
+
+    @abstractmethod
     def conjugate(self):
         """Return element-wise ``a.conjugate()``"""
         pass
+
+
+def matrix_compare(a, b):
+    if a is b:
+        return 0
+    for x, y in zip(a, b):
+        if x == y:
+            continue
+        if x < y:
+            return -1
+        if x > y:
+            return 1
+        raise RuntimeError
+    u = a.shape
+    v = b.shape
+    if u == v:
+        return 0
+    if u < v:
+        return -1
+    if u > v:
+        return 1
+    raise RuntimeError
