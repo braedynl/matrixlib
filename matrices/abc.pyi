@@ -1,11 +1,13 @@
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterable, Iterator, Sequence
-from typing import (Any, Generic, Literal, SupportsIndex, TypeVar, Union,
-                    overload)
+from collections.abc import Iterable, Iterator, Sequence, Sized
+from typing import (Any, Literal, Protocol, SupportsIndex, TypeVar, Union,
+                    overload, runtime_checkable)
 
 from .rule import Rule
 
 __all__ = [
+    "Shaped",
+    "ShapedIterable",
     "MatrixLike",
     "ComplexMatrixLike",
     "RealMatrixLike",
@@ -23,7 +25,20 @@ RealT_co = TypeVar("RealT_co", covariant=True, bound=float)
 IntegralT_co = TypeVar("IntegralT_co", covariant=True, bound=int)
 
 
-class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
+@runtime_checkable
+class Shaped(Sized, Protocol[M_co, N_co]):
+    def __len__(self) -> int: ...
+    @property
+    @abstractmethod
+    def shape(self) -> tuple[M_co, N_co]: ...
+
+
+@runtime_checkable
+class ShapedIterable(Shaped[M_co, N_co], Iterable[T_co], Protocol[T_co, M_co, N_co]):
+    ...
+
+
+class MatrixLike(Sequence[T_co], ShapedIterable[T_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
     __match_args__: tuple[Literal["array"], Literal["shape"]]
@@ -51,9 +66,6 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @property
     @abstractmethod
     def array(self) -> Sequence[T_co]: ...
-    @property
-    @abstractmethod
-    def shape(self) -> tuple[M_co, N_co]: ...
     @property
     def nrows(self) -> M_co: ...
     @property

@@ -1,11 +1,13 @@
 import operator
 from abc import ABCMeta, abstractmethod
-from collections.abc import Sequence
-from typing import Generic, TypeVar
+from collections.abc import Iterable, Sequence, Sized
+from typing import Protocol, TypeVar, runtime_checkable
 
 from .rule import Rule
 
 __all__ = [
+    "Shaped",
+    "ShapedIterable",
     "MatrixLike",
     "ComplexMatrixLike",
     "RealMatrixLike",
@@ -22,7 +24,31 @@ RealT_co = TypeVar("RealT_co", covariant=True, bound=float)
 IntegralT_co = TypeVar("IntegralT_co", covariant=True, bound=int)
 
 
-class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
+@runtime_checkable
+class Shaped(Sized, Protocol[M_co, N_co]):
+    """Protocol for classes that support ``shape`` and ``__len__()``"""
+
+    def __len__(self):
+        """Return the product of the shape"""
+        shape = self.shape
+        return shape[0] * shape[1]
+
+    @property
+    @abstractmethod
+    def shape(self):
+        """The number of rows and columns as a ``tuple``"""
+        pass
+
+
+@runtime_checkable
+class ShapedIterable(Shaped[M_co, N_co], Iterable[T_co], Protocol[T_co, M_co, N_co]):
+    """Protocol for classes that support ``shape``, ``__len__()``, and
+    ``__iter__()``
+    """
+    pass
+
+
+class MatrixLike(Sequence[T_co], ShapedIterable[T_co, M_co, N_co], metaclass=ABCMeta):
     """Abstract base class for matrix-like objects
 
     A kind of "hybrid" generic sequence type that interfaces both one and two
@@ -79,12 +105,6 @@ class MatrixLike(Sequence[T_co], Generic[T_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def array(self):
         """A sequence of the matrix's elements"""
-        pass
-
-    @property
-    @abstractmethod
-    def shape(self):
-        """A sequence of the matrix's dimensions"""
         pass
 
     @property
