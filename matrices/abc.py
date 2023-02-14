@@ -119,9 +119,8 @@ class MatrixLike(Sequence[T_co], ShapedIterable[T_co, M_co, N_co], metaclass=ABC
 
     @property
     def size(self):
-        """The product of the matrix's shape"""
-        shape = self.shape
-        return shape[0] * shape[1]
+        """The product of the shape"""
+        return len(self)
 
     @abstractmethod
     def equal(self, other):
