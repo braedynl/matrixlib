@@ -1,2 +1,3 @@
-from .checked_map import *
+from .matrix_map import *
 from .operator import *
+from .vectorize import *

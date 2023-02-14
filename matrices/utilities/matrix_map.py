@@ -3,12 +3,7 @@ from typing import TypeVar
 
 from ..abc import ShapedIterable
 
-__all__ = ["CheckedMap", "vectorize"]
-
-T = TypeVar("T")
-
-M = TypeVar("M", bound=int)
-N = TypeVar("N", bound=int)
+__all__ = ["MatrixMap"]
 
 T_co = TypeVar("T_co", covariant=True)
 
@@ -16,7 +11,17 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class CheckedMap(Collection[T_co], ShapedIterable[T_co, M_co, N_co]):
+class MatrixMap(Collection[T_co], ShapedIterable[T_co, M_co, N_co]):
+    """A shaped, collection wrapper for mapping processes on ``MatrixLike``
+    objects
+
+    Note that elements of the collection are computed lazily, and without
+    caching. ``__iter__()`` (or any of its dependents) will compute/re-compute
+    the mapping for each call.
+
+    ``MatrixMap`` is a type of ``ShapedIterable``, which can be passed directly
+    to a built-in ``Matrix`` constructor.
+    """
 
     __slots__ = ("_func", "_matrices")
 
@@ -51,27 +56,3 @@ class CheckedMap(Collection[T_co], ShapedIterable[T_co, M_co, N_co]):
         This tuple is guaranteed to contain at least one matrix.
         """
         return self._matrices
-
-
-def vectorize():
-    """Convert a scalar-based function into a matrix-based one
-
-    For a function, ``f()``, whose signature is ``f(x: T, ...) -> S``,
-    ``vectorize()`` returns a wrapper of ``f()`` whose signature is
-    ``f(x: MatrixLike[T, M, N], ...) -> CheckedMap[S, M, N]``.
-
-    Vectorization will only be applied to positional function arguments.
-    Keyword arguments are stripped, and will no longer be passable.
-
-    The returned object is a ``CheckedMap``, which can be fed directly to the
-    built-in ``Matrix`` constructor (and any of its sub-classes, of course).
-    """
-
-    def vectorize_decorator(func, /):
-
-        def vectorize_wrapper(matrix1, /, *matrices):
-            return CheckedMap(func, matrix1, *matrices)
-
-        return vectorize_wrapper
-
-    return vectorize_decorator
