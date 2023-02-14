@@ -35,7 +35,7 @@ class MatrixMap(Collection[T_co], ShapedIterable[T_co, M_co, N_co]):
         self._matrices = (matrix1, *matrices)
 
     def __iter__(self):
-        yield from map(self.func *self.matrices)
+        yield from map(self.func, *self.matrices)
 
     def __contains__(self, value):
         return any(map(lambda x: x is value or x == value, self))
