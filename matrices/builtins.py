@@ -5,6 +5,7 @@ from views import SequenceView
 
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike)
+from .protocols import ShapedIterable
 from .rule import COL, ROW, Rule
 from .utilities.checked_map import checked_map
 from .utilities.operator import (add, bitwise_and, bitwise_or, bitwise_xor, eq,
@@ -41,7 +42,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     def __init__(self, array=None, shape=None):
         self._array = [] if array is None else list(array)
 
-        if isinstance(array, MatrixLike):
+        if isinstance(array, ShapedIterable):
             self._shape = array.shape
             return
 

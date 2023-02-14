@@ -3,6 +3,7 @@ from typing import Any, Literal, Optional, SupportsIndex, TypeVar, overload
 
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike)
+from .protocols import ShapedIterable
 from .rule import Rule
 
 __all__ = [
@@ -36,7 +37,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     __slots__: tuple[Literal["_array"], Literal["_shape"]]
 
     @overload
-    def __init__(self, array: MatrixLike[T_co, M_co, N_co]) -> None: ...
+    def __init__(self, array: ShapedIterable[T_co, M_co, N_co]) -> None: ...
     @overload
     def __init__(self, array: Optional[Iterable[T_co]] = None, shape: Optional[tuple[Optional[M_co], Optional[N_co]]] = None) -> None: ...
     def __repr__(self) -> str: ...
