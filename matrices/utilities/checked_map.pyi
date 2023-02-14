@@ -81,41 +81,60 @@ class checked_map(Iterator[T_co], Generic[T_co, M_co, N_co]):
         /,
         *matrices: MatrixLike[Any, M_co, N_co],
     ) -> None: ...
-
     def __next__(self) -> T_co: ...
     def __iter__(self: Self) -> Self: ...
 
     @property
     def shape(self) -> tuple[M_co, N_co]: ...
+    @property
+    def nrows(self) -> M_co: ...
+    @property
+    def ncols(self) -> N_co: ...
+    @property
+    def size(self) -> int: ...
 
 
-@overload
-def vectorize(
-    func: Callable[[T1], T],
-    /,
-) -> Callable[[MatrixLike[T1, M, N]], checked_map[T, M, N]]: ...
-@overload
-def vectorize(
-    func: Callable[[T1, T2], T],
-    /,
-) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N]], checked_map[T, M, N]]: ...
-@overload
-def vectorize(
-    func: Callable[[T1, T2, T3], T],
-    /,
-) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N]], checked_map[T, M, N]]: ...
-@overload
-def vectorize(
-    func: Callable[[T1, T2, T3, T4], T],
-    /,
-) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N]], checked_map[T, M, N]]: ...
-@overload
-def vectorize(
-    func: Callable[[T1, T2, T3, T4, T5], T],
-    /,
-) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N], MatrixLike[T5, M, N]], checked_map[T, M, N]]: ...
-@overload
-def vectorize(
-    func: Callable[..., T],
-    /,
-) -> Callable[..., checked_map[T, M, N]]: ...
+class Vectorizer:
+
+    # HACK: this type does *not* exist in the implementation file - this is
+    # solely to help vectorize() give correct overloading information.
+
+    @overload
+    @staticmethod
+    def __call__(
+        func: Callable[[T1], T],
+        /,
+    ) -> Callable[[MatrixLike[T1, M, N]], checked_map[T, M, N]]: ...
+    @overload
+    @staticmethod
+    def __call__(
+        func: Callable[[T1, T2], T],
+        /,
+    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N]], checked_map[T, M, N]]: ...
+    @overload
+    @staticmethod
+    def __call__(
+        func: Callable[[T1, T2, T3], T],
+        /,
+    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N]], checked_map[T, M, N]]: ...
+    @overload
+    @staticmethod
+    def __call__(
+        func: Callable[[T1, T2, T3, T4], T],
+        /,
+    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N]], checked_map[T, M, N]]: ...
+    @overload
+    @staticmethod
+    def __call__(
+        func: Callable[[T1, T2, T3, T4, T5], T],
+        /,
+    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N], MatrixLike[T5, M, N]], checked_map[T, M, N]]: ...
+    @overload
+    @staticmethod
+    def __call__(
+        func: Callable[..., T],
+        /,
+    ) -> Callable[..., checked_map[T, M, N]]: ...
+
+
+def vectorize() -> Vectorizer: ...
