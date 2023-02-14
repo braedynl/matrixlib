@@ -1,25 +1,24 @@
-import functools
-from collections.abc import Iterator
-from typing import Generic, TypeVar
+from collections.abc import Collection
+from typing import TypeVar
 
-__all__ = ["checked_map", "vectorize"]
+from ..abc import ShapedIterable
+
+__all__ = ["CheckedMap", "vectorize"]
 
 T = TypeVar("T")
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
 
+T_co = TypeVar("T_co", covariant=True)
+
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class checked_map(Iterator[T], Generic[T, M, N]):
-    """Return a shaped ``map``-like iterator over one or more matrices
+class CheckedMap(Collection[T_co], ShapedIterable[T_co, M_co, N_co]):
 
-    Raises ``ValueError`` if not all of the input matrices are of equal shape.
-    """
-
-    __slots__ = ("_items", "_shape")
+    __slots__ = ("_func", "_matrices")
 
     def __init__(self, func, matrix1, /, *matrices):
         u = matrix1.shape
@@ -27,35 +26,31 @@ class checked_map(Iterator[T], Generic[T, M, N]):
             v = matrix2.shape
             if u != v:
                 raise ValueError(f"incompatible shapes {u}, {v}")
-        self._shape = u
-        self._items = map(func, matrix1, *matrices)
-
-    def __next__(self):
-        return next(self._items)
+        self._func = func
+        self._matrices = (matrix1, *matrices)
 
     def __iter__(self):
-        return self
+        yield from map(self.func *self.matrices)
+
+    def __contains__(self, value):
+        return any(map(lambda x: x is value or x == value, self))
 
     @property
     def shape(self):
-        """The intended shape"""
-        return self._shape
+        return self.matrices[0].shape
 
     @property
-    def nrows(self):
-        """The intended number of rows"""
-        return self.shape[0]
+    def func(self):
+        """The mapping function"""
+        return self._func
 
     @property
-    def ncols(self):
-        """The intended number of columns"""
-        return self.shape[1]
+    def matrices(self):
+        """A ``tuple`` of the matrices used in the mapping process
 
-    @property
-    def size(self):
-        """The intended size"""
-        shape = self.shape
-        return shape[0] * shape[1]
+        This tuple is guaranteed to contain at least one matrix.
+        """
+        return self._matrices
 
 
 def vectorize():
@@ -63,25 +58,19 @@ def vectorize():
 
     For a function, ``f()``, whose signature is ``f(x: T, ...) -> S``,
     ``vectorize()`` returns a wrapper of ``f()`` whose signature is
-    ``f(x: MatrixLike[T, M, N], ...) -> checked_map[S, M, N]``.
+    ``f(x: MatrixLike[T, M, N], ...) -> CheckedMap[S, M, N]``.
 
-    Vectorization only applies to positional arguments. Keyword arguments are
-    preserved as they appear in the decorated function, though this is not
-    properly type-hinted due to some current limitations of the typing system.
+    Vectorization will only be applied to positional function arguments.
+    Keyword arguments are stripped, and will no longer be passable.
 
-    The returned object is a ``checked_map`` iterator, which can be fed
-    directly to the built-in ``Matrix`` constructor (and all of its
-    sub-classes, of course).
+    The returned object is a ``CheckedMap``, which can be fed directly to the
+    built-in ``Matrix`` constructor (and any of its sub-classes, of course).
     """
 
     def vectorize_decorator(func, /):
 
-        def vectorize_wrapper(matrix1, /, *matrices, **kwargs):
-            return checked_map(
-                functools.partial(func, **kwargs) if kwargs else func,
-                matrix1,
-                *matrices,
-            )
+        def vectorize_wrapper(matrix1, /, *matrices):
+            return CheckedMap(func, matrix1, *matrices)
 
         return vectorize_wrapper
 

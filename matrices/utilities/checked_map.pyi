@@ -1,9 +1,9 @@
-from collections.abc import Callable, Iterator
-from typing import Any, Generic, Literal, TypeVar, overload
+from collections.abc import Callable, Collection, Iterator
+from typing import Any, Literal, TypeVar, overload
 
-from ..abc import MatrixLike
+from ..abc import MatrixLike, ShapedIterable
 
-__all__ = ["checked_map", "vectorize"]
+__all__ = ["CheckedMap", "vectorize"]
 
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
@@ -12,6 +12,7 @@ T4 = TypeVar("T4")
 T5 = TypeVar("T5")
 
 T = TypeVar("T")
+S = TypeVar("S")
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
@@ -21,12 +22,10 @@ T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
-Self = TypeVar("Self", bound=checked_map)
 
+class CheckedMap(Collection[T_co], ShapedIterable[T_co, M_co, N_co]):
 
-class checked_map(Iterator[T_co], Generic[T_co, M_co, N_co]):
-
-    __slots__: tuple[Literal["_items"], Literal["_shape"]]
+    __slots__: tuple[Literal["_func"], Literal["_matrices"]]
 
     @overload
     def __init__(
@@ -81,20 +80,18 @@ class checked_map(Iterator[T_co], Generic[T_co, M_co, N_co]):
         /,
         *matrices: MatrixLike[Any, M_co, N_co],
     ) -> None: ...
-    def __next__(self) -> T_co: ...
-    def __iter__(self: Self) -> Self: ...
+    def __iter__(self) -> Iterator[T_co]: ...
+    def __contains__(self, value: Any) -> bool: ...
 
     @property
     def shape(self) -> tuple[M_co, N_co]: ...
     @property
-    def nrows(self) -> M_co: ...
+    def func(self) -> Callable[..., T_co]: ...
     @property
-    def ncols(self) -> N_co: ...
-    @property
-    def size(self) -> int: ...
+    def matrices(self) -> tuple[MatrixLike[Any, M_co, N_co], ...]: ...
 
 
-class Vectorizer:
+class vectorize_dispatch:
 
     # HACK: this type does *not* exist in the implementation file - this is
     # solely to help vectorize() give correct overloading information.
@@ -102,39 +99,39 @@ class Vectorizer:
     @overload
     @staticmethod
     def __call__(
-        func: Callable[[T1], T],
+        func: Callable[[T1], S],
         /,
-    ) -> Callable[[MatrixLike[T1, M, N]], checked_map[T, M, N]]: ...
+    ) -> Callable[[MatrixLike[T1, M, N]], CheckedMap[S, M, N]]: ...
     @overload
     @staticmethod
     def __call__(
-        func: Callable[[T1, T2], T],
+        func: Callable[[T1, T2], S],
         /,
-    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N]], checked_map[T, M, N]]: ...
+    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N]], CheckedMap[S, M, N]]: ...
     @overload
     @staticmethod
     def __call__(
-        func: Callable[[T1, T2, T3], T],
+        func: Callable[[T1, T2, T3], S],
         /,
-    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N]], checked_map[T, M, N]]: ...
+    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N]], CheckedMap[S, M, N]]: ...
     @overload
     @staticmethod
     def __call__(
-        func: Callable[[T1, T2, T3, T4], T],
+        func: Callable[[T1, T2, T3, T4], S],
         /,
-    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N]], checked_map[T, M, N]]: ...
+    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N]], CheckedMap[S, M, N]]: ...
     @overload
     @staticmethod
     def __call__(
-        func: Callable[[T1, T2, T3, T4, T5], T],
+        func: Callable[[T1, T2, T3, T4, T5], S],
         /,
-    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N], MatrixLike[T5, M, N]], checked_map[T, M, N]]: ...
+    ) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N], MatrixLike[T5, M, N]], CheckedMap[S, M, N]]: ...
     @overload
     @staticmethod
     def __call__(
-        func: Callable[..., T],
+        func: Callable[..., S],
         /,
-    ) -> Callable[..., checked_map[T, M, N]]: ...
+    ) -> Callable[..., CheckedMap[S, M, N]]: ...
 
 
-def vectorize() -> Vectorizer: ...
+def vectorize() -> vectorize_dispatch: ...
