@@ -1,22 +1,41 @@
+from collections.abc import Iterator
+from typing import Generic, TypeVar
 
-__all__ = ["checked_map"]
+__all__ = ["checked_map", "vectorize"]
+
+T = TypeVar("T")
+
+M = TypeVar("M", bound=int)
+N = TypeVar("N", bound=int)
 
 
-def checked_map(func, matrix, /, *matrices, reverse_args=False):
-    """Return a ``map`` across one or more matrices, raising ``ValueError`` if
-    not all of the input matrices have equal shapes
+class checked_map(Iterator[T], Generic[T, M, N]):
 
-    If ``reverse_args=True``, the input matrices are passed to the ``map``
-    constructor in reverse order (equivalent to reversing the arguments of
-    ``func``).
-    """
-    if not matrices:
-        return map(func, matrix)
-    u = matrix.shape
-    for other_matrix in matrices:
-        v = other_matrix.shape
-        if u != v:
-            raise ValueError(f"incompatible shapes {u}, {v}")
-    if reverse_args:
-        return map(func, *reversed(matrices), matrix)
-    return map(func, matrix, *matrices)
+    __slots__ = ("_items", "_shape")
+
+    def __init__(self, func, matrix1, /, *matrices):
+        u = matrix1.shape
+        for matrix2 in matrices:
+            v = matrix2.shape
+            if u != v:
+                raise ValueError(f"incompatible shapes {u}, {v}")
+        self._shape = u
+        self._items = iter(map(func, matrix1, *matrices))
+
+    def __next__(self):
+        return next(self._items)
+
+    def __iter__(self):
+        return self
+
+    @property
+    def shape(self):
+        return self._shape
+
+
+def vectorize(func, /):
+
+    def vectorize_wrapper(matrix1, /, *matrices):
+        return checked_map(func, matrix1, *matrices)
+
+    return vectorize_wrapper

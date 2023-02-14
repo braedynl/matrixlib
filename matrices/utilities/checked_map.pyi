@@ -1,9 +1,9 @@
 from collections.abc import Callable, Iterator
-from typing import Any, Literal, TypeVar, overload
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from ..abc import MatrixLike
 
-__all__ = ["checked_map"]
+__all__ = ["checked_map", "vectorize"]
 
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
@@ -16,120 +16,106 @@ T = TypeVar("T")
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
 
+T_co = TypeVar("T_co", covariant=True)
+
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
+
+Self = TypeVar("Self", bound=checked_map)
+
+
+class checked_map(Iterator[T_co], Generic[T_co, M_co, N_co]):
+
+    __slots__: tuple[Literal["_items"], Literal["_shape"]]
+
+    @overload
+    def __init__(
+        self,
+        func: Callable[[T1], T_co],
+        matrix1: MatrixLike[T1, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        func: Callable[[T1, T2], T_co],
+        matrix1: MatrixLike[T1, M_co, N_co],
+        matrix2: MatrixLike[T2, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        func: Callable[[T1, T2, T3], T_co],
+        matrix1: MatrixLike[T1, M_co, N_co],
+        matrix2: MatrixLike[T2, M_co, N_co],
+        matrix3: MatrixLike[T3, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        func: Callable[[T1, T2, T3, T4], T_co],
+        matrix1: MatrixLike[T1, M_co, N_co],
+        matrix2: MatrixLike[T2, M_co, N_co],
+        matrix3: MatrixLike[T3, M_co, N_co],
+        matrix4: MatrixLike[T4, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        func: Callable[[T1, T2, T3, T4, T5], T_co],
+        matrix1: MatrixLike[T1, M_co, N_co],
+        matrix2: MatrixLike[T2, M_co, N_co],
+        matrix3: MatrixLike[T3, M_co, N_co],
+        matrix4: MatrixLike[T4, M_co, N_co],
+        matrix5: MatrixLike[T5, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        func: Callable[..., T_co],
+        matrix1: MatrixLike[Any, M_co, N_co],
+        /,
+        *matrices: MatrixLike[Any, M_co, N_co],
+    ) -> None: ...
+
+    def __next__(self) -> T_co: ...
+    def __iter__(self: Self) -> Self: ...
+
+    @property
+    def shape(self) -> tuple[M_co, N_co]: ...
+
 
 @overload
-def checked_map(
+def vectorize(
     func: Callable[[T1], T],
-    matrix1: MatrixLike[T1, M, N],
     /,
-    *,
-    reverse_args: Literal[True],
-) -> Iterator[T]: ...
+) -> Callable[[MatrixLike[T1, M, N]], checked_map[T, M, N]]: ...
 @overload
-def checked_map(
+def vectorize(
     func: Callable[[T1, T2], T],
-    matrix1: MatrixLike[T2, M, N],
-    matrix2: MatrixLike[T1, M, N],
     /,
-    *,
-    reverse_args: Literal[True],
-) -> Iterator[T]: ...
+) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N]], checked_map[T, M, N]]: ...
 @overload
-def checked_map(
+def vectorize(
     func: Callable[[T1, T2, T3], T],
-    matrix1: MatrixLike[T3, M, N],
-    matrix2: MatrixLike[T2, M, N],
-    matrix3: MatrixLike[T1, M, N],
     /,
-    *,
-    reverse_args: Literal[True],
-) -> Iterator[T]: ...
+) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N]], checked_map[T, M, N]]: ...
 @overload
-def checked_map(
+def vectorize(
     func: Callable[[T1, T2, T3, T4], T],
-    matrix1: MatrixLike[T4, M, N],
-    matrix2: MatrixLike[T3, M, N],
-    matrix3: MatrixLike[T2, M, N],
-    matrix4: MatrixLike[T1, M, N],
     /,
-    *,
-    reverse_args: Literal[True],
-) -> Iterator[T]: ...
+) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N]], checked_map[T, M, N]]: ...
 @overload
-def checked_map(
+def vectorize(
     func: Callable[[T1, T2, T3, T4, T5], T],
-    matrix1: MatrixLike[T5, M, N],
-    matrix2: MatrixLike[T4, M, N],
-    matrix3: MatrixLike[T3, M, N],
-    matrix4: MatrixLike[T2, M, N],
-    matrix5: MatrixLike[T1, M, N],
     /,
-    *,
-    reverse_args: Literal[True],
-) -> Iterator[T]: ...
+) -> Callable[[MatrixLike[T1, M, N], MatrixLike[T2, M, N], MatrixLike[T3, M, N], MatrixLike[T4, M, N], MatrixLike[T5, M, N]], checked_map[T, M, N]]: ...
 @overload
-def checked_map(
+def vectorize(
     func: Callable[..., T],
-    matrix: MatrixLike[Any, M, N],
     /,
-    *matrices: MatrixLike[Any, M, N],
-    reverse_args: Literal[True],
-) -> Iterator[T]: ...
-@overload
-def checked_map(
-    func: Callable[[T1], T],
-    matrix1: MatrixLike[T1, M, N],
-    /,
-    *,
-    reverse_args: Literal[False] = False,
-) -> Iterator[T]: ...
-@overload
-def checked_map(
-    func: Callable[[T1, T2], T],
-    matrix1: MatrixLike[T1, M, N],
-    matrix2: MatrixLike[T2, M, N],
-    /,
-    *,
-    reverse_args: Literal[False] = False,
-) -> Iterator[T]: ...
-@overload
-def checked_map(
-    func: Callable[[T1, T2, T3], T],
-    matrix1: MatrixLike[T1, M, N],
-    matrix2: MatrixLike[T2, M, N],
-    matrix3: MatrixLike[T3, M, N],
-    /,
-    *,
-    reverse_args: Literal[False] = False,
-) -> Iterator[T]: ...
-@overload
-def checked_map(
-    func: Callable[[T1, T2, T3, T4], T],
-    matrix1: MatrixLike[T1, M, N],
-    matrix2: MatrixLike[T2, M, N],
-    matrix3: MatrixLike[T3, M, N],
-    matrix4: MatrixLike[T4, M, N],
-    /,
-    *,
-    reverse_args: Literal[False] = False,
-) -> Iterator[T]: ...
-@overload
-def checked_map(
-    func: Callable[[T1, T2, T3, T4, T5], T],
-    matrix1: MatrixLike[T1, M, N],
-    matrix2: MatrixLike[T2, M, N],
-    matrix3: MatrixLike[T3, M, N],
-    matrix4: MatrixLike[T4, M, N],
-    matrix5: MatrixLike[T5, M, N],
-    /,
-    *,
-    reverse_args: Literal[False] = False,
-) -> Iterator[T]: ...
-@overload
-def checked_map(
-    func: Callable[..., T],
-    matrix: MatrixLike[Any, M, N],
-    /,
-    *matrices: MatrixLike[Any, M, N],
-    reverse_args: Literal[False] = False,
-) -> Iterator[T]: ...
+) -> Callable[..., checked_map[T, M, N]]: ...
