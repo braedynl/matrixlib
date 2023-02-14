@@ -69,9 +69,9 @@ def vectorize():
     preserved as they appear in the decorated function, though this is not
     properly type-hinted due to some current limitations of the typing system.
 
-    The returned object is a ``checked_map`` iterator, which can be directly
-    fed into the built-in ``Matrix`` constructor (and all of its sub-classes,
-    of course).
+    The returned object is a ``checked_map`` iterator, which can be fed
+    directly to the built-in ``Matrix`` constructor (and all of its
+    sub-classes, of course).
     """
 
     def vectorize_decorator(func, /):
