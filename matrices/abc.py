@@ -1,13 +1,16 @@
 import operator
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterable, Sequence, Sized
+from collections.abc import Collection, Iterable, Sequence, Sized
 from typing import Protocol, TypeVar, runtime_checkable
 
 from .rule import Rule
+from .utilities import matrix_operator
 
 __all__ = [
     "Shaped",
     "ShapedIterable",
+    "ShapedCollection",
+    "ShapedSequence",
     "MatrixLike",
     "ComplexMatrixLike",
     "RealMatrixLike",
@@ -45,10 +48,31 @@ class ShapedIterable(Shaped[M_co, N_co], Iterable[T_co], Protocol[T_co, M_co, N_
     """Protocol for classes that support ``shape``, ``__len__()``, and
     ``__iter__()``
     """
-    pass
+
+    @abstractmethod
+    def __iter__(self):
+        """Return an iterator over the values in row-major order"""
+        pass
 
 
-class MatrixLike(Sequence[T_co], ShapedIterable[T_co, M_co, N_co], metaclass=ABCMeta):
+@runtime_checkable
+class ShapedCollection(ShapedIterable[T_co, M_co, N_co], Collection[T_co], Protocol[T_co, M_co, N_co]):
+    """Protocol for classes that support ``shape``, ``__len__()``,
+    ``__iter__()``, and ``__contains__()``
+    """
+
+    def __contains__(self, value):
+        """Return true if the collection contains ``value``, otherwise false"""
+        return any(map(lambda x: x is value or x == value, self))
+
+
+class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Sequence[T_co], metaclass=ABCMeta):
+    """Abstract base class for shaped sequence types"""
+
+    __slots__ = ()
+
+
+class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
     """Abstract base class for matrix-like objects
 
     A kind of "hybrid" generic sequence type that interfaces both one and two
@@ -130,21 +154,6 @@ class MatrixLike(Sequence[T_co], ShapedIterable[T_co, M_co, N_co], metaclass=ABC
     @abstractmethod
     def not_equal(self, other):
         """Return element-wise ``a != b``"""
-        pass
-
-    @abstractmethod
-    def logical_and(self, other):
-        """Return element-wise ``logical_and(a, b)``"""
-        pass
-
-    @abstractmethod
-    def logical_or(self, other):
-        """Return element-wise ``logical_or(a, b)``"""
-        pass
-
-    @abstractmethod
-    def logical_not(self):
-        """Return element-wise ``logical_not(a)``"""
         pass
 
     @abstractmethod
@@ -308,25 +317,25 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
     def __lt__(self, other):
         """Return true if lexicographic ``a < b``, otherwise false"""
         if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_compare(self, other) < 0
+            return matrix_operator.cmp(self, other) < 0
         return NotImplemented
 
     def __le__(self, other):
         """Return true if lexicographic ``a <= b``, otherwise false"""
         if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_compare(self, other) <= 0
+            return matrix_operator.cmp(self, other) <= 0
         return NotImplemented
 
     def __gt__(self, other):
         """Return true if lexicographic ``a > b``, otherwise false"""
         if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_compare(self, other) > 0
+            return matrix_operator.cmp(self, other) > 0
         return NotImplemented
 
     def __ge__(self, other):
         """Return true if lexicographic ``a >= b``, otherwise false"""
         if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_compare(self, other) >= 0
+            return matrix_operator.cmp(self, other) >= 0
         return NotImplemented
 
     @abstractmethod
@@ -455,25 +464,25 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
     def __lt__(self, other):
         """Return true if lexicographic ``a < b``, otherwise false"""
         if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_compare(self, other) < 0
+            return matrix_operator.cmp(self, other) < 0
         return NotImplemented
 
     def __le__(self, other):
         """Return true if lexicographic ``a <= b``, otherwise false"""
         if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_compare(self, other) <= 0
+            return matrix_operator.cmp(self, other) <= 0
         return NotImplemented
 
     def __gt__(self, other):
         """Return true if lexicographic ``a > b``, otherwise false"""
         if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_compare(self, other) > 0
+            return matrix_operator.cmp(self, other) > 0
         return NotImplemented
 
     def __ge__(self, other):
         """Return true if lexicographic ``a >= b``, otherwise false"""
         if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_compare(self, other) >= 0
+            return matrix_operator.cmp(self, other) >= 0
         return NotImplemented
 
     @abstractmethod
@@ -613,7 +622,7 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
 
     def __pos__(self):
         """Return element-wise ``+a``"""
-        pass
+        return self
 
     @abstractmethod
     def __abs__(self):
@@ -653,25 +662,3 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
 ComplexMatrixLike.COMPARABLE_TYPES = (ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike)
 RealMatrixLike.COMPARABLE_TYPES = (RealMatrixLike, IntegralMatrixLike)
 IntegralMatrixLike.COMPARABLE_TYPES = (IntegralMatrixLike,)
-
-
-def matrix_compare(a, b):
-    if a is b:
-        return 0
-    for x, y in zip(a, b):
-        if x == y:
-            continue
-        if x < y:
-            return -1
-        if x > y:
-            return 1
-        raise RuntimeError
-    u = a.shape
-    v = b.shape
-    if u == v:
-        return 0
-    if u < v:
-        return -1
-    if u > v:
-        return 1
-    raise RuntimeError

@@ -213,15 +213,6 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     def not_equal(self, other):
         return IntegralMatrix(matrix_operator.not_equal(self, other))
 
-    def logical_and(self, other):
-        return IntegralMatrix(matrix_operator.logical_and(self, other))
-
-    def logical_or(self, other):
-        return IntegralMatrix(matrix_operator.logical_or(self, other))
-
-    def logical_not(self):
-        return IntegralMatrix(matrix_operator.logical_not(self))
-
     def transpose(self):
         from .views.builtins import MatrixTranspose
         return MatrixTranspose(self)

@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterable, Iterator, Sequence, Sized
+from collections.abc import Collection, Iterable, Iterator, Sequence, Sized
 from typing import (Any, Literal, Protocol, SupportsIndex, TypeVar, Union,
                     overload, runtime_checkable)
 
@@ -8,6 +8,8 @@ from .rule import Rule
 __all__ = [
     "Shaped",
     "ShapedIterable",
+    "ShapedCollection",
+    "ShapedSequence",
     "MatrixLike",
     "ComplexMatrixLike",
     "RealMatrixLike",
@@ -27,7 +29,9 @@ IntegralT_co = TypeVar("IntegralT_co", covariant=True, bound=int)
 
 @runtime_checkable
 class Shaped(Sized, Protocol[M_co, N_co]):
+
     def __len__(self) -> int: ...
+
     @property
     @abstractmethod
     def shape(self) -> tuple[M_co, N_co]: ...
@@ -38,7 +42,37 @@ class ShapedIterable(Shaped[M_co, N_co], Iterable[T_co], Protocol[T_co, M_co, N_
     ...
 
 
-class MatrixLike(ShapedIterable[T_co, M_co, N_co], Sequence[T_co], metaclass=ABCMeta):
+@runtime_checkable
+class ShapedCollection(ShapedIterable[T_co, M_co, N_co], Collection[T_co], Protocol[T_co, M_co, N_co]):
+
+    def __contains__(self, value: Any) -> bool: ...
+
+
+class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Sequence[T_co], metaclass=ABCMeta):
+
+    __slots__: tuple[()]
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: int) -> T_co: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: slice) -> ShapedSequence[T_co, Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, int]) -> T_co: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, slice]) -> ShapedSequence[T_co, Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, int]) -> ShapedSequence[T_co, Any, Literal[1]]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, slice]) -> ShapedSequence[T_co, Any, Any]: ...
+
+
+class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
     __match_args__: tuple[Literal["array"], Literal["shape"]]
@@ -76,12 +110,6 @@ class MatrixLike(ShapedIterable[T_co, M_co, N_co], Sequence[T_co], metaclass=ABC
     def equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
     @abstractmethod
     def not_equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
-    @abstractmethod
-    def logical_and(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
-    @abstractmethod
-    def logical_or(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
-    @abstractmethod
-    def logical_not(self) -> IntegralMatrixLike[bool, M_co, N_co]: ...
     @abstractmethod
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]: ...
     @abstractmethod
