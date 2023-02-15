@@ -309,6 +309,10 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise ``a.conjugate()``"""
         pass
 
+    def transjugate(self):
+        """Return the conjugate transpose"""
+        return self.transpose().conjugate()
+
 
 class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
