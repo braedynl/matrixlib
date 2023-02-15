@@ -38,12 +38,11 @@ class ShapedIterable(Shaped[M_co, N_co], Iterable[T_co], Protocol[T_co, M_co, N_
     ...
 
 
-class MatrixLike(Sequence[T_co], ShapedIterable[T_co, M_co, N_co], metaclass=ABCMeta):
+class MatrixLike(ShapedIterable[T_co, M_co, N_co], Sequence[T_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
     __match_args__: tuple[Literal["array"], Literal["shape"]]
 
-    def __len__(self) -> int: ...
     @overload
     @abstractmethod
     def __getitem__(self, key: int) -> T_co: ...
