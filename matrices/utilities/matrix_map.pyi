@@ -17,7 +17,7 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class MatrixMap(Collection[T_co], ShapedIterable[T_co, M_co, N_co]):
+class MatrixMap(ShapedIterable[T_co, M_co, N_co], Collection[T_co]):
 
     __slots__: tuple[Literal["_func"], Literal["_matrices"]]
 

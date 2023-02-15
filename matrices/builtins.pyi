@@ -2,8 +2,7 @@ from collections.abc import Iterable, Sequence
 from typing import Any, Literal, Optional, SupportsIndex, TypeVar, overload
 
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
-                  RealMatrixLike)
-from .protocols import ShapedIterable
+                  RealMatrixLike, ShapedIterable)
 from .rule import Rule
 
 __all__ = [
