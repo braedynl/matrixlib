@@ -2,6 +2,7 @@ from typing import Any, Literal, Protocol, TypeVar, overload
 
 from ..abc import MatrixLike
 from .matrix_map import MatrixMap
+from .matrix_product import MatrixProduct
 
 __all__ = [
     "cmp",
@@ -26,10 +27,7 @@ __all__ = [
     "bit_and",
     "bit_xor",
     "bit_or",
-    "bit_inv",
-    "log_and",
-    "log_xor",
-    "log_or",
+    "bit_not",
     "mat_mul",
     "conj",
 ]
@@ -43,6 +41,8 @@ T_contra = TypeVar("T_contra", contravariant=True)
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
 P = TypeVar("P", bound=int)
+
+ComplexT = TypeVar("ComplexT", bound=complex)
 
 
 class SupportsAdd(Protocol[T_contra, T_co]):
@@ -103,8 +103,6 @@ class SupportsAbs(Protocol[T_co]):
     def __abs__(self) -> T_co: ...
 class SupportsInvert(Protocol[T_co]):
     def __invert__(self) -> T_co: ...
-class SupportsConjugate(Protocol[T_co]):
-    def conjugate(self) -> T_co: ...
 
 
 def cmp(a: MatrixLike, b: MatrixLike, /) -> Literal[-1, 0, 1]: ...
@@ -168,12 +166,7 @@ def bit_xor(a: MatrixLike[S, M, N], b: MatrixLike[SupportsRXor[S, T], M, N], /) 
 def bit_or(a: MatrixLike[SupportsOr[S, T], M, N], b: MatrixLike[S, M, N], /) -> MatrixMap[T, M, N]: ...
 @overload
 def bit_or(a: MatrixLike[S, M, N], b: MatrixLike[SupportsROr[S, T], M, N], /) -> MatrixMap[T, M, N]: ...
-def bit_inv(a: MatrixLike[SupportsInvert[T], M, N], /) -> MatrixMap[T, M, N]: ...
+def bit_not(a: MatrixLike[SupportsInvert[T], M, N], /) -> MatrixMap[T, M, N]: ...
 
-def log_and(a: MatrixLike[Any, M, N], b: MatrixLike[Any, M, N], /) -> MatrixMap[bool, M, N]: ...
-def log_xor(a: MatrixLike[Any, M, N], b: MatrixLike[Any, M, N], /) -> MatrixMap[bool, M, N]: ...
-def log_or(a: MatrixLike[Any, M, N], b: MatrixLike[Any, M, N], /) -> MatrixMap[bool, M, N]: ...
-def log_inv(a: MatrixLike[Any, M, N], /) -> MatrixMap[bool, M, N]: ...
-
-def mat_mul(a: MatrixLike[Any, M, N], b: MatrixLike[Any, N, P], /): ...
-def conj(a: MatrixLike[SupportsConjugate[T], M, N], /) -> MatrixMap[T, M, N]: ...
+def mat_mul(a: MatrixLike[ComplexT, M, N], b: MatrixLike[ComplexT, N, P], /) -> MatrixProduct[ComplexT, M, P]: ...
+def conj(a: MatrixLike[ComplexT, M, N], /) -> MatrixMap[ComplexT, M, N]: ...

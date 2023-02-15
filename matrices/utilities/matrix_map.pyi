@@ -1,7 +1,7 @@
-from collections.abc import Callable, Collection, Iterator
+from collections.abc import Callable, Iterator
 from typing import Any, Literal, TypeVar, overload
 
-from ..abc import MatrixLike, ShapedIterable
+from ..abc import MatrixLike, ShapedCollection
 
 __all__ = ["MatrixMap"]
 
@@ -17,9 +17,9 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class MatrixMap(ShapedIterable[T_co, M_co, N_co], Collection[T_co]):
+class MatrixMap(ShapedCollection[T_co, M_co, N_co]):
 
-    __slots__: tuple[Literal["_func"], Literal["_matrices"]]
+    __slots__: tuple[Literal["_func"], Literal["_matrices"], Literal["_shape"]]
 
     @overload
     def __init__(
@@ -75,11 +75,6 @@ class MatrixMap(ShapedIterable[T_co, M_co, N_co], Collection[T_co]):
         *matrices: MatrixLike[Any, M_co, N_co],
     ) -> None: ...
     def __iter__(self) -> Iterator[T_co]: ...
-    def __contains__(self, value: Any) -> bool: ...
 
     @property
     def shape(self) -> tuple[M_co, N_co]: ...
-    @property
-    def func(self) -> Callable[..., T_co]: ...
-    @property
-    def matrices(self) -> tuple[MatrixLike[Any, M_co, N_co], ...]: ...

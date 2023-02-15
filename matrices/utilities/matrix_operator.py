@@ -1,5 +1,6 @@
 import operator
 
+from .matrix_product import MatrixProduct
 from .vectorize import vectorize
 
 __all__ = [
@@ -25,7 +26,7 @@ __all__ = [
     "bit_and",
     "bit_xor",
     "bit_or",
-    "bit_inv",
+    "bit_not",
     "log_and",
     "log_xor",
     "log_or",
@@ -81,26 +82,10 @@ abs     = vectorize()(abs)
 bit_and = vectorize()(operator.__and__)
 bit_xor = vectorize()(operator.__xor__)
 bit_or  = vectorize()(operator.__or__)
-bit_inv = vectorize()(operator.__invert__)
+bit_not = vectorize()(operator.__invert__)
 
-@vectorize()
-def log_and(a, b, /):
-    return not not (a and b)
-
-@vectorize()
-def log_xor(a, b, /):
-    return (not a) is not (not b)
-
-@vectorize()
-def log_or(a, b, /):
-    return not not (a or b)
-
-@vectorize()
-def log_inv(a, /):
-    return not a
-
-def mat_mul(a, b, /):  # TODO: needs proper stub as well
-    pass
+def mat_mul(a, b, /):
+    return MatrixProduct(a, b)
 
 @vectorize()
 def conj(a, /):
