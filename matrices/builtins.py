@@ -302,9 +302,6 @@ class ComplexMatrix(ComplexMatrixLike[ComplexT_co, M_co, N_co], Matrix[ComplexT_
     def __neg__(self):
         return ComplexMatrix(matrix_operator.neg(self))
 
-    def __pos__(self):
-        return ComplexMatrix(matrix_operator.pos(self))
-
     def __abs__(self):
         return RealMatrix(matrix_operator.abs(self))
 
@@ -397,9 +394,6 @@ class RealMatrix(RealMatrixLike[RealT_co, M_co, N_co], Matrix[RealT_co, M_co, N_
     def __neg__(self):
         return RealMatrix(matrix_operator.neg(self))
 
-    def __pos__(self):
-        return RealMatrix(matrix_operator.pos(self))
-
     def __abs__(self):
         return RealMatrix(matrix_operator.abs(self))
 
@@ -414,9 +408,6 @@ class RealMatrix(RealMatrixLike[RealT_co, M_co, N_co], Matrix[RealT_co, M_co, N_
 
     def greater_equal(self, other):
         return IntegralMatrix(matrix_operator.greater_equal(self, other))
-
-    def conjugate(self):
-        return RealMatrix(matrix_operator.conjugate(self))
 
     # TODO: override transpose(), flip(), and reverse()
 
@@ -554,9 +545,6 @@ class IntegralMatrix(IntegralMatrixLike[IntegralT_co, M_co, N_co], Matrix[Integr
     def __neg__(self):
         return IntegralMatrix(matrix_operator.neg(self))
 
-    def __pos__(self):
-        return IntegralMatrix(matrix_operator.pos(self))
-
     def __abs__(self):
         return IntegralMatrix(matrix_operator.abs(self))
 
@@ -574,8 +562,5 @@ class IntegralMatrix(IntegralMatrixLike[IntegralT_co, M_co, N_co], Matrix[Integr
 
     def greater_equal(self, other):
         return IntegralMatrix(matrix_operator.greater_equal(self, other))
-
-    def conjugate(self):
-        return IntegralMatrix(matrix_operator.conjugate(self))
 
     # TODO: override transpose(), flip(), and reverse()

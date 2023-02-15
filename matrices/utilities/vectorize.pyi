@@ -18,7 +18,7 @@ M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
 
 
-class vectorize_dispatch:
+class _vectorize_dispatch:
 
     # NOTE: this type does *not* exist in the implementation file - this is
     # solely to help vectorize() give correct overloading information.
@@ -61,4 +61,4 @@ class vectorize_dispatch:
     ) -> Callable[..., MatrixMap[S, M, N]]: ...
 
 
-def vectorize() -> vectorize_dispatch: ...
+def vectorize() -> _vectorize_dispatch: ...

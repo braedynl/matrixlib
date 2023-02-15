@@ -286,10 +286,9 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise ``-a``"""
         pass
 
-    @abstractmethod
     def __pos__(self):
         """Return element-wise ``+a``"""
-        pass
+        return self
 
     @abstractmethod
     def __abs__(self):
@@ -415,10 +414,9 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise ``-a``"""
         pass
 
-    @abstractmethod
     def __pos__(self):
         """Return element-wise ``+a``"""
-        pass
+        return self
 
     @abstractmethod
     def __abs__(self):
@@ -445,10 +443,9 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise ``a >= b``"""
         pass
 
-    @abstractmethod
     def conjugate(self):
         """Return element-wise ``a.conjugate()``"""
-        pass
+        return self
 
 
 class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
@@ -614,7 +611,6 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
         """Return element-wise ``-a``"""
         pass
 
-    @abstractmethod
     def __pos__(self):
         """Return element-wise ``+a``"""
         pass
@@ -649,10 +645,9 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
         """Return element-wise ``a >= b``"""
         pass
 
-    @abstractmethod
     def conjugate(self):
         """Return element-wise ``a.conjugate()``"""
-        pass
+        return self
 
 
 ComplexMatrixLike.COMPARABLE_TYPES = (ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike)

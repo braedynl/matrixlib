@@ -26,11 +26,12 @@ class MatrixMap(Collection[T_co], ShapedIterable[T_co, M_co, N_co]):
     __slots__ = ("_func", "_matrices")
 
     def __init__(self, func, matrix1, /, *matrices):
-        u = matrix1.shape
-        for matrix2 in matrices:
-            v = matrix2.shape
-            if u != v:
-                raise ValueError(f"incompatible shapes {u}, {v}")
+        if matrices:
+            u = matrix1.shape
+            for matrix2 in matrices:
+                v = matrix2.shape
+                if u != v:
+                    raise ValueError(f"incompatible shapes {u}, {v}")
         self._func = func
         self._matrices = (matrix1, *matrices)
 
