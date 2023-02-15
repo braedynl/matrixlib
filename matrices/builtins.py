@@ -4,14 +4,10 @@ from typing import TypeVar
 from views import SequenceView
 
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
-                  RealMatrixLike)
-from .protocols import ShapedIterable
+                  RealMatrixLike, ShapedIterable)
 from .rule import COL, ROW, Rule
-from .utilities.checked_map import checked_map
-from .utilities.operator import (add, bitwise_and, bitwise_or, bitwise_xor, eq,
-                                 floordiv, ge, gt, invert, le, logical_and,
-                                 logical_not, logical_or, lshift, lt, mod, mul,
-                                 ne, neg, pos, rshift, sub, truediv)
+from .utilities import matrix_operator
+from .utilities.matrix_map import MatrixMap
 
 __all__ = [
     "Matrix",
@@ -42,7 +38,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     def __init__(self, array=None, shape=None):
         self._array = [] if array is None else list(array)
 
-        if isinstance(array, ShapedIterable):
+        if isinstance(array, (MatrixLike, MatrixMap, ShapedIterable)):
             self._shape = array.shape
             return
 
@@ -212,34 +208,19 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         return self._shape
 
     def equal(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(eq, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.equal(self, other))
 
     def not_equal(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(ne, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.not_equal(self, other))
 
     def logical_and(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(logical_and, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.logical_and(self, other))
 
     def logical_or(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(logical_or, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.logical_or(self, other))
 
     def logical_not(self):
-        return IntegralMatrix.from_raw_parts(
-            array=list(map(logical_not, self)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.logical_not(self))
 
     def transpose(self):
         from .views.builtins import MatrixTranspose
@@ -272,79 +253,63 @@ class ComplexMatrix(ComplexMatrixLike[ComplexT_co, M_co, N_co], Matrix[ComplexT_
 
     __slots__ = ()
 
-    def __add__(self, other, *, reverse_args=False):
+    def __add__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return ComplexMatrix.from_raw_parts(
-                array=list(checked_map(add, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return ComplexMatrix(matrix_operator.add(self, other))
         return NotImplemented
 
-    def __sub__(self, other, *, reverse_args=False):
+    def __sub__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return ComplexMatrix.from_raw_parts(
-                array=list(checked_map(sub, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return ComplexMatrix(matrix_operator.sub(self, other))
         return NotImplemented
 
-    def __mul__(self, other, *, reverse_args=False):
+    def __mul__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return ComplexMatrix.from_raw_parts(
-                array=list(checked_map(mul, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return ComplexMatrix(matrix_operator.mul(self, other))
         return NotImplemented
 
     def __matmul__(self, other):  # TODO
         pass
 
-    def __truediv__(self, other, *, reverse_args=False):
+    def __truediv__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return ComplexMatrix.from_raw_parts(
-                array=list(checked_map(truediv, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return ComplexMatrix(matrix_operator.truediv(self, other))
         return NotImplemented
 
     def __radd__(self, other):
-        return self.__add__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return ComplexMatrix(matrix_operator.add(other, self))
+        return NotImplemented
 
     def __rsub__(self, other):
-        return self.__sub__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return ComplexMatrix(matrix_operator.sub(other, self))
+        return NotImplemented
 
     def __rmul__(self, other):
-        return self.__mul__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return ComplexMatrix(matrix_operator.mul(other, self))
+        return NotImplemented
 
     def __rmatmul__(self, other):  # TODO
         pass
 
     def __rtruediv__(self, other):
-        return self.__truediv__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return ComplexMatrix(matrix_operator.truediv(other, self))
+        return NotImplemented
 
     def __neg__(self):
-        return ComplexMatrix.from_raw_parts(
-            array=list(map(neg, self)),
-            shape=self.shape,
-        )
+        return ComplexMatrix(matrix_operator.neg(self))
 
     def __pos__(self):
-        return ComplexMatrix.from_raw_parts(
-            array=list(map(pos, self)),
-            shape=self.shape,
-        )
+        return ComplexMatrix(matrix_operator.pos(self))
 
     def __abs__(self):
-        return RealMatrix.from_raw_parts(
-            array=list(map(abs, self)),
-            shape=self.shape,
-        )
+        return RealMatrix(matrix_operator.abs(self))
 
     def conjugate(self):
-        return ComplexMatrix.from_raw_parts(
-            array=list(map(lambda x: x.conjugate(), self)),
-            shape=self.shape,
-        )
+        return ComplexMatrix(matrix_operator.conjugate(self))
 
     # TODO: override transpose(), flip(), and reverse()
 
@@ -353,136 +318,105 @@ class RealMatrix(RealMatrixLike[RealT_co, M_co, N_co], Matrix[RealT_co, M_co, N_
 
     __slots__ = ()
 
-    def __add__(self, other, *, reverse_args=False):
+    def __add__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return RealMatrix.from_raw_parts(
-                array=list(checked_map(add, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return RealMatrix(matrix_operator.add(self, other))
         return NotImplemented
 
-    def __sub__(self, other, *, reverse_args=False):
+    def __sub__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return RealMatrix.from_raw_parts(
-                array=list(checked_map(sub, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return RealMatrix(matrix_operator.sub(self, other))
         return NotImplemented
 
-    def __mul__(self, other, *, reverse_args=False):
+    def __mul__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return RealMatrix.from_raw_parts(
-                array=list(checked_map(mul, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return RealMatrix(matrix_operator.mul(self, other))
         return NotImplemented
 
     def __matmul__(self, other):  # TODO
         pass
 
-    def __truediv__(self, other, *, reverse_args=False):
+    def __truediv__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return RealMatrix.from_raw_parts(
-                array=list(checked_map(truediv, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return RealMatrix(matrix_operator.truediv(self, other))
         return NotImplemented
 
-    def __floordiv__(self, other, *, reverse_args=False):
+    def __floordiv__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return RealMatrix.from_raw_parts(
-                array=list(checked_map(floordiv, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return RealMatrix(matrix_operator.floordiv(self, other))
         return NotImplemented
 
-    def __mod__(self, other, *, reverse_args=False):
+    def __mod__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return RealMatrix.from_raw_parts(
-                array=list(checked_map(mod, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return RealMatrix(matrix_operator.mod(self, other))
         return NotImplemented
 
-    def __divmod__(self, other, *, reverse_args=False):
+    def __divmod__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return Matrix.from_raw_parts(
-                array=list(checked_map(divmod, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return Matrix(matrix_operator.divmod(self, other))
         return NotImplemented
 
     def __radd__(self, other):
-        return self.__add__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return RealMatrix(matrix_operator.add(other, self))
+        return NotImplemented
 
     def __rsub__(self, other):
-        return self.__sub__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return RealMatrix(matrix_operator.sub(other, self))
+        return NotImplemented
 
     def __rmul__(self, other):
-        return self.__mul__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return RealMatrix(matrix_operator.mul(other, self))
+        return NotImplemented
 
     def __rmatmul__(self, other):  # TODO
         pass
 
     def __rtruediv__(self, other):
-        return self.__truediv__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return RealMatrix(matrix_operator.truediv(other, self))
+        return NotImplemented
 
     def __rfloordiv__(self, other):
-        return self.__floordiv__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return RealMatrix(matrix_operator.floordiv(other, self))
+        return NotImplemented
 
     def __rmod__(self, other):
-        return self.__mod__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return RealMatrix(matrix_operator.mod(other, self))
+        return NotImplemented
 
     def __rdivmod__(self, other):
-        return self.__divmod__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return Matrix(matrix_operator.divmod(other, self))
+        return NotImplemented
 
     def __neg__(self):
-        return RealMatrix.from_raw_parts(
-            array=list(map(neg, self)),
-            shape=self.shape,
-        )
+        return RealMatrix(matrix_operator.neg(self))
 
     def __pos__(self):
-        return RealMatrix.from_raw_parts(
-            array=list(map(pos, self)),
-            shape=self.shape,
-        )
+        return RealMatrix(matrix_operator.pos(self))
 
     def __abs__(self):
-        return RealMatrix.from_raw_parts(
-            array=list(map(abs, self)),
-            shape=self.shape,
-        )
+        return RealMatrix(matrix_operator.abs(self))
 
     def lesser(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(lt, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.lesser(self, other))
 
     def lesser_equal(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(le, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.lesser_equal(self, other))
 
     def greater(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(gt, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.greater(self, other))
 
     def greater_equal(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(ge, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.greater_equal(self, other))
 
     def conjugate(self):
-        return RealMatrix.from_raw_parts(
-            array=list(map(lambda x: x.conjugate(), self)),
-            shape=self.shape,
-        )
+        return RealMatrix(matrix_operator.conjugate(self))
 
     # TODO: override transpose(), flip(), and reverse()
 
@@ -491,196 +425,157 @@ class IntegralMatrix(IntegralMatrixLike[IntegralT_co, M_co, N_co], Matrix[Integr
 
     __slots__ = ()
 
-    def __add__(self, other, *, reverse_args=False):
+    def __add__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(add, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.add(self, other))
         return NotImplemented
 
-    def __sub__(self, other, *, reverse_args=False):
+    def __sub__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(sub, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.sub(self, other))
         return NotImplemented
 
-    def __mul__(self, other, *, reverse_args=False):
+    def __mul__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(mul, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.mul(self, other))
         return NotImplemented
 
     def __matmul__(self, other):  # TODO
         pass
 
-    def __truediv__(self, other, *, reverse_args=False):
+    def __truediv__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return RealMatrix.from_raw_parts(
-                array=list(checked_map(truediv, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return RealMatrix(matrix_operator.truediv(self, other))
         return NotImplemented
 
-    def __floordiv__(self, other, *, reverse_args=False):
+    def __floordiv__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(floordiv, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.floordiv(self, other))
         return NotImplemented
 
-    def __mod__(self, other, *, reverse_args=False):
+    def __mod__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(mod, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.mod(self, other))
         return NotImplemented
 
-    def __divmod__(self, other, *, reverse_args=False):
+    def __divmod__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return Matrix.from_raw_parts(
-                array=list(checked_map(divmod, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return Matrix(matrix_operator.divmod(self, other))
         return NotImplemented
 
-    def __lshift__(self, other, *, reverse_args=False):
+    def __lshift__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(lshift, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.lshift(self, other))
         return NotImplemented
 
-    def __rshift__(self, other, *, reverse_args=False):
+    def __rshift__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(rshift, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.rshift(self, other))
         return NotImplemented
 
-    def __and__(self, other, *, reverse_args=False):
+    def __and__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(bitwise_and, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.bitwise_and(self, other))
         return NotImplemented
 
-    def __xor__(self, other, *, reverse_args=False):
+    def __xor__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(bitwise_xor, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.bitwise_xor(self, other))
         return NotImplemented
 
-    def __or__(self, other, *, reverse_args=False):
+    def __or__(self, other):
         if isinstance(other, self.COMPARABLE_TYPES):
-            return IntegralMatrix.from_raw_parts(
-                array=list(checked_map(bitwise_or, self, other, reverse_args=reverse_args)),
-                shape=self.shape,
-            )
+            return IntegralMatrix(matrix_operator.bitwise_or(self, other))
         return NotImplemented
 
     def __radd__(self, other):
-        return self.__add__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.add(other, self))
+        return NotImplemented
 
     def __rsub__(self, other):
-        return self.__sub__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.sub(other, self))
+        return NotImplemented
 
     def __rmul__(self, other):
-        return self.__mul__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.mul(other, self))
+        return NotImplemented
 
     def __rmatmul__(self, other):  # TODO
         pass
 
     def __rtruediv__(self, other):
-        return self.__truediv__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return RealMatrix(matrix_operator.truediv(other, self))
+        return NotImplemented
 
     def __rfloordiv__(self, other):
-        return self.__floordiv__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.floordiv(other, self))
+        return NotImplemented
 
     def __rmod__(self, other):
-        return self.__mod__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.mod(other, self))
+        return NotImplemented
 
     def __rdivmod__(self, other):
-        return self.__divmod__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return Matrix(matrix_operator.divmod(other, self))
+        return NotImplemented
 
     def __rlshift__(self, other):
-        return self.__lshift__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.lshift(other, self))
+        return NotImplemented
 
     def __rrshift__(self, other):
-        return self.__rshift__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.rshift(other, self))
+        return NotImplemented
 
     def __rand__(self, other):
-        return self.__and__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.bitwise_and(other, self))
+        return NotImplemented
 
     def __rxor__(self, other):
-        return self.__xor__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.bitwise_xor(other, self))
+        return NotImplemented
 
     def __ror__(self, other):
-        return self.__or__(other, reverse_args=True)
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return IntegralMatrix(matrix_operator.bitwise_or(other, self))
+        return NotImplemented
 
     def __neg__(self):
-        return IntegralMatrix.from_raw_parts(
-            array=list(map(neg, self)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.neg(self))
 
     def __pos__(self):
-        return IntegralMatrix.from_raw_parts(
-            array=list(map(pos, self)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.pos(self))
 
     def __abs__(self):
-        return IntegralMatrix.from_raw_parts(
-            array=list(map(abs, self)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.abs(self))
 
     def __invert__(self):
-        return IntegralMatrix.from_raw_parts(
-            array=list(map(invert, self)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.invert(self))
 
     def lesser(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(lt, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.lesser(self, other))
 
     def lesser_equal(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(le, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.lesser_equal(self, other))
 
     def greater(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(gt, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.greater(self, other))
 
     def greater_equal(self, other):
-        return IntegralMatrix.from_raw_parts(
-            array=list(checked_map(ge, self, other)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.greater_equal(self, other))
 
     def conjugate(self):
-        return IntegralMatrix.from_raw_parts(
-            array=list(map(lambda x: x.conjugate(), self)),
-            shape=self.shape,
-        )
+        return IntegralMatrix(matrix_operator.conjugate(self))
 
     # TODO: override transpose(), flip(), and reverse()

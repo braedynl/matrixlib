@@ -1,3 +1,3 @@
 from .matrix_map import *
-from .operator import *
+from .matrix_operator import *
 from .vectorize import *
