@@ -19,7 +19,7 @@ class MatrixMap(ShapedCollection[T_co, M_co, N_co]):
     the mapping for each call.
     """
 
-    __slots__ = ("_func", "_matrices", "_shape")
+    __slots__ = ("_func", "_args", "_shape")
 
     def __init__(self, func, matrix1, /, *matrices):
         shape1 = matrix1.shape
@@ -27,12 +27,12 @@ class MatrixMap(ShapedCollection[T_co, M_co, N_co]):
             shape2 = matrix2.shape
             if shape1 != shape2:
                 raise ValueError(f"incompatible shapes {shape1}, {shape2}")
-        self._func = func
-        self._matrices = (matrix1, *matrices)
+        self._func  = func
+        self._args  = (matrix1, *matrices)
         self._shape = shape1
 
     def __iter__(self):
-        yield from map(self._func, *self._matrices)
+        yield from map(self._func, *self._args)
 
     @property
     def shape(self):

@@ -19,7 +19,7 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 
 class MatrixMap(ShapedCollection[T_co, M_co, N_co]):
 
-    __slots__: tuple[Literal["_func"], Literal["_matrices"], Literal["_shape"]]
+    __slots__: tuple[Literal["_func"], Literal["_args"], Literal["_shape"]]
 
     @overload
     def __init__(

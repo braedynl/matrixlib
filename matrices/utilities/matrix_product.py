@@ -23,19 +23,17 @@ class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
     the mapping for each call.
     """
 
-    __slots__ = ("_shape", "_matrix1", "_matrix2")
+    __slots__ = ("_args", "_shape")
 
     def __init__(self, matrix1, matrix2):
         (m, n), (p, q) = (u, v) = (matrix1.shape, matrix2.shape)
         if n != p:
             raise ValueError(f"incompatible shapes {u}, {v} by inner dimensions")
+        self._args  = (matrix1, matrix2)
         self._shape = (m, q)
-        self._matrix1 = matrix1
-        self._matrix2 = matrix2
 
     def __iter__(self):
-        a = self._matrix1
-        b = self._matrix2
+        a, b = self._args
 
         m = a.nrows
         n = a.ncols
