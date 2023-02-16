@@ -1,10 +1,11 @@
+import functools
 import operator
 from abc import ABCMeta, abstractmethod
 from collections.abc import Collection, Iterable, Sequence, Sized
 from typing import Protocol, TypeVar, runtime_checkable
 
 from .rule import Rule
-from .utilities import matrix_operator
+# from .utilities import matrix_operator  # FIXME: causes circular import (usage of compare())
 
 __all__ = [
     "Shaped",
@@ -15,6 +16,7 @@ __all__ = [
     "ComplexMatrixLike",
     "RealMatrixLike",
     "IntegralMatrixLike",
+    "check_friendly",
 ]
 
 T_co = TypeVar("T_co", covariant=True)
@@ -654,6 +656,17 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
         return self.transpose()
 
 
-ComplexMatrixLike.COMPARABLE_TYPES = (ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike)
-RealMatrixLike.COMPARABLE_TYPES = (RealMatrixLike, IntegralMatrixLike)
-IntegralMatrixLike.COMPARABLE_TYPES = (IntegralMatrixLike,)
+ComplexMatrixLike.FRIENDLY_TYPES = (ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike)
+RealMatrixLike.FRIENDLY_TYPES = (RealMatrixLike, IntegralMatrixLike)
+IntegralMatrixLike.FRIENDLY_TYPES = (IntegralMatrixLike,)
+
+
+def check_friendly(method, /):
+
+    @functools.wraps(method)
+    def check_friendly_wrapper(self, other):
+        if isinstance(other, self.FRIENDLY_TYPES):
+            return method(self, other)
+        return NotImplemented
+
+    return check_friendly_wrapper

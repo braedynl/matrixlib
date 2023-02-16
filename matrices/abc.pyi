@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
-from collections.abc import Collection, Iterable, Iterator, Sequence, Sized
+from collections.abc import (Callable, Collection, Iterable, Iterator,
+                             Sequence, Sized)
 from typing import (Any, Literal, Protocol, SupportsIndex, TypeVar, Union,
                     overload, runtime_checkable)
 
@@ -14,7 +15,18 @@ __all__ = [
     "ComplexMatrixLike",
     "RealMatrixLike",
     "IntegralMatrixLike",
+    "check_friendly",
 ]
+
+T = TypeVar("T")
+S = TypeVar("S")
+
+ComplexMatrixLikeT1 = TypeVar("ComplexMatrixLikeT1", bound=ComplexMatrixLike)
+ComplexMatrixLikeT2 = TypeVar("ComplexMatrixLikeT2", bound=ComplexMatrixLike)
+RealMatrixLikeT1 = TypeVar("RealMatrixLikeT1", bound=RealMatrixLike)
+RealMatrixLikeT2 = TypeVar("RealMatrixLikeT2", bound=RealMatrixLike)
+IntegralMatrixLikeT1 = TypeVar("IntegralMatrixLikeT1", bound=IntegralMatrixLike)
+IntegralMatrixLikeT2 = TypeVar("IntegralMatrixLikeT2", bound=IntegralMatrixLike)
 
 T_co = TypeVar("T_co", covariant=True)
 
@@ -144,7 +156,7 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
 
-    COMPARABLE_TYPES: tuple[type[ComplexMatrixLike], type[RealMatrixLike], type[IntegralMatrixLike]]
+    FRIENDLY_TYPES: tuple[type[ComplexMatrixLike], type[RealMatrixLike], type[IntegralMatrixLike]]
 
     @overload
     @abstractmethod
@@ -288,7 +300,7 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__: tuple[()]
 
-    COMPARABLE_TYPES: tuple[type[RealMatrixLike], type[IntegralMatrixLike]]
+    FRIENDLY_TYPES: tuple[type[RealMatrixLike], type[IntegralMatrixLike]]
 
     @overload
     @abstractmethod
@@ -466,7 +478,7 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
 
     __slots__: tuple[()]
 
-    COMPARABLE_TYPES: tuple[type[IntegralMatrixLike]]
+    FRIENDLY_TYPES: tuple[type[IntegralMatrixLike]]
 
     @overload
     @abstractmethod
@@ -580,3 +592,20 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
 
     def conjugate(self) -> IntegralMatrixLike[IntegralT_co, M_co, N_co]: ...
     def transjugate(self) -> IntegralMatrixLike[IntegralT_co, N_co, M_co]: ...
+
+
+@overload
+def check_friendly(
+    method: Callable[[ComplexMatrixLikeT1, ComplexMatrixLikeT2], S],
+    /,
+) -> Callable[[ComplexMatrixLikeT1, ComplexMatrixLikeT2], S]: ...
+@overload
+def check_friendly(
+    method: Callable[[RealMatrixLikeT1, RealMatrixLikeT2], S],
+    /,
+) -> Callable[[RealMatrixLikeT1, RealMatrixLikeT2], S]: ...
+@overload
+def check_friendly(
+    method: Callable[[IntegralMatrixLikeT1, IntegralMatrixLikeT2], S],
+    /,
+) -> Callable[[IntegralMatrixLikeT1, IntegralMatrixLikeT2], S]: ...
