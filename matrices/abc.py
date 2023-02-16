@@ -662,6 +662,14 @@ IntegralMatrixLike.FRIENDLY_TYPES = (IntegralMatrixLike,)
 
 
 def check_friendly(method, /):
+    """Return ``NotImplemented`` for "un-friendly" argument types passed to
+    special binary methods
+
+    This utility is primarily intended for implementations of
+    ``ComplexMatrixLike``, ``RealMatrixLike``, and ``IntegralMatrixLike``, who
+    define a ``FRIENDLY_TYPES`` class attribute for interoperability with one
+    another.
+    """
 
     @functools.wraps(method)
     def check_friendly_wrapper(self, other):
