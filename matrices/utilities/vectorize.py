@@ -20,6 +20,11 @@ def vectorize():
         def vectorize_wrapper(matrix1, /, *matrices):
             return MatrixMap(func, matrix1, *matrices)
 
+        vectorize_wrapper.__module__   = func.__module__
+        vectorize_wrapper.__name__     = func.__name__
+        vectorize_wrapper.__qualname__ = func.__qualname__
+        vectorize_wrapper.__doc__      = func.__doc__
+
         return vectorize_wrapper
 
     return vectorize_decorator
