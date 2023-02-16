@@ -18,16 +18,6 @@ __all__ = [
     "check_friendly",
 ]
 
-T = TypeVar("T")
-S = TypeVar("S")
-
-ComplexMatrixLikeT1 = TypeVar("ComplexMatrixLikeT1", bound=ComplexMatrixLike)
-ComplexMatrixLikeT2 = TypeVar("ComplexMatrixLikeT2", bound=ComplexMatrixLike)
-RealMatrixLikeT1 = TypeVar("RealMatrixLikeT1", bound=RealMatrixLike)
-RealMatrixLikeT2 = TypeVar("RealMatrixLikeT2", bound=RealMatrixLike)
-IntegralMatrixLikeT1 = TypeVar("IntegralMatrixLikeT1", bound=IntegralMatrixLike)
-IntegralMatrixLikeT2 = TypeVar("IntegralMatrixLikeT2", bound=IntegralMatrixLike)
-
 T_co = TypeVar("T_co", covariant=True)
 
 M_co = TypeVar("M_co", bound=int, covariant=True)
@@ -594,18 +584,30 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
     def transjugate(self) -> IntegralMatrixLike[IntegralT_co, N_co, M_co]: ...
 
 
+S = TypeVar("S")
+
+ComplexMatrixLikeT = TypeVar("ComplexMatrixLikeT", bound=ComplexMatrixLike)
+ComplexMatrixLikeFriendT = TypeVar("ComplexMatrixLikeFriendT", bound=Union[ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike])
+
+RealMatrixLikeT = TypeVar("RealMatrixLikeT", bound=RealMatrixLike)
+RealMatrixLikeFriendT = TypeVar("RealMatrixLikeFriendT", bound=Union[RealMatrixLike, IntegralMatrixLike])
+
+IntegralMatrixLikeT = TypeVar("IntegralMatrixLikeT", bound=IntegralMatrixLike)
+IntegralMatrixLikeFriendT = TypeVar("IntegralMatrixLikeFriendT", bound=IntegralMatrixLike)
+
+
 @overload
 def check_friendly(
-    method: Callable[[ComplexMatrixLikeT1, ComplexMatrixLikeT2], S],
+    method: Callable[[ComplexMatrixLikeT, ComplexMatrixLikeFriendT], S],
     /,
-) -> Callable[[ComplexMatrixLikeT1, ComplexMatrixLikeT2], S]: ...
+) -> Callable[[ComplexMatrixLikeT, ComplexMatrixLikeFriendT], S]: ...
 @overload
 def check_friendly(
-    method: Callable[[RealMatrixLikeT1, RealMatrixLikeT2], S],
+    method: Callable[[RealMatrixLikeT, RealMatrixLikeFriendT], S],
     /,
-) -> Callable[[RealMatrixLikeT1, RealMatrixLikeT2], S]: ...
+) -> Callable[[RealMatrixLikeT, RealMatrixLikeFriendT], S]: ...
 @overload
 def check_friendly(
-    method: Callable[[IntegralMatrixLikeT1, IntegralMatrixLikeT2], S],
+    method: Callable[[IntegralMatrixLikeT, IntegralMatrixLikeFriendT], S],
     /,
-) -> Callable[[IntegralMatrixLikeT1, IntegralMatrixLikeT2], S]: ...
+) -> Callable[[IntegralMatrixLikeT, IntegralMatrixLikeFriendT], S]: ...
