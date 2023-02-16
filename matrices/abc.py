@@ -48,11 +48,7 @@ class ShapedIterable(Shaped[M_co, N_co], Iterable[T_co], Protocol[T_co, M_co, N_
     """Protocol for classes that support ``shape``, ``__len__()``, and
     ``__iter__()``
     """
-
-    @abstractmethod
-    def __iter__(self):
-        """Return an iterator over the values in row-major order"""
-        pass
+    pass
 
 
 @runtime_checkable
@@ -102,15 +98,6 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
             )
         return NotImplemented
 
-    def __len__(self):
-        """Return the matrix's size"""
-        return self.size
-
-    @abstractmethod
-    def __getitem__(self, key):
-        """Return the element or sub-matrix corresponding to ``key``"""
-        pass
-
     def __iter__(self):
         """Return an iterator over the values of the matrix in row-major order"""
         yield from self.values()
@@ -120,10 +107,6 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         row-major order
         """
         yield from self.values(reverse=True)
-
-    def __contains__(self, value):
-        """Return true if the matrix contains ``value``, otherwise false"""
-        return any(map(lambda x: x is value or x == value, self.values()))
 
     @property
     @abstractmethod
@@ -295,14 +278,14 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise ``-a``"""
         pass
 
-    def __pos__(self):
-        """Return element-wise ``+a``"""
-        return self
-
     @abstractmethod
     def __abs__(self):
         """Return element-wise ``abs(a)``"""
         pass
+
+    def __pos__(self):
+        """Return element-wise ``+a``"""
+        return self
 
     @abstractmethod
     def conjugate(self):
@@ -317,30 +300,6 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
-
-    def __lt__(self, other):
-        """Return true if lexicographic ``a < b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) < 0
-        return NotImplemented
-
-    def __le__(self, other):
-        """Return true if lexicographic ``a <= b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) <= 0
-        return NotImplemented
-
-    def __gt__(self, other):
-        """Return true if lexicographic ``a > b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) > 0
-        return NotImplemented
-
-    def __ge__(self, other):
-        """Return true if lexicographic ``a >= b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) >= 0
-        return NotImplemented
 
     @abstractmethod
     def __add__(self, other):
@@ -427,14 +386,38 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise ``-a``"""
         pass
 
-    def __pos__(self):
-        """Return element-wise ``+a``"""
-        return self
-
     @abstractmethod
     def __abs__(self):
         """Return element-wise ``abs(a)``"""
         pass
+
+    def __pos__(self):
+        """Return element-wise ``+a``"""
+        return self
+
+    def __lt__(self, other):
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return matrix_operator.cmp(self, other) < 0
+        return NotImplemented
+
+    def __le__(self, other):
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return matrix_operator.cmp(self, other) <= 0
+        return NotImplemented
+
+    def __gt__(self, other):
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return matrix_operator.cmp(self, other) > 0
+        return NotImplemented
+
+    def __ge__(self, other):
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return matrix_operator.cmp(self, other) >= 0
+        return NotImplemented
 
     @abstractmethod
     def lesser(self, other):
@@ -460,34 +443,14 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise ``a.conjugate()``"""
         return self
 
+    def transjugate(self):
+        """Return the conjugate transpose"""
+        return self.transpose()
+
 
 class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
-
-    def __lt__(self, other):
-        """Return true if lexicographic ``a < b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) < 0
-        return NotImplemented
-
-    def __le__(self, other):
-        """Return true if lexicographic ``a <= b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) <= 0
-        return NotImplemented
-
-    def __gt__(self, other):
-        """Return true if lexicographic ``a > b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) > 0
-        return NotImplemented
-
-    def __ge__(self, other):
-        """Return true if lexicographic ``a >= b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) >= 0
-        return NotImplemented
 
     @abstractmethod
     def __add__(self, other):
@@ -624,10 +587,6 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
         """Return element-wise ``-a``"""
         pass
 
-    def __pos__(self):
-        """Return element-wise ``+a``"""
-        return self
-
     @abstractmethod
     def __abs__(self):
         """Return element-wise ``abs(a)``"""
@@ -637,6 +596,34 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
     def __invert__(self):
         """Return element-wise ``~a``"""
         pass
+
+    def __pos__(self):
+        """Return element-wise ``+a``"""
+        return self
+
+    def __lt__(self, other):
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return matrix_operator.cmp(self, other) < 0
+        return NotImplemented
+
+    def __le__(self, other):
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return matrix_operator.cmp(self, other) <= 0
+        return NotImplemented
+
+    def __gt__(self, other):
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return matrix_operator.cmp(self, other) > 0
+        return NotImplemented
+
+    def __ge__(self, other):
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        if isinstance(other, self.COMPARABLE_TYPES):
+            return matrix_operator.cmp(self, other) >= 0
+        return NotImplemented
 
     @abstractmethod
     def lesser(self, other):
@@ -661,6 +648,10 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
     def conjugate(self):
         """Return element-wise ``a.conjugate()``"""
         return self
+
+    def transjugate(self):
+        """Return the conjugate transpose"""
+        return self.transpose()
 
 
 ComplexMatrixLike.COMPARABLE_TYPES = (ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike)
