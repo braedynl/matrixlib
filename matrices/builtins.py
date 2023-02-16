@@ -35,42 +35,32 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
     __slots__ = ("_array", "_shape")
 
-    def __init__(self, array=None, shape=None):
+    def __init__(self, array=(), shape=(None, None)):
         self._array = [] if array is None else list(array)
 
         if isinstance(array, (MatrixLike, MatrixMap, ShapedIterable)):
             self._shape = array.shape
             return
 
-        n = len(self._array)
-
-        if shape is None:
-            self._shape = (1, n)
-            return
-
+        size = len(self._array)
         nrows, ncols = shape
 
         if nrows is None and ncols is None:
-            shape = (1, n)
-
+            shape = (1, size)
         elif nrows is None:
-            nrows, loss = divmod(n, ncols) if ncols else (0, n)
+            nrows, loss = divmod(size, ncols) if ncols else (0, size)
             if loss:
-                raise ValueError(f"cannot interpret array of size {n} as shape M × {ncols}")
+                raise ValueError(f"cannot interpret array of size {size} as shape M × {ncols}")
             shape = (nrows, ncols)
-
         elif ncols is None:
-            ncols, loss = divmod(n, nrows) if nrows else (0, n)
+            ncols, loss = divmod(size, nrows) if nrows else (0, size)
             if loss:
-                raise ValueError(f"cannot interpret array of size {n} as shape {nrows} × N")
+                raise ValueError(f"cannot interpret array of size {size} as shape {nrows} × N")
             shape = (nrows, ncols)
-
         else:
-            m = nrows * ncols
-            if n != m:
-                raise ValueError(f"cannot interpret array of size {n} as shape {nrows} × {ncols}")
-
-        if nrows < 0 or ncols < 0:
+            if nrows * ncols != size:
+                raise ValueError(f"cannot interpret array of size {size} as shape {nrows} × {ncols}")
+        if shape[0] < 0 or shape[1] < 0:
             raise ValueError("dimensions must be non-negative")
 
         self._shape = shape
@@ -79,6 +69,9 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     def __repr__(self):
         """Return a canonical representation of the matrix"""
         return f"{self.__class__.__name__}(array={self._array!r}, shape={self._shape!r})"
+
+    def __len__(self):
+        return len(self._array)
 
     def __getitem__(self, key):
         if isinstance(key, tuple):
