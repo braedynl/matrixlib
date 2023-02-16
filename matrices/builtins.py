@@ -8,6 +8,7 @@ from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
 from .rule import COL, ROW, Rule
 from .utilities import matrix_operator
 from .utilities.matrix_map import MatrixMap
+from .utilities.matrix_product import MatrixProduct
 
 __all__ = [
     "Matrix",
@@ -38,7 +39,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     def __init__(self, array=(), shape=(None, None)):
         self._array = [] if array is None else list(array)
 
-        if isinstance(array, (MatrixLike, MatrixMap, ShapedIterable)):
+        if isinstance(array, (MatrixLike, MatrixMap, MatrixProduct, ShapedIterable)):
             self._shape = array.shape
             return
 
@@ -294,6 +295,22 @@ class RealMatrix(RealMatrixLike[RealT_co, M_co, N_co], Matrix[RealT_co, M_co, N_
     __slots__ = ()
 
     @check_friendly
+    def __lt__(self, other):
+        return matrix_operator.compare(self, other) < 0
+
+    @check_friendly
+    def __le__(self, other):
+        return matrix_operator.compare(self, other) <= 0
+
+    @check_friendly
+    def __gt__(self, other):
+        return matrix_operator.compare(self, other) > 0
+
+    @check_friendly
+    def __ge__(self, other):
+        return matrix_operator.compare(self, other) >= 0
+
+    @check_friendly
     def __add__(self, other):
         return RealMatrix(matrix_operator.__add__(self, other))
 
@@ -381,6 +398,22 @@ class RealMatrix(RealMatrixLike[RealT_co, M_co, N_co], Matrix[RealT_co, M_co, N_
 class IntegralMatrix(IntegralMatrixLike[IntegralT_co, M_co, N_co], Matrix[IntegralT_co, M_co, N_co]):
 
     __slots__ = ()
+
+    @check_friendly
+    def __lt__(self, other):
+        return matrix_operator.compare(self, other) < 0
+
+    @check_friendly
+    def __le__(self, other):
+        return matrix_operator.compare(self, other) <= 0
+
+    @check_friendly
+    def __gt__(self, other):
+        return matrix_operator.compare(self, other) > 0
+
+    @check_friendly
+    def __ge__(self, other):
+        return matrix_operator.compare(self, other) >= 0
 
     @check_friendly
     def __add__(self, other):

@@ -5,7 +5,6 @@ from collections.abc import Collection, Iterable, Sequence, Sized
 from typing import Protocol, TypeVar, runtime_checkable
 
 from .rule import Rule
-# from .utilities import matrix_operator  # FIXME: causes circular import (usage of compare())
 
 __all__ = [
     "Shaped",
@@ -304,6 +303,26 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
     __slots__ = ()
 
     @abstractmethod
+    def __lt__(self, other):
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        pass
+
+    @abstractmethod
+    def __le__(self, other):
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        pass
+
+    @abstractmethod
+    def __gt__(self, other):
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        pass
+
+    @abstractmethod
+    def __ge__(self, other):
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        pass
+
+    @abstractmethod
     def __add__(self, other):
         """Return element-wise ``a + b``"""
         pass
@@ -397,30 +416,6 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise ``+a``"""
         return self
 
-    def __lt__(self, other):
-        """Return true if lexicographic ``a < b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) < 0
-        return NotImplemented
-
-    def __le__(self, other):
-        """Return true if lexicographic ``a <= b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) <= 0
-        return NotImplemented
-
-    def __gt__(self, other):
-        """Return true if lexicographic ``a > b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) > 0
-        return NotImplemented
-
-    def __ge__(self, other):
-        """Return true if lexicographic ``a >= b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) >= 0
-        return NotImplemented
-
     @abstractmethod
     def lesser(self, other):
         """Return element-wise ``a < b``"""
@@ -453,6 +448,26 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
+
+    @abstractmethod
+    def __lt__(self, other):
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        pass
+
+    @abstractmethod
+    def __le__(self, other):
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        pass
+
+    @abstractmethod
+    def __gt__(self, other):
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        pass
+
+    @abstractmethod
+    def __ge__(self, other):
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        pass
 
     @abstractmethod
     def __add__(self, other):
@@ -602,30 +617,6 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
     def __pos__(self):
         """Return element-wise ``+a``"""
         return self
-
-    def __lt__(self, other):
-        """Return true if lexicographic ``a < b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) < 0
-        return NotImplemented
-
-    def __le__(self, other):
-        """Return true if lexicographic ``a <= b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) <= 0
-        return NotImplemented
-
-    def __gt__(self, other):
-        """Return true if lexicographic ``a > b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) > 0
-        return NotImplemented
-
-    def __ge__(self, other):
-        """Return true if lexicographic ``a >= b``, otherwise false"""
-        if isinstance(other, self.COMPARABLE_TYPES):
-            return matrix_operator.cmp(self, other) >= 0
-        return NotImplemented
 
     @abstractmethod
     def lesser(self, other):
