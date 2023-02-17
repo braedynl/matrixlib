@@ -1,26 +1,18 @@
 from reprlib import recursive_repr
 from typing import TypeVar
 
-from ..builtins import FrozenMatrix
-from ..rule import COL, ROW, Rule
-from ..utilities.checked_map import checked_map
-from ..utilities.operator import (equal, logical_and, logical_not, logical_or,
-                                  not_equal)
+from ..abc import ComplexMatrixLike, IntegralMatrixLike, RealMatrixLike
+from ..rule import Rule
 from .abc import MatrixViewLike
-
-__all__ = [
-    "MatrixView",
-    "MatrixTransform",
-    "MatrixTranspose",
-    "MatrixRowFlip",
-    "MatrixColFlip",
-    "MatrixReverse",
-]
 
 T = TypeVar("T")
 
-M = TypeVar("M", bound=int)
-N = TypeVar("N", bound=int)
+M = TypeVar("M", covariant=True, bound=int)
+N = TypeVar("N", covariant=True, bound=int)
+
+ComplexT = TypeVar("ComplexT", bound=complex)
+RealT = TypeVar("RealT", bound=float)
+IntegralT = TypeVar("IntegralT", bound=int)
 
 
 class MatrixView(MatrixViewLike[T, M, N]):
@@ -32,22 +24,17 @@ class MatrixView(MatrixViewLike[T, M, N]):
 
     @recursive_repr("...")
     def __repr__(self):
+        """Return a canonical representation of the view"""
         return f"{self.__class__.__name__}(target={self._target!r})"
 
-    def __len__(self):
-        return len(self._target)
-
     def __getitem__(self, key):
-        return self._target[key]
+        return self._target.__getitem__(key)
 
-    def __iter__(self):
-        yield from iter(self._target)
+    def __deepcopy__(self, memo=None):
+        """Return the view"""
+        return self
 
-    def __reversed__(self):
-        yield from reversed(self._target)
-
-    def __contains__(self, value):
-        return value in self._target
+    __copy__ = __deepcopy__
 
     @property
     def array(self):
@@ -57,32 +44,11 @@ class MatrixView(MatrixViewLike[T, M, N]):
     def shape(self):
         return self._target.shape
 
-    @property
-    def nrows(self):
-        return self._target.nrows
-
-    @property
-    def ncols(self):
-        return self._target.ncols
-
-    @property
-    def size(self):
-        return self._target.size
-
     def equal(self, other):
         return self._target.equal(other)
 
     def not_equal(self, other):
         return self._target.not_equal(other)
-
-    def logical_and(self, other):
-        return self._target.logical_and(other)
-
-    def logical_or(self, other):
-        return self._target.logical_or(other)
-
-    def logical_not(self):
-        return self._target.logical_not()
 
     def transpose(self):
         return self._target.transpose()
@@ -93,287 +59,245 @@ class MatrixView(MatrixViewLike[T, M, N]):
     def reverse(self):
         return self._target.reverse()
 
-    def n(self, by):
-        return self._target.n(by)
 
-    def values(self, *, by=Rule.ROW, reverse=False):
-        yield from self._target.values(by=by, reverse=reverse)
-
-    def slices(self, *, by=Rule.ROW, reverse=False):
-        yield from self._target.slices(by=by, reverse=reverse)
-
-    def _resolve_vector_index(self, key):
-        return self._target._resolve_vector_index(key)
-
-    def _resolve_matrix_index(self, key, *, by=Rule.ROW):
-        return self._target._resolve_matrix_index(key, by=by)
-
-    def _resolve_vector_slice(self, key):
-        return self._target._resolve_vector_slice(key)
-
-    def _resolve_matrix_slice(self, key, *, by=Rule.ROW):
-        return self._target._resolve_matrix_slice(key, by=by)
-
-
-class MatrixTransform(MatrixViewLike[T, M, N]):
-
-    __slots__ = ("_target",)
-
-    def __init__(self, target):
-        self._target = target
-
-    @recursive_repr("...")
-    def __repr__(self):
-        return f"{self.__class__.__name__}(target={self._target!r})"
-
-    def __getitem__(self, key, *, cls=FrozenMatrix):
-        if isinstance(key, tuple):
-            row_key, col_key = key
-
-            if isinstance(row_key, slice):
-                row_indices = self._resolve_matrix_slice(row_key, by=ROW)
-
-                if isinstance(col_key, slice):
-                    col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                    return cls.wrap(
-                        array=[
-                            self._target[
-                                self._permute_matrix_index(
-                                    row_index=row_index,
-                                    col_index=col_index,
-                                )
-                            ]
-                            for row_index in row_indices
-                            for col_index in col_indices
-                        ],
-                        shape=(len(row_indices), len(col_indices)),
-                    )
-
-                col_index = self._resolve_matrix_index(col_key, by=COL)
-                return cls.wrap(
-                    array=[
-                        self._target[
-                            self._permute_matrix_index(
-                                row_index=row_index,
-                                col_index=col_index,
-                            )
-                        ]
-                        for row_index in row_indices
-                    ],
-                    shape=(len(row_indices), 1),
-                )
-
-            row_index = self._resolve_matrix_index(row_key, by=ROW)
-
-            if isinstance(col_key, slice):
-                col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                return cls.wrap(
-                    array=[
-                        self._target[
-                            self._permute_matrix_index(
-                                row_index=row_index,
-                                col_index=col_index,
-                            )
-                        ]
-                        for col_index in col_indices
-                    ],
-                    shape=(1, len(col_indices)),
-                )
-
-            col_index = self._resolve_matrix_index(col_key, by=COL)
-            return self._target[
-                self._permute_matrix_index(
-                    row_index=row_index,
-                    col_index=col_index,
-                )
-            ]
-
-        if isinstance(key, slice):
-            val_indices = self._resolve_vector_slice(key)
-            return cls.wrap(
-                array=[
-                    self._target[
-                        self._permute_vector_index(
-                            val_index=val_index,
-                        )
-                    ]
-                    for val_index in val_indices
-                ],
-                shape=(1, len(val_indices)),
-            )
-
-        val_index = self._resolve_vector_index(key)
-        return self._target[
-            self._permute_vector_index(
-                val_index=val_index,
-            )
-        ]
-
-    @property
-    def array(self):
-        return list(self.values())
-
-    @property
-    def shape(self):
-        return self._target.shape
-
-    @property
-    def nrows(self):
-        return self._target.nrows
-
-    @property
-    def ncols(self):
-        return self._target.ncols
-
-    @property
-    def size(self):
-        return self._target.size
-
-    def equal(self, other):
-        return FrozenMatrix.wrap(
-            array=list(checked_map(equal, self, other)),
-            shape=self.shape,
-        )
-
-    def not_equal(self, other):
-        return FrozenMatrix.wrap(
-            array=list(checked_map(not_equal, self, other)),
-            shape=self.shape,
-        )
-
-    def logical_and(self, other):
-        return FrozenMatrix.wrap(
-            array=list(checked_map(logical_and, self, other)),
-            shape=self.shape,
-        )
-
-    def logical_or(self, other):
-        return FrozenMatrix.wrap(
-            array=list(checked_map(logical_or, self, other)),
-            shape=self.shape,
-        )
-
-    def logical_not(self):
-        return FrozenMatrix.wrap(
-            array=list(map(logical_not, self)),
-            shape=self.shape,
-        )
-
-    def transpose(self):
-        return MatrixTranspose(self)
-
-    def flip(self, *, by=Rule.ROW):
-        MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
-        return MatrixTransform(self)
-
-    def reverse(self):
-        return MatrixReverse(self)
-
-    def n(self, by):
-        return self._target.n(by)
-
-    def _permute_vector_index(self, val_index):
-        return val_index
-
-    def _permute_matrix_index(self, row_index, col_index):
-        return row_index * self.ncols + col_index
-
-
-class MatrixTranspose(MatrixTransform[T, M, N]):
+class ComplexMatrixView(ComplexMatrixLike[ComplexT, M, N], MatrixView[ComplexT, M, N]):
 
     __slots__ = ()
 
-    @property
-    def shape(self):
-        return tuple(reversed(self._target.shape))
+    def __add__(self, other):
+        return self._target.__add__(other)
 
-    @property
-    def nrows(self):
-        return self._target.ncols
+    def __sub__(self, other):
+        return self._target.__sub__(other)
 
-    @property
-    def ncols(self):
-        return self._target.nrows
+    def __mul__(self, other):
+        return self._target.__mul__(other)
 
-    def transpose(self):
-        return MatrixView(self._target)
+    def __matmul__(self, other):
+        return self._target.__matmul__(other)
 
-    def n(self, by):
-        return self._target.n(~by)
+    def __truediv__(self, other):
+        return self._target.__truediv__(other)
 
-    def _permute_vector_index(self, val_index):
-        row_index, col_index = divmod(val_index, self.ncols)
-        return self._permute_matrix_index(
-            row_index=row_index,
-            col_index=col_index,
-        )
+    def __radd__(self, other):
+        return self._target.__radd__(other)
 
-    def _permute_matrix_index(self, row_index, col_index):
-        return col_index * self.nrows + row_index
+    def __rsub__(self, other):
+        return self._target.__rsub__(other)
 
+    def __rmul__(self, other):
+        return self._target.__rmul__(other)
 
-class MatrixRowFlip(MatrixTransform[T, M, N]):
+    def __rmatmul__(self, other):
+        return self._target.__rmatmul__(other)
 
-    __slots__ = ()
+    def __rtruediv__(self, other):
+        return self._target.__rtruediv__(other)
 
-    def flip(self, *, by=Rule.ROW):
-        if by is Rule.ROW:
-            return MatrixView(self._target)
-        return super().flip(by=by)
+    def __neg__(self):
+        return self._target.__neg__()
 
-    def _permute_vector_index(self, val_index):
-        row_index, col_index = divmod(val_index, self.ncols)
-        return self._permute_matrix_index(
-            row_index=row_index,
-            col_index=col_index,
-        )
+    def __abs__(self):
+        return self._target.__abs__()
 
-    def _permute_matrix_index(self, row_index, col_index):
-        row_index = self.nrows - row_index - 1
-        return super()._permute_matrix_index(
-            row_index=row_index,
-            col_index=col_index,
-        )
+    def conjugate(self):
+        return self._target.conjugate()
 
 
-class MatrixColFlip(MatrixTransform[T, M, N]):
+class RealMatrixView(RealMatrixLike[RealT, M, N], MatrixView[RealT, M, N]):
 
     __slots__ = ()
 
-    def flip(self, *, by=Rule.ROW):
-        if by is Rule.COL:
-            return MatrixView(self._target)
-        return super().flip(by=by)
+    def __lt__(self, other):
+        return self._target.__lt__(other)
 
-    def _permute_vector_index(self, val_index):
-        row_index, col_index = divmod(val_index, self.ncols)
-        return self._permute_matrix_index(
-            row_index=row_index,
-            col_index=col_index,
-        )
+    def __le__(self, other):
+        return self._target.__le__(other)
 
-    def _permute_matrix_index(self, row_index, col_index):
-        col_index = self.ncols - col_index - 1
-        return super()._permute_matrix_index(
-            row_index=row_index,
-            col_index=col_index,
-        )
+    def __gt__(self, other):
+        return self._target.__gt__(other)
+
+    def __ge__(self, other):
+        return self._target.__ge__(other)
+
+    def __add__(self, other):
+        return self._target.__add__(other)
+
+    def __sub__(self, other):
+        return self._target.__sub__(other)
+
+    def __mul__(self, other):
+        return self._target.__mul__(other)
+
+    def __matmul__(self, other):
+        return self._target.__matmul__(other)
+
+    def __truediv__(self, other):
+        return self._target.__truediv__(other)
+
+    def __floordiv__(self, other):
+        return self._target.__floordiv__(other)
+
+    def __mod__(self, other):
+        return self._target.__mod__(other)
+
+    def __divmod__(self, other):
+        return self._target.__divmod__(other)
+
+    def __radd__(self, other):
+        return self._target.__radd__(other)
+
+    def __rsub__(self, other):
+        return self._target.__rsub__(other)
+
+    def __rmul__(self, other):
+        return self._target.__rmul__(other)
+
+    def __rmatmul__(self, other):
+        return self._target.__rmatmul__(other)
+
+    def __rtruediv__(self, other):
+        return self._target.__rtruediv__(other)
+
+    def __rfloordiv__(self, other):
+        return self._target.__rfloordiv__(other)
+
+    def __rmod__(self, other):
+        return self._target.__rmod__(other)
+
+    def __rdivmod__(self, other):
+        return self._target.__rdivmod__(other)
+
+    def __neg__(self):
+        return self._target.__neg__()
+
+    def __abs__(self):
+        return self._target.__abs__()
+
+    def lesser(self, other):
+        return self._target.lesser(other)
+
+    def lesser_equal(self, other):
+        return self._target.lesser_equal(other)
+
+    def greater(self, other):
+        return self._target.greater(other)
+
+    def greater_equal(self, other):
+        return self._target.greater_equal(other)
 
 
-class MatrixReverse(MatrixTransform[T, M, N]):
+class IntegralMatrixView(IntegralMatrixLike[IntegralT, M, N], MatrixView[IntegralT, M, N]):
 
     __slots__ = ()
 
-    def reverse(self):
-        return MatrixView(self._target)
+    def __lt__(self, other):
+        return self._target.__lt__(other)
 
-    def _permute_vector_index(self, val_index):
-        return self.size - val_index - 1
+    def __le__(self, other):
+        return self._target.__le__(other)
 
-    def _permute_matrix_index(self, row_index, col_index):
-        return self._permute_vector_index(
-            val_index=super()._permute_matrix_index(
-                row_index=row_index,
-                col_index=col_index,
-            ),
-        )
+    def __gt__(self, other):
+        return self._target.__gt__(other)
+
+    def __ge__(self, other):
+        return self._target.__ge__(other)
+
+    def __add__(self, other):
+        return self._target.__add__(other)
+
+    def __sub__(self, other):
+        return self._target.__sub__(other)
+
+    def __mul__(self, other):
+        return self._target.__mul__(other)
+
+    def __matmul__(self, other):
+        return self._target.__matmul__(other)
+
+    def __truediv__(self, other):
+        return self._target.__truediv__(other)
+
+    def __floordiv__(self, other):
+        return self._target.__floordiv__(other)
+
+    def __mod__(self, other):
+        return self._target.__mod__(other)
+
+    def __divmod__(self, other):
+        return self._target.__divmod__(other)
+
+    def __lshift__(self, other):
+        return self._target.__lshift__(other)
+
+    def __rshift__(self, other):
+        return self._target.__rshift__(other)
+
+    def __and__(self, other):
+        return self._target.__and__(other)
+
+    def __xor__(self, other):
+        return self._target.__xor__(other)
+
+    def __or__(self, other):
+        return self._target.__or__(other)
+
+    def __radd__(self, other):
+        return self._target.__radd__(other)
+
+    def __rsub__(self, other):
+        return self._target.__rsub__(other)
+
+    def __rmul__(self, other):
+        return self._target.__rmul__(other)
+
+    def __rmatmul__(self, other):
+        return self._target.__rmatmul__(other)
+
+    def __rtruediv__(self, other):
+        return self._target.__rtruediv__(other)
+
+    def __rfloordiv__(self, other):
+        return self._target.__rfloordiv__(other)
+
+    def __rmod__(self, other):
+        return self._target.__rmod__(other)
+
+    def __rdivmod__(self, other):
+        return self._target.__rdivmod__(other)
+
+    def __rlshift__(self, other):
+        return self._target.__rlshift__(other)
+
+    def __rrshift__(self, other):
+        return self._target.__rrshift__(other)
+
+    def __rand__(self, other):
+        return self._target.__rand__(other)
+
+    def __rxor__(self, other):
+        return self._target.__rxor__(other)
+
+    def __ror__(self, other):
+        return self._target.__ror__(other)
+
+    def __neg__(self):
+        return self._target.__neg__()
+
+    def __abs__(self):
+        return self._target.__abs__()
+
+    def __invert__(self):
+        return self._target.__invert__()
+
+    def lesser(self, other):
+        return self._target.lesser(other)
+
+    def lesser_equal(self, other):
+        return self._target.lesser_equal(other)
+
+    def greater(self, other):
+        return self._target.greater(other)
+
+    def greater_equal(self, other):
+        return self._target.greater_equal(other)
