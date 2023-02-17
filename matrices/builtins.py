@@ -37,14 +37,15 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     __slots__ = ("_array", "_shape")
 
     def __init__(self, array=(), shape=(None, None)):
-        self._array = [] if array is None else list(array)
+        self._array = list(array)
 
-        if isinstance(array, (MatrixLike, MatrixMap, MatrixProduct, ShapedIterable)):
+        if isinstance(array, (MatrixMap, MatrixProduct, MatrixLike, ShapedIterable)):
             self._shape = array.shape
             return
 
-        size = len(self._array)
-        nrows, ncols = shape
+        nrows = shape[0]
+        ncols = shape[1]
+        size  = len(self._array)
 
         if nrows is None and ncols is None:
             shape = (1, size)
