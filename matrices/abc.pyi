@@ -52,8 +52,6 @@ class ShapedCollection(ShapedIterable[T_co, M_co, N_co], Collection[T_co], Proto
 
 class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Sequence[T_co], metaclass=ABCMeta):
 
-    __slots__: tuple[()]
-
     @overload
     @abstractmethod
     def __getitem__(self, key: int) -> T_co: ...
@@ -75,9 +73,6 @@ class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Sequence[T_co], metacla
 
 
 class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
-
-    __slots__: tuple[()]
-    __match_args__: tuple[Literal["array"], Literal["shape"]]
 
     @overload
     @abstractmethod
@@ -143,8 +138,6 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
 
 class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
-
-    __slots__: tuple[()]
 
     FRIENDLY_TYPES: tuple[type[ComplexMatrixLike], type[RealMatrixLike], type[IntegralMatrixLike]]
 
@@ -287,8 +280,6 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
 
 class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
-
-    __slots__: tuple[()]
 
     FRIENDLY_TYPES: tuple[type[RealMatrixLike], type[IntegralMatrixLike]]
 
@@ -469,8 +460,6 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
 class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
 
-    __slots__: tuple[()]
-
     FRIENDLY_TYPES: tuple[type[IntegralMatrixLike]]
 
     @overload
@@ -617,27 +606,22 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
 S = TypeVar("S")
 
 ComplexMatrixLikeT = TypeVar("ComplexMatrixLikeT", bound=ComplexMatrixLike)
-ComplexMatrixLikeFriendT = TypeVar("ComplexMatrixLikeFriendT", bound=Union[ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike])
-
 RealMatrixLikeT = TypeVar("RealMatrixLikeT", bound=RealMatrixLike)
-RealMatrixLikeFriendT = TypeVar("RealMatrixLikeFriendT", bound=Union[RealMatrixLike, IntegralMatrixLike])
-
 IntegralMatrixLikeT = TypeVar("IntegralMatrixLikeT", bound=IntegralMatrixLike)
-IntegralMatrixLikeFriendT = TypeVar("IntegralMatrixLikeFriendT", bound=IntegralMatrixLike)
 
 
 @overload
 def check_friendly(
-    method: Callable[[ComplexMatrixLikeT, ComplexMatrixLikeFriendT], S],
+    method: Callable[[ComplexMatrixLikeT, Union[ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike]], S],
     /,
-) -> Callable[[ComplexMatrixLikeT, ComplexMatrixLikeFriendT], S]: ...
+) -> Callable[[ComplexMatrixLikeT, Union[ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike]], S]: ...
 @overload
 def check_friendly(
-    method: Callable[[RealMatrixLikeT, RealMatrixLikeFriendT], S],
+    method: Callable[[RealMatrixLikeT, Union[RealMatrixLike, IntegralMatrixLike]], S],
     /,
-) -> Callable[[RealMatrixLikeT, RealMatrixLikeFriendT], S]: ...
+) -> Callable[[RealMatrixLikeT, Union[RealMatrixLike, IntegralMatrixLike]], S]: ...
 @overload
 def check_friendly(
-    method: Callable[[IntegralMatrixLikeT, IntegralMatrixLikeFriendT], S],
+    method: Callable[[IntegralMatrixLikeT, IntegralMatrixLike], S],
     /,
-) -> Callable[[IntegralMatrixLikeT, IntegralMatrixLikeFriendT], S]: ...
+) -> Callable[[IntegralMatrixLikeT, IntegralMatrixLike], S]: ...
