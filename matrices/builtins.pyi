@@ -6,6 +6,7 @@ from typing import (Any, Literal, Optional, SupportsIndex, TypeVar, Union,
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike, ShapedIterable)
 from .rule import Rule
+from .unsafe import unsafe
 
 __all__ = [
     "Matrix",
@@ -62,6 +63,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     def __copy__(self: MatrixT) -> MatrixT: ...
 
     @classmethod
+    @unsafe
     def from_raw_parts(cls: type[MatrixT], array: tuple[T_co, ...], shape: tuple[M_co, N_co]) -> MatrixT: ...
     @classmethod
     def from_nesting(cls: type[MatrixT], nesting: Iterable[Iterable[T_co]]) -> MatrixT: ...

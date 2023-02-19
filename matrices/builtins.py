@@ -7,6 +7,7 @@ from views import SequenceView
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike, ShapedIterable, check_friendly)
 from .rule import COL, ROW, Rule
+from .unsafe import unsafe
 from .utilities.matrix_map import MatrixMap
 from .utilities.matrix_operator import (__abs__, __add__, __and__, __divmod__,
                                         __eq__, __floordiv__, __ge__, __gt__,
@@ -153,6 +154,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     __copy__ = __deepcopy__
 
     @classmethod
+    @unsafe
     def from_raw_parts(cls, array, shape):
         """Construct a matrix directly from its ``array`` and ``shape`` parts
 
@@ -161,8 +163,8 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         with caution.
 
         The following properties are required to construct a valid matrix:
-        - ``array`` must be a flattened ``list``. That is, the elements of the
-          matrix must be contained within the shallowest depth of the ``list``
+        - ``array`` must be a flattened ``tuple``. That is, the elements of the
+          matrix must be contained within the shallowest depth of the ``tuple``
           instance.
         - ``shape`` must be a ``tuple`` of two positive integers, where the
           product of its values equals the length of ``array``.
@@ -211,10 +213,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
                     raise ValueError(f"row {nrows} has length {n}, but precedent rows have length {ncols}")
                 nrows += 1
 
-        return cls.from_raw_parts(
-            array=cls.STORAGE_TYPE(flatten(nesting)),
-            shape=(nrows, ncols),
-        )
+        return cls(flatten(nesting), shape=(nrows, ncols))
 
     @property
     def array(self):
