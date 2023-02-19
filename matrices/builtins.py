@@ -14,7 +14,7 @@ from .utilities.matrix_operator import (__abs__, __add__, __and__, __divmod__,
                                         __invert__, __le__, __lshift__, __lt__,
                                         __matmul__, __mod__, __mul__, __ne__,
                                         __neg__, __or__, __pos__, __rshift__,
-                                        __sub__, __truediv__, __xor__, compare,
+                                        __sub__, __truediv__, __xor__,
                                         conjugate)
 from .utilities.matrix_product import MatrixProduct
 
@@ -47,10 +47,10 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
     __slots__ = ("_array", "_shape")
 
-    STORAGE_TYPE = tuple
+    STORAGE_FACTORY = tuple
 
     def __init__(self, array=(), shape=(None, None)):
-        self._array = self.STORAGE_TYPE(array)
+        self._array = self.STORAGE_FACTORY(array)
 
         if isinstance(array, (MatrixMap, MatrixProduct, MatrixLike, ShapedIterable)):
             self._shape = array.shape
@@ -89,6 +89,8 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         return len(self._array)
 
     def __getitem__(self, key):
+        array = self._array
+
         if isinstance(key, tuple):
             row_key, col_key = key
             ncols = self.ncols
@@ -98,21 +100,21 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
                 if isinstance(col_key, slice):
                     col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                    return self.__class__.from_raw_parts(
-                        array=[
-                            self._array[row_index * ncols + col_index]
+                    return self.__class__(
+                        (
+                            array[row_index * ncols + col_index]
                             for row_index in row_indices
                             for col_index in col_indices
-                        ],
+                        ),
                         shape=(len(row_indices), len(col_indices)),
                     )
 
                 col_index = self._resolve_matrix_index(col_key, by=COL)
-                return self.__class__.from_raw_parts(
-                    array=[
-                        self._array[row_index * ncols + col_index]
+                return self.__class__(
+                    (
+                        array[row_index * ncols + col_index]
                         for row_index in row_indices
-                    ],
+                    ),
                     shape=(len(row_indices), 1),
                 )
 
@@ -120,29 +122,29 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
             if isinstance(col_key, slice):
                 col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                return self.__class__.from_raw_parts(
-                    array=[
-                        self._array[row_index * ncols + col_index]
+                return self.__class__(
+                    (
+                        array[row_index * ncols + col_index]
                         for col_index in col_indices
-                    ],
+                    ),
                     shape=(1, len(col_indices)),
                 )
 
             col_index = self._resolve_matrix_index(col_key, by=COL)
-            return self._array[row_index * ncols + col_index]
+            return array[row_index * ncols + col_index]
 
         if isinstance(key, slice):
             val_indices = self._resolve_vector_slice(key)
-            return self.__class__.from_raw_parts(
-                array=[
-                    self._array[val_index]
+            return self.__class__(
+                (
+                    array[val_index]
                     for val_index in val_indices
-                ],
+                ),
                 shape=(1, len(val_indices)),
             )
 
         val_index = self._resolve_vector_index(key)
-        return self._array[val_index]
+        return array[val_index]
 
     def __contains__(self, value):
         return value in self._array
@@ -242,19 +244,6 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         from .views.builtins import MatrixReverse
         return MatrixReverse(self)
 
-    def values(self, *, by=Rule.ROW, reverse=False):
-        values = reversed if reverse else iter
-        if by is Rule.ROW:
-            yield from values(self._array)
-            return
-        nrows = self.nrows
-        ncols = self.ncols
-        row_indices = range(nrows)
-        col_indices = range(ncols)
-        for col_index in values(col_indices):
-            for row_index in values(row_indices):
-                yield self._array[row_index * ncols + col_index]
-
 
 class ComplexMatrixOperators(ComplexMatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
@@ -313,22 +302,6 @@ class ComplexMatrixOperators(ComplexMatrixLike[ComplexT_co, M_co, N_co], metacla
 class RealMatrixOperators(RealMatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
-
-    @check_friendly
-    def __lt__(self, other):
-        return compare(self, other) < 0
-
-    @check_friendly
-    def __le__(self, other):
-        return compare(self, other) <= 0
-
-    @check_friendly
-    def __gt__(self, other):
-        return compare(self, other) > 0
-
-    @check_friendly
-    def __ge__(self, other):
-        return compare(self, other) >= 0
 
     @check_friendly
     def __add__(self, other):
@@ -416,22 +389,6 @@ class RealMatrixOperators(RealMatrixLike[RealT_co, M_co, N_co], metaclass=ABCMet
 class IntegralMatrixOperators(IntegralMatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
-
-    @check_friendly
-    def __lt__(self, other):
-        return compare(self, other) < 0
-
-    @check_friendly
-    def __le__(self, other):
-        return compare(self, other) <= 0
-
-    @check_friendly
-    def __gt__(self, other):
-        return compare(self, other) > 0
-
-    @check_friendly
-    def __ge__(self, other):
-        return compare(self, other) >= 0
 
     @check_friendly
     def __add__(self, other):
