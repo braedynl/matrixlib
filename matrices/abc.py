@@ -220,6 +220,56 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         return range(*key.indices(bound))
 
 
+def check_friendly(method, /):
+    """Return ``NotImplemented`` for "un-friendly" argument types passed to
+    special binary methods
+
+    This utility is primarily intended for implementations of
+    ``ComplexMatrixLike``, ``RealMatrixLike``, and ``IntegralMatrixLike``, who
+    define a ``FRIENDLY_TYPES`` class attribute for interoperability with one
+    another.
+    """
+
+    @functools.wraps(method)
+    def check_friendly_wrapper(self, other):
+        if isinstance(other, self.FRIENDLY_TYPES):
+            return method(self, other)
+        return NotImplemented
+
+    return check_friendly_wrapper
+
+
+def compare(a, b, /):
+    """Return literal -1, 0, or 1 if two matrices lexicographically compare as
+    ``a < b``, ``a = b``, or ``a > b``, respectively
+
+    This function is used to implement the base comparison operators for
+    ``RealMatrixLike`` and ``IntegralMatrixLike``.
+    """
+    if a is b:
+        return 0
+    for x, y in zip(a, b):
+        if x is y or x == y:
+            continue
+        if x < y:
+            return -1
+        if x > y:
+            return 1
+        raise RuntimeError
+    u = a.shape
+    v = b.shape
+    if u is v:
+        return 0
+    for m, n in zip(u, v):
+        if m is n or m == n:
+            continue
+        if m < n:
+            return -1
+        if m > n:
+            return 1
+    return 0
+
+
 class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
@@ -302,25 +352,25 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
-    @abstractmethod
+    @check_friendly
     def __lt__(self, other):
         """Return true if lexicographic ``a < b``, otherwise false"""
-        pass
+        return compare(self, other) < 0
 
-    @abstractmethod
+    @check_friendly
     def __le__(self, other):
         """Return true if lexicographic ``a <= b``, otherwise false"""
-        pass
+        return compare(self, other) <= 0
 
-    @abstractmethod
+    @check_friendly
     def __gt__(self, other):
         """Return true if lexicographic ``a > b``, otherwise false"""
-        pass
+        return compare(self, other) > 0
 
-    @abstractmethod
+    @check_friendly
     def __ge__(self, other):
         """Return true if lexicographic ``a >= b``, otherwise false"""
-        pass
+        return compare(self, other) >= 0
 
     @abstractmethod
     def __add__(self, other):
@@ -449,25 +499,25 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
 
     __slots__ = ()
 
-    @abstractmethod
+    @check_friendly
     def __lt__(self, other):
         """Return true if lexicographic ``a < b``, otherwise false"""
-        pass
+        return compare(self, other) < 0
 
-    @abstractmethod
+    @check_friendly
     def __le__(self, other):
         """Return true if lexicographic ``a <= b``, otherwise false"""
-        pass
+        return compare(self, other) <= 0
 
-    @abstractmethod
+    @check_friendly
     def __gt__(self, other):
         """Return true if lexicographic ``a > b``, otherwise false"""
-        pass
+        return compare(self, other) > 0
 
-    @abstractmethod
+    @check_friendly
     def __ge__(self, other):
         """Return true if lexicographic ``a >= b``, otherwise false"""
-        pass
+        return compare(self, other) >= 0
 
     @abstractmethod
     def __add__(self, other):
@@ -650,22 +700,3 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
 ComplexMatrixLike.FRIENDLY_TYPES = (ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike)
 RealMatrixLike.FRIENDLY_TYPES = (RealMatrixLike, IntegralMatrixLike)
 IntegralMatrixLike.FRIENDLY_TYPES = (IntegralMatrixLike,)
-
-
-def check_friendly(method, /):
-    """Return ``NotImplemented`` for "un-friendly" argument types passed to
-    special binary methods
-
-    This utility is primarily intended for implementations of
-    ``ComplexMatrixLike``, ``RealMatrixLike``, and ``IntegralMatrixLike``, who
-    define a ``FRIENDLY_TYPES`` class attribute for interoperability with one
-    another.
-    """
-
-    @functools.wraps(method)
-    def check_friendly_wrapper(self, other):
-        if isinstance(other, self.FRIENDLY_TYPES):
-            return method(self, other)
-        return NotImplemented
-
-    return check_friendly_wrapper

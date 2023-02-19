@@ -1,11 +1,10 @@
-from typing import Any, Literal, Protocol, TypeVar, overload
+from typing import Any, Protocol, TypeVar, overload
 
 from ..abc import MatrixLike
 from .matrix_map import MatrixMap
 from .matrix_product import MatrixProduct
 
 __all__ = [
-    "compare",
     "__lt__",
     "__le__",
     "__eq__",
@@ -104,8 +103,6 @@ class SupportsAbs(Protocol[T_co]):
 class SupportsInvert(Protocol[T_co]):
     def __invert__(self) -> T_co: ...
 
-
-def compare(a: MatrixLike, b: MatrixLike, /) -> Literal[-1, 0, 1]: ...
 
 def __lt__(a: MatrixLike[Any, M, N], b: MatrixLike[Any, M, N], /) -> MatrixMap[bool, M, N]: ...
 def __le__(a: MatrixLike[Any, M, N], b: MatrixLike[Any, M, N], /) -> MatrixMap[bool, M, N]: ...

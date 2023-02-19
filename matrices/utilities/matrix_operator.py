@@ -4,7 +4,6 @@ from .matrix_product import MatrixProduct
 from .vectorize import vectorize
 
 __all__ = [
-    "compare",
     "__lt__",
     "__le__",
     "__eq__",
@@ -31,30 +30,6 @@ __all__ = [
     "conjugate",
 ]
 
-
-def compare(a, b, /):
-    if a is b:
-        return 0
-    for x, y in zip(a, b):
-        if x == y:
-            continue
-        if x < y:
-            return -1
-        if x > y:
-            return 1
-        raise RuntimeError
-    u = a.shape
-    v = b.shape
-    if u is v:
-        return 0
-    for m, n in zip(u, v):
-        if m == n:
-            continue
-        if m < n:
-            return -1
-        if m > n:
-            return 1
-    return 0
 
 __lt__ = vectorize()(operator.__lt__)
 __le__ = vectorize()(operator.__le__)
