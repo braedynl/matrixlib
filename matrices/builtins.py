@@ -1,3 +1,4 @@
+from abc import ABCMeta
 from reprlib import recursive_repr
 from typing import TypeVar
 
@@ -6,12 +7,21 @@ from views import SequenceView
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike, ShapedIterable, check_friendly)
 from .rule import COL, ROW, Rule
-from .utilities import matrix_operator
 from .utilities.matrix_map import MatrixMap
+from .utilities.matrix_operator import (__abs__, __add__, __and__, __divmod__,
+                                        __eq__, __floordiv__, __ge__, __gt__,
+                                        __invert__, __le__, __lshift__, __lt__,
+                                        __matmul__, __mod__, __mul__, __ne__,
+                                        __neg__, __or__, __pos__, __rshift__,
+                                        __sub__, __truediv__, __xor__, compare,
+                                        conjugate)
 from .utilities.matrix_product import MatrixProduct
 
 __all__ = [
     "Matrix",
+    "ComplexMatrixOperators",
+    "RealMatrixOperators",
+    "IntegralMatrixOperators",
     "ComplexMatrix",
     "RealMatrix",
     "IntegralMatrix",
@@ -203,10 +213,10 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         return self._shape
 
     def equal(self, other):
-        return IntegralMatrix(matrix_operator.__eq__(self, other))
+        return IntegralMatrix(__eq__(self, other))
 
     def not_equal(self, other):
-        return IntegralMatrix(matrix_operator.__ne__(self, other))
+        return IntegralMatrix(__ne__(self, other))
 
     def transpose(self):
         from .views.builtins import MatrixTranspose
@@ -235,310 +245,325 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
                 yield self._array[row_index * ncols + col_index]
 
 
-class ComplexMatrix(ComplexMatrixLike[ComplexT_co, M_co, N_co], Matrix[ComplexT_co, M_co, N_co]):
+class ComplexMatrixOperators(ComplexMatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
     @check_friendly
     def __add__(self, other):
-        return ComplexMatrix(matrix_operator.__add__(self, other))
+        return ComplexMatrix(__add__(self, other))
 
     @check_friendly
     def __sub__(self, other):
-        return ComplexMatrix(matrix_operator.__sub__(self, other))
+        return ComplexMatrix(__sub__(self, other))
 
     @check_friendly
     def __mul__(self, other):
-        return ComplexMatrix(matrix_operator.__mul__(self, other))
+        return ComplexMatrix(__mul__(self, other))
 
     @check_friendly
     def __matmul__(self, other):
-        return ComplexMatrix(matrix_operator.__matmul__(self, other))
+        return ComplexMatrix(__matmul__(self, other))
 
     @check_friendly
     def __truediv__(self, other):
-        return ComplexMatrix(matrix_operator.__truediv__(self, other))
+        return ComplexMatrix(__truediv__(self, other))
 
     @check_friendly
     def __radd__(self, other):
-        return ComplexMatrix(matrix_operator.__add__(other, self))
+        return ComplexMatrix(__add__(other, self))
 
     @check_friendly
     def __rsub__(self, other):
-        return ComplexMatrix(matrix_operator.__sub__(other, self))
+        return ComplexMatrix(__sub__(other, self))
 
     @check_friendly
     def __rmul__(self, other):
-        return ComplexMatrix(matrix_operator.__mul__(other, self))
+        return ComplexMatrix(__mul__(other, self))
 
     @check_friendly
     def __rmatmul__(self, other):
-        return ComplexMatrix(matrix_operator.__matmul__(other, self))
+        return ComplexMatrix(__matmul__(other, self))
 
     @check_friendly
     def __rtruediv__(self, other):
-        return ComplexMatrix(matrix_operator.__truediv__(other, self))
+        return ComplexMatrix(__truediv__(other, self))
 
     def __neg__(self):
-        return ComplexMatrix(matrix_operator.__neg__(self))
+        return ComplexMatrix(__neg__(self))
 
     def __abs__(self):
-        return RealMatrix(matrix_operator.__abs__(self))
+        return RealMatrix(__abs__(self))
 
     def conjugate(self):
-        return ComplexMatrix(matrix_operator.conjugate(self))
-
-    # TODO: override transpose(), flip(), and reverse()
+        return ComplexMatrix(conjugate(self))
 
 
-class RealMatrix(RealMatrixLike[RealT_co, M_co, N_co], Matrix[RealT_co, M_co, N_co]):
+class RealMatrixOperators(RealMatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
     @check_friendly
     def __lt__(self, other):
-        return matrix_operator.compare(self, other) < 0
+        return compare(self, other) < 0
 
     @check_friendly
     def __le__(self, other):
-        return matrix_operator.compare(self, other) <= 0
+        return compare(self, other) <= 0
 
     @check_friendly
     def __gt__(self, other):
-        return matrix_operator.compare(self, other) > 0
+        return compare(self, other) > 0
 
     @check_friendly
     def __ge__(self, other):
-        return matrix_operator.compare(self, other) >= 0
+        return compare(self, other) >= 0
 
     @check_friendly
     def __add__(self, other):
-        return RealMatrix(matrix_operator.__add__(self, other))
+        return RealMatrix(__add__(self, other))
 
     @check_friendly
     def __sub__(self, other):
-        return RealMatrix(matrix_operator.__sub__(self, other))
+        return RealMatrix(__sub__(self, other))
 
     @check_friendly
     def __mul__(self, other):
-        return RealMatrix(matrix_operator.__mul__(self, other))
+        return RealMatrix(__mul__(self, other))
 
     @check_friendly
     def __matmul__(self, other):
-        return RealMatrix(matrix_operator.__matmul__(self, other))
+        return RealMatrix(__matmul__(self, other))
 
     @check_friendly
     def __truediv__(self, other):
-        return RealMatrix(matrix_operator.__truediv__(self, other))
+        return RealMatrix(__truediv__(self, other))
 
     @check_friendly
     def __floordiv__(self, other):
-        return RealMatrix(matrix_operator.__floordiv__(self, other))
+        return RealMatrix(__floordiv__(self, other))
 
     @check_friendly
     def __mod__(self, other):
-        return RealMatrix(matrix_operator.__mod__(self, other))
+        return RealMatrix(__mod__(self, other))
 
     @check_friendly
     def __divmod__(self, other):
-        return Matrix(matrix_operator.__divmod__(self, other))
+        return Matrix(__divmod__(self, other))
 
     @check_friendly
     def __radd__(self, other):
-        return RealMatrix(matrix_operator.__add__(other, self))
+        return RealMatrix(__add__(other, self))
 
     @check_friendly
     def __rsub__(self, other):
-        return RealMatrix(matrix_operator.__sub__(other, self))
+        return RealMatrix(__sub__(other, self))
 
     @check_friendly
     def __rmul__(self, other):
-        return RealMatrix(matrix_operator.__mul__(other, self))
+        return RealMatrix(__mul__(other, self))
 
     @check_friendly
     def __rmatmul__(self, other):
-        return RealMatrix(matrix_operator.__matmul__(other, self))
+        return RealMatrix(__matmul__(other, self))
 
     @check_friendly
     def __rtruediv__(self, other):
-        return RealMatrix(matrix_operator.__truediv__(other, self))
+        return RealMatrix(__truediv__(other, self))
 
     @check_friendly
     def __rfloordiv__(self, other):
-        return RealMatrix(matrix_operator.__floordiv__(other, self))
+        return RealMatrix(__floordiv__(other, self))
 
     @check_friendly
     def __rmod__(self, other):
-        return RealMatrix(matrix_operator.__mod__(other, self))
+        return RealMatrix(__mod__(other, self))
 
     @check_friendly
     def __rdivmod__(self, other):
-        return Matrix(matrix_operator.__divmod__(other, self))
+        return Matrix(__divmod__(other, self))
 
     def __neg__(self):
-        return RealMatrix(matrix_operator.__neg__(self))
+        return RealMatrix(__neg__(self))
 
     def __abs__(self):
-        return RealMatrix(matrix_operator.__abs__(self))
+        return RealMatrix(__abs__(self))
 
     def lesser(self, other):
-        return IntegralMatrix(matrix_operator.__lt__(self, other))
+        return IntegralMatrix(__lt__(self, other))
 
     def lesser_equal(self, other):
-        return IntegralMatrix(matrix_operator.__le__(self, other))
+        return IntegralMatrix(__le__(self, other))
 
     def greater(self, other):
-        return IntegralMatrix(matrix_operator.__gt__(self, other))
+        return IntegralMatrix(__gt__(self, other))
 
     def greater_equal(self, other):
-        return IntegralMatrix(matrix_operator.__ge__(self, other))
-
-    # TODO: override transpose(), flip(), and reverse()
+        return IntegralMatrix(__ge__(self, other))
 
 
-class IntegralMatrix(IntegralMatrixLike[IntegralT_co, M_co, N_co], Matrix[IntegralT_co, M_co, N_co]):
+class IntegralMatrixOperators(IntegralMatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
     @check_friendly
     def __lt__(self, other):
-        return matrix_operator.compare(self, other) < 0
+        return compare(self, other) < 0
 
     @check_friendly
     def __le__(self, other):
-        return matrix_operator.compare(self, other) <= 0
+        return compare(self, other) <= 0
 
     @check_friendly
     def __gt__(self, other):
-        return matrix_operator.compare(self, other) > 0
+        return compare(self, other) > 0
 
     @check_friendly
     def __ge__(self, other):
-        return matrix_operator.compare(self, other) >= 0
+        return compare(self, other) >= 0
 
     @check_friendly
     def __add__(self, other):
-        return IntegralMatrix(matrix_operator.__add__(self, other))
+        return IntegralMatrix(__add__(self, other))
 
     @check_friendly
     def __sub__(self, other):
-        return IntegralMatrix(matrix_operator.__sub__(self, other))
+        return IntegralMatrix(__sub__(self, other))
 
     @check_friendly
     def __mul__(self, other):
-        return IntegralMatrix(matrix_operator.__mul__(self, other))
+        return IntegralMatrix(__mul__(self, other))
 
     @check_friendly
     def __matmul__(self, other):
-        return IntegralMatrix(matrix_operator.__matmul__(self, other))
+        return IntegralMatrix(__matmul__(self, other))
 
     @check_friendly
     def __truediv__(self, other):
-        return RealMatrix(matrix_operator.__truediv__(self, other))
+        return RealMatrix(__truediv__(self, other))
 
     @check_friendly
     def __floordiv__(self, other):
-        return IntegralMatrix(matrix_operator.__floordiv__(self, other))
+        return IntegralMatrix(__floordiv__(self, other))
 
     @check_friendly
     def __mod__(self, other):
-        return IntegralMatrix(matrix_operator.__mod__(self, other))
+        return IntegralMatrix(__mod__(self, other))
 
     @check_friendly
     def __divmod__(self, other):
-        return Matrix(matrix_operator.__divmod__(self, other))
+        return Matrix(__divmod__(self, other))
 
     @check_friendly
     def __lshift__(self, other):
-        return IntegralMatrix(matrix_operator.__lshift__(self, other))
+        return IntegralMatrix(__lshift__(self, other))
 
     @check_friendly
     def __rshift__(self, other):
-        return IntegralMatrix(matrix_operator.__rshift__(self, other))
-
-    @check_friendly
-    def __radd__(self, other):
-        return IntegralMatrix(matrix_operator.__add__(other, self))
-
-    @check_friendly
-    def __rsub__(self, other):
-        return IntegralMatrix(matrix_operator.__sub__(other, self))
-
-    @check_friendly
-    def __rmul__(self, other):
-        return IntegralMatrix(matrix_operator.__mul__(other, self))
-
-    @check_friendly
-    def __rmatmul__(self, other):
-        return IntegralMatrix(matrix_operator.__matmul__(other, self))
-
-    @check_friendly
-    def __rtruediv__(self, other):
-        return RealMatrix(matrix_operator.__truediv__(other, self))
-
-    @check_friendly
-    def __rfloordiv__(self, other):
-        return IntegralMatrix(matrix_operator.__floordiv__(other, self))
-
-    @check_friendly
-    def __rmod__(self, other):
-        return IntegralMatrix(matrix_operator.__mod__(other, self))
-
-    @check_friendly
-    def __rdivmod__(self, other):
-        return Matrix(matrix_operator.__divmod__(other, self))
-
-    @check_friendly
-    def __rlshift__(self, other):
-        return IntegralMatrix(matrix_operator.__lshift__(other, self))
-
-    @check_friendly
-    def __rrshift__(self, other):
-        return IntegralMatrix(matrix_operator.__rshift__(other, self))
-
-    def __neg__(self):
-        return IntegralMatrix(matrix_operator.__neg__(self))
-
-    def __abs__(self):
-        return IntegralMatrix(matrix_operator.__abs__(self))
+        return IntegralMatrix(__rshift__(self, other))
 
     @check_friendly
     def __and__(self, other):
-        return IntegralMatrix(matrix_operator.__and__(self, other))
+        return IntegralMatrix(__and__(self, other))
 
     @check_friendly
     def __xor__(self, other):
-        return IntegralMatrix(matrix_operator.__xor__(self, other))
+        return IntegralMatrix(__xor__(self, other))
 
     @check_friendly
     def __or__(self, other):
-        return IntegralMatrix(matrix_operator.__or__(self, other))
+        return IntegralMatrix(__or__(self, other))
+
+    @check_friendly
+    def __radd__(self, other):
+        return IntegralMatrix(__add__(other, self))
+
+    @check_friendly
+    def __rsub__(self, other):
+        return IntegralMatrix(__sub__(other, self))
+
+    @check_friendly
+    def __rmul__(self, other):
+        return IntegralMatrix(__mul__(other, self))
+
+    @check_friendly
+    def __rmatmul__(self, other):
+        return IntegralMatrix(__matmul__(other, self))
+
+    @check_friendly
+    def __rtruediv__(self, other):
+        return RealMatrix(__truediv__(other, self))
+
+    @check_friendly
+    def __rfloordiv__(self, other):
+        return IntegralMatrix(__floordiv__(other, self))
+
+    @check_friendly
+    def __rmod__(self, other):
+        return IntegralMatrix(__mod__(other, self))
+
+    @check_friendly
+    def __rdivmod__(self, other):
+        return Matrix(__divmod__(other, self))
+
+    @check_friendly
+    def __rlshift__(self, other):
+        return IntegralMatrix(__lshift__(other, self))
+
+    @check_friendly
+    def __rrshift__(self, other):
+        return IntegralMatrix(__rshift__(other, self))
 
     @check_friendly
     def __rand__(self, other):
-        return IntegralMatrix(matrix_operator.__and__(other, self))
+        return IntegralMatrix(__and__(other, self))
 
     @check_friendly
     def __rxor__(self, other):
-        return IntegralMatrix(matrix_operator.__xor__(other, self))
+        return IntegralMatrix(__xor__(other, self))
 
     @check_friendly
     def __ror__(self, other):
-        return IntegralMatrix(matrix_operator.__or__(other, self))
+        return IntegralMatrix(__or__(other, self))
+
+    def __neg__(self):
+        return IntegralMatrix(__neg__(self))
+
+    def __abs__(self):
+        return IntegralMatrix(__abs__(self))
 
     def __invert__(self):
-        return IntegralMatrix(matrix_operator.__invert__(self))
+        return IntegralMatrix(__invert__(self))
 
     def lesser(self, other):
-        return IntegralMatrix(matrix_operator.__lt__(self, other))
+        return IntegralMatrix(__lt__(self, other))
 
     def lesser_equal(self, other):
-        return IntegralMatrix(matrix_operator.__le__(self, other))
+        return IntegralMatrix(__le__(self, other))
 
     def greater(self, other):
-        return IntegralMatrix(matrix_operator.__gt__(self, other))
+        return IntegralMatrix(__gt__(self, other))
 
     def greater_equal(self, other):
-        return IntegralMatrix(matrix_operator.__ge__(self, other))
+        return IntegralMatrix(__ge__(self, other))
+
+
+class ComplexMatrix(ComplexMatrixOperators[ComplexT_co, M_co, N_co], Matrix[ComplexT_co, M_co, N_co]):
+
+    __slots__ = ()
+
+    # TODO: override transpose(), flip(), and reverse()
+
+
+class RealMatrix(RealMatrixOperators[RealT_co, M_co, N_co], Matrix[RealT_co, M_co, N_co]):
+
+    __slots__ = ()
+
+    # TODO: override transpose(), flip(), and reverse()
+
+
+class IntegralMatrix(IntegralMatrixOperators[IntegralT_co, M_co, N_co], Matrix[IntegralT_co, M_co, N_co]):
+
+    __slots__ = ()
 
     # TODO: override transpose(), flip(), and reverse()
