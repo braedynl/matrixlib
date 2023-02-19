@@ -46,8 +46,10 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
     __slots__ = ("_array", "_shape")
 
+    STORAGE_TYPE = tuple
+
     def __init__(self, array=(), shape=(None, None)):
-        self._array = list(array)
+        self._array = self.STORAGE_TYPE(array)
 
         if isinstance(array, (MatrixMap, MatrixProduct, MatrixLike, ShapedIterable)):
             self._shape = array.shape
@@ -174,7 +176,7 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         return self
 
     @classmethod
-    def from_nested(cls, nested):
+    def from_nesting(cls, nesting):
         """Construct a matrix from a singly-nested iterable, using the
         shallowest iterable's length to deduce the number of rows, and the
         nested iterables' lengths to deduce the number of columns
@@ -182,27 +184,37 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         Raises ``ValueError`` if the length of the nested iterables is
         inconsistent.
         """
-        array = []
+        nrows = 0
+        ncols = 0
 
-        rows = iter(nested)
-        try:
-            row = next(rows)
-        except StopIteration:
-            return cls.from_raw_parts(array=array, shape=(0, 0))
-        else:
-            array.extend(row)
+        def flatten(nesting):
+            nonlocal nrows, ncols
 
-        nrows1 = 1
-        ncols1 = len(array)
+            rows = iter(nesting)
+            try:
+                row = next(rows)
+            except StopIteration:
+                return
+            else:
+                nrows += 1
 
-        for nrows1, row in enumerate(rows, start=2):
-            ncols2 = 0
-            for ncols2, val in enumerate(row, start=1):
-                array.append(val)
-            if ncols1 != ncols2:
-                raise ValueError(f"row {nrows1} has length {ncols2}, but precedent rows have length {ncols1}")
+            for val in row:
+                yield val
+                ncols += 1
 
-        return cls.from_raw_parts(array=array, shape=(nrows1, ncols1))
+            for row in rows:
+                n = 0
+                for val in row:
+                    yield val
+                    n += 1
+                if n != ncols:
+                    raise ValueError(f"row {nrows} has length {n}, but precedent rows have length {ncols}")
+                nrows += 1
+
+        return cls.from_raw_parts(
+            array=cls.STORAGE_TYPE(flatten(nesting)),
+            shape=(nrows, ncols),
+        )
 
     @property
     def array(self):

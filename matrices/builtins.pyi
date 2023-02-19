@@ -1,5 +1,5 @@
 from abc import ABCMeta
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from typing import (Any, Literal, Optional, SupportsIndex, TypeVar, Union,
                     overload)
 
@@ -38,6 +38,8 @@ MatrixT = TypeVar("MatrixT", bound=Matrix)
 
 class Matrix(MatrixLike[T_co, M_co, N_co]):
 
+    STORAGE_TYPE: Callable[[Iterable[T]], Sequence[T]] = tuple
+
     @overload
     def __getitem__(self, key: SupportsIndex) -> T_co: ...
     @overload
@@ -60,9 +62,9 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
     def __copy__(self: MatrixT) -> MatrixT: ...
 
     @classmethod
-    def from_raw_parts(cls: type[MatrixT], array: list[T_co], shape: tuple[M_co, N_co]) -> MatrixT: ...
+    def from_raw_parts(cls: type[MatrixT], array: tuple[T_co, ...], shape: tuple[M_co, N_co]) -> MatrixT: ...
     @classmethod
-    def from_nested(cls: type[MatrixT], nested: Iterable[Iterable[T_co]]) -> MatrixT: ...
+    def from_nesting(cls: type[MatrixT], nesting: Iterable[Iterable[T_co]]) -> MatrixT: ...
 
     @property
     def array(self) -> Sequence[T_co]: ...
