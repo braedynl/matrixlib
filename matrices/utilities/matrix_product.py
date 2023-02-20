@@ -1,4 +1,3 @@
-import functools
 import itertools
 import operator
 from typing import TypeVar
@@ -11,6 +10,11 @@ ComplexT_co = TypeVar("ComplexT_co", covariant=True, bound=complex)
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)  # P just makes makes more sense for matrix multiplication
+
+
+def sum_prod(a, b, /):
+    """Return the sum of products between two iterables, ``a`` and ``b``"""
+    return sum(map(operator.mul, a, b))
 
 
 class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
@@ -48,9 +52,9 @@ class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
 
         for i in ix:
             for j in jx:
-                yield functools.reduce(
-                    operator.add,
-                    map(lambda k: a[i, k] * b[k, j], kx),
+                yield sum_prod(
+                    (a[i * n + k] for k in kx),
+                    (b[k * q + j] for k in kx),
                 )
 
     @property
