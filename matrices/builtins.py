@@ -1,8 +1,4 @@
-from abc import ABCMeta
-from reprlib import recursive_repr
-from typing import TypeVar
-
-from views import SequenceView
+from typing import Generic, TypeVar
 
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike, ShapedIterable, check_friendly)
@@ -19,12 +15,13 @@ from .utilities.matrix_operator import (__abs__, __add__, __and__, __divmod__,
 from .utilities.matrix_product import MatrixProduct
 
 __all__ = [
+    "MatrixOperatorsMixin",
     "Matrix",
-    "ComplexMatrixOperators",
-    "RealMatrixOperators",
-    "IntegralMatrixOperators",
+    "ComplexMatrixOperatorsMixin",
     "ComplexMatrix",
+    "RealMatrixOperatorsMixin",
     "RealMatrix",
+    "IntegralMatrixOperatorsMixin",
     "IntegralMatrix",
 ]
 
@@ -43,7 +40,21 @@ RealT_co = TypeVar("RealT_co", covariant=True, bound=float)
 IntegralT_co = TypeVar("IntegralT_co", covariant=True, bound=int)
 
 
-class Matrix(MatrixLike[T_co, M_co, N_co]):
+class MatrixOperatorsMixin(Generic[T_co, M_co, N_co]):
+    """Mixin class that defines the "operator methods" of ``MatrixLike`` using
+    built-in matrix types
+    """
+
+    __slots__ = ()
+
+    def equal(self, other):
+        return IntegralMatrix(__eq__(self, other))
+
+    def not_equal(self, other):
+        return IntegralMatrix(__ne__(self, other))
+
+
+class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co]):
 
     __slots__ = ("_array", "_shape")
 
@@ -80,7 +91,6 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
         self._shape = shape
 
-    @recursive_repr("...")
     def __repr__(self):
         """Return a canonical representation of the matrix"""
         return f"{self.__class__.__name__}(array={self._array!r}, shape={self._shape!r})"
@@ -219,17 +229,11 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
 
     @property
     def array(self):
-        return SequenceView(self._array)
+        return self._array
 
     @property
     def shape(self):
         return self._shape
-
-    def equal(self, other):
-        return IntegralMatrix(__eq__(self, other))
-
-    def not_equal(self, other):
-        return IntegralMatrix(__ne__(self, other))
 
     def transpose(self):
         from .views.builtins import MatrixTranspose
@@ -245,7 +249,10 @@ class Matrix(MatrixLike[T_co, M_co, N_co]):
         return MatrixReverse(self)
 
 
-class ComplexMatrixOperators(ComplexMatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
+class ComplexMatrixOperatorsMixin(Generic[ComplexT_co, M_co, N_co]):
+    """Mixin class that defines the "operator methods" of ``ComplexMatrixLike``
+    using built-in matrix types
+    """
 
     __slots__ = ()
 
@@ -299,7 +306,32 @@ class ComplexMatrixOperators(ComplexMatrixLike[ComplexT_co, M_co, N_co], metacla
         return ComplexMatrix(conjugate(self))
 
 
-class RealMatrixOperators(RealMatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
+class ComplexMatrix(
+    ComplexMatrixOperatorsMixin[ComplexT_co, M_co, N_co],
+    ComplexMatrixLike[ComplexT_co, M_co, N_co],
+    Matrix[ComplexT_co, M_co, N_co],
+):
+
+    __slots__ = ()
+
+    def transpose(self):
+        from .views.builtins import ComplexMatrixTranspose
+        return ComplexMatrixTranspose(self)
+
+    def flip(self, *, by=Rule.ROW):
+        from .views.builtins import ComplexMatrixColFlip, ComplexMatrixRowFlip
+        MatrixTransform = (ComplexMatrixRowFlip, ComplexMatrixColFlip)[by.value]
+        return MatrixTransform(self)
+
+    def reverse(self):
+        from .views.builtins import ComplexMatrixReverse
+        return ComplexMatrixReverse(self)
+
+
+class RealMatrixOperatorsMixin(Generic[RealT_co, M_co, N_co]):
+    """Mixin class that defines the "operator methods" of ``RealMatrixLike``
+    using built-in matrix types
+    """
 
     __slots__ = ()
 
@@ -386,7 +418,32 @@ class RealMatrixOperators(RealMatrixLike[RealT_co, M_co, N_co], metaclass=ABCMet
         return IntegralMatrix(__ge__(self, other))
 
 
-class IntegralMatrixOperators(IntegralMatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
+class RealMatrix(
+    RealMatrixOperatorsMixin[RealT_co, M_co, N_co],
+    RealMatrixLike[RealT_co, M_co, N_co],
+    Matrix[RealT_co, M_co, N_co],
+):
+
+    __slots__ = ()
+
+    def transpose(self):
+        from .views.builtins import RealMatrixTranspose
+        return RealMatrixTranspose(self)
+
+    def flip(self, *, by=Rule.ROW):
+        from .views.builtins import RealMatrixColFlip, RealMatrixRowFlip
+        MatrixTransform = (RealMatrixRowFlip, RealMatrixColFlip)[by.value]
+        return MatrixTransform(self)
+
+    def reverse(self):
+        from .views.builtins import RealMatrixReverse
+        return RealMatrixReverse(self)
+
+
+class IntegralMatrixOperatorsMixin(Generic[IntegralT_co, M_co, N_co]):
+    """Mixin class that defines the "operator methods" of
+    ``IntegralMatrixLike`` using built-in matrix types
+    """
 
     __slots__ = ()
 
@@ -516,22 +573,24 @@ class IntegralMatrixOperators(IntegralMatrixLike[IntegralT_co, M_co, N_co], meta
         return IntegralMatrix(__ge__(self, other))
 
 
-class ComplexMatrix(ComplexMatrixOperators[ComplexT_co, M_co, N_co], Matrix[ComplexT_co, M_co, N_co]):
+class IntegralMatrix(
+    IntegralMatrixOperatorsMixin[IntegralT_co, M_co, N_co],
+    IntegralMatrixLike[IntegralT_co, M_co, N_co],
+    Matrix[IntegralT_co, M_co, N_co],
+):
 
     __slots__ = ()
 
-    # TODO: override transpose(), flip(), and reverse()
+    def transpose(self):
+        from .views.builtins import IntegralMatrixTranspose
+        return IntegralMatrixTranspose(self)
 
+    def flip(self, *, by=Rule.ROW):
+        from .views.builtins import (IntegralMatrixColFlip,
+                                     IntegralMatrixRowFlip)
+        MatrixTransform = (IntegralMatrixRowFlip, IntegralMatrixColFlip)[by.value]
+        return MatrixTransform(self)
 
-class RealMatrix(RealMatrixOperators[RealT_co, M_co, N_co], Matrix[RealT_co, M_co, N_co]):
-
-    __slots__ = ()
-
-    # TODO: override transpose(), flip(), and reverse()
-
-
-class IntegralMatrix(IntegralMatrixOperators[IntegralT_co, M_co, N_co], Matrix[IntegralT_co, M_co, N_co]):
-
-    __slots__ = ()
-
-    # TODO: override transpose(), flip(), and reverse()
+    def reverse(self):
+        from .views.builtins import IntegralMatrixReverse
+        return IntegralMatrixReverse(self)
