@@ -10,8 +10,7 @@ __all__ = ["MatrixProduct"]
 ComplexT_co = TypeVar("ComplexT_co", covariant=True, bound=complex)
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
-N_co = TypeVar("N_co", covariant=True, bound=int)
-P_co = TypeVar("P_co", covariant=True, bound=int)
+P_co = TypeVar("P_co", covariant=True, bound=int)  # P just makes makes more sense for matrix multiplication
 
 
 class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
@@ -25,11 +24,11 @@ class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
 
     __slots__ = ("_args", "_shape")
 
-    def __init__(self, matrix1, matrix2):
-        (m, n), (p, q) = (u, v) = (matrix1.shape, matrix2.shape)
+    def __init__(self, a, b, /):
+        (m, n), (p, q) = (u, v) = (a.shape, b.shape)
         if n != p:
             raise ValueError(f"incompatible shapes {u}, {v} by inner dimensions")
-        self._args  = (matrix1, matrix2)
+        self._args  = (a, b)
         self._shape = (m, q)
 
     def __iter__(self):

@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterator
-from typing import Any, Literal, TypeVar, overload
+from typing import Any, TypeVar, overload
 
 from ..abc import MatrixLike, ShapedCollection
 
@@ -19,60 +19,58 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 
 class MatrixMap(ShapedCollection[T_co, M_co, N_co]):
 
-    __slots__: tuple[Literal["_func"], Literal["_args"], Literal["_shape"]]
-
     @overload
     def __init__(
         self,
-        func: Callable[[T1], T_co],
-        matrix1: MatrixLike[T1, M_co, N_co],
+        f: Callable[[T1], T_co],
+        a: MatrixLike[T1, M_co, N_co],
         /,
     ) -> None: ...
     @overload
     def __init__(
         self,
-        func: Callable[[T1, T2], T_co],
-        matrix1: MatrixLike[T1, M_co, N_co],
-        matrix2: MatrixLike[T2, M_co, N_co],
+        f: Callable[[T1, T2], T_co],
+        a: MatrixLike[T1, M_co, N_co],
+        b: MatrixLike[T2, M_co, N_co],
         /,
     ) -> None: ...
     @overload
     def __init__(
         self,
-        func: Callable[[T1, T2, T3], T_co],
-        matrix1: MatrixLike[T1, M_co, N_co],
-        matrix2: MatrixLike[T2, M_co, N_co],
-        matrix3: MatrixLike[T3, M_co, N_co],
+        f: Callable[[T1, T2, T3], T_co],
+        a: MatrixLike[T1, M_co, N_co],
+        b: MatrixLike[T2, M_co, N_co],
+        c: MatrixLike[T3, M_co, N_co],
         /,
     ) -> None: ...
     @overload
     def __init__(
         self,
-        func: Callable[[T1, T2, T3, T4], T_co],
-        matrix1: MatrixLike[T1, M_co, N_co],
-        matrix2: MatrixLike[T2, M_co, N_co],
-        matrix3: MatrixLike[T3, M_co, N_co],
-        matrix4: MatrixLike[T4, M_co, N_co],
+        f: Callable[[T1, T2, T3, T4], T_co],
+        a: MatrixLike[T1, M_co, N_co],
+        b: MatrixLike[T2, M_co, N_co],
+        c: MatrixLike[T3, M_co, N_co],
+        d: MatrixLike[T4, M_co, N_co],
         /,
     ) -> None: ...
     @overload
     def __init__(
         self,
-        func: Callable[[T1, T2, T3, T4, T5], T_co],
-        matrix1: MatrixLike[T1, M_co, N_co],
-        matrix2: MatrixLike[T2, M_co, N_co],
-        matrix3: MatrixLike[T3, M_co, N_co],
-        matrix4: MatrixLike[T4, M_co, N_co],
-        matrix5: MatrixLike[T5, M_co, N_co],
+        f: Callable[[T1, T2, T3, T4, T5], T_co],
+        a: MatrixLike[T1, M_co, N_co],
+        b: MatrixLike[T2, M_co, N_co],
+        c: MatrixLike[T3, M_co, N_co],
+        d: MatrixLike[T4, M_co, N_co],
+        e: MatrixLike[T5, M_co, N_co],
         /,
     ) -> None: ...
     @overload
     def __init__(
         self,
-        func: Callable[..., T_co],
-        matrix1: MatrixLike[Any, M_co, N_co],
+        f: Callable[..., T_co],
+        a: MatrixLike[Any, M_co, N_co],
         /,
-        *matrices: MatrixLike[Any, M_co, N_co],
+        *bx: MatrixLike[Any, M_co, N_co],
     ) -> None: ...
     def __iter__(self) -> Iterator[T_co]: ...
 

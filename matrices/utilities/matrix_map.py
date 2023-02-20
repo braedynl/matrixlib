@@ -21,15 +21,15 @@ class MatrixMap(ShapedCollection[T_co, M_co, N_co]):
 
     __slots__ = ("_func", "_args", "_shape")
 
-    def __init__(self, func, matrix1, /, *matrices):
-        shape1 = matrix1.shape
-        for matrix2 in matrices:
-            shape2 = matrix2.shape
-            if shape1 != shape2:
-                raise ValueError(f"incompatible shapes {shape1}, {shape2}")
-        self._func  = func
-        self._args  = (matrix1, *matrices)
-        self._shape = shape1
+    def __init__(self, f, a, /, *bx):
+        u = a.shape
+        for b in bx:
+            v = b.shape
+            if u != v:
+                raise ValueError(f"incompatible shapes {u}, {v}")
+        self._func  = f
+        self._args  = (a, *bx)
+        self._shape = u
 
     def __iter__(self):
         yield from map(self._func, *self._args)

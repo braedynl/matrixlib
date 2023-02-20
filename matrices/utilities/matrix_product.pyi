@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import Literal, TypeVar
+from typing import TypeVar
 
 from ..abc import MatrixLike, ShapedCollection
 
@@ -14,9 +14,7 @@ P_co = TypeVar("P_co", covariant=True, bound=int)
 
 class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
 
-    __slots__: tuple[Literal["_args"], Literal["_shape"]]
-
-    def __init__(self, matrix1: MatrixLike[ComplexT_co, M_co, N_co], matrix2: MatrixLike[ComplexT_co, N_co, P_co]) -> None: ...
+    def __init__(self, a: MatrixLike[ComplexT_co, M_co, N_co], b: MatrixLike[ComplexT_co, N_co, P_co], /) -> None: ...
     def __iter__(self) -> Iterator[ComplexT_co]: ...
 
     @property
