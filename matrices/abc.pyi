@@ -9,6 +9,7 @@ from .rule import Rule
 __all__ = [
     "Indexable",
     "Shaped",
+    "ShapedIndexable",
     "ShapedIterable",
     "ShapedCollection",
     "ShapedSequence",
@@ -56,6 +57,10 @@ class Shaped(Sized, Protocol[M_co, N_co]):
     def ncols(self) -> N_co: ...
     @property
     def size(self) -> int: ...
+
+
+@runtime_checkable
+class ShapedIndexable(Shaped[M_co, N_co], Indexable[T_co], Protocol[T_co, M_co, N_co]): ...
 
 
 @runtime_checkable

@@ -9,6 +9,7 @@ from .rule import Rule
 __all__ = [
     "Indexable",
     "Shaped",
+    "ShapedIndexable",
     "ShapedIterable",
     "ShapedCollection",
     "ShapedSequence",
@@ -72,6 +73,13 @@ class Shaped(Sized, Protocol[M_co, N_co]):
     def size(self):
         """The product of the shape"""
         return len(self)
+
+
+@runtime_checkable
+class ShapedIndexable(Shaped[M_co, N_co], Indexable[T_co], Protocol[T_co, M_co, N_co]):
+    """Protocol for classes that support ``shape``, and index-based
+    ``__getitem__()``
+    """
 
 
 @runtime_checkable
