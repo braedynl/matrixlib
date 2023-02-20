@@ -7,6 +7,7 @@ from typing import (Any, Literal, Protocol, SupportsIndex, TypeVar, Union,
 from .rule import Rule
 
 __all__ = [
+    "Indexable",
     "Shaped",
     "ShapedIterable",
     "ShapedCollection",
@@ -27,6 +28,17 @@ P_co = TypeVar("P_co", bound=int, covariant=True)
 ComplexT_co = TypeVar("ComplexT_co", covariant=True, bound=complex)
 RealT_co = TypeVar("RealT_co", covariant=True, bound=float)
 IntegralT_co = TypeVar("IntegralT_co", covariant=True, bound=int)
+
+
+@runtime_checkable
+class Indexable(Protocol[T_co]):
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: int) -> T_co: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, int]) -> T_co: ...
 
 
 @runtime_checkable
@@ -56,7 +68,7 @@ class ShapedCollection(ShapedIterable[T_co, M_co, N_co], Collection[T_co], Proto
     def __contains__(self, value: Any) -> bool: ...
 
 
-class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Sequence[T_co], metaclass=ABCMeta):
+class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Indexable[T_co], Sequence[T_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod

@@ -7,6 +7,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 from .rule import Rule
 
 __all__ = [
+    "Indexable",
     "Shaped",
     "ShapedIterable",
     "ShapedCollection",
@@ -26,6 +27,20 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 ComplexT_co = TypeVar("ComplexT_co", covariant=True, bound=complex)
 RealT_co = TypeVar("RealT_co", covariant=True, bound=float)
 IntegralT_co = TypeVar("IntegralT_co", covariant=True, bound=int)
+
+
+@runtime_checkable
+class Indexable(Protocol[T_co]):
+    """Protocol for classes that support vector and matrix-like
+    ``__getitem__()`` access
+
+    Note that slicing is not a requirement by this protocol.
+    """
+
+    @abstractmethod
+    def __getitem__(self, key):
+        """Return the value corresponding to ``key``"""
+        raise NotImplementedError
 
 
 @runtime_checkable
@@ -77,10 +92,15 @@ class ShapedCollection(ShapedIterable[T_co, M_co, N_co], Collection[T_co], Proto
         return any(map(lambda x: x is value or x == value, self))
 
 
-class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Sequence[T_co], metaclass=ABCMeta):
+class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Indexable[T_co], Sequence[T_co], metaclass=ABCMeta):
     """Abstract base class for shaped sequence types"""
 
     __slots__ = ()
+
+    @abstractmethod
+    def __getitem__(self, key):
+        """Return the value or sub-sequence corresponding to ``key``"""
+        raise NotImplementedError
 
 
 class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
