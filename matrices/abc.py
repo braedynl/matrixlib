@@ -41,7 +41,22 @@ class Shaped(Sized, Protocol[M_co, N_co]):
     @abstractmethod
     def shape(self):
         """The number of rows and columns as a ``tuple``"""
-        pass
+        raise NotImplementedError
+
+    @property
+    def nrows(self):
+        """The number of rows"""
+        return self.shape[0]
+
+    @property
+    def ncols(self):
+        """The number of columns"""
+        return self.shape[1]
+
+    @property
+    def size(self):
+        """The product of the shape"""
+        return len(self)
 
 
 @runtime_checkable
@@ -49,7 +64,6 @@ class ShapedIterable(Shaped[M_co, N_co], Iterable[T_co], Protocol[T_co, M_co, N_
     """Protocol for classes that support ``shape``, ``__len__()``, and
     ``__iter__()``
     """
-    pass
 
 
 @runtime_checkable
@@ -113,47 +127,32 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def array(self):
         """A sequence of the matrix's elements"""
-        pass
-
-    @property
-    def nrows(self):
-        """The number of rows"""
-        return self.shape[0]
-
-    @property
-    def ncols(self):
-        """The number of columns"""
-        return self.shape[1]
-
-    @property
-    def size(self):
-        """The product of the shape"""
-        return len(self)
+        raise NotImplementedError
 
     @abstractmethod
     def equal(self, other):
         """Return element-wise ``a == b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def not_equal(self, other):
         """Return element-wise ``a != b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def transpose(self):
         """Return the matrix transpose"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def flip(self, *, by=Rule.ROW):
         """Return the matrix flipped across the rows or columns"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def reverse(self):
         """Return the matrix reversed"""
-        pass
+        raise NotImplementedError
 
     def n(self, by):
         """Return the dimension corresponding to the given rule
@@ -277,62 +276,62 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def __add__(self, other):
         """Return element-wise ``a + b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __sub__(self, other):
         """Return element-wise ``a - b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __mul__(self, other):
         """Return element-wise ``a * b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __matmul__(self, other):
         """Return the matrix product"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __truediv__(self, other):
         """Return element-wise ``a / b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __radd__(self, other):
         """Return element-wise ``b + a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rsub__(self, other):
         """Return element-wise ``b - a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rmul__(self, other):
         """Return element-wise ``b * a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rmatmul__(self, other):
         """Return the reverse matrix product"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rtruediv__(self, other):
         """Return element-wise ``b / a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __neg__(self):
         """Return element-wise ``-a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __abs__(self):
         """Return element-wise ``abs(a)``"""
-        pass
+        raise NotImplementedError
 
     def __pos__(self):
         """Return element-wise ``+a``"""
@@ -341,7 +340,7 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def conjugate(self):
         """Return element-wise ``a.conjugate()``"""
-        pass
+        raise NotImplementedError
 
     def transjugate(self):
         """Return the conjugate transpose"""
@@ -375,92 +374,92 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def __add__(self, other):
         """Return element-wise ``a + b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __sub__(self, other):
         """Return element-wise ``a - b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __mul__(self, other):
         """Return element-wise ``a * b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __matmul__(self, other):
         """Return the matrix product"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __truediv__(self, other):
         """Return element-wise ``a / b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __floordiv__(self, other):
         """Return element-wise ``a // b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __mod__(self, other):
         """Return element-wise ``a % b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __divmod__(self, other):
         """Return element-wise ``divmod(a, b)``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __radd__(self, other):
         """Return element-wise ``b + a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rsub__(self, other):
         """Return element-wise ``b - a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rmul__(self, other):
         """Return element-wise ``b * a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rmatmul__(self, other):
         """Return the reverse matrix product"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rtruediv__(self, other):
         """Return element-wise ``b / a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rfloordiv__(self, other):
         """Return element-wise ``b // a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rmod__(self, other):
         """Return element-wise ``b % a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rdivmod__(self, other):
         """Return element-wise ``divmod(b, a)``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __neg__(self):
         """Return element-wise ``-a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __abs__(self):
         """Return element-wise ``abs(a)``"""
-        pass
+        raise NotImplementedError
 
     def __pos__(self):
         """Return element-wise ``+a``"""
@@ -469,22 +468,22 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def lesser(self, other):
         """Return element-wise ``a < b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def lesser_equal(self, other):
         """Return element-wise ``a <= b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def greater(self, other):
         """Return element-wise ``a > b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def greater_equal(self, other):
         """Return element-wise ``a >= b``"""
-        pass
+        raise NotImplementedError
 
     def conjugate(self):
         """Return element-wise ``a.conjugate()``"""
@@ -522,147 +521,147 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
     @abstractmethod
     def __add__(self, other):
         """Return element-wise ``a + b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __sub__(self, other):
         """Return element-wise ``a - b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __mul__(self, other):
         """Return element-wise ``a * b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __matmul__(self, other):
         """Return the matrix product"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __truediv__(self, other):
         """Return element-wise ``a / b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __floordiv__(self, other):
         """Return element-wise ``a // b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __mod__(self, other):
         """Return element-wise ``a % b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __divmod__(self, other):
         """Return element-wise ``divmod(a, b)``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __lshift__(self, other):
         """Return element-wise ``a << b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rshift__(self, other):
         """Return element-wise ``a >> b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __and__(self, other):
         """Return element-wise ``a & b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __xor__(self, other):
         """Return element-wise ``a ^ b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __or__(self, other):
         """Return element-wise ``a | b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __radd__(self, other):
         """Return element-wise ``b + a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rsub__(self, other):
         """Return element-wise ``b - a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rmul__(self, other):
         """Return element-wise ``b * a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rmatmul__(self, other):
         """Return the reverse matrix product"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rtruediv__(self, other):
         """Return element-wise ``b / a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rfloordiv__(self, other):
         """Return element-wise ``b // a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rmod__(self, other):
         """Return element-wise ``b % a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rdivmod__(self, other):
         """Return element-wise ``divmod(b, a)``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rlshift__(self, other):
         """Return element-wise ``b << a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rrshift__(self, other):
         """Return element-wise ``b >> a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rand__(self, other):
         """Return element-wise ``b & a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __rxor__(self, other):
         """Return element-wise ``b ^ a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __ror__(self, other):
         """Return element-wise ``b | a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __neg__(self):
         """Return element-wise ``-a``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __abs__(self):
         """Return element-wise ``abs(a)``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def __invert__(self):
         """Return element-wise ``~a``"""
-        pass
+        raise NotImplementedError
 
     def __pos__(self):
         """Return element-wise ``+a``"""
@@ -671,22 +670,22 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
     @abstractmethod
     def lesser(self, other):
         """Return element-wise ``a < b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def lesser_equal(self, other):
         """Return element-wise ``a <= b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def greater(self, other):
         """Return element-wise ``a > b``"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def greater_equal(self, other):
         """Return element-wise ``a >= b``"""
-        pass
+        raise NotImplementedError
 
     def conjugate(self):
         """Return element-wise ``a.conjugate()``"""
