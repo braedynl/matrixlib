@@ -1,8 +1,15 @@
-from typing import TypeVar
+from collections.abc import Callable, Iterator
+from typing import Any, TypeVar, overload
 
-from ..abc import ShapedCollection
+from ..abc import ShapedCollection, ShapedIterable
 
 __all__ = ["MatrixMap"]
+
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+T3 = TypeVar("T3")
+T4 = TypeVar("T4")
+T5 = TypeVar("T5")
 
 T_co = TypeVar("T_co", covariant=True)
 
@@ -21,6 +28,60 @@ class MatrixMap(ShapedCollection[T_co, M_co, N_co]):
 
     __slots__ = ("_func", "_args", "_shape")
 
+    @overload
+    def __init__(
+        self,
+        f: Callable[[T1], T_co],
+        a: ShapedIterable[T1, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        f: Callable[[T1, T2], T_co],
+        a: ShapedIterable[T1, M_co, N_co],
+        b: ShapedIterable[T2, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        f: Callable[[T1, T2, T3], T_co],
+        a: ShapedIterable[T1, M_co, N_co],
+        b: ShapedIterable[T2, M_co, N_co],
+        c: ShapedIterable[T3, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        f: Callable[[T1, T2, T3, T4], T_co],
+        a: ShapedIterable[T1, M_co, N_co],
+        b: ShapedIterable[T2, M_co, N_co],
+        c: ShapedIterable[T3, M_co, N_co],
+        d: ShapedIterable[T4, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        f: Callable[[T1, T2, T3, T4, T5], T_co],
+        a: ShapedIterable[T1, M_co, N_co],
+        b: ShapedIterable[T2, M_co, N_co],
+        c: ShapedIterable[T3, M_co, N_co],
+        d: ShapedIterable[T4, M_co, N_co],
+        e: ShapedIterable[T5, M_co, N_co],
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        f: Callable[..., T_co],
+        a: ShapedIterable[Any, M_co, N_co],
+        /,
+        *bx: ShapedIterable[Any, M_co, N_co],
+    ) -> None: ...
+
     def __init__(self, f, a, /, *bx):
         u = a.shape
         for b in bx:
@@ -31,9 +92,9 @@ class MatrixMap(ShapedCollection[T_co, M_co, N_co]):
         self._args  = (a, *bx)
         self._shape = u
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[T_co]:
         yield from map(self._func, *self._args)
 
     @property
-    def shape(self):
+    def shape(self) -> tuple[M_co, N_co]:
         return self._shape
