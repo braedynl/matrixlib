@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import warnings
 from collections.abc import Callable
@@ -16,7 +18,8 @@ class SafetyWarning(UserWarning):
     Suppression of a ``SafetyWarning`` implies that you are aware of the unsafe
     function's behavior and/or ramifications.
     """
-    pass
+
+    __slots__ = ()
 
 
 def unsafe(func: CallableT, /) -> CallableT:
@@ -28,10 +31,12 @@ def unsafe(func: CallableT, /) -> CallableT:
     ``warnings.catch_warnings()``.
     """
 
+    qualified_name = func.__qualname__
+
     @functools.wraps(func)
     def unsafe_wrapper(*args, **kwargs):
         warnings.warn(
-            f"function '{func.__qualname__}' is unsafe; read its documentation for tips on proper usage",
+            f"function '{qualified_name}' is unsafe; read its documentation for tips on proper usage",
             category=SafetyWarning,
         )
         return func(*args, **kwargs)
