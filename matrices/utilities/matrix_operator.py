@@ -1,5 +1,7 @@
 import operator
+from typing import TypeVar
 
+from ..abc import ShapedIndexable
 from .matrix_product import MatrixProduct
 from .vectorize import vectorize
 
@@ -30,6 +32,12 @@ __all__ = [
     "conjugate",
 ]
 
+ComplexT = TypeVar("ComplexT", bound=complex)
+
+M = TypeVar("M", bound=int)
+N = TypeVar("N", bound=int)
+P = TypeVar("P", bound=int)
+
 
 __lt__ = vectorize()(operator.__lt__)
 __le__ = vectorize()(operator.__le__)
@@ -47,18 +55,17 @@ __mod__      = vectorize()(operator.__mod__)
 __divmod__   = vectorize()(divmod)
 __lshift__   = vectorize()(operator.__lshift__)
 __rshift__   = vectorize()(operator.__rshift__)
+__and__      = vectorize()(operator.__and__)
+__xor__      = vectorize()(operator.__xor__)
+__or__       = vectorize()(operator.__or__)
 __neg__      = vectorize()(operator.__neg__)
 __pos__      = vectorize()(operator.__pos__)
 __abs__      = vectorize()(abs)
+__invert__   = vectorize()(operator.__invert__)
 
-__and__    = vectorize()(operator.__and__)
-__xor__    = vectorize()(operator.__xor__)
-__or__     = vectorize()(operator.__or__)
-__invert__ = vectorize()(operator.__invert__)
-
-def __matmul__(a, b, /):
+def __matmul__(a: ShapedIndexable[ComplexT, M, N], b: ShapedIndexable[ComplexT, N, P], /) -> MatrixProduct[ComplexT, M, P]:
     return MatrixProduct(a, b)
 
 @vectorize()
-def conjugate(a, /):
-    return a.conjugate()
+def conjugate(a: ComplexT, /) -> ComplexT:
+    return a.conjugate()  # type: ignore[return-value]
