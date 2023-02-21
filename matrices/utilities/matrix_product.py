@@ -1,18 +1,22 @@
 import itertools
 import operator
+from collections.abc import Iterable, Iterator
 from typing import TypeVar
 
-from ..abc import ShapedCollection
+from ..abc import ShapedCollection, ShapedIndexable
 
 __all__ = ["MatrixProduct"]
 
+ComplexT = TypeVar("ComplexT", bound=complex)
 ComplexT_co = TypeVar("ComplexT_co", covariant=True, bound=complex)
+ComplexT_contra = TypeVar("ComplexT_contra", contravariant=True, bound=complex)
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
-P_co = TypeVar("P_co", covariant=True, bound=int)  # P just makes makes more sense for matrix multiplication
+N_co = TypeVar("N_co", covariant=True, bound=int)
+P_co = TypeVar("P_co", covariant=True, bound=int)
 
 
-def sum_prod(a, b, /):
+def sum_prod(a: Iterable[ComplexT], b: Iterable[ComplexT], /) -> ComplexT:
     """Return the sum of products between two iterables, ``a`` and ``b``"""
     return sum(map(operator.mul, a, b))
 
@@ -28,14 +32,19 @@ class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
 
     __slots__ = ("_args", "_shape")
 
-    def __init__(self, a, b, /):
+    def __init__(
+        self,
+        a: ShapedIndexable[ComplexT_co, M_co, N_co],
+        b: ShapedIndexable[ComplexT_co, N_co, P_co],
+        /,
+    ) -> None:
         (m, n), (p, q) = (u, v) = (a.shape, b.shape)
         if n != p:
             raise ValueError(f"incompatible shapes {u}, {v} by inner dimensions")
         self._args  = (a, b)
         self._shape = (m, q)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[ComplexT_co]:
         a, b = self._args
 
         m = a.nrows
@@ -58,5 +67,5 @@ class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
                 )
 
     @property
-    def shape(self):
+    def shape(self) -> tuple[M_co, P_co]:
         return self._shape
