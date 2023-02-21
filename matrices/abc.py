@@ -97,7 +97,10 @@ class ShapedCollection(ShapedIterable[T_co, M_co, N_co], Collection[T_co], Proto
 
     def __contains__(self, value):
         """Return true if the collection contains ``value``, otherwise false"""
-        return any(map(lambda x: x is value or x == value, self))
+        for x in self:
+            if x is value or x == value:
+                return True
+        return False
 
 
 class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Indexable[T_co], Sequence[T_co], metaclass=ABCMeta):
@@ -127,7 +130,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
             return (
                 self.shape == other.shape
                 and
-                all(map(lambda x, y: (x is y) or (x == y), self, other))
+                all((x is y or x == y) for x, y in zip(self, other))
             )
         return NotImplemented
 
@@ -137,7 +140,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
             return (
                 self.shape != other.shape
                 or
-                any(map(lambda x, y: (x is not y) and (x != y), self, other))
+                any(not (x is y or x == y) for x, y in zip(self, other))
             )
         return NotImplemented
 
