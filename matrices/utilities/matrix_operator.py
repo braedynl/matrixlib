@@ -1,7 +1,9 @@
 import operator
-from typing import TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
-from ..abc import ShapedIndexable
+from ..abc import ShapedIndexable, ShapedIterable
+from .matrix_map import MatrixMap
 from .matrix_product import MatrixProduct
 from .vectorize import vectorize
 
@@ -32,40 +34,38 @@ __all__ = [
     "conjugate",
 ]
 
-ComplexT = TypeVar("ComplexT", bound=complex)
-
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
 P = TypeVar("P", bound=int)
 
 
-__lt__ = vectorize()(operator.__lt__)
-__le__ = vectorize()(operator.__le__)
-__eq__ = vectorize()(operator.__eq__)
-__ne__ = vectorize()(operator.__ne__)
-__gt__ = vectorize()(operator.__gt__)
-__ge__ = vectorize()(operator.__ge__)
+__lt__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]] = vectorize()(operator.__lt__)
+__le__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]] = vectorize()(operator.__le__)
+__eq__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]] = vectorize()(operator.__eq__)
+__ne__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]] = vectorize()(operator.__ne__)
+__gt__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]] = vectorize()(operator.__gt__)
+__ge__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]] = vectorize()(operator.__ge__)
 
-__add__      = vectorize()(operator.__add__)
-__sub__      = vectorize()(operator.__sub__)
-__mul__      = vectorize()(operator.__mul__)
-__truediv__  = vectorize()(operator.__truediv__)
-__floordiv__ = vectorize()(operator.__floordiv__)
-__mod__      = vectorize()(operator.__mod__)
-__divmod__   = vectorize()(divmod)
-__lshift__   = vectorize()(operator.__lshift__)
-__rshift__   = vectorize()(operator.__rshift__)
-__and__      = vectorize()(operator.__and__)
-__xor__      = vectorize()(operator.__xor__)
-__or__       = vectorize()(operator.__or__)
-__neg__      = vectorize()(operator.__neg__)
-__pos__      = vectorize()(operator.__pos__)
-__abs__      = vectorize()(abs)
-__invert__   = vectorize()(operator.__invert__)
+__add__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]      = vectorize()(operator.__add__)
+__sub__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]      = vectorize()(operator.__sub__)
+__mul__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]      = vectorize()(operator.__mul__)
+__truediv__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]  = vectorize()(operator.__truediv__)
+__floordiv__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]] = vectorize()(operator.__floordiv__)
+__mod__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]      = vectorize()(operator.__mod__)
+__divmod__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]   = vectorize()(divmod)
+__lshift__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]   = vectorize()(operator.__lshift__)
+__rshift__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]   = vectorize()(operator.__rshift__)
+__and__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]      = vectorize()(operator.__and__)
+__xor__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]      = vectorize()(operator.__xor__)
+__or__: Callable[[ShapedIterable[Any, M, N], ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]       = vectorize()(operator.__or__)
+__neg__: Callable[[ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]                                 = vectorize()(operator.__neg__)
+__pos__: Callable[[ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]                                 = vectorize()(operator.__pos__)
+__abs__: Callable[[ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]                                 = vectorize()(abs)
+__invert__: Callable[[ShapedIterable[Any, M, N]], MatrixMap[Any, M, N]]                              = vectorize()(operator.__invert__)
 
-def __matmul__(a: ShapedIndexable[ComplexT, M, N], b: ShapedIndexable[ComplexT, N, P], /) -> MatrixProduct[ComplexT, M, P]:
+def __matmul__(a: ShapedIndexable[Any, M, N], b: ShapedIndexable[Any, N, P], /) -> MatrixProduct[Any, M, P]:
     return MatrixProduct(a, b)
 
 @vectorize()
-def conjugate(a: ComplexT, /) -> ComplexT:
-    return a.conjugate()  # type: ignore[return-value]
+def conjugate(a: Any, /) -> Any:
+    return a.conjugate()

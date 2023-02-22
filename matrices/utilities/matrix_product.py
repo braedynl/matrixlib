@@ -16,7 +16,7 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
 
 
-def sum_prod(a: Iterable[ComplexT], b: Iterable[ComplexT], /) -> ComplexT:
+def sum_products(a: Iterable[ComplexT], b: Iterable[ComplexT], /) -> ComplexT:
     """Return the sum of products between two iterables, ``a`` and ``b``"""
     return sum(map(operator.mul, a, b))
 
@@ -61,7 +61,7 @@ class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
 
         for i in ix:
             for j in jx:
-                yield sum_prod(
+                yield sum_products(
                     (a[i * n + k] for k in kx),
                     (b[k * q + j] for k in kx),
                 )
