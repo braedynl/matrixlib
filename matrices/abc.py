@@ -3,8 +3,7 @@ from __future__ import annotations
 import functools
 import operator
 from abc import ABCMeta, abstractmethod
-from collections.abc import (Callable, Collection, Iterable, Iterator,
-                             Sequence, Sized)
+from collections.abc import Collection, Iterable, Iterator, Sequence, Sized
 from typing import (Any, Literal, Protocol, SupportsIndex, TypeVar, Union,
                     overload, runtime_checkable)
 
@@ -117,7 +116,7 @@ class ShapedCollection(ShapedIterable[T_co, M_co, N_co], Collection[T_co], Proto
         return False
 
 
-class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Indexable[T_co], Sequence[T_co], metaclass=ABCMeta):
+class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Sequence[T_co], metaclass=ABCMeta):
     """Abstract base class for shaped sequence types"""
 
     __slots__ = ()
@@ -288,7 +287,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator that yields shallow copies of each row or column"""
-        values: Any = reversed if reverse else iter
+        values = reversed if reverse else iter
         if by is Rule.ROW:
             row_indices = range(self.nrows)
             for row_index in values(row_indices):
@@ -322,29 +321,6 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         bound = self.n(by)
         return range(*key.indices(bound))
 
-
-S = TypeVar("S")
-
-ComplexMatrixLikeT = TypeVar("ComplexMatrixLikeT", bound="ComplexMatrixLike")
-RealMatrixLikeT = TypeVar("RealMatrixLikeT", bound="RealMatrixLike")
-IntegralMatrixLikeT = TypeVar("IntegralMatrixLikeT", bound="IntegralMatrixLike")
-
-
-@overload
-def check_friendly(
-    method: Callable[[IntegralMatrixLikeT, IntegralMatrixLike], S],
-    /,
-) -> Callable[[IntegralMatrixLikeT, IntegralMatrixLike], S]: ...
-@overload
-def check_friendly(
-    method: Callable[[RealMatrixLikeT, Union[RealMatrixLike, IntegralMatrixLike]], S],
-    /,
-) -> Callable[[RealMatrixLikeT, Union[RealMatrixLike, IntegralMatrixLike]], S]: ...
-@overload
-def check_friendly(
-    method: Callable[[ComplexMatrixLikeT, Union[ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike]], S],
-    /,
-) -> Callable[[ComplexMatrixLikeT, Union[ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike]], S]: ...
 
 def check_friendly(method, /):
     """Return ``NotImplemented`` for "un-friendly" argument types passed to
@@ -1058,7 +1034,7 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
         raise NotImplementedError
 
     @abstractmethod
-    def __divmod__(self: IntegralMatrixLike[int, M_co, N_co], other: IntegralMatrixLike[int, M_co, N_co]) -> MatrixLike[tuple[float, float], M_co, N_co]:
+    def __divmod__(self: IntegralMatrixLike[int, M_co, N_co], other: IntegralMatrixLike[int, M_co, N_co]) -> MatrixLike[tuple[int, int], M_co, N_co]:
         """Return element-wise ``divmod(a, b)``"""
         raise NotImplementedError
 
@@ -1144,7 +1120,7 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
         raise NotImplementedError
 
     @abstractmethod
-    def __rdivmod__(self: IntegralMatrixLike[int, M_co, N_co], other: IntegralMatrixLike[int, M_co, N_co]) -> MatrixLike[tuple[float, float], M_co, N_co]:
+    def __rdivmod__(self: IntegralMatrixLike[int, M_co, N_co], other: IntegralMatrixLike[int, M_co, N_co]) -> MatrixLike[tuple[int, int], M_co, N_co]:
         """Return element-wise ``divmod(b, a)``"""
         raise NotImplementedError
 
