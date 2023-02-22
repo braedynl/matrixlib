@@ -420,7 +420,7 @@ class ComplexMatrix(
     def __getitem__(self, key: tuple[slice, slice]) -> ComplexMatrixLike[ComplexT_co, Any, Any]: ...
 
     def __getitem__(self, key):
-        return super().__getitem__(key)
+        return Matrix.__getitem__(self, key)
 
     def transpose(self) -> ComplexMatrixLike[ComplexT_co, N_co, M_co]:
         raise NotImplementedError
@@ -644,7 +644,7 @@ class RealMatrix(
     def __getitem__(self, key: tuple[slice, slice]) -> RealMatrixLike[RealT_co, Any, Any]: ...
 
     def __getitem__(self, key):
-        return super().__getitem__(key)
+        return Matrix.__getitem__(self, key)
 
     def transpose(self) -> RealMatrixLike[RealT_co, N_co, M_co]:
         raise NotImplementedError
@@ -841,7 +841,7 @@ class IntegralMatrix(
     def __getitem__(self, key: tuple[slice, slice]) -> IntegralMatrixLike[IntegralT_co, Any, Any]: ...
 
     def __getitem__(self, key):
-        return super().__getitem__(key)
+        return Matrix.__getitem__(self, key)
 
     def transpose(self) -> IntegralMatrixLike[IntegralT_co, N_co, M_co]:
         raise NotImplementedError
