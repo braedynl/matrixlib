@@ -8,7 +8,6 @@ from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike, ShapedIndexable, ShapedIterable,
                   check_friendly)
 from .rule import COL, ROW, Rule
-from .unsafe import unsafe
 from .utilities.matrix_map import MatrixMap
 from .utilities.matrix_operator import (__abs__, __add__, __and__, __divmod__,
                                         __eq__, __floordiv__, __ge__, __gt__,
@@ -18,6 +17,7 @@ from .utilities.matrix_operator import (__abs__, __add__, __and__, __divmod__,
                                         __sub__, __truediv__, __xor__,
                                         conjugate)
 from .utilities.matrix_product import MatrixProduct
+from .utilities.unsafe import unsafe
 
 __all__ = [
     "MatrixOperatorsMixin",
