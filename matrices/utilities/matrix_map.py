@@ -89,7 +89,7 @@ class MatrixMap(ShapedCollection[S_co, M_co, N_co]):
             if u != v:
                 raise ValueError(f"incompatible shapes {u}, {v}")
         self._func  = f
-        self._args  = (a, *bx)
+        self._args  = a, *bx
         self._shape = u
 
     def __iter__(self) -> Iterator[S_co]:
