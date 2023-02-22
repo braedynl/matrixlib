@@ -3,7 +3,8 @@ from __future__ import annotations
 import functools
 import operator
 from abc import ABCMeta, abstractmethod
-from collections.abc import Collection, Iterable, Iterator, Sequence, Sized
+from collections.abc import (Callable, Collection, Iterable, Iterator,
+                             Sequence, Sized)
 from typing import (Any, Literal, Protocol, SupportsIndex, TypeVar, Union,
                     overload, runtime_checkable)
 
@@ -322,7 +323,10 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         return range(*key.indices(bound))
 
 
-def check_friendly(method, /):
+CallableT = TypeVar("CallableT", bound=Callable)
+
+
+def check_friendly(method: CallableT, /) -> CallableT:
     """Return ``NotImplemented`` for "un-friendly" argument types passed to
     special binary methods
 
@@ -338,7 +342,7 @@ def check_friendly(method, /):
             return method(self, other)
         return NotImplemented
 
-    return check_friendly_wrapper
+    return check_friendly_wrapper  # type: ignore[return-value]
 
 
 def compare(a, b, /):
