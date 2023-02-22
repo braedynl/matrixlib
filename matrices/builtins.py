@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+import warnings
+from collections.abc import Iterable, Iterator
 from typing import (Any, Generic, Literal, Optional, SupportsIndex, TypeVar,
                     overload)
 
@@ -213,45 +214,51 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
         self._shape = shape
         return self
 
-    # @classmethod
-    # def from_nesting(cls: type[MatrixT], nesting: Iterable[Iterable[T_co]]) -> MatrixT:
-    #     """Construct a matrix from a singly-nested iterable, using the
-    #     shallowest iterable's length to deduce the number of rows, and the
-    #     nested iterables' lengths to deduce the number of columns
+    @classmethod
+    def from_nesting(cls: type[MatrixT], nesting: Iterable[Iterable[T_co]]) -> MatrixT:
+        """Construct a matrix from a singly-nested iterable, using the
+        shallowest iterable's length to deduce the number of rows, and the
+        nested iterables' lengths to deduce the number of columns
 
-    #     Raises ``ValueError`` if the length of the nested iterables is
-    #     inconsistent.
-    #     """
-    #     nrows = 0
-    #     ncols = 0
+        Raises ``ValueError`` if the length of the nested iterables is
+        inconsistent.
+        """
+        nrows = 0
+        ncols = 0
 
-    #     def flatten(nesting):
-    #         nonlocal nrows, ncols
+        def collapse(nesting: Iterable[Iterable[T_co]]) -> Iterator[T_co]:
+            nonlocal nrows
+            nonlocal ncols
+            rows = iter(nesting)
+            try:
+                row = next(rows)
+            except StopIteration:
+                return
+            else:
+                nrows += 1
+            for val in row:
+                yield val
+                ncols += 1
+            for row in rows:
+                n = 0
+                for val in row:
+                    yield val
+                    n += 1
+                if n != ncols:
+                    raise ValueError(f"row {nrows} has length {n}, but precedent rows have length {ncols}")
+                nrows += 1
 
-    #         rows = iter(nesting)
-    #         try:
-    #             row = next(rows)
-    #         except StopIteration:
-    #             return
-    #         else:
-    #             nrows += 1
+        array = tuple(collapse(nesting))
+        shape = nrows, ncols
 
-    #         for val in row:
-    #             yield val
-    #             ncols += 1
+        with warnings.catch_warnings():
+            warnings.simplefilter(action="ignore")
+            self = cls.from_raw_parts(
+                array=array,
+                shape=shape,
+            )
 
-    #         for row in rows:
-    #             n = 0
-    #             for val in row:
-    #                 yield val
-    #                 n += 1
-    #             if n != ncols:
-    #                 raise ValueError(f"row {nrows} has length {n}, but precedent rows have length {ncols}")
-    #             nrows += 1
-
-    #     array = flatten(nesting)
-
-    #     return cls(array, shape=(nrows, ncols))
+        return self
 
     @property
     def array(self) -> tuple[T_co, ...]:
