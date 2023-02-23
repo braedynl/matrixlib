@@ -32,10 +32,6 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
 
-ComplexT_co = TypeVar("ComplexT_co", covariant=True, bound=complex)
-RealT_co = TypeVar("RealT_co", covariant=True, bound=float)
-IntegralT_co = TypeVar("IntegralT_co", covariant=True, bound=int)
-
 
 @runtime_checkable
 class Indexable(Protocol[T_co]):
@@ -218,12 +214,12 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]:
+    def equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a == b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def not_equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]:
+    def not_equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a != b``"""
         raise NotImplementedError
 
@@ -311,7 +307,8 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         bound = self.n(by)
         index += bound * (index < 0)
         if index < 0 or index >= bound:
-            raise IndexError(f"there are {bound} {by.handle}s but index is {key}")
+            handle = by.handle
+            raise IndexError(f"there are {bound} {handle}s but index is {key}")
         return index
 
     def _resolve_vector_slice(self, key: slice) -> Iterable[int]:
@@ -376,28 +373,28 @@ def compare(a, b, /):
     return 0
 
 
-class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
+class ComplexMatrixLike(MatrixLike[complex, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
     @overload
     @abstractmethod
-    def __getitem__(self, key: int) -> ComplexT_co: ...
+    def __getitem__(self, key: int) -> complex: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: slice) -> ComplexMatrixLike[ComplexT_co, Literal[1], Any]: ...
+    def __getitem__(self, key: slice) -> ComplexMatrixLike[Literal[1], Any]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[int, int]) -> ComplexT_co: ...
+    def __getitem__(self, key: tuple[int, int]) -> complex: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[int, slice]) -> ComplexMatrixLike[ComplexT_co, Literal[1], Any]: ...
+    def __getitem__(self, key: tuple[int, slice]) -> ComplexMatrixLike[Literal[1], Any]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[slice, int]) -> ComplexMatrixLike[ComplexT_co, Any, Literal[1]]: ...
+    def __getitem__(self, key: tuple[slice, int]) -> ComplexMatrixLike[Any, Literal[1]]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[slice, slice]) -> ComplexMatrixLike[ComplexT_co, Any, Any]: ...
+    def __getitem__(self, key: tuple[slice, slice]) -> ComplexMatrixLike[Any, Any]: ...
 
     @abstractmethod
     def __getitem__(self, key):
@@ -405,13 +402,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __add__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __add__(self, other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __add__(self, other: RealMatrixLike[float, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __add__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __add__(self, other: ComplexMatrixLike[complex, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __add__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __add__(self, other):
@@ -420,13 +417,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __sub__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __sub__(self, other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __sub__(self, other: RealMatrixLike[float, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __sub__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __sub__(self, other: ComplexMatrixLike[complex, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __sub__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __sub__(self, other):
@@ -435,13 +432,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __mul__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __mul__(self, other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __mul__(self, other: RealMatrixLike[float, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __mul__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __mul__(self, other: ComplexMatrixLike[complex, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __mul__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __mul__(self, other):
@@ -450,13 +447,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __matmul__(self, other: IntegralMatrixLike[int, N_co, P_co]) -> ComplexMatrixLike[complex, M_co, P_co]: ...
+    def __matmul__(self, other: IntegralMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
     @overload
     @abstractmethod
-    def __matmul__(self, other: RealMatrixLike[float, N_co, P_co]) -> ComplexMatrixLike[complex, M_co, P_co]: ...
+    def __matmul__(self, other: RealMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
     @overload
     @abstractmethod
-    def __matmul__(self, other: ComplexMatrixLike[complex, N_co, P_co]) -> ComplexMatrixLike[complex, M_co, P_co]: ...
+    def __matmul__(self, other: ComplexMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
 
     @abstractmethod
     def __matmul__(self, other):
@@ -465,13 +462,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __truediv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __truediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __truediv__(self, other: RealMatrixLike[float, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __truediv__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __truediv__(self, other: ComplexMatrixLike[complex, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __truediv__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __truediv__(self, other):
@@ -480,13 +477,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __radd__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __radd__(self, other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __radd__(self, other: RealMatrixLike[float, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __radd__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __radd__(self, other: ComplexMatrixLike[complex, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __radd__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __radd__(self, other):
@@ -495,13 +492,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rsub__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __rsub__(self, other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rsub__(self, other: RealMatrixLike[float, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __rsub__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rsub__(self, other: ComplexMatrixLike[complex, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __rsub__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rsub__(self, other):
@@ -510,13 +507,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rmul__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __rmul__(self, other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rmul__(self, other: RealMatrixLike[float, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __rmul__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rmul__(self, other: ComplexMatrixLike[complex, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __rmul__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rmul__(self, other):
@@ -525,13 +522,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rmatmul__(self, other: IntegralMatrixLike[int, P_co, M_co]) -> ComplexMatrixLike[complex, P_co, N_co]: ...
+    def __rmatmul__(self, other: IntegralMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rmatmul__(self, other: RealMatrixLike[float, P_co, M_co]) -> ComplexMatrixLike[complex, P_co, N_co]: ...
+    def __rmatmul__(self, other: RealMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rmatmul__(self, other: ComplexMatrixLike[complex, P_co, M_co]) -> ComplexMatrixLike[complex, P_co, N_co]: ...
+    def __rmatmul__(self, other: ComplexMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...
 
     @abstractmethod
     def __rmatmul__(self, other):
@@ -540,13 +537,13 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rtruediv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __rtruediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rtruediv__(self, other: RealMatrixLike[float, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __rtruediv__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rtruediv__(self, other: ComplexMatrixLike[complex, M_co, N_co]) -> ComplexMatrixLike[complex, M_co, N_co]: ...
+    def __rtruediv__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rtruediv__(self, other):
@@ -554,75 +551,75 @@ class ComplexMatrixLike(MatrixLike[ComplexT_co, M_co, N_co], metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def __neg__(self) -> ComplexMatrixLike[complex, M_co, N_co]:
+    def __neg__(self) -> ComplexMatrixLike[M_co, N_co]:
         """Return element-wise ``-a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __abs__(self) -> RealMatrixLike[float, M_co, N_co]:
+    def __abs__(self) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``abs(a)``"""
         raise NotImplementedError
 
-    def __pos__(self) -> ComplexMatrixLike[complex, M_co, N_co]:
+    def __pos__(self) -> ComplexMatrixLike[M_co, N_co]:
         """Return element-wise ``+a``"""
         return self
 
     @abstractmethod
-    def transpose(self) -> ComplexMatrixLike[ComplexT_co, N_co, M_co]:
+    def transpose(self) -> ComplexMatrixLike[N_co, M_co]:
         raise NotImplementedError
 
     @abstractmethod
-    def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrixLike[ComplexT_co, M_co, N_co]:
+    def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrixLike[M_co, N_co]:
         raise NotImplementedError
 
     @abstractmethod
-    def reverse(self) -> ComplexMatrixLike[ComplexT_co, M_co, N_co]:
+    def reverse(self) -> ComplexMatrixLike[M_co, N_co]:
         raise NotImplementedError
 
     @overload
-    def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[ComplexMatrixLike[ComplexT_co, Literal[1], N_co]]: ...
+    def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[ComplexMatrixLike[Literal[1], N_co]]: ...
     @overload
-    def slices(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[ComplexMatrixLike[ComplexT_co, M_co, Literal[1]]]: ...
+    def slices(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[ComplexMatrixLike[M_co, Literal[1]]]: ...
     @overload
-    def slices(self, *, by: Rule, reverse: bool = False) -> Iterator[ComplexMatrixLike[ComplexT_co, Any, Any]]: ...
+    def slices(self, *, by: Rule, reverse: bool = False) -> Iterator[ComplexMatrixLike[Any, Any]]: ...
     @overload
-    def slices(self, *, reverse: bool = False) -> Iterator[ComplexMatrixLike[ComplexT_co, Literal[1], N_co]]: ...
+    def slices(self, *, reverse: bool = False) -> Iterator[ComplexMatrixLike[Literal[1], N_co]]: ...
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         yield from super().slices(by=by, reverse=reverse)
 
     @abstractmethod
-    def conjugate(self) -> ComplexMatrixLike[complex, M_co, N_co]:
+    def conjugate(self) -> ComplexMatrixLike[M_co, N_co]:
         """Return element-wise ``a.conjugate()``"""
         raise NotImplementedError
 
-    def transjugate(self) -> ComplexMatrixLike[complex, N_co, M_co]:
+    def transjugate(self) -> ComplexMatrixLike[N_co, M_co]:
         """Return the conjugate transpose"""
         return self.transpose().conjugate()
 
 
-class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
+class RealMatrixLike(MatrixLike[float, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
     @overload
     @abstractmethod
-    def __getitem__(self, key: int) -> RealT_co: ...
+    def __getitem__(self, key: int) -> float: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: slice) -> RealMatrixLike[RealT_co, Literal[1], Any]: ...
+    def __getitem__(self, key: slice) -> RealMatrixLike[Literal[1], Any]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[int, int]) -> RealT_co: ...
+    def __getitem__(self, key: tuple[int, int]) -> float: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[int, slice]) -> RealMatrixLike[RealT_co, Literal[1], Any]: ...
+    def __getitem__(self, key: tuple[int, slice]) -> RealMatrixLike[Literal[1], Any]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[slice, int]) -> RealMatrixLike[RealT_co, Any, Literal[1]]: ...
+    def __getitem__(self, key: tuple[slice, int]) -> RealMatrixLike[Any, Literal[1]]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[slice, slice]) -> RealMatrixLike[RealT_co, Any, Any]: ...
+    def __getitem__(self, key: tuple[slice, slice]) -> RealMatrixLike[Any, Any]: ...
 
     @abstractmethod
     def __getitem__(self, key):
@@ -670,10 +667,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __add__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __add__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __add__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __add__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __add__(self, other):
@@ -682,10 +679,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __sub__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __sub__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __sub__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __sub__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __sub__(self, other):
@@ -694,10 +691,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __mul__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __mul__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __mul__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __mul__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __mul__(self, other):
@@ -706,10 +703,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __matmul__(self, other: IntegralMatrixLike[int, N_co, P_co]) -> RealMatrixLike[float, M_co, P_co]: ...
+    def __matmul__(self, other: IntegralMatrixLike[N_co, P_co]) -> RealMatrixLike[M_co, P_co]: ...
     @overload
     @abstractmethod
-    def __matmul__(self, other: RealMatrixLike[float, N_co, P_co]) -> RealMatrixLike[float, M_co, P_co]: ...
+    def __matmul__(self, other: RealMatrixLike[N_co, P_co]) -> RealMatrixLike[M_co, P_co]: ...
 
     @abstractmethod
     def __matmul__(self, other):
@@ -718,10 +715,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __truediv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __truediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __truediv__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __truediv__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __truediv__(self, other):
@@ -730,10 +727,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __floordiv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __floordiv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __floordiv__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __floordiv__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __floordiv__(self, other):
@@ -742,10 +739,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __mod__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __mod__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __mod__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __mod__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __mod__(self, other):
@@ -754,10 +751,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __divmod__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> MatrixLike[tuple[float, float], M_co, N_co]: ...
+    def __divmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
     @overload
     @abstractmethod
-    def __divmod__(self, other: RealMatrixLike[float, M_co, N_co]) -> MatrixLike[tuple[float, float], M_co, N_co]: ...
+    def __divmod__(self, other: RealMatrixLike[M_co, N_co]) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
 
     @abstractmethod
     def __divmod__(self, other):
@@ -766,10 +763,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __radd__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __radd__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __radd__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __radd__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __radd__(self, other):
@@ -778,10 +775,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rsub__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rsub__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rsub__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rsub__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rsub__(self, other):
@@ -790,10 +787,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rmul__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rmul__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rmul__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rmul__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rmul__(self, other):
@@ -802,10 +799,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rmatmul__(self, other: IntegralMatrixLike[int, P_co, M_co]) -> RealMatrixLike[float, P_co, N_co]: ...
+    def __rmatmul__(self, other: IntegralMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rmatmul__(self, other: RealMatrixLike[float, P_co, M_co]) -> RealMatrixLike[float, P_co, N_co]: ...
+    def __rmatmul__(self, other: RealMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]: ...
 
     @abstractmethod
     def __rmatmul__(self, other):
@@ -814,10 +811,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rtruediv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rtruediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rtruediv__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rtruediv__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rtruediv__(self, other):
@@ -826,10 +823,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rfloordiv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rfloordiv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rfloordiv__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rfloordiv__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rfloordiv__(self, other):
@@ -838,10 +835,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rmod__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def __rmod__(self, other: RealMatrixLike[float, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]: ...
+    def __rmod__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rmod__(self, other):
@@ -850,10 +847,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def __rdivmod__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> MatrixLike[tuple[float, float], M_co, N_co]: ...
+    def __rdivmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
     @overload
     @abstractmethod
-    def __rdivmod__(self, other: RealMatrixLike[float, M_co, N_co]) -> MatrixLike[tuple[float, float], M_co, N_co]: ...
+    def __rdivmod__(self, other: RealMatrixLike[M_co, N_co]) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
 
     @abstractmethod
     def __rdivmod__(self, other):
@@ -861,49 +858,49 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def __neg__(self) -> RealMatrixLike[float, M_co, N_co]:
+    def __neg__(self) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``-a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __abs__(self) -> RealMatrixLike[float, M_co, N_co]:
+    def __abs__(self) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``abs(a)``"""
         raise NotImplementedError
 
-    def __pos__(self) -> RealMatrixLike[float, M_co, N_co]:
+    def __pos__(self) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``+a``"""
         return self
 
     @abstractmethod
-    def transpose(self) -> RealMatrixLike[RealT_co, N_co, M_co]:
+    def transpose(self) -> RealMatrixLike[N_co, M_co]:
         raise NotImplementedError
 
     @abstractmethod
-    def flip(self, *, by: Rule = Rule.ROW) -> RealMatrixLike[RealT_co, M_co, N_co]:
+    def flip(self, *, by: Rule = Rule.ROW) -> RealMatrixLike[M_co, N_co]:
         raise NotImplementedError
 
     @abstractmethod
-    def reverse(self) -> RealMatrixLike[RealT_co, M_co, N_co]:
+    def reverse(self) -> RealMatrixLike[M_co, N_co]:
         raise NotImplementedError
 
     @overload
-    def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[RealMatrixLike[RealT_co, Literal[1], N_co]]: ...
+    def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[RealMatrixLike[Literal[1], N_co]]: ...
     @overload
-    def slices(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[RealMatrixLike[RealT_co, M_co, Literal[1]]]: ...
+    def slices(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[RealMatrixLike[M_co, Literal[1]]]: ...
     @overload
-    def slices(self, *, by: Rule, reverse: bool = False) -> Iterator[RealMatrixLike[RealT_co, Any, Any]]: ...
+    def slices(self, *, by: Rule, reverse: bool = False) -> Iterator[RealMatrixLike[Any, Any]]: ...
     @overload
-    def slices(self, *, reverse: bool = False) -> Iterator[RealMatrixLike[RealT_co, Literal[1], N_co]]: ...
+    def slices(self, *, reverse: bool = False) -> Iterator[RealMatrixLike[Literal[1], N_co]]: ...
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         yield from super().slices(by=by, reverse=reverse)
 
     @overload
     @abstractmethod
-    def lesser(self, other: IntegralMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
+    def lesser(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def lesser(self, other: RealMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
+    def lesser(self, other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def lesser(self, other):
@@ -912,10 +909,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def lesser_equal(self, other: IntegralMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
+    def lesser_equal(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def lesser_equal(self, other: RealMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
+    def lesser_equal(self, other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def lesser_equal(self, other):
@@ -924,10 +921,10 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def greater(self, other: IntegralMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
+    def greater(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def greater(self, other: RealMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
+    def greater(self, other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def greater(self, other):
@@ -936,47 +933,47 @@ class RealMatrixLike(MatrixLike[RealT_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def greater_equal(self, other: IntegralMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
+    def greater_equal(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def greater_equal(self, other: RealMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
+    def greater_equal(self, other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def greater_equal(self, other):
         """Return element-wise ``a >= b``"""
         raise NotImplementedError
 
-    def conjugate(self) -> RealMatrixLike[float, M_co, N_co]:
+    def conjugate(self) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``a.conjugate()``"""
         return self
 
-    def transjugate(self) -> RealMatrixLike[float, N_co, M_co]:
+    def transjugate(self) -> RealMatrixLike[N_co, M_co]:
         """Return the conjugate transpose"""
         return self.transpose()
 
 
-class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta):
+class IntegralMatrixLike(MatrixLike[int, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
     @overload
     @abstractmethod
-    def __getitem__(self, key: int) -> IntegralT_co: ...
+    def __getitem__(self, key: int) -> int: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: slice) -> IntegralMatrixLike[IntegralT_co, Literal[1], Any]: ...
+    def __getitem__(self, key: slice) -> IntegralMatrixLike[Literal[1], Any]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[int, int]) -> IntegralT_co: ...
+    def __getitem__(self, key: tuple[int, int]) -> int: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[int, slice]) -> IntegralMatrixLike[IntegralT_co, Literal[1], Any]: ...
+    def __getitem__(self, key: tuple[int, slice]) -> IntegralMatrixLike[Literal[1], Any]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[slice, int]) -> IntegralMatrixLike[IntegralT_co, Any, Literal[1]]: ...
+    def __getitem__(self, key: tuple[slice, int]) -> IntegralMatrixLike[Any, Literal[1]]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[slice, slice]) -> IntegralMatrixLike[IntegralT_co, Any, Any]: ...
+    def __getitem__(self, key: tuple[slice, slice]) -> IntegralMatrixLike[Any, Any]: ...
 
     @abstractmethod
     def __getitem__(self, key):
@@ -1003,245 +1000,203 @@ class IntegralMatrixLike(MatrixLike[IntegralT_co, M_co, N_co], metaclass=ABCMeta
         return compare(self, other) >= 0
 
     @abstractmethod
-    def __add__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __add__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a + b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __sub__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __sub__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a - b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __mul__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __mul__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a * b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __matmul__(self, other: IntegralMatrixLike[int, N_co, P_co]) -> IntegralMatrixLike[int, M_co, P_co]:
+    def __matmul__(self, other: IntegralMatrixLike[N_co, P_co]) -> IntegralMatrixLike[M_co, P_co]:
         """Return the matrix product"""
         raise NotImplementedError
 
     @abstractmethod
-    def __truediv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]:
+    def __truediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``a / b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __floordiv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __floordiv__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a // b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __mod__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __mod__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a % b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __divmod__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> MatrixLike[tuple[int, int], M_co, N_co]:
+    def __divmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]:
         """Return element-wise ``divmod(a, b)``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __lshift__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __lshift__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a << b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rshift__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __rshift__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a >> b``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __and__(self: IntegralMatrixLike[bool, M_co, N_co], other: IntegralMatrixLike[bool, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __and__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]: ...
-
-    @abstractmethod
-    def __and__(self, other):
+    def __and__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a & b``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __xor__(self: IntegralMatrixLike[bool, M_co, N_co], other: IntegralMatrixLike[bool, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __xor__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]: ...
-
-    @abstractmethod
-    def __xor__(self, other):
+    def __xor__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a ^ b``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __or__(self: IntegralMatrixLike[bool, M_co, N_co], other: IntegralMatrixLike[bool, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __or__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]: ...
-
-    @abstractmethod
-    def __or__(self, other):
+    def __or__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a | b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __radd__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __radd__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b + a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rsub__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __rsub__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b - a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rmul__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __rmul__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b * a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rmatmul__(self, other: IntegralMatrixLike[int, P_co, M_co]) -> IntegralMatrixLike[int, P_co, N_co]:
+    def __rmatmul__(self, other: IntegralMatrixLike[P_co, M_co]) -> IntegralMatrixLike[P_co, N_co]:
         """Return the reverse matrix product"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rtruediv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> RealMatrixLike[float, M_co, N_co]:
+    def __rtruediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``b / a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rfloordiv__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __rfloordiv__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b // a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rmod__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __rmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b % a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rdivmod__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> MatrixLike[tuple[int, int], M_co, N_co]:
+    def __rdivmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]:
         """Return element-wise ``divmod(b, a)``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rlshift__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __rlshift__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b << a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __rrshift__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __rrshift__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b >> a``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __rand__(self: IntegralMatrixLike[bool, M_co, N_co], other: IntegralMatrixLike[bool, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rand__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]: ...
-
-    @abstractmethod
-    def __rand__(self, other):
+    def __rand__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b & a``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __rxor__(self: IntegralMatrixLike[bool, M_co, N_co], other: IntegralMatrixLike[bool, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rxor__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]: ...
-
-    @abstractmethod
-    def __rxor__(self, other):
+    def __rxor__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b ^ a``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __ror__(self: IntegralMatrixLike[bool, M_co, N_co], other: IntegralMatrixLike[bool, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __ror__(self, other: IntegralMatrixLike[int, M_co, N_co]) -> IntegralMatrixLike[int, M_co, N_co]: ...
-
-    @abstractmethod
-    def __ror__(self, other):
+    def __ror__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``b | a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __neg__(self) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __neg__(self) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``-a``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __abs__(self) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __abs__(self) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``abs(a)``"""
         raise NotImplementedError
 
     @abstractmethod
-    def __invert__(self) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __invert__(self) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``~a``"""
         raise NotImplementedError
 
-    def __pos__(self) -> IntegralMatrixLike[int, M_co, N_co]:
+    def __pos__(self) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``+a``"""
         return self
 
     @abstractmethod
-    def transpose(self) -> IntegralMatrixLike[IntegralT_co, N_co, M_co]:
+    def transpose(self) -> IntegralMatrixLike[N_co, M_co]:
         raise NotImplementedError
 
     @abstractmethod
-    def flip(self, *, by: Rule = Rule.ROW) -> IntegralMatrixLike[IntegralT_co, M_co, N_co]:
+    def flip(self, *, by: Rule = Rule.ROW) -> IntegralMatrixLike[M_co, N_co]:
         raise NotImplementedError
 
     @abstractmethod
-    def reverse(self) -> IntegralMatrixLike[IntegralT_co, M_co, N_co]:
+    def reverse(self) -> IntegralMatrixLike[M_co, N_co]:
         raise NotImplementedError
 
     @overload
-    def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[IntegralMatrixLike[IntegralT_co, Literal[1], N_co]]: ...
+    def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[IntegralMatrixLike[Literal[1], N_co]]: ...
     @overload
-    def slices(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[IntegralMatrixLike[IntegralT_co, M_co, Literal[1]]]: ...
+    def slices(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[IntegralMatrixLike[M_co, Literal[1]]]: ...
     @overload
-    def slices(self, *, by: Rule, reverse: bool = False) -> Iterator[IntegralMatrixLike[IntegralT_co, Any, Any]]: ...
+    def slices(self, *, by: Rule, reverse: bool = False) -> Iterator[IntegralMatrixLike[Any, Any]]: ...
     @overload
-    def slices(self, *, reverse: bool = False) -> Iterator[IntegralMatrixLike[IntegralT_co, Literal[1], N_co]]: ...
+    def slices(self, *, reverse: bool = False) -> Iterator[IntegralMatrixLike[Literal[1], N_co]]: ...
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         yield from super().slices(by=by, reverse=reverse)
 
     @abstractmethod
-    def lesser(self, other: IntegralMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]:
+    def lesser(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a < b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def lesser_equal(self, other: IntegralMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]:
+    def lesser_equal(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a <= b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def greater(self, other: IntegralMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]:
+    def greater(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a > b``"""
         raise NotImplementedError
 
     @abstractmethod
-    def greater_equal(self, other: IntegralMatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[bool, M_co, N_co]:
+    def greater_equal(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a >= b``"""
         raise NotImplementedError
 
-    def conjugate(self) -> IntegralMatrixLike[int, M_co, N_co]:
+    def conjugate(self) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a.conjugate()``"""
         return self
 
-    def transjugate(self) -> IntegralMatrixLike[int, N_co, M_co]:
+    def transjugate(self) -> IntegralMatrixLike[N_co, M_co]:
         """Return the conjugate transpose"""
         return self.transpose()
 
