@@ -41,8 +41,8 @@ class MatrixProduct(ShapedCollection[ComplexT_co, M_co, P_co]):
         (m, n), (p, q) = (u, v) = (a.shape, b.shape)
         if n != p:
             raise ValueError(f"incompatible shapes {u}, {v} by inner dimensions")
-        self._args  = (a, b)
-        self._shape = (m, q)
+        self._args  = a, b
+        self._shape = m, q
 
     def __iter__(self) -> Iterator[ComplexT_co]:
         a, b = self._args
