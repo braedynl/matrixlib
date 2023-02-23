@@ -72,19 +72,6 @@ class vectorize:
 
     def __call__(self, f: Callable[..., S], /) -> Callable[..., MatrixMap[S, M, N]]:
 
-        @overload
-        def vectorize_wrapper(a: ShapedIterable[T1, M, N], /) -> MatrixMap[S, M, N]: ...
-        @overload
-        def vectorize_wrapper(a: ShapedIterable[T1, M, N], b: ShapedIterable[T2, M, N], /) -> MatrixMap[S, M, N]: ...
-        @overload
-        def vectorize_wrapper(a: ShapedIterable[T1, M, N], b: ShapedIterable[T2, M, N], c: ShapedIterable[T3, M, N], /) -> MatrixMap[S, M, N]: ...
-        @overload
-        def vectorize_wrapper(a: ShapedIterable[T1, M, N], b: ShapedIterable[T2, M, N], c: ShapedIterable[T3, M, N], d: ShapedIterable[T4, M, N], /) -> MatrixMap[S, M, N]: ...
-        @overload
-        def vectorize_wrapper(a: ShapedIterable[T1, M, N], b: ShapedIterable[T2, M, N], c: ShapedIterable[T3, M, N], d: ShapedIterable[T4, M, N], e: ShapedIterable[T5, M, N], /) -> MatrixMap[S, M, N]: ...
-        @overload
-        def vectorize_wrapper(a: ShapedIterable[Any, M, N], /, *bx: ShapedIterable[Any, M, N]) -> MatrixMap[S, M, N]: ...
-
         def vectorize_wrapper(a: ShapedIterable[Any, M, N], /, *bx: ShapedIterable[Any, M, N]) -> MatrixMap[S, M, N]:
             return MatrixMap(f, a, *bx)
 
