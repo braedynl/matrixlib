@@ -300,7 +300,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     def _resolve_vector_index(self, key: SupportsIndex) -> int:
         index = operator.index(key)
-        bound = self.size
+        bound = len(self)
         index += bound * (index < 0)
         if index < 0 or index >= bound:
             raise IndexError(f"there are {bound} items but index is {key}")
@@ -315,7 +315,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         return index
 
     def _resolve_vector_slice(self, key: slice) -> Iterable[int]:
-        bound = self.size
+        bound = len(self)
         return range(*key.indices(bound))
 
     def _resolve_matrix_slice(self, key: slice, *, by: Rule = Rule.ROW) -> Iterable[int]:
