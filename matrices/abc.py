@@ -9,7 +9,7 @@ from collections.abc import (Callable, Collection, Iterable, Iterator,
 from typing import (Any, Literal, Protocol, SupportsIndex, TypeVar, Union,
                     overload, runtime_checkable)
 
-from .rule import Rule
+from .rule import COL, ROW, Rule
 
 __all__ = [
     "Indexable",
@@ -200,13 +200,13 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     def __iter__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in row-major order"""
-        yield from self.values()
+        yield from self.values(by=ROW, reverse=False)
 
     def __reversed__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
-        yield from self.values(reverse=True)
+        yield from self.values(by=ROW, reverse=True)
 
     @property
     @abstractmethod
