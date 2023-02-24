@@ -11,13 +11,8 @@ from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike, ShapedIndexable, ShapedIterable,
                   check_friendly)
 from .rule import COL, ROW, Rule
-from .utilities.matrix_operator import (__abs__, __add__, __and__, __divmod__,
-                                        __eq__, __floordiv__, __ge__, __gt__,
-                                        __invert__, __le__, __lshift__, __lt__,
-                                        __matmul__, __mod__, __mul__, __ne__,
-                                        __neg__, __or__, __pos__, __rshift__,
-                                        __sub__, __truediv__, __xor__,
-                                        conjugate)
+from .utilities.matrix_map import MatrixMap
+from .utilities.matrix_product import MatrixProduct
 
 __all__ = [
     "MatrixOperatorsMixin",
@@ -52,10 +47,10 @@ class MatrixOperatorsMixin(Generic[T_co, M_co, N_co]):
     __slots__ = ()
 
     def equal(self: ShapedIterable[T_co, M_co, N_co], other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__eq__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__eq__, self, other))
 
     def not_equal(self: ShapedIterable[T_co, M_co, N_co], other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__ne__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__ne__, self, other))
 
 
 class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co]):
@@ -293,7 +288,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __add__(self, other):
-        return ComplexMatrix(__add__(self, other))
+        return ComplexMatrix(MatrixMap(operator.__add__, self, other))
 
     @overload
     def __sub__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
@@ -304,7 +299,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __sub__(self, other):
-        return ComplexMatrix(__sub__(self, other))
+        return ComplexMatrix(MatrixMap(operator.__sub__, self, other))
 
     @overload
     def __mul__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
@@ -315,7 +310,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __mul__(self, other):
-        return ComplexMatrix(__mul__(self, other))
+        return ComplexMatrix(MatrixMap(operator.__mul__, self, other))
 
     @overload
     def __matmul__(self: ShapedIndexable[complex, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
@@ -326,7 +321,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __matmul__(self, other):
-        return ComplexMatrix(__matmul__(self, other))
+        return ComplexMatrix(MatrixProduct(self, other))
 
     @overload
     def __truediv__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
@@ -337,7 +332,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __truediv__(self, other):
-        return ComplexMatrix(__truediv__(self, other))
+        return ComplexMatrix(MatrixMap(operator.__truediv__, self, other))
 
     @overload
     def __radd__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
@@ -348,7 +343,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __radd__(self, other):
-        return ComplexMatrix(__add__(other, self))
+        return ComplexMatrix(MatrixMap(operator.__add__, other, self))
 
     @overload
     def __rsub__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
@@ -359,7 +354,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rsub__(self, other):
-        return ComplexMatrix(__sub__(other, self))
+        return ComplexMatrix(MatrixMap(operator.__sub__, other, self))
 
     @overload
     def __rmul__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
@@ -370,7 +365,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rmul__(self, other):
-        return ComplexMatrix(__mul__(other, self))
+        return ComplexMatrix(MatrixMap(operator.__mul__, other, self))
 
     @overload
     def __rmatmul__(self: ShapedIndexable[complex, M_co, N_co], other: IntegralMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...  # type: ignore[misc]
@@ -381,7 +376,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rmatmul__(self, other):
-        return ComplexMatrix(__matmul__(other, self))
+        return ComplexMatrix(MatrixProduct(other, self))
 
     @overload
     def __rtruediv__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
@@ -392,16 +387,16 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rtruediv__(self, other):
-        return ComplexMatrix(__truediv__(other, self))
+        return ComplexMatrix(MatrixMap(operator.__truediv__, other, self))
 
     def __neg__(self: ShapedIterable[complex, M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]:
-        return ComplexMatrix(__neg__(self))
+        return ComplexMatrix(MatrixMap(operator.__neg__, self))
 
     def __abs__(self: ShapedIterable[complex, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
-        return RealMatrix(__abs__(self))
+        return RealMatrix(MatrixMap(abs, self))
 
     def conjugate(self: ShapedIterable[complex, M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]:
-        return ComplexMatrix(conjugate(self))
+        return ComplexMatrix(MatrixMap(lambda x: x.conjugate(), self))
 
 
 class ComplexMatrix(ComplexMatrixOperatorsMixin[M_co, N_co], ComplexMatrixLike[M_co, N_co], Matrix[complex, M_co, N_co]):
@@ -448,7 +443,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __add__(self, other):
-        return RealMatrix(__add__(self, other))
+        return RealMatrix(MatrixMap(operator.__add__, self, other))
 
     @overload
     def __sub__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
@@ -457,7 +452,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __sub__(self, other):
-        return RealMatrix(__sub__(self, other))
+        return RealMatrix(MatrixMap(operator.__sub__, self, other))
 
     @overload
     def __mul__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
@@ -466,7 +461,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __mul__(self, other):
-        return RealMatrix(__mul__(self, other))
+        return RealMatrix(MatrixMap(operator.__mul__, self, other))
 
     @overload
     def __matmul__(self: ShapedIndexable[float, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> RealMatrixLike[M_co, P_co]: ...
@@ -475,7 +470,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __matmul__(self, other):
-        return RealMatrix(__matmul__(self, other))
+        return RealMatrix(MatrixProduct(self, other))
 
     @overload
     def __truediv__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
@@ -484,7 +479,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __truediv__(self, other):
-        return RealMatrix(__truediv__(self, other))
+        return RealMatrix(MatrixMap(operator.__truediv__, self, other))
 
     @overload
     def __floordiv__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
@@ -493,7 +488,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __floordiv__(self, other):
-        return RealMatrix(__floordiv__(self, other))
+        return RealMatrix(MatrixMap(operator.__floordiv__, self, other))
 
     @overload
     def __mod__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
@@ -502,7 +497,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __mod__(self, other):
-        return RealMatrix(__mod__(self, other))
+        return RealMatrix(MatrixMap(operator.__mod__, self, other))
 
     @overload
     def __divmod__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
@@ -511,7 +506,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __divmod__(self, other):
-        xx, yx = itertools.tee(__divmod__(self, other), 2)
+        xx, yx = itertools.tee(MatrixMap(divmod, self, other), 2)
         shape = self.shape
         return (
             RealMatrix.from_raw_parts(
@@ -531,7 +526,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __radd__(self, other):
-        return RealMatrix(__add__(other, self))
+        return RealMatrix(MatrixMap(operator.__add__, other, self))
 
     @overload
     def __rsub__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
@@ -540,7 +535,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rsub__(self, other):
-        return RealMatrix(__sub__(other, self))
+        return RealMatrix(MatrixMap(operator.__sub__, other, self))
 
     @overload
     def __rmul__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
@@ -549,7 +544,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rmul__(self, other):
-        return RealMatrix(__mul__(other, self))
+        return RealMatrix(MatrixMap(operator.__mul__, other, self))
 
     @overload
     def __rmatmul__(self: ShapedIndexable[float, M_co, N_co], other: IntegralMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]: ...  # type: ignore[misc]
@@ -558,7 +553,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rmatmul__(self, other):
-        return RealMatrix(__matmul__(other, self))
+        return RealMatrix(MatrixProduct(other, self))
 
     @overload
     def __rtruediv__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
@@ -567,7 +562,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rtruediv__(self, other):
-        return RealMatrix(__truediv__(other, self))
+        return RealMatrix(MatrixMap(operator.__truediv__, other, self))
 
     @overload
     def __rfloordiv__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
@@ -576,7 +571,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rfloordiv__(self, other):
-        return RealMatrix(__floordiv__(other, self))
+        return RealMatrix(MatrixMap(operator.__floordiv__, other, self))
 
     @overload
     def __rmod__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
@@ -585,7 +580,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rmod__(self, other):
-        return RealMatrix(__mod__(other, self))
+        return RealMatrix(MatrixMap(operator.__mod__, other, self))
 
     @overload
     def __rdivmod__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...  # type: ignore[misc]
@@ -594,7 +589,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rdivmod__(self, other):
-        xx, yx = itertools.tee(__divmod__(other, self), 2)
+        xx, yx = itertools.tee(MatrixMap(divmod, other, self), 2)
         shape = self.shape
         return (
             RealMatrix.from_raw_parts(
@@ -608,10 +603,10 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
         )
 
     def __neg__(self: ShapedIterable[float, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
-        return RealMatrix(__neg__(self))
+        return RealMatrix(MatrixMap(operator.__neg__, self))
 
     def __abs__(self: ShapedIterable[float, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
-        return RealMatrix(__abs__(self))
+        return RealMatrix(MatrixMap(abs, self))
 
     @overload
     def lesser(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
@@ -619,7 +614,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
     def lesser(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser(self, other):
-        return IntegralMatrix(__lt__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__lt__, self, other))
 
     @overload
     def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
@@ -627,7 +622,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
     def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser_equal(self, other):
-        return IntegralMatrix(__le__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__le__, self, other))
 
     @overload
     def greater(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
@@ -635,7 +630,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
     def greater(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater(self, other):
-        return IntegralMatrix(__gt__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__gt__, self, other))
 
     @overload
     def greater_equal(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
@@ -643,7 +638,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
     def greater_equal(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater_equal(self, other):
-        return IntegralMatrix(__ge__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__ge__, self, other))
 
 
 class RealMatrix(RealMatrixOperatorsMixin[M_co, N_co], RealMatrixLike[M_co, N_co], Matrix[float, M_co, N_co]):
@@ -685,35 +680,35 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __add__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__add__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__add__, self, other))
 
     @check_friendly
     def __sub__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__sub__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__sub__, self, other))
 
     @check_friendly
     def __mul__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__mul__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__mul__, self, other))
 
     @check_friendly
     def __matmul__(self: ShapedIndexable[int, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> IntegralMatrixLike[M_co, P_co]:
-        return IntegralMatrix(__matmul__(self, other))
+        return IntegralMatrix(MatrixProduct(self, other))
 
     @check_friendly
     def __truediv__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
-        return RealMatrix(__truediv__(self, other))
+        return RealMatrix(MatrixMap(operator.__truediv__, self, other))
 
     @check_friendly
     def __floordiv__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__floordiv__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__floordiv__, self, other))
 
     @check_friendly
     def __mod__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__mod__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__mod__, self, other))
 
     @check_friendly
     def __divmod__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]:
-        xx, yx = itertools.tee(__divmod__(self, other), 2)
+        xx, yx = itertools.tee(MatrixMap(divmod, self, other), 2)
         shape = self.shape
         return (
             IntegralMatrix.from_raw_parts(
@@ -728,55 +723,55 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __lshift__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__lshift__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__lshift__, self, other))
 
     @check_friendly
     def __rshift__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__rshift__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__rshift__, self, other))
 
     @check_friendly
     def __and__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__and__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__and__, self, other))
 
     @check_friendly
     def __xor__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__xor__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__xor__, self, other))
 
     @check_friendly
     def __or__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__or__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__or__, self, other))
 
     @check_friendly
     def __radd__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__add__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__add__, other, self))
 
     @check_friendly
     def __rsub__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__sub__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__sub__, other, self))
 
     @check_friendly
     def __rmul__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__mul__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__mul__, other, self))
 
     @check_friendly
     def __rmatmul__(self: ShapedIndexable[int, M_co, N_co], other: IntegralMatrixLike[P_co, M_co]) -> IntegralMatrixLike[P_co, N_co]:
-        return IntegralMatrix(__matmul__(other, self))
+        return IntegralMatrix(MatrixProduct(other, self))
 
     @check_friendly
     def __rtruediv__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
-        return RealMatrix(__truediv__(other, self))
+        return RealMatrix(MatrixMap(operator.__truediv__, other, self))
 
     @check_friendly
     def __rfloordiv__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__floordiv__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__floordiv__, other, self))
 
     @check_friendly
     def __rmod__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__mod__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__mod__, other, self))
 
     @check_friendly
     def __rdivmod__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]:
-        xx, yx = itertools.tee(__divmod__(other, self), 2)
+        xx, yx = itertools.tee(MatrixMap(divmod, other, self), 2)
         shape = self.shape
         return (
             IntegralMatrix.from_raw_parts(
@@ -791,44 +786,44 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rlshift__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__lshift__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__lshift__, other, self))
 
     @check_friendly
     def __rrshift__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__rshift__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__rshift__, other, self))
 
     @check_friendly
     def __rand__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__and__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__and__, other, self))
 
     @check_friendly
     def __rxor__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__xor__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__xor__, other, self))
 
     @check_friendly
     def __ror__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__or__(other, self))
+        return IntegralMatrix(MatrixMap(operator.__or__, other, self))
 
     def __neg__(self: ShapedIterable[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__neg__(self))
+        return IntegralMatrix(MatrixMap(operator.__neg__, self))
 
     def __abs__(self: ShapedIterable[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__abs__(self))
+        return IntegralMatrix(MatrixMap(abs, self))
 
     def __invert__(self: ShapedIterable[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__invert__(self))
+        return IntegralMatrix(MatrixMap(operator.__invert__, self))
 
     def lesser(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__lt__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__lt__, self, other))
 
     def lesser_equal(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__le__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__le__, self, other))
 
     def greater(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__gt__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__gt__, self, other))
 
     def greater_equal(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        return IntegralMatrix(__ge__(self, other))
+        return IntegralMatrix(MatrixMap(operator.__ge__, self, other))
 
 
 class IntegralMatrix(IntegralMatrixOperatorsMixin[M_co, N_co], IntegralMatrixLike[M_co, N_co], Matrix[int, M_co, N_co]):
