@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import functools
 import operator
 from abc import ABCMeta, abstractmethod
@@ -562,7 +563,7 @@ class ComplexMatrixLike(MatrixLike[complex, M_co, N_co], metaclass=ABCMeta):
 
     def __pos__(self) -> ComplexMatrixLike[M_co, N_co]:
         """Return element-wise ``+a``"""
-        return self
+        return copy.copy(self)
 
     @abstractmethod
     def transpose(self) -> ComplexMatrixLike[N_co, M_co]:
@@ -869,7 +870,7 @@ class RealMatrixLike(MatrixLike[float, M_co, N_co], metaclass=ABCMeta):
 
     def __pos__(self) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``+a``"""
-        return self
+        return copy.copy(self)
 
     @abstractmethod
     def transpose(self) -> RealMatrixLike[N_co, M_co]:
@@ -945,7 +946,7 @@ class RealMatrixLike(MatrixLike[float, M_co, N_co], metaclass=ABCMeta):
 
     def conjugate(self) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``a.conjugate()``"""
-        return self
+        return copy.copy(self)
 
     def transjugate(self) -> RealMatrixLike[N_co, M_co]:
         """Return the conjugate transpose"""
@@ -1146,7 +1147,7 @@ class IntegralMatrixLike(MatrixLike[int, M_co, N_co], metaclass=ABCMeta):
 
     def __pos__(self) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``+a``"""
-        return self
+        return copy.copy(self)
 
     @abstractmethod
     def transpose(self) -> IntegralMatrixLike[N_co, M_co]:
@@ -1194,7 +1195,7 @@ class IntegralMatrixLike(MatrixLike[int, M_co, N_co], metaclass=ABCMeta):
 
     def conjugate(self) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a.conjugate()``"""
-        return self
+        return copy.copy(self)
 
     def transjugate(self) -> IntegralMatrixLike[N_co, M_co]:
         """Return the conjugate transpose"""
