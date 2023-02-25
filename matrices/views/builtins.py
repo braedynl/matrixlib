@@ -1,351 +1,658 @@
-from reprlib import recursive_repr
-from typing import TypeVar
+from __future__ import annotations
 
-from ..abc import (ComplexMatrixLike, IntegralMatrixLike, RealMatrixLike,
-                   check_friendly)
-from ..builtins import ComplexMatrix, IntegralMatrix, Matrix, RealMatrix
+from collections.abc import Iterable, Sequence
+from typing import Any, Literal, Optional, TypeVar, overload
+
+from ..abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
+                   MatrixLikeFlags, RealMatrixLike)
+from ..builtins import (ComplexMatrix, ComplexMatrixOperatorsMixin,
+                        IntegralMatrix, IntegralMatrixOperatorsMixin, Matrix,
+                        MatrixOperatorsMixin, RealMatrix,
+                        RealMatrixOperatorsMixin)
 from ..rule import COL, ROW, Rule
-from ..utilities import matrix_operator
 from .abc import MatrixViewLike
 
 __all__ = [
     # Basic viewers
     "MatrixView", "ComplexMatrixView", "RealMatrixView", "IntegralMatrixView",
 
-    # Base transformers
+    # Flags
+    "MatrixTransformFlags", "MatrixTransposeFlags",
+
+    # Base transforms
     "MatrixTransform", "ComplexMatrixTransform", "RealMatrixTransform",
     "IntegralMatrixTransform",
 
-    # Matrix transformers
-    "MatrixTranspose", "MatrixRowFlip", "MatrixColFlip", "MatrixReverse",
+    # Transpose transforms
+    "MatrixTranspose", "ComplexMatrixTranspose", "RealMatrixTranspose",
+    "IntegralMatrixTranspose",
 
-    # Complex Matrix transformers
-    "ComplexMatrixTranspose", "ComplexMatrixRowFlip", "ComplexMatrixColFlip",
-    "ComplexMatrixReverse",
+    # Row flip transforms
+    "MatrixRowFlip", "ComplexMatrixRowFlip", "RealMatrixRowFlip",
+    "IntegralMatrixRowFlip",
 
-    # Real Matrix transformers
-    "RealMatrixTranspose", "RealMatrixRowFlip", "RealMatrixColFlip",
-    "RealMatrixReverse",
+    # Column flip transforms
+    "MatrixColFlip", "ComplexMatrixColFlip", "RealMatrixColFlip",
+    "IntegralMatrixColFlip",
 
-    # Integral Matrix transformers
-    "IntegralMatrixTranspose", "IntegralMatrixRowFlip",
-    "IntegralMatrixColFlip", "IntegralMatrixReverse",
+    # Reverse transforms
+    "MatrixReverse", "ComplexMatrixReverse", "RealMatrixReverse",
+    "IntegralMatrixReverse",
 ]
 
 T = TypeVar("T")
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
+P = TypeVar("P", bound=int)
 
-ComplexT = TypeVar("ComplexT", bound=complex)
-RealT = TypeVar("RealT", bound=float)
-IntegralT = TypeVar("IntegralT", bound=int)
+MatrixViewT = TypeVar("MatrixViewT", bound="MatrixView")
+MatrixTransformT = TypeVar("MatrixTransformT", bound="MatrixTransform")
 
 
 class MatrixView(MatrixViewLike[T, M, N]):
 
     __slots__ = ("_target",)
 
-    def __init__(self, target):
+    def __init__(self, target: MatrixLike[T, M, N]) -> None:
         self._target = target
 
-    @recursive_repr("...")
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a canonical representation of the view"""
         return f"{self.__class__.__name__}(target={self._target!r})"
+
+    @overload
+    def __getitem__(self, key: int) -> T: ...
+    @overload
+    def __getitem__(self, key: slice) -> MatrixLike[T, Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> T: ...
+    @overload
+    def __getitem__(self, key: tuple[int, slice]) -> MatrixLike[T, Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, int]) -> MatrixLike[T, Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> MatrixLike[T, Any, Any]: ...
 
     def __getitem__(self, key):
         return self._target.__getitem__(key)
 
-    def __deepcopy__(self, memo=None):
+    def __deepcopy__(self: MatrixViewT, memo: Optional[dict[int, Any]] = None) -> MatrixViewT:
         """Return the view"""
         return self
 
     __copy__ = __deepcopy__
 
     @property
-    def array(self):
+    def array(self) -> Sequence[T]:
         return self._target.array
 
     @property
-    def shape(self):
+    def shape(self) -> tuple[M, N]:
         return self._target.shape
 
-    def equal(self, other):
+    @property
+    def flags(self) -> MatrixLikeFlags:
+        return self._target.flags
+
+    def equal(self, other: MatrixLike[Any, M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.equal(other)
 
-    def not_equal(self, other):
+    def not_equal(self, other: MatrixLike[Any, M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.not_equal(other)
 
-    def transpose(self):
+    def transpose(self) -> MatrixLike[T, N, M]:
         return self._target.transpose()
 
-    def flip(self, *, by=Rule.ROW):
+    def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T, M, N]:
         return self._target.flip(by=by)
 
-    def reverse(self):
+    def reverse(self) -> MatrixLike[T, M, N]:
         return self._target.reverse()
 
 
-class ComplexMatrixView(ComplexMatrixLike[ComplexT, M, N], MatrixView[ComplexT, M, N]):
+class ComplexMatrixView(ComplexMatrixLike[M, N], MatrixView[complex, M, N]):
 
     __slots__ = ()
+
+    def __init__(self, target: ComplexMatrixLike[M, N]) -> None:
+        self._target: ComplexMatrixLike[M, N] = target
+
+    @overload
+    def __getitem__(self, key: int) -> complex: ...
+    @overload
+    def __getitem__(self, key: slice) -> ComplexMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> complex: ...
+    @overload
+    def __getitem__(self, key: tuple[int, slice]) -> ComplexMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, int]) -> ComplexMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> ComplexMatrixLike[Any, Any]: ...
+
+    def __getitem__(self, key):
+        return MatrixView.__getitem__(self, key)
+
+    @overload
+    def __add__(self, other: IntegralMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __add__(self, other: RealMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __add__(self, other: ComplexMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
 
     def __add__(self, other):
         return self._target.__add__(other)
 
+    @overload
+    def __sub__(self, other: IntegralMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __sub__(self, other: RealMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __sub__(self, other: ComplexMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+
     def __sub__(self, other):
         return self._target.__sub__(other)
+
+    @overload
+    def __mul__(self, other: IntegralMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __mul__(self, other: RealMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __mul__(self, other: ComplexMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
 
     def __mul__(self, other):
         return self._target.__mul__(other)
 
+    @overload
+    def __matmul__(self, other: IntegralMatrixLike[N, P]) -> ComplexMatrixLike[M, P]: ...
+    @overload
+    def __matmul__(self, other: RealMatrixLike[N, P]) -> ComplexMatrixLike[M, P]: ...
+    @overload
+    def __matmul__(self, other: ComplexMatrixLike[N, P]) -> ComplexMatrixLike[M, P]: ...
+
     def __matmul__(self, other):
         return self._target.__matmul__(other)
+
+    @overload
+    def __truediv__(self, other: IntegralMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __truediv__(self, other: RealMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __truediv__(self, other: ComplexMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
 
     def __truediv__(self, other):
         return self._target.__truediv__(other)
 
+    @overload
+    def __radd__(self, other: IntegralMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __radd__(self, other: RealMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __radd__(self, other: ComplexMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+
     def __radd__(self, other):
         return self._target.__radd__(other)
+
+    @overload
+    def __rsub__(self, other: IntegralMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __rsub__(self, other: RealMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __rsub__(self, other: ComplexMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
 
     def __rsub__(self, other):
         return self._target.__rsub__(other)
 
+    @overload
+    def __rmul__(self, other: IntegralMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __rmul__(self, other: RealMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __rmul__(self, other: ComplexMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+
     def __rmul__(self, other):
         return self._target.__rmul__(other)
+
+    @overload
+    def __rmatmul__(self, other: IntegralMatrixLike[P, M]) -> ComplexMatrixLike[P, N]: ...
+    @overload
+    def __rmatmul__(self, other: RealMatrixLike[P, M]) -> ComplexMatrixLike[P, N]: ...
+    @overload
+    def __rmatmul__(self, other: ComplexMatrixLike[P, M]) -> ComplexMatrixLike[P, N]: ...
 
     def __rmatmul__(self, other):
         return self._target.__rmatmul__(other)
 
+    @overload
+    def __rtruediv__(self, other: IntegralMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __rtruediv__(self, other: RealMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+    @overload
+    def __rtruediv__(self, other: ComplexMatrixLike[M, N]) -> ComplexMatrixLike[M, N]: ...
+
     def __rtruediv__(self, other):
         return self._target.__rtruediv__(other)
 
-    def __neg__(self):
+    def __neg__(self) -> ComplexMatrixLike[M, N]:
         return self._target.__neg__()
 
-    def __abs__(self):
+    def __abs__(self) -> RealMatrixLike[M, N]:
         return self._target.__abs__()
 
-    def conjugate(self):
+    def transpose(self) -> ComplexMatrixLike[N, M]:
+        return self._target.transpose()
+
+    def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrixLike[M, N]:
+        return self._target.flip(by=by)
+
+    def reverse(self) -> ComplexMatrixLike[M, N]:
+        return self._target.reverse()
+
+    def conjugate(self) -> ComplexMatrixLike[M, N]:
         return self._target.conjugate()
 
 
-class RealMatrixView(RealMatrixLike[RealT, M, N], MatrixView[RealT, M, N]):
+class RealMatrixView(RealMatrixLike[M, N], MatrixView[float, M, N]):
 
     __slots__ = ()
 
-    def __lt__(self, other):
-        return self._target.__lt__(other)
+    def __init__(self, target: RealMatrixLike[M, N]) -> None:
+        self._target: RealMatrixLike[M, N] = target
 
-    def __le__(self, other):
-        return self._target.__le__(other)
+    @overload
+    def __getitem__(self, key: int) -> float: ...
+    @overload
+    def __getitem__(self, key: slice) -> RealMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> float: ...
+    @overload
+    def __getitem__(self, key: tuple[int, slice]) -> RealMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, int]) -> RealMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> RealMatrixLike[Any, Any]: ...
 
-    def __gt__(self, other):
-        return self._target.__gt__(other)
+    def __getitem__(self, key):
+        return MatrixView.__getitem__(self, key)
 
-    def __ge__(self, other):
-        return self._target.__ge__(other)
+    @overload
+    def __add__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __add__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
 
     def __add__(self, other):
         return self._target.__add__(other)
 
+    @overload
+    def __sub__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __sub__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+
     def __sub__(self, other):
         return self._target.__sub__(other)
+
+    @overload
+    def __mul__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __mul__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
 
     def __mul__(self, other):
         return self._target.__mul__(other)
 
+    @overload
+    def __matmul__(self, other: IntegralMatrixLike[N, P]) -> RealMatrixLike[M, P]: ...
+    @overload
+    def __matmul__(self, other: RealMatrixLike[N, P]) -> RealMatrixLike[M, P]: ...
+
     def __matmul__(self, other):
         return self._target.__matmul__(other)
+
+    @overload
+    def __truediv__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __truediv__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
 
     def __truediv__(self, other):
         return self._target.__truediv__(other)
 
+    @overload
+    def __floordiv__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __floordiv__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+
     def __floordiv__(self, other):
         return self._target.__floordiv__(other)
+
+    @overload
+    def __mod__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __mod__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
 
     def __mod__(self, other):
         return self._target.__mod__(other)
 
+    @overload
+    def __divmod__(self, other: IntegralMatrixLike[M, N]) -> tuple[RealMatrixLike[M, N], RealMatrixLike[M, N]]: ...
+    @overload
+    def __divmod__(self, other: RealMatrixLike[M, N]) -> tuple[RealMatrixLike[M, N], RealMatrixLike[M, N]]: ...
+
     def __divmod__(self, other):
         return self._target.__divmod__(other)
+
+    @overload
+    def __radd__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __radd__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
 
     def __radd__(self, other):
         return self._target.__radd__(other)
 
+    @overload
+    def __rsub__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __rsub__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+
     def __rsub__(self, other):
         return self._target.__rsub__(other)
+
+    @overload
+    def __rmul__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __rmul__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
 
     def __rmul__(self, other):
         return self._target.__rmul__(other)
 
+    @overload
+    def __rmatmul__(self, other: IntegralMatrixLike[P, M]) -> RealMatrixLike[P, N]: ...
+    @overload
+    def __rmatmul__(self, other: RealMatrixLike[P, M]) -> RealMatrixLike[P, N]: ...
+
     def __rmatmul__(self, other):
         return self._target.__rmatmul__(other)
+
+    @overload
+    def __rtruediv__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __rtruediv__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
 
     def __rtruediv__(self, other):
         return self._target.__rtruediv__(other)
 
+    @overload
+    def __rfloordiv__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __rfloordiv__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+
     def __rfloordiv__(self, other):
         return self._target.__rfloordiv__(other)
+
+    @overload
+    def __rmod__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
+    @overload
+    def __rmod__(self, other: RealMatrixLike[M, N]) -> RealMatrixLike[M, N]: ...
 
     def __rmod__(self, other):
         return self._target.__rmod__(other)
 
+    @overload
+    def __rdivmod__(self, other: IntegralMatrixLike[M, N]) -> tuple[RealMatrixLike[M, N], RealMatrixLike[M, N]]: ...
+    @overload
+    def __rdivmod__(self, other: RealMatrixLike[M, N]) -> tuple[RealMatrixLike[M, N], RealMatrixLike[M, N]]: ...
+
     def __rdivmod__(self, other):
         return self._target.__rdivmod__(other)
 
-    def __neg__(self):
+    def __neg__(self) -> RealMatrixLike[M, N]:
         return self._target.__neg__()
 
-    def __abs__(self):
+    def __abs__(self) -> RealMatrixLike[M, N]:
         return self._target.__abs__()
+
+    def transpose(self) -> RealMatrixLike[N, M]:
+        return self._target.transpose()
+
+    def flip(self, *, by: Rule = Rule.ROW) -> RealMatrixLike[M, N]:
+        return self._target.flip(by=by)
+
+    def reverse(self) -> RealMatrixLike[M, N]:
+        return self._target.reverse()
+
+    @overload
+    def lesser(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]: ...
+    @overload
+    def lesser(self, other: RealMatrixLike[M, N]) -> IntegralMatrixLike[M, N]: ...
 
     def lesser(self, other):
         return self._target.lesser(other)
 
+    @overload
+    def lesser_equal(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]: ...
+    @overload
+    def lesser_equal(self, other: RealMatrixLike[M, N]) -> IntegralMatrixLike[M, N]: ...
+
     def lesser_equal(self, other):
         return self._target.lesser_equal(other)
 
+    @overload
+    def greater(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]: ...
+    @overload
+    def greater(self, other: RealMatrixLike[M, N]) -> IntegralMatrixLike[M, N]: ...
+
     def greater(self, other):
         return self._target.greater(other)
+
+    @overload
+    def greater_equal(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]: ...
+    @overload
+    def greater_equal(self, other: RealMatrixLike[M, N]) -> IntegralMatrixLike[M, N]: ...
 
     def greater_equal(self, other):
         return self._target.greater_equal(other)
 
 
-class IntegralMatrixView(IntegralMatrixLike[IntegralT, M, N], MatrixView[IntegralT, M, N]):
+class IntegralMatrixView(IntegralMatrixLike[M, N], MatrixView[int, M, N]):
 
     __slots__ = ()
 
-    def __lt__(self, other):
-        return self._target.__lt__(other)
+    def __init__(self, target: IntegralMatrixLike[M, N]) -> None:
+        self._target: IntegralMatrixLike[M, N] = target
 
-    def __le__(self, other):
-        return self._target.__le__(other)
+    @overload
+    def __getitem__(self, key: int) -> int: ...
+    @overload
+    def __getitem__(self, key: slice) -> IntegralMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> int: ...
+    @overload
+    def __getitem__(self, key: tuple[int, slice]) -> IntegralMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, int]) -> IntegralMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> IntegralMatrixLike[Any, Any]: ...
 
-    def __gt__(self, other):
-        return self._target.__gt__(other)
+    def __getitem__(self, key):
+        return MatrixView.__getitem__(self, key)
 
-    def __ge__(self, other):
-        return self._target.__ge__(other)
-
-    def __add__(self, other):
+    def __add__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__add__(other)
 
-    def __sub__(self, other):
+    def __sub__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__sub__(other)
 
-    def __mul__(self, other):
+    def __mul__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__mul__(other)
 
-    def __matmul__(self, other):
+    def __matmul__(self, other: IntegralMatrixLike[N, P]) -> IntegralMatrixLike[M, P]:
         return self._target.__matmul__(other)
 
-    def __truediv__(self, other):
+    def __truediv__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]:
         return self._target.__truediv__(other)
 
-    def __floordiv__(self, other):
+    def __floordiv__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__floordiv__(other)
 
-    def __mod__(self, other):
+    def __mod__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__mod__(other)
 
-    def __divmod__(self, other):
+    def __divmod__(self, other: IntegralMatrixLike[M, N]) -> tuple[IntegralMatrixLike[M, N], IntegralMatrixLike[M, N]]:
         return self._target.__divmod__(other)
 
-    def __lshift__(self, other):
+    def __lshift__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__lshift__(other)
 
-    def __rshift__(self, other):
+    def __rshift__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__rshift__(other)
 
-    def __and__(self, other):
+    def __and__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__and__(other)
 
-    def __xor__(self, other):
+    def __xor__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__xor__(other)
 
-    def __or__(self, other):
+    def __or__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__or__(other)
 
-    def __radd__(self, other):
+    def __radd__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__radd__(other)
 
-    def __rsub__(self, other):
+    def __rsub__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__rsub__(other)
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__rmul__(other)
 
-    def __rmatmul__(self, other):
+    def __rmatmul__(self, other: IntegralMatrixLike[P, M]) -> IntegralMatrixLike[P, N]:
         return self._target.__rmatmul__(other)
 
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other: IntegralMatrixLike[M, N]) -> RealMatrixLike[M, N]:
         return self._target.__rtruediv__(other)
 
-    def __rfloordiv__(self, other):
+    def __rfloordiv__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__rfloordiv__(other)
 
-    def __rmod__(self, other):
+    def __rmod__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__rmod__(other)
 
-    def __rdivmod__(self, other):
+    def __rdivmod__(self, other: IntegralMatrixLike[M, N]) -> tuple[IntegralMatrixLike[M, N], IntegralMatrixLike[M, N]]:
         return self._target.__rdivmod__(other)
 
-    def __rlshift__(self, other):
+    def __rlshift__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__rlshift__(other)
 
-    def __rrshift__(self, other):
+    def __rrshift__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__rrshift__(other)
 
-    def __rand__(self, other):
+    def __rand__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__rand__(other)
 
-    def __rxor__(self, other):
+    def __rxor__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__rxor__(other)
 
-    def __ror__(self, other):
+    def __ror__(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.__ror__(other)
 
-    def __neg__(self):
+    def __neg__(self) -> IntegralMatrixLike[M, N]:
         return self._target.__neg__()
 
-    def __abs__(self):
+    def __abs__(self) -> IntegralMatrixLike[M, N]:
         return self._target.__abs__()
 
-    def __invert__(self):
+    def __invert__(self) -> IntegralMatrixLike[M, N]:
         return self._target.__invert__()
 
-    def lesser(self, other):
+    def transpose(self) -> IntegralMatrixLike[N, M]:
+        return self._target.transpose()
+
+    def flip(self, *, by: Rule = Rule.ROW) -> IntegralMatrixLike[M, N]:
+        return self._target.flip(by=by)
+
+    def reverse(self) -> IntegralMatrixLike[M, N]:
+        return self._target.reverse()
+
+    def lesser(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.lesser(other)
 
-    def lesser_equal(self, other):
+    def lesser_equal(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.lesser_equal(other)
 
-    def greater(self, other):
+    def greater(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.greater(other)
 
-    def greater_equal(self, other):
+    def greater_equal(self, other: IntegralMatrixLike[M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.greater_equal(other)
 
 
-class MatrixTransform(MatrixViewLike[T, M, N]):
+class MatrixTransformFlags(MatrixLikeFlags):
+
+    __slots__ = ()
+
+    @property
+    def lazy_array(self) -> bool:
+        return True
+
+    @property
+    def lazy_shape(self) -> bool:
+        return self._matrix.flags.lazy_shape
+
+    @property
+    def writable(self) -> bool:
+        return self._matrix.flags.writable
+
+    @property
+    def growable(self) -> bool:
+        return self._matrix.flags.growable
+
+    @property
+    def shrinkable(self) -> bool:
+        return self._matrix.flags.shrinkable
+
+
+class MatrixTransposeFlags(MatrixTransformFlags):
+
+    __slots__ = ()
+
+    @property
+    def lazy_shape(self) -> bool:
+        return True
+
+
+class MatrixTransform(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
 
     __slots__ = ("_target",)
 
-    BASE_TYPE = Matrix
-    VIEW_TYPE = MatrixView
+    def __init__(self, target: MatrixLike[T, M, N]) -> None:
+        self._target: MatrixLike[T, M, N] = target
 
-    def __init__(self, target) -> None:
-        self._target = target
-
-    @recursive_repr("...")
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a canonical representation of the view"""
         return f"{self.__class__.__name__}(target={self._target!r})"
 
+    @overload
+    def __getitem__(self, key: int) -> T: ...
+    @overload
+    def __getitem__(self, key: slice) -> MatrixLike[T, Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> T: ...
+    @overload
+    def __getitem__(self, key: tuple[int, slice]) -> MatrixLike[T, Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, int]) -> MatrixLike[T, Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> MatrixLike[T, Any, Any]: ...
+
     def __getitem__(self, key):
+        target = self._target
+
+        if target.flags.lazy_array:
+            array = target
+        else:
+            array = target.array
+
+        permute_matrix_index = self._permute_matrix_index
+        permute_vector_index = self._permute_vector_index
+
         if isinstance(key, tuple):
             row_key, col_key = key
 
@@ -354,31 +661,21 @@ class MatrixTransform(MatrixViewLike[T, M, N]):
 
                 if isinstance(col_key, slice):
                     col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                    return self.BASE_TYPE.from_raw_parts(
-                        array=[
-                            self._target[
-                                self._permute_matrix_index(
-                                    row_index=row_index,
-                                    col_index=col_index,
-                                )
-                            ]
+                    return self._decompose(
+                        (
+                            array[permute_matrix_index(row_index, col_index)]
                             for row_index in row_indices
                             for col_index in col_indices
-                        ],
+                        ),
                         shape=(len(row_indices), len(col_indices)),
                     )
 
                 col_index = self._resolve_matrix_index(col_key, by=COL)
-                return self.BASE_TYPE.from_raw_parts(
-                    array=[
-                        self._target[
-                            self._permute_matrix_index(
-                                row_index=row_index,
-                                col_index=col_index,
-                            )
-                        ]
+                return self._decompose(
+                    (
+                        array[permute_matrix_index(row_index, col_index)]
                         for row_index in row_indices
-                    ],
+                    ),
                     shape=(len(row_indices), 1),
                 )
 
@@ -386,420 +683,286 @@ class MatrixTransform(MatrixViewLike[T, M, N]):
 
             if isinstance(col_key, slice):
                 col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                return self.BASE_TYPE.from_raw_parts(
-                    array=[
-                        self._target[
-                            self._permute_matrix_index(
-                                row_index=row_index,
-                                col_index=col_index,
-                            )
-                        ]
+                return self._decompose(
+                    (
+                        array[permute_matrix_index(row_index, col_index)]
                         for col_index in col_indices
-                    ],
+                    ),
                     shape=(1, len(col_indices)),
                 )
 
             col_index = self._resolve_matrix_index(col_key, by=COL)
-            return self._target[
-                self._permute_matrix_index(
-                    row_index=row_index,
-                    col_index=col_index,
-                )
-            ]
+            return array[permute_matrix_index(row_index, col_index)]
 
         if isinstance(key, slice):
             val_indices = self._resolve_vector_slice(key)
-            return self.BASE_TYPE.from_raw_parts(
-                array=[
-                    self._target[
-                        self._permute_vector_index(
-                            val_index=val_index,
-                        )
-                    ]
+            return self._decompose(
+                (
+                    array[permute_vector_index(val_index)]
                     for val_index in val_indices
-                ],
+                ),
                 shape=(1, len(val_indices)),
             )
 
         val_index = self._resolve_vector_index(key)
-        return self._target[
-            self._permute_vector_index(
-                val_index=val_index,
-            )
-        ]
+        return array[permute_vector_index(val_index)]
 
-    def __deepcopy__(self, memo=None):
+    def __deepcopy__(self: MatrixTransformT, memo: Optional[dict[int, Any]] = None) -> MatrixTransformT:
+        """Return the view"""
         return self
 
     __copy__ = __deepcopy__
 
     @property
-    def array(self):
-        return list(self.values())
+    def array(self) -> Sequence[T]:
+        return tuple(self.values(by=ROW, reverse=False))
 
     @property
-    def shape(self):
+    def shape(self) -> tuple[M, N]:
         return self._target.shape
 
-    def equal(self, other):
-        return IntegralMatrix(matrix_operator.__eq__(self, other))
+    @property
+    def flags(self) -> MatrixTransformFlags:
+        return MatrixTransformFlags(self._target)
 
-    def not_equal(self, other):
-        return IntegralMatrix(matrix_operator.__ne__(self, other))
-
-    def transpose(self):
+    def transpose(self) -> MatrixLike[T, N, M]:
         return MatrixTranspose(self)
 
-    def flip(self, *, by=Rule.ROW):
+    def flip(self, *, by=Rule.ROW) -> MatrixLike[T, M, N]:
         MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
         return MatrixTransform(self)
 
-    def reverse(self):
+    def reverse(self) -> MatrixLike[T, M, N]:
         return MatrixReverse(self)
 
-    def _permute_vector_index(self, val_index):
+    def _decompose(self, array: Iterable[T], shape: tuple[M, N]) -> MatrixLike[T, M, N]:
+        return Matrix(array, shape)
+
+    def _permute_vector_index(self, val_index: int) -> int:
         return val_index
 
-    def _permute_matrix_index(self, row_index, col_index):
+    def _permute_matrix_index(self, row_index: int, col_index: int) -> int:
         return row_index * self.ncols + col_index
 
 
-class ComplexMatrixTransform(ComplexMatrixLike[ComplexT, M, N], MatrixTransform[ComplexT, M, N]):
+class ComplexMatrixTransform(
+    ComplexMatrixOperatorsMixin[M, N],
+    ComplexMatrixLike[M, N],
+    MatrixTransform[complex, M, N],
+):
 
     __slots__ = ()
 
-    BASE_TYPE = ComplexMatrix
-    VIEW_TYPE = ComplexMatrixView
+    def __init__(self, target: ComplexMatrixLike[M, N]) -> None:
+        super().__init__(target)
+        self._target: ComplexMatrixLike[M, N]
 
-    @check_friendly
-    def __add__(self, other):
-        return ComplexMatrix(matrix_operator.__add__(self, other))
+    @overload
+    def __getitem__(self, key: int) -> complex: ...
+    @overload
+    def __getitem__(self, key: slice) -> ComplexMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> complex: ...
+    @overload
+    def __getitem__(self, key: tuple[int, slice]) -> ComplexMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, int]) -> ComplexMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> ComplexMatrixLike[Any, Any]: ...
 
-    @check_friendly
-    def __sub__(self, other):
-        return ComplexMatrix(matrix_operator.__sub__(self, other))
+    def __getitem__(self, key):
+        return MatrixTransform.__getitem__(self, key)
 
-    @check_friendly
-    def __mul__(self, other):
-        return ComplexMatrix(matrix_operator.__mul__(self, other))
-
-    @check_friendly
-    def __matmul__(self, other):
-        return ComplexMatrix(matrix_operator.__matmul__(self, other))
-
-    @check_friendly
-    def __truediv__(self, other):
-        return ComplexMatrix(matrix_operator.__truediv__(self, other))
-
-    @check_friendly
-    def __radd__(self, other):
-        return ComplexMatrix(matrix_operator.__add__(other, self))
-
-    @check_friendly
-    def __rsub__(self, other):
-        return ComplexMatrix(matrix_operator.__sub__(other, self))
-
-    @check_friendly
-    def __rmul__(self, other):
-        return ComplexMatrix(matrix_operator.__mul__(other, self))
-
-    @check_friendly
-    def __rmatmul__(self, other):
-        return ComplexMatrix(matrix_operator.__matmul__(other, self))
-
-    @check_friendly
-    def __rtruediv__(self, other):
-        return ComplexMatrix(matrix_operator.__truediv__(other, self))
-
-    def __neg__(self):
-        return ComplexMatrix(matrix_operator.__neg__(self))
-
-    def __abs__(self):
-        return RealMatrix(matrix_operator.__abs__(self))
-
-    def transpose(self):
+    def transpose(self) -> ComplexMatrixLike[N, M]:
         return ComplexMatrixTranspose(self)
 
-    def flip(self, *, by=Rule.ROW):
-        MatrixTransform = (ComplexMatrixRowFlip, ComplexMatrixColFlip)[by.value]
-        return MatrixTransform(self)
+    def flip(self, *, by=Rule.ROW) -> ComplexMatrixLike[M, N]:
+        ComplexMatrixTransform = (ComplexMatrixRowFlip, ComplexMatrixColFlip)[by.value]
+        return ComplexMatrixTransform(self)
 
-    def reverse(self):
+    def reverse(self) -> ComplexMatrixLike[M, N]:
         return ComplexMatrixReverse(self)
 
-    def conjugate(self):
-        return ComplexMatrix(matrix_operator.conjugate(self))
+    def _decompose(self, array: Iterable[complex], shape: tuple[M, N]) -> ComplexMatrixLike[M, N]:
+        return ComplexMatrix(array, shape)
 
 
-class RealMatrixTransform(RealMatrixLike[RealT, M, N], MatrixTransform[RealT, M, N]):
+class RealMatrixTransform(
+    RealMatrixOperatorsMixin[M, N],
+    RealMatrixLike[M, N],
+    MatrixTransform[float, M, N],
+):
 
     __slots__ = ()
 
-    BASE_TYPE = RealMatrix
-    VIEW_TYPE = RealMatrixView
+    def __init__(self, target: RealMatrixLike[M, N]) -> None:
+        super().__init__(target)
+        self._target: RealMatrixLike[M, N]
 
-    @check_friendly
-    def __add__(self, other):
-        return RealMatrix(matrix_operator.__add__(self, other))
+    @overload
+    def __getitem__(self, key: int) -> float: ...
+    @overload
+    def __getitem__(self, key: slice) -> RealMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> float: ...
+    @overload
+    def __getitem__(self, key: tuple[int, slice]) -> RealMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, int]) -> RealMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> RealMatrixLike[Any, Any]: ...
 
-    @check_friendly
-    def __sub__(self, other):
-        return RealMatrix(matrix_operator.__sub__(self, other))
+    def __getitem__(self, key):
+        return MatrixTransform.__getitem__(self, key)
 
-    @check_friendly
-    def __mul__(self, other):
-        return RealMatrix(matrix_operator.__mul__(self, other))
-
-    @check_friendly
-    def __matmul__(self, other):
-        return RealMatrix(matrix_operator.__matmul__(self, other))
-
-    @check_friendly
-    def __truediv__(self, other):
-        return RealMatrix(matrix_operator.__truediv__(self, other))
-
-    @check_friendly
-    def __floordiv__(self, other):
-        return RealMatrix(matrix_operator.__floordiv__(self, other))
-
-    @check_friendly
-    def __mod__(self, other):
-        return RealMatrix(matrix_operator.__mod__(self, other))
-
-    @check_friendly
-    def __divmod__(self, other):
-        return Matrix(matrix_operator.__divmod__(self, other))
-
-    @check_friendly
-    def __radd__(self, other):
-        return RealMatrix(matrix_operator.__add__(other, self))
-
-    @check_friendly
-    def __rsub__(self, other):
-        return RealMatrix(matrix_operator.__sub__(other, self))
-
-    @check_friendly
-    def __rmul__(self, other):
-        return RealMatrix(matrix_operator.__mul__(other, self))
-
-    @check_friendly
-    def __rmatmul__(self, other):
-        return RealMatrix(matrix_operator.__matmul__(other, self))
-
-    @check_friendly
-    def __rtruediv__(self, other):
-        return RealMatrix(matrix_operator.__truediv__(other, self))
-
-    @check_friendly
-    def __rfloordiv__(self, other):
-        return RealMatrix(matrix_operator.__floordiv__(other, self))
-
-    @check_friendly
-    def __rmod__(self, other):
-        return RealMatrix(matrix_operator.__mod__(other, self))
-
-    @check_friendly
-    def __rdivmod__(self, other):
-        return Matrix(matrix_operator.__divmod__(other, self))
-
-    def __neg__(self):
-        return RealMatrix(matrix_operator.__neg__(self))
-
-    def __abs__(self):
-        return RealMatrix(matrix_operator.__abs__(self))
-
-    def transpose(self):
+    def transpose(self) -> RealMatrixLike[N, M]:
         return RealMatrixTranspose(self)
 
-    def flip(self, *, by=Rule.ROW):
-        MatrixTransform = (RealMatrixRowFlip, RealMatrixColFlip)[by.value]
-        return MatrixTransform(self)
+    def flip(self, *, by=Rule.ROW) -> RealMatrixLike[M, N]:
+        RealMatrixTransform = (RealMatrixRowFlip, RealMatrixColFlip)[by.value]
+        return RealMatrixTransform(self)
 
-    def reverse(self):
+    def reverse(self) -> RealMatrixLike[M, N]:
         return RealMatrixReverse(self)
 
+    def _decompose(self, array: Iterable[float], shape: tuple[M, N]) -> RealMatrixLike[M, N]:
+        return RealMatrix(array, shape)
 
-class IntegralMatrixTransform(IntegralMatrixLike[IntegralT, M, N], MatrixTransform[IntegralT, M, N]):
+
+class IntegralMatrixTransform(
+    IntegralMatrixOperatorsMixin[M, N],
+    IntegralMatrixLike[M, N],
+    MatrixTransform[int, M, N],
+):
 
     __slots__ = ()
 
-    BASE_TYPE = IntegralMatrix
-    VIEW_TYPE = IntegralMatrixView
+    def __init__(self, target: IntegralMatrixLike[M, N]) -> None:
+        super().__init__(target)
+        self._target: IntegralMatrixLike[M, N]
 
-    @check_friendly
-    def __add__(self, other):
-        return IntegralMatrix(matrix_operator.__add__(self, other))
+    @overload
+    def __getitem__(self, key: int) -> int: ...
+    @overload
+    def __getitem__(self, key: slice) -> IntegralMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> int: ...
+    @overload
+    def __getitem__(self, key: tuple[int, slice]) -> IntegralMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, int]) -> IntegralMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> IntegralMatrixLike[Any, Any]: ...
 
-    @check_friendly
-    def __sub__(self, other):
-        return IntegralMatrix(matrix_operator.__sub__(self, other))
+    def __getitem__(self, key):
+        return MatrixTransform.__getitem__(self, key)
 
-    @check_friendly
-    def __mul__(self, other):
-        return IntegralMatrix(matrix_operator.__mul__(self, other))
-
-    @check_friendly
-    def __matmul__(self, other):
-        return IntegralMatrix(matrix_operator.__matmul__(self, other))
-
-    @check_friendly
-    def __truediv__(self, other):
-        return RealMatrix(matrix_operator.__truediv__(self, other))
-
-    @check_friendly
-    def __floordiv__(self, other):
-        return IntegralMatrix(matrix_operator.__floordiv__(self, other))
-
-    @check_friendly
-    def __mod__(self, other):
-        return IntegralMatrix(matrix_operator.__mod__(self, other))
-
-    @check_friendly
-    def __divmod__(self, other):
-        return Matrix(matrix_operator.__divmod__(self, other))
-
-    @check_friendly
-    def __lshift__(self, other):
-        return IntegralMatrix(matrix_operator.__lshift__(self, other))
-
-    @check_friendly
-    def __rshift__(self, other):
-        return IntegralMatrix(matrix_operator.__rshift__(self, other))
-
-    @check_friendly
-    def __and__(self, other):
-        return IntegralMatrix(matrix_operator.__and__(self, other))
-
-    @check_friendly
-    def __xor__(self, other):
-        return IntegralMatrix(matrix_operator.__xor__(self, other))
-
-    @check_friendly
-    def __or__(self, other):
-        return IntegralMatrix(matrix_operator.__or__(self, other))
-
-    @check_friendly
-    def __radd__(self, other):
-        return IntegralMatrix(matrix_operator.__add__(other, self))
-
-    @check_friendly
-    def __rsub__(self, other):
-        return IntegralMatrix(matrix_operator.__sub__(other, self))
-
-    @check_friendly
-    def __rmul__(self, other):
-        return IntegralMatrix(matrix_operator.__mul__(other, self))
-
-    @check_friendly
-    def __rmatmul__(self, other):
-        return IntegralMatrix(matrix_operator.__matmul__(other, self))
-
-    @check_friendly
-    def __rtruediv__(self, other):
-        return RealMatrix(matrix_operator.__truediv__(other, self))
-
-    @check_friendly
-    def __rfloordiv__(self, other):
-        return IntegralMatrix(matrix_operator.__floordiv__(other, self))
-
-    @check_friendly
-    def __rmod__(self, other):
-        return IntegralMatrix(matrix_operator.__mod__(other, self))
-
-    @check_friendly
-    def __rdivmod__(self, other):
-        return Matrix(matrix_operator.__divmod__(other, self))
-
-    @check_friendly
-    def __rlshift__(self, other):
-        return IntegralMatrix(matrix_operator.__lshift__(other, self))
-
-    @check_friendly
-    def __rrshift__(self, other):
-        return IntegralMatrix(matrix_operator.__rshift__(other, self))
-
-    @check_friendly
-    def __rand__(self, other):
-        return IntegralMatrix(matrix_operator.__and__(other, self))
-
-    @check_friendly
-    def __rxor__(self, other):
-        return IntegralMatrix(matrix_operator.__xor__(other, self))
-
-    @check_friendly
-    def __ror__(self, other):
-        return IntegralMatrix(matrix_operator.__or__(other, self))
-
-    def __neg__(self):
-        return IntegralMatrix(matrix_operator.__neg__(self))
-
-    def __abs__(self):
-        return IntegralMatrix(matrix_operator.__abs__(self))
-
-    def __invert__(self):
-        return IntegralMatrix(matrix_operator.__invert__(self))
-
-    def transpose(self):
+    def transpose(self) -> IntegralMatrixLike[N, M]:
         return IntegralMatrixTranspose(self)
 
-    def flip(self, *, by=Rule.ROW):
-        MatrixTransform = (IntegralMatrixRowFlip, IntegralMatrixColFlip)[by.value]
-        return MatrixTransform(self)
+    def flip(self, *, by=Rule.ROW) -> IntegralMatrixLike[M, N]:
+        IntegralMatrixTransform = (IntegralMatrixRowFlip, IntegralMatrixColFlip)[by.value]
+        return IntegralMatrixTransform(self)
 
-    def reverse(self):
+    def reverse(self) -> IntegralMatrixLike[M, N]:
         return IntegralMatrixReverse(self)
 
+    def _decompose(self, array: Iterable[int], shape: tuple[M, N]) -> IntegralMatrix[M, N]:
+        return IntegralMatrix(array, shape)
 
-class TransposeMixin:
+
+class MatrixTranspose(MatrixTransform[T, M, N]):
 
     __slots__ = ()
 
-    @property
-    def shape(self):
-        return tuple(reversed(self._target.shape))
+    def __init__(self, target: MatrixLike[T, N, M]) -> None:
+        super().__init__(target)  # type: ignore[arg-type]
+        self._target: MatrixLike[T, N, M]  # type: ignore[assignment]
 
     @property
-    def nrows(self):
+    def shape(self) -> tuple[M, N]:
+        shape = self._target.shape
+        return (shape[1], shape[0])
+
+    @property
+    def nrows(self) -> M:
         return self._target.ncols
 
     @property
-    def ncols(self):
+    def ncols(self) -> N:
         return self._target.nrows
 
-    def transpose(self):
-        return self.VIEW_TYPE(self._target)
+    @property
+    def flags(self) -> MatrixTransposeFlags:
+        return MatrixTransposeFlags(self._target)
 
-    def n(self, by):
-        return self._target.n(~by)
+    def transpose(self) -> MatrixLike[T, N, M]:
+        return MatrixView(self._target)
 
-    def _permute_vector_index(self, val_index):
+    def _permute_vector_index(self, val_index: int) -> int:
         row_index, col_index = divmod(val_index, self.ncols)
         return self._permute_matrix_index(
             row_index=row_index,
             col_index=col_index,
         )
 
-    def _permute_matrix_index(self, row_index, col_index):
+    def _permute_matrix_index(self, row_index: int, col_index: int) -> int:
         return col_index * self.nrows + row_index
 
 
-class RowFlipMixin:
+class ComplexMatrixTranspose(ComplexMatrixTransform[M, N], MatrixTranspose[complex, M, N]):
 
     __slots__ = ()
 
-    def flip(self, *, by=Rule.ROW):
+    def __init__(self, target: ComplexMatrixLike[N, M]) -> None:
+        super().__init__(target)  # type: ignore[arg-type]
+        self._target: ComplexMatrixLike[N, M]  # type: ignore[assignment]
+
+    def transpose(self) -> ComplexMatrixLike[N, M]:
+        return ComplexMatrixView(self._target)
+
+
+class RealMatrixTranspose(RealMatrixTransform[M, N], MatrixTranspose[float, M, N]):
+
+    __slots__ = ()
+
+    def __init__(self, target: RealMatrixLike[N, M]) -> None:
+        super().__init__(target)  # type: ignore[arg-type]
+        self._target: RealMatrixLike[N, M]  # type: ignore[assignment]
+
+    def transpose(self) -> RealMatrixLike[N, M]:
+        return RealMatrixView(self._target)
+
+
+class IntegralMatrixTranspose(IntegralMatrixTransform[M, N], MatrixTranspose[int, M, N]):
+
+    __slots__ = ()
+
+    def __init__(self, target: IntegralMatrixLike[N, M]) -> None:
+        super().__init__(target)  # type: ignore[arg-type]
+        self._target: IntegralMatrixLike[N, M]  # type: ignore[assignment]
+
+    def transpose(self) -> IntegralMatrixLike[N, M]:
+        return IntegralMatrixView(self._target)
+
+
+class MatrixRowFlip(MatrixTransform[T, M, N]):
+
+    __slots__ = ()
+
+    def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T, M, N]:
         if by is Rule.ROW:
-            return self.VIEW_TYPE(self._target)
+            return MatrixView(self._target)
         return super().flip(by=by)
 
-    def _permute_vector_index(self, val_index):
+    def _permute_vector_index(self, val_index: int) -> int:
         row_index, col_index = divmod(val_index, self.ncols)
         return self._permute_matrix_index(
             row_index=row_index,
             col_index=col_index,
         )
 
-    def _permute_matrix_index(self, row_index, col_index):
+    def _permute_matrix_index(self, row_index: int, col_index: int) -> int:
         row_index = self.nrows - row_index - 1
         return super()._permute_matrix_index(
             row_index=row_index,
@@ -807,23 +970,53 @@ class RowFlipMixin:
         )
 
 
-class ColFlipMixin:
+class ComplexMatrixRowFlip(ComplexMatrixTransform[M, N], MatrixRowFlip[complex, M, N]):
 
     __slots__ = ()
 
-    def flip(self, *, by=Rule.ROW):
-        if by is Rule.COL:
-            return self.VIEW_TYPE(self._target)
+    def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrixLike[M, N]:
+        if by is Rule.ROW:
+            return ComplexMatrixView(self._target)
         return super().flip(by=by)
 
-    def _permute_vector_index(self, val_index):
+
+class RealMatrixRowFlip(RealMatrixTransform[M, N], MatrixRowFlip[float, M, N]):
+
+    __slots__ = ()
+
+    def flip(self, *, by: Rule = Rule.ROW) -> RealMatrixLike[M, N]:
+        if by is Rule.ROW:
+            return RealMatrixView(self._target)
+        return super().flip(by=by)
+
+
+class IntegralMatrixRowFlip(IntegralMatrixTransform[M, N], MatrixRowFlip[int, M, N]):
+
+    __slots__ = ()
+
+    def flip(self, *, by: Rule = Rule.ROW) -> IntegralMatrixLike[M, N]:
+        if by is Rule.ROW:
+            return IntegralMatrixView(self._target)
+        return super().flip(by=by)
+
+
+class MatrixColFlip(MatrixTransform[T, M, N]):
+
+    __slots__ = ()
+
+    def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T, M, N]:
+        if by is Rule.COL:
+            return MatrixView(self._target)
+        return super().flip(by=by)
+
+    def _permute_vector_index(self, val_index: int) -> int:
         row_index, col_index = divmod(val_index, self.ncols)
         return self._permute_matrix_index(
             row_index=row_index,
             col_index=col_index,
         )
 
-    def _permute_matrix_index(self, row_index, col_index):
+    def _permute_matrix_index(self, row_index: int, col_index: int) -> int:
         col_index = self.ncols - col_index - 1
         return super()._permute_matrix_index(
             row_index=row_index,
@@ -831,17 +1024,47 @@ class ColFlipMixin:
         )
 
 
-class ReverseMixin:
+class ComplexMatrixColFlip(ComplexMatrixTransform[M, N], MatrixColFlip[complex, M, N]):
 
     __slots__ = ()
 
-    def reverse(self):
-        return self.VIEW_TYPE(self._target)
+    def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrixLike[M, N]:
+        if by is Rule.COL:
+            return ComplexMatrixView(self._target)
+        return super().flip(by=by)
 
-    def _permute_vector_index(self, val_index):
-        return self.size - val_index - 1
 
-    def _permute_matrix_index(self, row_index, col_index):
+class RealMatrixColFlip(RealMatrixTransform[M, N], MatrixColFlip[float, M, N]):
+
+    __slots__ = ()
+
+    def flip(self, *, by: Rule = Rule.ROW) -> RealMatrixLike[M, N]:
+        if by is Rule.COL:
+            return RealMatrixView(self._target)
+        return super().flip(by=by)
+
+
+class IntegralMatrixColFlip(IntegralMatrixTransform[M, N], MatrixColFlip[int, M, N]):
+
+    __slots__ = ()
+
+    def flip(self, *, by: Rule = Rule.ROW) -> IntegralMatrixLike[M, N]:
+        if by is Rule.COL:
+            return IntegralMatrixView(self._target)
+        return super().flip(by=by)
+
+
+class MatrixReverse(MatrixTransform[T, M, N]):
+
+    __slots__ = ()
+
+    def reverse(self) -> MatrixLike[T, M, N]:
+        return MatrixView(self._target)
+
+    def _permute_vector_index(self, val_index: int) -> int:
+        return len(self) - val_index - 1
+
+    def _permute_matrix_index(self, row_index: int, col_index: int) -> int:
         return self._permute_vector_index(
             val_index=super()._permute_matrix_index(
                 row_index=row_index,
@@ -850,35 +1073,25 @@ class ReverseMixin:
         )
 
 
-class MatrixTranspose(TransposeMixin, MatrixTransform[T, M, N]):
+class ComplexMatrixReverse(ComplexMatrixTransform[M, N], MatrixReverse[complex, M, N]):
+
     __slots__ = ()
-class MatrixRowFlip(RowFlipMixin, MatrixTransform[T, M, N]):
+
+    def reverse(self) -> ComplexMatrixLike[M, N]:
+        return ComplexMatrixView(self._target)
+
+
+class RealMatrixReverse(RealMatrixTransform[M, N], MatrixReverse[float, M, N]):
+
     __slots__ = ()
-class MatrixColFlip(ColFlipMixin, MatrixTransform[T, M, N]):
+
+    def reverse(self) -> RealMatrixLike[M, N]:
+        return RealMatrixView(self._target)
+
+
+class IntegralMatrixReverse(IntegralMatrixTransform[M, N], MatrixReverse[int, M, N]):
+
     __slots__ = ()
-class MatrixReverse(ReverseMixin, MatrixTransform[T, M, N]):
-    __slots__ = ()
-class ComplexMatrixTranspose(TransposeMixin, ComplexMatrixTransform[ComplexT, M, N]):
-    __slots__ = ()
-class ComplexMatrixRowFlip(RowFlipMixin, ComplexMatrixTransform[ComplexT, M, N]):
-    __slots__ = ()
-class ComplexMatrixColFlip(ColFlipMixin, ComplexMatrixTransform[ComplexT, M, N]):
-    __slots__ = ()
-class ComplexMatrixReverse(ReverseMixin, ComplexMatrixTransform[ComplexT, M, N]):
-    __slots__ = ()
-class RealMatrixTranspose(TransposeMixin, RealMatrixTransform[RealT, M, N]):
-    __slots__ = ()
-class RealMatrixRowFlip(RowFlipMixin, RealMatrixTransform[RealT, M, N]):
-    __slots__ = ()
-class RealMatrixColFlip(ColFlipMixin, RealMatrixTransform[RealT, M, N]):
-    __slots__ = ()
-class RealMatrixReverse(ReverseMixin, RealMatrixTransform[RealT, M, N]):
-    __slots__ = ()
-class IntegralMatrixTranspose(TransposeMixin, IntegralMatrixTransform[IntegralT, M, N]):
-    __slots__ = ()
-class IntegralMatrixRowFlip(RowFlipMixin, IntegralMatrixTransform[IntegralT, M, N]):
-    __slots__ = ()
-class IntegralMatrixColFlip(ColFlipMixin, IntegralMatrixTransform[IntegralT, M, N]):
-    __slots__ = ()
-class IntegralMatrixReverse(ReverseMixin, IntegralMatrixTransform[IntegralT, M, N]):
-    __slots__ = ()
+
+    def reverse(self) -> IntegralMatrixLike[M, N]:
+        return IntegralMatrixView(self._target)

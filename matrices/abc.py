@@ -18,6 +18,7 @@ __all__ = [
     "ShapedIterable",
     "ShapedCollection",
     "ShapedSequence",
+    "MatrixLikeFlags",
     "MatrixLike",
     "check_friendly",
     "ComplexMatrixLike",
@@ -36,21 +37,10 @@ P_co = TypeVar("P_co", covariant=True, bound=int)
 
 @runtime_checkable
 class Indexable(Protocol[T_co]):
-    """Protocol for classes that support vector and matrix-like
-    ``__getitem__()`` access
-
-    Note that slicing is not a requirement by this protocol.
-    """
-
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: int) -> T_co: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: tuple[int, int]) -> T_co: ...
+    """Protocol for classes that support vector ``__getitem__()`` access"""
 
     @abstractmethod
-    def __getitem__(self, key):
+    def __getitem__(self, key: int) -> T_co:
         """Return the value corresponding to ``key``"""
         raise NotImplementedError
 
@@ -91,6 +81,17 @@ class ShapedIndexable(Shaped[M_co, N_co], Indexable[T_co], Protocol[T_co, M_co, 
     """Protocol for classes that support ``shape``, and index-based
     ``__getitem__()``
     """
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: int) -> T_co: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, int]) -> T_co: ...
+
+    @abstractmethod
+    def __getitem__(self, key):
+        raise NotImplementedError
 
 
 @runtime_checkable
@@ -142,6 +143,62 @@ class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Sequence[T_co], metacla
     def __getitem__(self, key):
         """Return the value or sub-sequence corresponding to ``key``"""
         raise NotImplementedError
+
+
+class MatrixLikeFlags:
+    """Details of the matrix class implementation
+
+    These flags are typically used by matrix types (usually views) to make
+    performance optimizations.
+    """
+
+    __slots__ = ("_matrix",)
+
+    def __init__(self, matrix: MatrixLike) -> None:
+        self._matrix = matrix
+
+    @property
+    def lazy_array(self) -> bool:
+        """True if the matrix's ``array`` property is computed at access time,
+        or false if it is pre-computed in some manner
+
+        This flag is used by matrix transforms (e.g. ``MatrixTranspose``,
+        ``MatrixReverse``) to save on subscripting cost. If this property is
+        true, then using the ``array`` property is typically an O(MN)
+        operation.
+        """
+        return False
+
+    @property
+    def lazy_shape(self) -> bool:
+        """True if the matrix's ``shape`` property is computed at access time,
+        or false if it is pre-computed in some manner
+
+        This flag currently sees no use by the built-in matrices, but,
+        ``MatrixTranspose`` (and its sub-classes) are one example where this
+        flag is true.
+        """
+        return False
+
+    @property
+    def mutable(self) -> bool:
+        """True if the matrix is mutable, otherwise false"""
+        return self.writable | self.growable | self.shrinkable
+
+    @property
+    def writable(self) -> bool:
+        """True if the matrix can be written to, otherwise false"""
+        return False
+
+    @property
+    def growable(self) -> bool:
+        """True if the matrix can grow in size, otherwise false"""
+        return False
+
+    @property
+    def shrinkable(self) -> bool:
+        """True if the matrix can shrink in size, otherwise false"""
+        return False
 
 
 class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
@@ -213,6 +270,11 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
     def array(self) -> Sequence[T_co]:
         """A sequence of the matrix's elements"""
         raise NotImplementedError
+
+    @property
+    def flags(self) -> MatrixLikeFlags:
+        """Details of the matrix class implementation"""
+        return MatrixLikeFlags(self)
 
     @abstractmethod
     def equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
