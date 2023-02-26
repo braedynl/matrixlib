@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from typing import Any, Literal, Optional, TypeVar, overload
+from typing import Any, Literal, Optional, TypeVar, Union, overload
 
 from ..abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                    MatrixLikeFlags, RealMatrixLike)
@@ -895,6 +895,16 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
     @property
     def flags(self) -> MatrixTransposeFlags:
         return MatrixTransposeFlags(self._target)
+
+    @overload
+    def n(self, by: Literal[Rule.ROW]) -> M: ...
+    @overload
+    def n(self, by: Literal[Rule.COL]) -> N: ...
+    @overload
+    def n(self, by: Rule) -> Union[M, N]: ...
+
+    def n(self, by):
+        return self._target.n(~by)
 
     def transpose(self) -> MatrixLike[T, N, M]:
         return MatrixView(self._target)
