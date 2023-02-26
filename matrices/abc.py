@@ -374,11 +374,11 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
             raise IndexError(f"there are {bound} {handle}s but index is {key}")
         return index
 
-    def _resolve_vector_slice(self, key: slice) -> Iterable[int]:
+    def _resolve_vector_slice(self, key: slice) -> Collection[int]:
         bound = len(self)
         return range(*key.indices(bound))
 
-    def _resolve_matrix_slice(self, key: slice, *, by: Rule = Rule.ROW) -> Iterable[int]:
+    def _resolve_matrix_slice(self, key: slice, *, by: Rule = Rule.ROW) -> Collection[int]:
         bound = self.n(by)
         return range(*key.indices(bound))
 
