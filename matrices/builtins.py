@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import contextlib
+import copy
 import itertools
 import operator
-from collections.abc import Generator, Iterable
+from collections.abc import Iterable, Iterator
 from typing import (Any, Generic, Literal, Optional, SupportsIndex, TypeVar,
                     overload)
 
@@ -23,6 +23,10 @@ __all__ = [
     "RealMatrix",
     "IntegralMatrixOperatorsMixin",
     "IntegralMatrix",
+    "ConstantMatrix",
+    "ComplexConstantMatrix",
+    "RealConstantMatrix",
+    "IntegralConstantMatrix",
 ]
 
 T = TypeVar("T")
@@ -37,6 +41,7 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
 
 MatrixT = TypeVar("MatrixT", bound="Matrix")
+ConstantMatrixT = TypeVar("ConstantMatrixT", bound="ConstantMatrix")
 
 
 class MatrixOperatorsMixin(Generic[T_co, M_co, N_co]):
@@ -134,7 +139,7 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
                 if isinstance(col_key, slice):
                     col_indices = self._resolve_matrix_slice(col_key, by=COL)
                     return self.__class__(
-                        (
+                        array=(
                             array[row_index * ncols + col_index]
                             for row_index in row_indices
                             for col_index in col_indices
@@ -144,7 +149,7 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
 
                 col_index = self._resolve_matrix_index(col_key, by=COL)
                 return self.__class__(
-                    (
+                    array=(
                         array[row_index * ncols + col_index]
                         for row_index in row_indices
                     ),
@@ -156,7 +161,7 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
             if isinstance(col_key, slice):
                 col_indices = self._resolve_matrix_slice(col_key, by=COL)
                 return self.__class__(
-                    (
+                    array=(
                         array[row_index * ncols + col_index]
                         for col_index in col_indices
                     ),
@@ -169,7 +174,7 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
         if isinstance(key, slice):
             val_indices = self._resolve_vector_slice(key)
             return self.__class__(
-                (
+                array=(
                     array[val_index]
                     for val_index in val_indices
                 ),
@@ -189,29 +194,6 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
     __copy__ = __deepcopy__
 
     @classmethod
-    def from_raw_parts(cls: type[MatrixT], array: tuple[T_co, ...], shape: tuple[M_co, N_co]) -> MatrixT:
-        """Construct a matrix directly from its ``array`` and ``shape`` parts
-
-        This method exists primarily for the benefit of matrix-producing
-        functions that have "pre-validated" the array and shape. Should be used
-        with caution.
-
-        The following properties are required to construct a valid matrix:
-        - ``array`` must be a flattened ``tuple``. That is, the elements of the
-          matrix must be contained within the shallowest depth of the ``tuple``
-          instance.
-        - ``shape`` must be a ``tuple`` of two positive integers, where the
-          product of its values equals the length of ``array``.
-
-        Direct references to the given parts are kept. It is up to the caller
-        to guarantee that the above criteria is met.
-        """
-        self = cls.__new__(cls)
-        self._array = array
-        self._shape = shape
-        return self
-
-    @classmethod
     def from_nesting(cls: type[MatrixT], nesting: Iterable[Iterable[T_co]]) -> MatrixT:
         """Construct a matrix from a singly-nested iterable, using the
         shallowest iterable's length to deduce the number of rows, and the
@@ -220,39 +202,30 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
         Raises ``ValueError`` if the length of the nested iterables is
         inconsistent.
         """
+        array = []
         nrows = ncols = 0
 
-        def flatten(nesting: Iterable[Iterable[T_co]]) -> Generator[T_co, None, None]:
-            nonlocal nrows, ncols
+        rows = iter(nesting)
+        try:
+            row = next(rows)
+        except StopIteration:
+            return cls(array=array, shape=(nrows, ncols))
+        else:
+            array.extend(row)
 
-            rows = iter(nesting)
-            try:
-                row = next(rows)
-            except StopIteration:
-                return
+        nrows += 1
+        ncols += len(array)
 
-            nrows += 1
+        for row in rows:
+            n = 0
             for val in row:
-                ncols += 1
-                yield val
+                array.append(val)
+                n += 1
+            if ncols != n:
+                raise ValueError(f"row at index {nrows} has length {n}, but precedent rows have length {ncols}")
+            nrows += 1
 
-            for row in rows:
-                nrows += 1
-                n = 0
-                for val in row:
-                    n += 1
-                    yield val
-                if n != ncols:
-                    raise ValueError(f"row {nrows} has length {n}, but precedent rows have length {ncols}")
-
-        with contextlib.closing(flatten(nesting)) as values:
-            array = tuple(values)
-            shape = nrows, ncols
-
-        return cls.from_raw_parts(
-            array=array,
-            shape=shape,
-        )
+        return cls(array=array, shape=(nrows, ncols))
 
     @property
     def array(self) -> tuple[T_co, ...]:
@@ -274,6 +247,19 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
     def reverse(self) -> MatrixLike[T_co, M_co, N_co]:
         from .views.builtins import MatrixReverse
         return MatrixReverse(self)
+
+    def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
+        array = self._array
+        values: Any = reversed if reverse else iter
+        if by is Rule.ROW:
+            yield from values(array)
+            return
+        nrows, ncols = self._shape
+        row_indices = range(nrows)
+        col_indices = range(ncols)
+        for col_index in values(col_indices):
+            for row_index in values(row_indices):
+                yield array[row_index * ncols + col_index]
 
 
 class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
@@ -514,15 +500,15 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __divmod__(self, other):
-        xx, yx = itertools.tee(MatrixMap(divmod, self, other), 2)
+        xs, ys = itertools.tee(MatrixMap(divmod, self, other), 2)
         shape = self.shape
         return (
-            RealMatrix.from_raw_parts(
-                array=tuple(map(operator.itemgetter(0), xx)),
+            RealMatrix(
+                array=map(operator.itemgetter(0), xs),
                 shape=shape,
             ),
-            RealMatrix.from_raw_parts(
-                array=tuple(map(operator.itemgetter(1), yx)),
+            RealMatrix(
+                array=map(operator.itemgetter(1), ys),
                 shape=shape,
             ),
         )
@@ -597,15 +583,15 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rdivmod__(self, other):
-        xx, yx = itertools.tee(MatrixMap(divmod, other, self), 2)
+        xs, ys = itertools.tee(MatrixMap(divmod, other, self), 2)
         shape = self.shape
         return (
-            RealMatrix.from_raw_parts(
-                array=tuple(map(operator.itemgetter(0), xx)),
+            RealMatrix(
+                array=map(operator.itemgetter(0), xs),
                 shape=shape,
             ),
-            RealMatrix.from_raw_parts(
-                array=tuple(map(operator.itemgetter(1), yx)),
+            RealMatrix(
+                array=map(operator.itemgetter(1), ys),
                 shape=shape,
             ),
         )
@@ -720,15 +706,15 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __divmod__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]:
-        xx, yx = itertools.tee(MatrixMap(divmod, self, other), 2)
+        xs, ys = itertools.tee(MatrixMap(divmod, self, other), 2)
         shape = self.shape
         return (
-            IntegralMatrix.from_raw_parts(
-                array=tuple(map(operator.itemgetter(0), xx)),
+            IntegralMatrix(
+                array=map(operator.itemgetter(0), xs),
                 shape=shape,
             ),
-            IntegralMatrix.from_raw_parts(
-                array=tuple(map(operator.itemgetter(1), yx)),
+            IntegralMatrix(
+                array=map(operator.itemgetter(1), ys),
                 shape=shape,
             ),
         )
@@ -783,15 +769,15 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     @check_friendly
     def __rdivmod__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]:
-        xx, yx = itertools.tee(MatrixMap(divmod, other, self), 2)
+        xs, ys = itertools.tee(MatrixMap(divmod, other, self), 2)
         shape = self.shape
         return (
-            IntegralMatrix.from_raw_parts(
-                array=tuple(map(operator.itemgetter(0), xx)),
+            IntegralMatrix(
+                array=map(operator.itemgetter(0), xs),
                 shape=shape,
             ),
-            IntegralMatrix.from_raw_parts(
-                array=tuple(map(operator.itemgetter(1), yx)),
+            IntegralMatrix(
+                array=map(operator.itemgetter(1), ys),
                 shape=shape,
             ),
         )
@@ -871,3 +857,208 @@ class IntegralMatrix(IntegralMatrixOperatorsMixin[M_co, N_co], IntegralMatrixLik
     def reverse(self) -> IntegralMatrixLike[M_co, N_co]:
         from .views.builtins import IntegralMatrixReverse
         return IntegralMatrixReverse(self)
+
+
+class ConstantMatrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co]):
+
+    __slots__ = ("_value", "_shape")
+
+    @overload
+    def __init__(self, value: ConstantMatrix[T_co, M_co, N_co]) -> None: ...
+    @overload
+    def __init__(self, value: T_co, shape: tuple[M_co, N_co]) -> None: ...
+
+    def __init__(self, value, shape=None):
+        if isinstance(value, ConstantMatrix):
+            self._value = copy.copy(value.value)
+            self._shape = value.shape
+            return
+
+        self._value = copy.copy(value)
+
+        nrows = shape[0]
+        ncols = shape[1]
+
+        if nrows < 1 or ncols < 1:
+            raise ValueError("dimensions must be positive")
+
+        self._shape = shape
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(value={self._value!r}, shape={self._shape!r})"
+
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> T_co: ...
+    @overload
+    def __getitem__(self, key: slice) -> MatrixLike[T_co, Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> T_co: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, slice]) -> MatrixLike[T_co, Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> MatrixLike[T_co, Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> MatrixLike[T_co, Any, Any]: ...
+
+    def __getitem__(self, key):
+        value = self._value
+
+        if isinstance(key, tuple):
+            row_key, col_key = key
+
+            if isinstance(row_key, slice):
+                row_indices = self._resolve_matrix_slice(row_key, by=ROW)
+
+                if isinstance(col_key, slice):
+                    col_indices = self._resolve_matrix_slice(col_key, by=COL)
+                    return self.__class__(
+                        value=value,
+                        shape=(len(row_indices), len(col_indices)),
+                    )
+
+                self._resolve_matrix_index(col_key, by=COL)
+                return self.__class__(
+                    value=value,
+                    shape=(len(row_indices), 1),
+                )
+
+            self._resolve_matrix_index(row_key, by=ROW)
+
+            if isinstance(col_key, slice):
+                col_indices = self._resolve_matrix_slice(col_key, by=COL)
+                return self.__class__(
+                    value=value,
+                    shape=(1, len(col_indices)),
+                )
+
+            self._resolve_matrix_index(col_key, by=COL)
+            return value
+
+        if isinstance(key, slice):
+            val_indices = self._resolve_vector_slice(key)
+            return self.__class__(
+                value=value,
+                shape=(1, len(val_indices)),
+            )
+
+        self._resolve_vector_index(key)
+        return value
+
+    def __deepcopy__(self: ConstantMatrixT, memo: Optional[dict[int, Any]] = None) -> ConstantMatrixT:
+        return self
+
+    __copy__ = __deepcopy__
+
+    @property
+    def array(self) -> tuple[T_co, ...]:
+        return tuple(self.values())
+
+    @property
+    def shape(self) -> tuple[M_co, N_co]:
+        return self._shape
+
+    @property
+    def value(self) -> T_co:
+        return self._value
+
+    def transpose(self) -> MatrixLike[T_co, N_co, M_co]:
+        return self.__class__(value=self._value, shape=tuple(reversed(self._shape)))  # type: ignore[arg-type]
+
+    def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T_co, M_co, N_co]:
+        return copy.copy(self)
+
+    def reverse(self) -> MatrixLike[T_co, M_co, N_co]:
+        return copy.copy(self)
+
+    def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
+        yield from itertools.repeat(self._value, times=len(self))
+
+
+class ComplexConstantMatrix(ComplexMatrixOperatorsMixin[M_co, N_co], ComplexMatrixLike[M_co, N_co], ConstantMatrix[complex, M_co, N_co]):
+
+    __slots__ = ()
+
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> complex: ...
+    @overload
+    def __getitem__(self, key: slice) -> ComplexMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> complex: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, slice]) -> ComplexMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> ComplexMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> ComplexMatrixLike[Any, Any]: ...
+
+    def __getitem__(self, key):
+        return ConstantMatrix.__getitem__(self, key)
+
+    def transpose(self) -> ComplexMatrixLike[N_co, M_co]:
+        return ConstantMatrix.transpose(self)  # type: ignore[return-value]
+
+    def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrixLike[M_co, N_co]:
+        return ConstantMatrix.flip(self, by=by)  # type: ignore[return-value]
+
+    def reverse(self) -> ComplexMatrixLike[M_co, N_co]:
+        return ConstantMatrix.reverse(self)  # type: ignore[return-value]
+
+
+class RealConstantMatrix(RealMatrixOperatorsMixin[M_co, N_co], RealMatrixLike[M_co, N_co], ConstantMatrix[float, M_co, N_co]):
+
+    __slots__ = ()
+
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> float: ...
+    @overload
+    def __getitem__(self, key: slice) -> RealMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> float: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, slice]) -> RealMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> RealMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> RealMatrixLike[Any, Any]: ...
+
+    def __getitem__(self, key):
+        return ConstantMatrix.__getitem__(self, key)
+
+    def transpose(self) -> RealMatrixLike[N_co, M_co]:
+        return ConstantMatrix.transpose(self)  # type: ignore[return-value]
+
+    def flip(self, *, by: Rule = Rule.ROW) -> RealMatrixLike[M_co, N_co]:
+        return ConstantMatrix.flip(self, by=by)  # type: ignore[return-value]
+
+    def reverse(self) -> RealMatrixLike[M_co, N_co]:
+        return ConstantMatrix.reverse(self)  # type: ignore[return-value]
+
+
+class IntegralConstantMatrix(IntegralMatrixOperatorsMixin[M_co, N_co], IntegralMatrixLike[M_co, N_co], ConstantMatrix[int, M_co, N_co]):
+
+    __slots__ = ()
+
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> int: ...
+    @overload
+    def __getitem__(self, key: slice) -> IntegralMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> int: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, slice]) -> IntegralMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> IntegralMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> IntegralMatrixLike[Any, Any]: ...
+
+    def __getitem__(self, key):
+        return ConstantMatrix.__getitem__(self, key)
+
+    def transpose(self) -> IntegralMatrixLike[N_co, M_co]:
+        return ConstantMatrix.transpose(self)  # type: ignore[return-value]
+
+    def flip(self, *, by: Rule = Rule.ROW) -> IntegralMatrixLike[M_co, N_co]:
+        return ConstantMatrix.flip(self, by=by)  # type: ignore[return-value]
+
+    def reverse(self) -> IntegralMatrixLike[M_co, N_co]:
+        return ConstantMatrix.reverse(self)  # type: ignore[return-value]
