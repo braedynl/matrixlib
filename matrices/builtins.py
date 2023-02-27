@@ -202,8 +202,10 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
         Raises ``ValueError`` if the length of the nested iterables is
         inconsistent.
         """
-        array = []
-        nrows = ncols = 0
+        array: list[T_co] = []
+
+        nrows = 0
+        ncols = 0
 
         rows = iter(nesting)
         try:
