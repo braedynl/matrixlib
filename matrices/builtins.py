@@ -68,6 +68,11 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
     def __init__(self, array: Iterable[T_co] = (), shape: tuple[Optional[M_co], Optional[N_co]] = (None, None)) -> None: ...
 
     def __init__(self, array=(), shape=(None, None)):
+        if isinstance(array, Matrix):
+            self._array = array._array
+            self._shape = array._shape
+            return
+
         self._array = tuple(array)
         try:
             shape = array.shape  # Avoids having to instance-check with ShapedIterable,
