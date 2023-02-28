@@ -81,17 +81,17 @@ class MatrixMap(ShapedCollection[S_co, M_co, N_co]):
         f: Callable[..., S_co],
         a: ShapedIterable[Any, M_co, N_co],
         /,
-        *bx: ShapedIterable[Any, M_co, N_co],
+        *bs: ShapedIterable[Any, M_co, N_co],
     ) -> None: ...
 
-    def __init__(self, f, a, /, *bx):
+    def __init__(self, f, a, /, *bs):
         u = a.shape
-        for b in bx:
+        for b in bs:
             v = b.shape
             if u != v:
                 raise ValueError(f"incompatible shapes {u}, {v}")
         self._func  = f
-        self._args  = a, *bx
+        self._args  = a, *bs
         self._shape = u
 
     def __iter__(self) -> Iterator[S_co]:
