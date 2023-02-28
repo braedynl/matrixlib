@@ -9,7 +9,7 @@ from collections.abc import (Callable, Collection, Iterable, Iterator,
 from typing import (Any, Literal, Protocol, SupportsIndex, TypeVar, Union,
                     overload, runtime_checkable)
 
-from .rule import COL, ROW, Rule
+from .rule import Rule
 
 __all__ = [
     "Indexable",
@@ -18,7 +18,6 @@ __all__ = [
     "ShapedIterable",
     "ShapedCollection",
     "ShapedSequence",
-    "MatrixLikeFlags",
     "MatrixLike",
     "check_friendly",
     "ComplexMatrixLike",
@@ -145,62 +144,6 @@ class ShapedSequence(ShapedCollection[T_co, M_co, N_co], Sequence[T_co], metacla
         raise NotImplementedError
 
 
-class MatrixLikeFlags:
-    """Details of the matrix class implementation
-
-    These flags are typically used by matrix types (usually views) to make
-    performance optimizations.
-    """
-
-    __slots__ = ("_matrix",)
-
-    def __init__(self, matrix: MatrixLike) -> None:
-        self._matrix = matrix
-
-    @property
-    def lazy_array(self) -> bool:
-        """True if the matrix's ``array`` property is computed at access time,
-        or false if it is pre-computed in some manner
-
-        This flag is used by matrix transforms (e.g. ``MatrixTranspose``,
-        ``MatrixReverse``) to save on subscripting cost. If this property is
-        true, then using the ``array`` property is typically an O(MN)
-        operation.
-        """
-        return False
-
-    @property
-    def lazy_shape(self) -> bool:
-        """True if the matrix's ``shape`` property is computed at access time,
-        or false if it is pre-computed in some manner
-
-        This flag currently sees no use by the built-in matrices, but,
-        ``MatrixTranspose`` (and its sub-classes) are one example where this
-        flag is true.
-        """
-        return False
-
-    @property
-    def mutable(self) -> bool:
-        """True if the matrix is mutable, otherwise false"""
-        return self.writable | self.growable | self.shrinkable
-
-    @property
-    def writable(self) -> bool:
-        """True if the matrix can be written to, otherwise false"""
-        return False
-
-    @property
-    def growable(self) -> bool:
-        """True if the matrix can grow in size, otherwise false"""
-        return False
-
-    @property
-    def shrinkable(self) -> bool:
-        """True if the matrix can shrink in size, otherwise false"""
-        return False
-
-
 class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
     """Abstract base class for matrix-like objects
 
@@ -257,24 +200,27 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     def __iter__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in row-major order"""
-        yield from self.values(by=ROW, reverse=False)
+        yield from self.values()
 
     def __reversed__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
-        yield from self.values(by=ROW, reverse=True)
+        yield from self.values(reverse=True)
 
     @property
-    @abstractmethod
     def array(self) -> Sequence[T_co]:
-        """A sequence of the matrix's elements"""
-        raise NotImplementedError
+        """A sequence of the matrix's elements
 
-    @property
-    def flags(self) -> MatrixLikeFlags:
-        """Details of the matrix class implementation"""
-        return MatrixLikeFlags(self)
+        This property serves two purposes, in allowing for matrix data to be
+        matched via a ``match``-``case`` statement (for Python 3.10 or later),
+        and in allowing for matrix permutations to have faster access times.
+
+        If the matrix implementation composes a ``Sequence`` type that can be
+        safely exposed, it should be returned by this property. Otherwise, the
+        matrix itself should be returned (the default).
+        """
+        return self
 
     @abstractmethod
     def equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:

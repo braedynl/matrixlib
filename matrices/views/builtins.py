@@ -4,7 +4,7 @@ from collections.abc import Iterable, Sequence
 from typing import Any, Literal, Optional, TypeVar, Union, overload
 
 from ..abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
-                   MatrixLikeFlags, RealMatrixLike)
+                   RealMatrixLike)
 from ..builtins import (ComplexMatrix, ComplexMatrixOperatorsMixin,
                         IntegralMatrix, IntegralMatrixOperatorsMixin, Matrix,
                         MatrixOperatorsMixin, RealMatrix,
@@ -16,26 +16,23 @@ __all__ = [
     # Basic viewers
     "MatrixView", "ComplexMatrixView", "RealMatrixView", "IntegralMatrixView",
 
-    # Flags
-    "MatrixTransformFlags", "MatrixTransposeFlags",
+    # Base permutations
+    "MatrixPermutation", "ComplexMatrixPermutation", "RealMatrixPermutation",
+    "IntegralMatrixPermutation",
 
-    # Base transforms
-    "MatrixTransform", "ComplexMatrixTransform", "RealMatrixTransform",
-    "IntegralMatrixTransform",
-
-    # Transpose transforms
+    # Transpose permutations
     "MatrixTranspose", "ComplexMatrixTranspose", "RealMatrixTranspose",
     "IntegralMatrixTranspose",
 
-    # Row flip transforms
+    # Row flip permutations
     "MatrixRowFlip", "ComplexMatrixRowFlip", "RealMatrixRowFlip",
     "IntegralMatrixRowFlip",
 
-    # Column flip transforms
+    # Column flip permutations
     "MatrixColFlip", "ComplexMatrixColFlip", "RealMatrixColFlip",
     "IntegralMatrixColFlip",
 
-    # Reverse transforms
+    # Reverse permutations
     "MatrixReverse", "ComplexMatrixReverse", "RealMatrixReverse",
     "IntegralMatrixReverse",
 ]
@@ -47,7 +44,7 @@ N = TypeVar("N", bound=int)
 P = TypeVar("P", bound=int)
 
 MatrixViewT = TypeVar("MatrixViewT", bound="MatrixView")
-MatrixTransformT = TypeVar("MatrixTransformT", bound="MatrixTransform")
+MatrixPermutationT = TypeVar("MatrixPermutationT", bound="MatrixPermutation")
 
 
 class MatrixView(MatrixViewLike[T, M, N]):
@@ -90,10 +87,6 @@ class MatrixView(MatrixViewLike[T, M, N]):
     @property
     def shape(self) -> tuple[M, N]:
         return self._target.shape
-
-    @property
-    def flags(self) -> MatrixLikeFlags:
-        return self._target.flags
 
     def equal(self, other: MatrixLike[Any, M, N]) -> IntegralMatrixLike[M, N]:
         return self._target.equal(other)
@@ -584,41 +577,7 @@ class IntegralMatrixView(IntegralMatrixLike[M, N], MatrixView[int, M, N]):
         return self._target.greater_equal(other)
 
 
-class MatrixTransformFlags(MatrixLikeFlags):
-
-    __slots__ = ()
-
-    @property
-    def lazy_array(self) -> bool:
-        return True
-
-    @property
-    def lazy_shape(self) -> bool:
-        return self._matrix.flags.lazy_shape
-
-    @property
-    def writable(self) -> bool:
-        return self._matrix.flags.writable
-
-    @property
-    def growable(self) -> bool:
-        return self._matrix.flags.growable
-
-    @property
-    def shrinkable(self) -> bool:
-        return self._matrix.flags.shrinkable
-
-
-class MatrixTransposeFlags(MatrixTransformFlags):
-
-    __slots__ = ()
-
-    @property
-    def lazy_shape(self) -> bool:
-        return True
-
-
-class MatrixTransform(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
+class MatrixPermutation(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
 
     __slots__ = ("_target",)
 
@@ -643,12 +602,7 @@ class MatrixTransform(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
     def __getitem__(self, key: tuple[slice, slice]) -> MatrixLike[T, Any, Any]: ...
 
     def __getitem__(self, key):
-        target = self._target
-
-        if target.flags.lazy_array:
-            array = target
-        else:
-            array = target.array
+        array = self._target.array
 
         permute_matrix_index = self._permute_matrix_index
         permute_vector_index = self._permute_vector_index
@@ -662,7 +616,7 @@ class MatrixTransform(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
                 if isinstance(col_key, slice):
                     col_indices = self._resolve_matrix_slice(col_key, by=COL)
                     return self._decompose(
-                        (
+                        array=(
                             array[permute_matrix_index(row_index, col_index)]
                             for row_index in row_indices
                             for col_index in col_indices
@@ -672,7 +626,7 @@ class MatrixTransform(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
 
                 col_index = self._resolve_matrix_index(col_key, by=COL)
                 return self._decompose(
-                    (
+                    array=(
                         array[permute_matrix_index(row_index, col_index)]
                         for row_index in row_indices
                     ),
@@ -684,7 +638,7 @@ class MatrixTransform(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
             if isinstance(col_key, slice):
                 col_indices = self._resolve_matrix_slice(col_key, by=COL)
                 return self._decompose(
-                    (
+                    array=(
                         array[permute_matrix_index(row_index, col_index)]
                         for col_index in col_indices
                     ),
@@ -697,7 +651,7 @@ class MatrixTransform(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
         if isinstance(key, slice):
             val_indices = self._resolve_vector_slice(key)
             return self._decompose(
-                (
+                array=(
                     array[permute_vector_index(val_index)]
                     for val_index in val_indices
                 ),
@@ -707,36 +661,28 @@ class MatrixTransform(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
         val_index = self._resolve_vector_index(key)
         return array[permute_vector_index(val_index)]
 
-    def __deepcopy__(self: MatrixTransformT, memo: Optional[dict[int, Any]] = None) -> MatrixTransformT:
+    def __deepcopy__(self: MatrixPermutationT, memo: Optional[dict[int, Any]] = None) -> MatrixPermutationT:
         """Return the view"""
         return self
 
     __copy__ = __deepcopy__
 
     @property
-    def array(self) -> Sequence[T]:
-        return tuple(self.values(by=ROW, reverse=False))
-
-    @property
     def shape(self) -> tuple[M, N]:
         return self._target.shape
-
-    @property
-    def flags(self) -> MatrixTransformFlags:
-        return MatrixTransformFlags(self._target)
 
     def transpose(self) -> MatrixLike[T, N, M]:
         return MatrixTranspose(self)
 
     def flip(self, *, by=Rule.ROW) -> MatrixLike[T, M, N]:
-        MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
-        return MatrixTransform(self)
+        MatrixPermutation = (MatrixRowFlip, MatrixColFlip)[by.value]
+        return MatrixPermutation(self)
 
     def reverse(self) -> MatrixLike[T, M, N]:
         return MatrixReverse(self)
 
     def _decompose(self, array: Iterable[T], shape: tuple[M, N]) -> MatrixLike[T, M, N]:
-        return Matrix(array, shape)
+        return Matrix(array=array, shape=shape)
 
     def _permute_vector_index(self, val_index: int) -> int:
         return val_index
@@ -745,10 +691,10 @@ class MatrixTransform(MatrixOperatorsMixin[T, M, N], MatrixViewLike[T, M, N]):
         return row_index * self.ncols + col_index
 
 
-class ComplexMatrixTransform(
+class ComplexMatrixPermutation(
     ComplexMatrixOperatorsMixin[M, N],
     ComplexMatrixLike[M, N],
-    MatrixTransform[complex, M, N],
+    MatrixPermutation[complex, M, N],
 ):
 
     __slots__ = ()
@@ -771,26 +717,26 @@ class ComplexMatrixTransform(
     def __getitem__(self, key: tuple[slice, slice]) -> ComplexMatrixLike[Any, Any]: ...
 
     def __getitem__(self, key):
-        return MatrixTransform.__getitem__(self, key)
+        return MatrixPermutation.__getitem__(self, key)
 
     def transpose(self) -> ComplexMatrixLike[N, M]:
         return ComplexMatrixTranspose(self)
 
     def flip(self, *, by=Rule.ROW) -> ComplexMatrixLike[M, N]:
-        ComplexMatrixTransform = (ComplexMatrixRowFlip, ComplexMatrixColFlip)[by.value]
-        return ComplexMatrixTransform(self)
+        ComplexMatrixPermutation = (ComplexMatrixRowFlip, ComplexMatrixColFlip)[by.value]
+        return ComplexMatrixPermutation(self)
 
     def reverse(self) -> ComplexMatrixLike[M, N]:
         return ComplexMatrixReverse(self)
 
     def _decompose(self, array: Iterable[complex], shape: tuple[M, N]) -> ComplexMatrixLike[M, N]:
-        return ComplexMatrix(array, shape)
+        return ComplexMatrix(array=array, shape=shape)
 
 
-class RealMatrixTransform(
+class RealMatrixPermutation(
     RealMatrixOperatorsMixin[M, N],
     RealMatrixLike[M, N],
-    MatrixTransform[float, M, N],
+    MatrixPermutation[float, M, N],
 ):
 
     __slots__ = ()
@@ -813,26 +759,26 @@ class RealMatrixTransform(
     def __getitem__(self, key: tuple[slice, slice]) -> RealMatrixLike[Any, Any]: ...
 
     def __getitem__(self, key):
-        return MatrixTransform.__getitem__(self, key)
+        return MatrixPermutation.__getitem__(self, key)
 
     def transpose(self) -> RealMatrixLike[N, M]:
         return RealMatrixTranspose(self)
 
     def flip(self, *, by=Rule.ROW) -> RealMatrixLike[M, N]:
-        RealMatrixTransform = (RealMatrixRowFlip, RealMatrixColFlip)[by.value]
-        return RealMatrixTransform(self)
+        RealMatrixPermutation = (RealMatrixRowFlip, RealMatrixColFlip)[by.value]
+        return RealMatrixPermutation(self)
 
     def reverse(self) -> RealMatrixLike[M, N]:
         return RealMatrixReverse(self)
 
     def _decompose(self, array: Iterable[float], shape: tuple[M, N]) -> RealMatrixLike[M, N]:
-        return RealMatrix(array, shape)
+        return RealMatrix(array=array, shape=shape)
 
 
-class IntegralMatrixTransform(
+class IntegralMatrixPermutation(
     IntegralMatrixOperatorsMixin[M, N],
     IntegralMatrixLike[M, N],
-    MatrixTransform[int, M, N],
+    MatrixPermutation[int, M, N],
 ):
 
     __slots__ = ()
@@ -855,23 +801,23 @@ class IntegralMatrixTransform(
     def __getitem__(self, key: tuple[slice, slice]) -> IntegralMatrixLike[Any, Any]: ...
 
     def __getitem__(self, key):
-        return MatrixTransform.__getitem__(self, key)
+        return MatrixPermutation.__getitem__(self, key)
 
     def transpose(self) -> IntegralMatrixLike[N, M]:
         return IntegralMatrixTranspose(self)
 
     def flip(self, *, by=Rule.ROW) -> IntegralMatrixLike[M, N]:
-        IntegralMatrixTransform = (IntegralMatrixRowFlip, IntegralMatrixColFlip)[by.value]
-        return IntegralMatrixTransform(self)
+        IntegralMatrixPermutation = (IntegralMatrixRowFlip, IntegralMatrixColFlip)[by.value]
+        return IntegralMatrixPermutation(self)
 
     def reverse(self) -> IntegralMatrixLike[M, N]:
         return IntegralMatrixReverse(self)
 
     def _decompose(self, array: Iterable[int], shape: tuple[M, N]) -> IntegralMatrix[M, N]:
-        return IntegralMatrix(array, shape)
+        return IntegralMatrix(array=array, shape=shape)
 
 
-class MatrixTranspose(MatrixTransform[T, M, N]):
+class MatrixTranspose(MatrixPermutation[T, M, N]):
 
     __slots__ = ()
 
@@ -891,10 +837,6 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
     @property
     def ncols(self) -> N:
         return self._target.nrows
-
-    @property
-    def flags(self) -> MatrixTransposeFlags:
-        return MatrixTransposeFlags(self._target)
 
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M: ...
@@ -920,7 +862,7 @@ class MatrixTranspose(MatrixTransform[T, M, N]):
         return col_index * self.nrows + row_index
 
 
-class ComplexMatrixTranspose(ComplexMatrixTransform[M, N], MatrixTranspose[complex, M, N]):
+class ComplexMatrixTranspose(ComplexMatrixPermutation[M, N], MatrixTranspose[complex, M, N]):
 
     __slots__ = ()
 
@@ -932,7 +874,7 @@ class ComplexMatrixTranspose(ComplexMatrixTransform[M, N], MatrixTranspose[compl
         return ComplexMatrixView(self._target)
 
 
-class RealMatrixTranspose(RealMatrixTransform[M, N], MatrixTranspose[float, M, N]):
+class RealMatrixTranspose(RealMatrixPermutation[M, N], MatrixTranspose[float, M, N]):
 
     __slots__ = ()
 
@@ -944,7 +886,7 @@ class RealMatrixTranspose(RealMatrixTransform[M, N], MatrixTranspose[float, M, N
         return RealMatrixView(self._target)
 
 
-class IntegralMatrixTranspose(IntegralMatrixTransform[M, N], MatrixTranspose[int, M, N]):
+class IntegralMatrixTranspose(IntegralMatrixPermutation[M, N], MatrixTranspose[int, M, N]):
 
     __slots__ = ()
 
@@ -956,7 +898,7 @@ class IntegralMatrixTranspose(IntegralMatrixTransform[M, N], MatrixTranspose[int
         return IntegralMatrixView(self._target)
 
 
-class MatrixRowFlip(MatrixTransform[T, M, N]):
+class MatrixRowFlip(MatrixPermutation[T, M, N]):
 
     __slots__ = ()
 
@@ -980,7 +922,7 @@ class MatrixRowFlip(MatrixTransform[T, M, N]):
         )
 
 
-class ComplexMatrixRowFlip(ComplexMatrixTransform[M, N], MatrixRowFlip[complex, M, N]):
+class ComplexMatrixRowFlip(ComplexMatrixPermutation[M, N], MatrixRowFlip[complex, M, N]):
 
     __slots__ = ()
 
@@ -990,7 +932,7 @@ class ComplexMatrixRowFlip(ComplexMatrixTransform[M, N], MatrixRowFlip[complex, 
         return super().flip(by=by)
 
 
-class RealMatrixRowFlip(RealMatrixTransform[M, N], MatrixRowFlip[float, M, N]):
+class RealMatrixRowFlip(RealMatrixPermutation[M, N], MatrixRowFlip[float, M, N]):
 
     __slots__ = ()
 
@@ -1000,7 +942,7 @@ class RealMatrixRowFlip(RealMatrixTransform[M, N], MatrixRowFlip[float, M, N]):
         return super().flip(by=by)
 
 
-class IntegralMatrixRowFlip(IntegralMatrixTransform[M, N], MatrixRowFlip[int, M, N]):
+class IntegralMatrixRowFlip(IntegralMatrixPermutation[M, N], MatrixRowFlip[int, M, N]):
 
     __slots__ = ()
 
@@ -1010,7 +952,7 @@ class IntegralMatrixRowFlip(IntegralMatrixTransform[M, N], MatrixRowFlip[int, M,
         return super().flip(by=by)
 
 
-class MatrixColFlip(MatrixTransform[T, M, N]):
+class MatrixColFlip(MatrixPermutation[T, M, N]):
 
     __slots__ = ()
 
@@ -1034,7 +976,7 @@ class MatrixColFlip(MatrixTransform[T, M, N]):
         )
 
 
-class ComplexMatrixColFlip(ComplexMatrixTransform[M, N], MatrixColFlip[complex, M, N]):
+class ComplexMatrixColFlip(ComplexMatrixPermutation[M, N], MatrixColFlip[complex, M, N]):
 
     __slots__ = ()
 
@@ -1044,7 +986,7 @@ class ComplexMatrixColFlip(ComplexMatrixTransform[M, N], MatrixColFlip[complex, 
         return super().flip(by=by)
 
 
-class RealMatrixColFlip(RealMatrixTransform[M, N], MatrixColFlip[float, M, N]):
+class RealMatrixColFlip(RealMatrixPermutation[M, N], MatrixColFlip[float, M, N]):
 
     __slots__ = ()
 
@@ -1054,7 +996,7 @@ class RealMatrixColFlip(RealMatrixTransform[M, N], MatrixColFlip[float, M, N]):
         return super().flip(by=by)
 
 
-class IntegralMatrixColFlip(IntegralMatrixTransform[M, N], MatrixColFlip[int, M, N]):
+class IntegralMatrixColFlip(IntegralMatrixPermutation[M, N], MatrixColFlip[int, M, N]):
 
     __slots__ = ()
 
@@ -1064,7 +1006,7 @@ class IntegralMatrixColFlip(IntegralMatrixTransform[M, N], MatrixColFlip[int, M,
         return super().flip(by=by)
 
 
-class MatrixReverse(MatrixTransform[T, M, N]):
+class MatrixReverse(MatrixPermutation[T, M, N]):
 
     __slots__ = ()
 
@@ -1083,7 +1025,7 @@ class MatrixReverse(MatrixTransform[T, M, N]):
         )
 
 
-class ComplexMatrixReverse(ComplexMatrixTransform[M, N], MatrixReverse[complex, M, N]):
+class ComplexMatrixReverse(ComplexMatrixPermutation[M, N], MatrixReverse[complex, M, N]):
 
     __slots__ = ()
 
@@ -1091,7 +1033,7 @@ class ComplexMatrixReverse(ComplexMatrixTransform[M, N], MatrixReverse[complex, 
         return ComplexMatrixView(self._target)
 
 
-class RealMatrixReverse(RealMatrixTransform[M, N], MatrixReverse[float, M, N]):
+class RealMatrixReverse(RealMatrixPermutation[M, N], MatrixReverse[float, M, N]):
 
     __slots__ = ()
 
@@ -1099,7 +1041,7 @@ class RealMatrixReverse(RealMatrixTransform[M, N], MatrixReverse[float, M, N]):
         return RealMatrixView(self._target)
 
 
-class IntegralMatrixReverse(IntegralMatrixTransform[M, N], MatrixReverse[int, M, N]):
+class IntegralMatrixReverse(IntegralMatrixPermutation[M, N], MatrixReverse[int, M, N]):
 
     __slots__ = ()
 

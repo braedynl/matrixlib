@@ -952,10 +952,6 @@ class ConstantMatrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_
     __copy__ = __deepcopy__
 
     @property
-    def array(self) -> tuple[T_co, ...]:
-        return tuple(self.values())
-
-    @property
     def shape(self) -> tuple[M_co, N_co]:
         return self._shape
 
