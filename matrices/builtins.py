@@ -115,9 +115,6 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
         """Return a canonical representation of the matrix"""
         return f"{self.__class__.__name__}(array={self._array!r}, shape={self._shape!r})"
 
-    def __len__(self) -> int:
-        return len(self._array)
-
     @overload
     def __getitem__(self, key: SupportsIndex) -> T_co: ...
     @overload
@@ -189,9 +186,6 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
         val_index = self._resolve_vector_index(key)
         return array[val_index]
 
-    def __contains__(self, value: Any) -> bool:
-        return value in self._array
-
     def __deepcopy__(self: MatrixT, memo: Optional[dict[int, Any]] = None) -> MatrixT:
         """Return the matrix"""
         return self
@@ -254,19 +248,6 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
     def reverse(self) -> MatrixLike[T_co, M_co, N_co]:
         from .views.builtins import MatrixReverse
         return MatrixReverse(self)
-
-    def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
-        array = self._array
-        values: Any = reversed if reverse else iter
-        if by is Rule.ROW:
-            yield from values(array)
-            return
-        nrows, ncols = self._shape
-        row_indices = range(nrows)
-        col_indices = range(ncols)
-        for col_index in values(col_indices):
-            for row_index in values(row_indices):
-                yield array[row_index * ncols + col_index]
 
 
 class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
