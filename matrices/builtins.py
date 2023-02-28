@@ -872,11 +872,11 @@ class ConstantMatrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_
 
     def __init__(self, value, shape=None):
         if isinstance(value, ConstantMatrix):
-            self._value = copy.copy(value.value)
+            self._value = value.value
             self._shape = value.shape
             return
 
-        self._value = copy.copy(value)
+        self._value = value
 
         nrows = shape[0]
         ncols = shape[1]
