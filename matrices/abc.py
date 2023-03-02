@@ -22,6 +22,8 @@ __all__ = [
     "ComplexMatrixLike",
     "RealMatrixLike",
     "IntegralMatrixLike",
+    "TimedeltaMatrixLike",
+    "DatetimeMatrixLike",
 ]
 
 T = TypeVar("T")
@@ -1123,105 +1125,6 @@ class IntegralMatrixLike(MatrixLike[int, M_co, N_co], metaclass=ABCMeta):
         return self.transpose()
 
 
-class DatetimeMatrixLike(MatrixLike[datetime, M_co, N_co], metaclass=ABCMeta):
-
-    __slots__ = ()
-
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: int) -> datetime: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: slice) -> DatetimeMatrixLike[Literal[1], Any]: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: tuple[int, int]) -> datetime: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: tuple[int, slice]) -> DatetimeMatrixLike[Literal[1], Any]: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: tuple[slice, int]) -> DatetimeMatrixLike[Any, Literal[1]]: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: tuple[slice, slice]) -> DatetimeMatrixLike[Any, Any]: ...
-
-    @abstractmethod
-    def __getitem__(self, key):
-        raise NotImplementedError
-
-    def __lt__(self, other: DatetimeMatrixLike) -> bool:
-        """Return true if lexicographic ``a < b``, otherwise false"""
-        if isinstance(other, DatetimeMatrixLike):
-            return lexicographic_compare(self, other) < 0
-        return NotImplemented
-
-    def __le__(self, other: DatetimeMatrixLike) -> bool:
-        """Return true if lexicographic ``a <= b``, otherwise false"""
-        if isinstance(other, DatetimeMatrixLike):
-            return lexicographic_compare(self, other) <= 0
-        return NotImplemented
-
-    def __gt__(self, other: DatetimeMatrixLike) -> bool:
-        """Return true if lexicographic ``a > b``, otherwise false"""
-        if isinstance(other, DatetimeMatrixLike):
-            return lexicographic_compare(self, other) > 0
-        return NotImplemented
-
-    def __ge__(self, other: DatetimeMatrixLike) -> bool:
-        """Return true if lexicographic ``a >= b``, otherwise false"""
-        if isinstance(other, DatetimeMatrixLike):
-            return lexicographic_compare(self, other) >= 0
-        return NotImplemented
-
-    @abstractmethod
-    def __add__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
-        """Return element-wise ``a + b``"""
-        raise NotImplementedError
-
-    @overload
-    @abstractmethod
-    def __sub__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __sub__(self, other: DatetimeMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
-
-    @abstractmethod
-    def __sub__(self, other):
-        """Return element-wise ``a - b``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __radd__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
-        """Return element-wise ``b + a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rsub__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]:
-        """Return element-wise ``b - a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def lesser(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``a < b``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def lesser_equal(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``a <= b``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def greater(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``a > b``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def greater_equal(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``a >= b``"""
-        raise NotImplementedError
-
-
 class TimedeltaMatrixLike(MatrixLike[timedelta, M_co, N_co], metaclass=ABCMeta):
 
     __slots__ = ()
@@ -1375,6 +1278,105 @@ class TimedeltaMatrixLike(MatrixLike[timedelta, M_co, N_co], metaclass=ABCMeta):
 
     @abstractmethod
     def greater_equal(self, other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a >= b``"""
+        raise NotImplementedError
+
+
+class DatetimeMatrixLike(MatrixLike[datetime, M_co, N_co], metaclass=ABCMeta):
+
+    __slots__ = ()
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: int) -> datetime: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: slice) -> DatetimeMatrixLike[Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, int]) -> datetime: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, slice]) -> DatetimeMatrixLike[Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, int]) -> DatetimeMatrixLike[Any, Literal[1]]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, slice]) -> DatetimeMatrixLike[Any, Any]: ...
+
+    @abstractmethod
+    def __getitem__(self, key):
+        raise NotImplementedError
+
+    def __lt__(self, other: DatetimeMatrixLike) -> bool:
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        if isinstance(other, DatetimeMatrixLike):
+            return lexicographic_compare(self, other) < 0
+        return NotImplemented
+
+    def __le__(self, other: DatetimeMatrixLike) -> bool:
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        if isinstance(other, DatetimeMatrixLike):
+            return lexicographic_compare(self, other) <= 0
+        return NotImplemented
+
+    def __gt__(self, other: DatetimeMatrixLike) -> bool:
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        if isinstance(other, DatetimeMatrixLike):
+            return lexicographic_compare(self, other) > 0
+        return NotImplemented
+
+    def __ge__(self, other: DatetimeMatrixLike) -> bool:
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        if isinstance(other, DatetimeMatrixLike):
+            return lexicographic_compare(self, other) >= 0
+        return NotImplemented
+
+    @abstractmethod
+    def __add__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``a + b``"""
+        raise NotImplementedError
+
+    @overload
+    @abstractmethod
+    def __sub__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
+    @overload
+    @abstractmethod
+    def __sub__(self, other: DatetimeMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+
+    @abstractmethod
+    def __sub__(self, other):
+        """Return element-wise ``a - b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __radd__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``b + a``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __rsub__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]:
+        """Return element-wise ``b - a``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def lesser(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a < b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def lesser_equal(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a <= b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def greater(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a > b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def greater_equal(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a >= b``"""
         raise NotImplementedError
 
