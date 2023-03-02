@@ -7,6 +7,8 @@ from collections.abc import Iterable, Iterator
 from typing import (Any, Generic, Literal, Optional, SupportsIndex, TypeVar,
                     cast, overload)
 
+from typing_extensions import Self
+
 from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
                   RealMatrixLike, ShapedIndexable, ShapedIterable,
                   StringMatrixLike)
@@ -33,15 +35,13 @@ T = TypeVar("T")
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
+P = TypeVar("P", bound=int)
 
 T_co = TypeVar("T_co", covariant=True)
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
-
-MatrixT = TypeVar("MatrixT", bound="Matrix")
-ConstantMatrixT = TypeVar("ConstantMatrixT", bound="ConstantMatrix")
 
 
 class MatrixOperatorsMixin(Generic[T_co, M_co, N_co]):
@@ -187,7 +187,7 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
         return array[val_index]
 
     @classmethod
-    def from_nesting(cls: type[MatrixT], nesting: Iterable[Iterable[T_co]]) -> MatrixT:
+    def from_nesting(cls, nesting: Iterable[Iterable[T_co]]) -> Self:
         """Construct a matrix from a singly-nested iterable, using the
         shallowest iterable's length to deduce the number of rows, and the
         nested iterables' lengths to deduce the number of columns
@@ -597,11 +597,11 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             shape = self.shape
             return (
                 RealMatrix(
-                    array=map(operator.itemgetter(0), xs),
+                    array=map(operator.itemgetter(0), xs),  # type: ignore[arg-type]
                     shape=shape,
                 ),
                 RealMatrix(
-                    array=map(operator.itemgetter(1), ys),
+                    array=map(operator.itemgetter(1), ys),  # type: ignore[arg-type]
                     shape=shape,
                 ),
             )
@@ -728,11 +728,11 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             shape = self.shape
             return (
                 IntegralMatrix(
-                    array=map(operator.itemgetter(0), xs),
+                    array=map(operator.itemgetter(0), xs),  # type: ignore[arg-type]
                     shape=shape,
                 ),
                 IntegralMatrix(
-                    array=map(operator.itemgetter(1), ys),
+                    array=map(operator.itemgetter(1), ys),  # type: ignore[arg-type]
                     shape=shape,
                 ),
             )

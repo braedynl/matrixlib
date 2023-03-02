@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from typing import (Any, Literal, Optional, Protocol, SupportsIndex, TypeVar,
                     Union, overload, runtime_checkable)
 
+from typing_extensions import Self
+
 from .rule import Rule
 
 __all__ = [
@@ -33,8 +35,6 @@ T_contra = TypeVar("T_contra", contravariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
-
-MatrixLikeT = TypeVar("MatrixLikeT", bound="MatrixLike")
 
 
 @runtime_checkable
@@ -211,7 +211,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         """
         yield from self.values(reverse=True)
 
-    def __deepcopy__(self: MatrixLikeT, memo: Optional[dict[int, Any]] = None) -> MatrixLikeT:
+    def __deepcopy__(self, memo: Optional[dict[int, Any]] = None) -> Self:
         """Return the matrix"""
         return self
 
