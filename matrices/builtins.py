@@ -119,7 +119,7 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
-        return f"{self.__class__.__name__}(array={self._array!r}, shape={self._shape!r})"
+        return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
 
     @overload
     def __getitem__(self, key: SupportsIndex) -> T_co: ...
@@ -135,7 +135,7 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
     def __getitem__(self, key: tuple[slice, slice]) -> MatrixLike[T_co, Any, Any]: ...
 
     def __getitem__(self, key):
-        array = self._array
+        array = self.array
 
         if isinstance(key, tuple):
             row_key, col_key = key
@@ -191,6 +191,14 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
 
         val_index = self._resolve_vector_index(key)
         return array[val_index]
+
+    def __hash__(self) -> int:
+        """Return a hash of the matrix
+
+        Instances of ``Matrix`` are only hashable if their elements are
+        hashable.
+        """
+        return hash((self.array, self.shape))
 
     @classmethod
     def from_nesting(cls, nesting: Iterable[Iterable[T_co]]) -> Self:
@@ -1038,7 +1046,7 @@ class MatrixFill(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, 
         self._shape = shape
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(value={self._value!r}, shape={self._shape!r})"
+        return f"{self.__class__.__name__}(value={self.value!r}, shape={self.shape!r})"
 
     @overload
     def __getitem__(self, key: SupportsIndex) -> T_co: ...
@@ -1054,7 +1062,7 @@ class MatrixFill(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, 
     def __getitem__(self, key: tuple[slice, slice]) -> MatrixLike[T_co, Any, Any]: ...
 
     def __getitem__(self, key):
-        value = self._value
+        value = self.value
 
         if isinstance(key, tuple):
             row_key, col_key = key
@@ -1106,12 +1114,7 @@ class MatrixFill(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, 
         return self._value
 
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]:
-        value = self._value
-        shape = self._shape
-        return self.__class__(
-            value=value,
-            shape=(shape[1], shape[0]),
-        )
+        return self.__class__(value=self.value, shape=tuple(reversed(self.shape)))  # type: ignore[arg-type]
 
     def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T_co, M_co, N_co]:
         return copy.copy(self)
@@ -1120,7 +1123,7 @@ class MatrixFill(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, 
         return copy.copy(self)
 
     def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
-        yield from itertools.repeat(self._value, times=len(self))
+        yield from itertools.repeat(self.value, times=len(self))
 
 
 class StringMatrixFill(StringMatrixOperatorsMixin[M_co, N_co], StringMatrixLike[M_co, N_co], MatrixFill[str, M_co, N_co]):
