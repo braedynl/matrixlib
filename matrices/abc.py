@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import copy
-import functools
 import operator
 from abc import ABCMeta, abstractmethod
-from collections.abc import (Callable, Collection, Iterable, Iterator,
-                             Sequence, Sized)
-from typing import (Any, Literal, Protocol, SupportsIndex, TypeVar, Union,
-                    overload, runtime_checkable)
+from collections.abc import Collection, Iterable, Iterator, Sequence, Sized
+from datetime import datetime, timedelta
+from typing import (Any, Literal, Optional, Protocol, SupportsIndex, TypeVar,
+                    Union, overload, runtime_checkable)
 
 from .rule import Rule
 
@@ -19,7 +18,7 @@ __all__ = [
     "ShapedCollection",
     "ShapedSequence",
     "MatrixLike",
-    "check_friendly",
+    "StringMatrixLike",
     "ComplexMatrixLike",
     "RealMatrixLike",
     "IntegralMatrixLike",
@@ -32,6 +31,8 @@ T_contra = TypeVar("T_contra", contravariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
+
+MatrixLikeT = TypeVar("MatrixLikeT", bound="MatrixLike")
 
 
 @runtime_checkable
@@ -208,6 +209,12 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         """
         yield from self.values(reverse=True)
 
+    def __deepcopy__(self: MatrixLikeT, memo: Optional[dict[int, Any]] = None) -> MatrixLikeT:
+        """Return the matrix"""
+        return self
+
+    __copy__ = __deepcopy__
+
     @property
     def array(self) -> Sequence[T_co]:
         """A sequence of the matrix's elements
@@ -329,57 +336,91 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         return range(*key.indices(bound))
 
 
-CallableT = TypeVar("CallableT", bound=Callable)
+class StringMatrixLike(MatrixLike[str, M_co, N_co], metaclass=ABCMeta):
 
+    __slots__ = ()
 
-def check_friendly(method: CallableT, /) -> CallableT:
-    """Return ``NotImplemented`` for "un-friendly" argument types passed to
-    special binary methods
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: int) -> str: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: slice) -> StringMatrixLike[Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, int]) -> str: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, slice]) -> StringMatrixLike[Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, int]) -> StringMatrixLike[Any, Literal[1]]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, slice]) -> StringMatrixLike[Any, Any]: ...
 
-    This utility is primarily intended for implementations of
-    ``ComplexMatrixLike``, ``RealMatrixLike``, and ``IntegralMatrixLike``, who
-    define a ``FRIENDLY_TYPES`` class attribute for interoperability with one
-    another.
-    """
+    @abstractmethod
+    def __getitem__(self, key):
+        raise NotImplementedError
 
-    @functools.wraps(method)
-    def check_friendly_wrapper(self, other):
-        if isinstance(other, self.FRIENDLY_TYPES):
-            return method(self, other)
+    def __lt__(self, other: StringMatrixLike) -> bool:
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        if isinstance(other, StringMatrixLike):
+            return lexicographic_compare(self, other) < 0
         return NotImplemented
 
-    return check_friendly_wrapper  # type: ignore[return-value]
+    def __le__(self, other: StringMatrixLike) -> bool:
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        if isinstance(other, StringMatrixLike):
+            return lexicographic_compare(self, other) <= 0
+        return NotImplemented
 
+    def __gt__(self, other: StringMatrixLike) -> bool:
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        if isinstance(other, StringMatrixLike):
+            return lexicographic_compare(self, other) > 0
+        return NotImplemented
 
-def compare(a, b, /):
-    """Return literal -1, 0, or 1 if two matrices lexicographically compare as
-    ``a < b``, ``a = b``, or ``a > b``, respectively
+    def __ge__(self, other: StringMatrixLike) -> bool:
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        if isinstance(other, StringMatrixLike):
+            return lexicographic_compare(self, other) >= 0
+        return NotImplemented
 
-    This function is used to implement the base comparison operators for
-    ``RealMatrixLike`` and ``IntegralMatrixLike``.
-    """
-    if a is b:
-        return 0
-    for x, y in zip(a, b):
-        if x is y or x == y:
-            continue
-        if x < y:
-            return -1
-        if x > y:
-            return 1
-        raise RuntimeError
-    u = a.shape
-    v = b.shape
-    if u is v:
-        return 0
-    for m, n in zip(u, v):
-        if m is n or m == n:
-            continue
-        if m < n:
-            return -1
-        if m > n:
-            return 1
-    return 0
+    @abstractmethod
+    def __add__(self, other: StringMatrixLike[M_co, N_co]) -> StringMatrixLike[M_co, N_co]:
+        """Return element-wise ``a + b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __mul__(self, other: IntegralMatrixLike[M_co, N_co]) -> StringMatrixLike[M_co, N_co]:
+        """Return element-wise ``a * b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __rmul__(self, other: IntegralMatrixLike[M_co, N_co]) -> StringMatrixLike[M_co, N_co]:
+        """Return element-wise ``b * a``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def lesser(self, other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a < b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def lesser_equal(self, other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a <= b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def greater(self, other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a > b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def greater_equal(self, other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a >= b``"""
+        raise NotImplementedError
 
 
 class ComplexMatrixLike(MatrixLike[complex, M_co, N_co], metaclass=ABCMeta):
@@ -490,9 +531,6 @@ class ComplexMatrixLike(MatrixLike[complex, M_co, N_co], metaclass=ABCMeta):
     @overload
     @abstractmethod
     def __radd__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __radd__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __radd__(self, other):
@@ -505,9 +543,6 @@ class ComplexMatrixLike(MatrixLike[complex, M_co, N_co], metaclass=ABCMeta):
     @overload
     @abstractmethod
     def __rsub__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rsub__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rsub__(self, other):
@@ -520,9 +555,6 @@ class ComplexMatrixLike(MatrixLike[complex, M_co, N_co], metaclass=ABCMeta):
     @overload
     @abstractmethod
     def __rmul__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rmul__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rmul__(self, other):
@@ -535,9 +567,6 @@ class ComplexMatrixLike(MatrixLike[complex, M_co, N_co], metaclass=ABCMeta):
     @overload
     @abstractmethod
     def __rmatmul__(self, other: RealMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rmatmul__(self, other: ComplexMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...
 
     @abstractmethod
     def __rmatmul__(self, other):
@@ -550,9 +579,6 @@ class ComplexMatrixLike(MatrixLike[complex, M_co, N_co], metaclass=ABCMeta):
     @overload
     @abstractmethod
     def __rtruediv__(self, other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rtruediv__(self, other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def __rtruediv__(self, other):
@@ -639,40 +665,44 @@ class RealMatrixLike(MatrixLike[float, M_co, N_co], metaclass=ABCMeta):
     @overload
     def __lt__(self, other: RealMatrixLike) -> bool: ...
 
-    @check_friendly
     def __lt__(self, other):
         """Return true if lexicographic ``a < b``, otherwise false"""
-        return compare(self, other) < 0
+        if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
+            return lexicographic_compare(self, other) < 0
+        return NotImplemented
 
     @overload
     def __le__(self, other: IntegralMatrixLike) -> bool: ...
     @overload
     def __le__(self, other: RealMatrixLike) -> bool: ...
 
-    @check_friendly
     def __le__(self, other):
         """Return true if lexicographic ``a <= b``, otherwise false"""
-        return compare(self, other) <= 0
+        if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
+            return lexicographic_compare(self, other) <= 0
+        return NotImplemented
 
     @overload
     def __gt__(self, other: IntegralMatrixLike) -> bool: ...
     @overload
     def __gt__(self, other: RealMatrixLike) -> bool: ...
 
-    @check_friendly
     def __gt__(self, other):
         """Return true if lexicographic ``a > b``, otherwise false"""
-        return compare(self, other) > 0
+        if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
+            return lexicographic_compare(self, other) > 0
+        return NotImplemented
 
     @overload
     def __ge__(self, other: IntegralMatrixLike) -> bool: ...
     @overload
     def __ge__(self, other: RealMatrixLike) -> bool: ...
 
-    @check_friendly
     def __ge__(self, other):
         """Return true if lexicographic ``a >= b``, otherwise false"""
-        return compare(self, other) >= 0
+        if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
+            return lexicographic_compare(self, other) >= 0
+        return NotImplemented
 
     @overload
     @abstractmethod
@@ -770,99 +800,43 @@ class RealMatrixLike(MatrixLike[float, M_co, N_co], metaclass=ABCMeta):
         """Return element-wise ``divmod(a, b)``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __radd__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __radd__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-
-    @abstractmethod
-    def __radd__(self, other):
+    def __radd__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``b + a``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __rsub__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rsub__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-
-    @abstractmethod
-    def __rsub__(self, other):
+    def __rsub__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``b - a``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __rmul__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rmul__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-
-    @abstractmethod
-    def __rmul__(self, other):
+    def __rmul__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``b * a``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __rmatmul__(self, other: IntegralMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rmatmul__(self, other: RealMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]: ...
-
-    @abstractmethod
-    def __rmatmul__(self, other):
+    def __rmatmul__(self, other: IntegralMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]:
         """Return the reverse matrix product"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __rtruediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rtruediv__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-
-    @abstractmethod
-    def __rtruediv__(self, other):
+    def __rtruediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``b / a``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __rfloordiv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rfloordiv__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-
-    @abstractmethod
-    def __rfloordiv__(self, other):
+    def __rfloordiv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``b // a``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __rmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-    @overload
-    @abstractmethod
-    def __rmod__(self, other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
-
-    @abstractmethod
-    def __rmod__(self, other):
+    def __rmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         """Return element-wise ``b % a``"""
         raise NotImplementedError
 
-    @overload
     @abstractmethod
-    def __rdivmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
-    @overload
-    @abstractmethod
-    def __rdivmod__(self, other: RealMatrixLike[M_co, N_co]) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
-
-    @abstractmethod
-    def __rdivmod__(self, other):
+    def __rdivmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]:
         """Return element-wise ``divmod(b, a)``"""
         raise NotImplementedError
 
@@ -988,25 +962,29 @@ class IntegralMatrixLike(MatrixLike[int, M_co, N_co], metaclass=ABCMeta):
     def __getitem__(self, key):
         raise NotImplementedError
 
-    @check_friendly
     def __lt__(self, other: IntegralMatrixLike) -> bool:
         """Return true if lexicographic ``a < b``, otherwise false"""
-        return compare(self, other) < 0
+        if isinstance(other, IntegralMatrixLike):
+            return lexicographic_compare(self, other) < 0
+        return NotImplemented
 
-    @check_friendly
     def __le__(self, other: IntegralMatrixLike) -> bool:
         """Return true if lexicographic ``a <= b``, otherwise false"""
-        return compare(self, other) <= 0
+        if isinstance(other, IntegralMatrixLike):
+            return lexicographic_compare(self, other) <= 0
+        return NotImplemented
 
-    @check_friendly
     def __gt__(self, other: IntegralMatrixLike) -> bool:
         """Return true if lexicographic ``a > b``, otherwise false"""
-        return compare(self, other) > 0
+        if isinstance(other, IntegralMatrixLike):
+            return lexicographic_compare(self, other) > 0
+        return NotImplemented
 
-    @check_friendly
     def __ge__(self, other: IntegralMatrixLike) -> bool:
         """Return true if lexicographic ``a >= b``, otherwise false"""
-        return compare(self, other) >= 0
+        if isinstance(other, IntegralMatrixLike):
+            return lexicographic_compare(self, other) >= 0
+        return NotImplemented
 
     @abstractmethod
     def __add__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
@@ -1071,71 +1049,6 @@ class IntegralMatrixLike(MatrixLike[int, M_co, N_co], metaclass=ABCMeta):
     @abstractmethod
     def __or__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         """Return element-wise ``a | b``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __radd__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b + a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rsub__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b - a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rmul__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b * a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rmatmul__(self, other: IntegralMatrixLike[P_co, M_co]) -> IntegralMatrixLike[P_co, N_co]:
-        """Return the reverse matrix product"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rtruediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
-        """Return element-wise ``b / a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rfloordiv__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b // a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b % a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rdivmod__(self, other: IntegralMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]:
-        """Return element-wise ``divmod(b, a)``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rlshift__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b << a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rrshift__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b >> a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rand__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b & a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __rxor__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b ^ a``"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def __ror__(self, other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        """Return element-wise ``b | a``"""
         raise NotImplementedError
 
     @abstractmethod
@@ -1210,6 +1123,300 @@ class IntegralMatrixLike(MatrixLike[int, M_co, N_co], metaclass=ABCMeta):
         return self.transpose()
 
 
-ComplexMatrixLike.FRIENDLY_TYPES = (ComplexMatrixLike, RealMatrixLike, IntegralMatrixLike)  # type: ignore
-RealMatrixLike.FRIENDLY_TYPES = (RealMatrixLike, IntegralMatrixLike)  # type: ignore
-IntegralMatrixLike.FRIENDLY_TYPES = IntegralMatrixLike  # type: ignore
+class DatetimeMatrixLike(MatrixLike[datetime, M_co, N_co], metaclass=ABCMeta):
+
+    __slots__ = ()
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: int) -> datetime: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: slice) -> DatetimeMatrixLike[Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, int]) -> datetime: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, slice]) -> DatetimeMatrixLike[Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, int]) -> DatetimeMatrixLike[Any, Literal[1]]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, slice]) -> DatetimeMatrixLike[Any, Any]: ...
+
+    @abstractmethod
+    def __getitem__(self, key):
+        raise NotImplementedError
+
+    def __lt__(self, other: DatetimeMatrixLike) -> bool:
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        if isinstance(other, DatetimeMatrixLike):
+            return lexicographic_compare(self, other) < 0
+        return NotImplemented
+
+    def __le__(self, other: DatetimeMatrixLike) -> bool:
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        if isinstance(other, DatetimeMatrixLike):
+            return lexicographic_compare(self, other) <= 0
+        return NotImplemented
+
+    def __gt__(self, other: DatetimeMatrixLike) -> bool:
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        if isinstance(other, DatetimeMatrixLike):
+            return lexicographic_compare(self, other) > 0
+        return NotImplemented
+
+    def __ge__(self, other: DatetimeMatrixLike) -> bool:
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        if isinstance(other, DatetimeMatrixLike):
+            return lexicographic_compare(self, other) >= 0
+        return NotImplemented
+
+    @abstractmethod
+    def __add__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``a + b``"""
+        raise NotImplementedError
+
+    @overload
+    @abstractmethod
+    def __sub__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
+    @overload
+    @abstractmethod
+    def __sub__(self, other: DatetimeMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+
+    @abstractmethod
+    def __sub__(self, other):
+        """Return element-wise ``a - b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __radd__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``b + a``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __rsub__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]:
+        """Return element-wise ``b - a``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def lesser(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a < b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def lesser_equal(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a <= b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def greater(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a > b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def greater_equal(self, other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a >= b``"""
+        raise NotImplementedError
+
+
+class TimedeltaMatrixLike(MatrixLike[timedelta, M_co, N_co], metaclass=ABCMeta):
+
+    __slots__ = ()
+
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: int) -> timedelta: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: slice) -> TimedeltaMatrixLike[Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, int]) -> timedelta: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[int, slice]) -> TimedeltaMatrixLike[Literal[1], Any]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, int]) -> TimedeltaMatrixLike[Any, Literal[1]]: ...
+    @overload
+    @abstractmethod
+    def __getitem__(self, key: tuple[slice, slice]) -> TimedeltaMatrixLike[Any, Any]: ...
+
+    @abstractmethod
+    def __getitem__(self, key):
+        raise NotImplementedError
+
+    def __lt__(self, other: TimedeltaMatrixLike) -> bool:
+        """Return true if lexicographic ``a < b``, otherwise false"""
+        if isinstance(other, TimedeltaMatrixLike):
+            return lexicographic_compare(self, other) < 0
+        return NotImplemented
+
+    def __le__(self, other: TimedeltaMatrixLike) -> bool:
+        """Return true if lexicographic ``a <= b``, otherwise false"""
+        if isinstance(other, TimedeltaMatrixLike):
+            return lexicographic_compare(self, other) <= 0
+        return NotImplemented
+
+    def __gt__(self, other: TimedeltaMatrixLike) -> bool:
+        """Return true if lexicographic ``a > b``, otherwise false"""
+        if isinstance(other, TimedeltaMatrixLike):
+            return lexicographic_compare(self, other) > 0
+        return NotImplemented
+
+    def __ge__(self, other: TimedeltaMatrixLike) -> bool:
+        """Return true if lexicographic ``a >= b``, otherwise false"""
+        if isinstance(other, TimedeltaMatrixLike):
+            return lexicographic_compare(self, other) >= 0
+        return NotImplemented
+
+    @abstractmethod
+    def __add__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``a + b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __sub__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``a - b``"""
+        raise NotImplementedError
+
+    @overload
+    @abstractmethod
+    def __mul__(self, other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    @abstractmethod
+    def __mul__(self, other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+
+    @abstractmethod
+    def __mul__(self, other):
+        """Return element-wise ``a * b``"""
+        raise NotImplementedError
+
+    @overload
+    @abstractmethod
+    def __truediv__(self, other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    @abstractmethod
+    def __truediv__(self, other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    @abstractmethod
+    def __truediv__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+
+    @abstractmethod
+    def __truediv__(self, other):
+        """Return element-wise ``a / b``"""
+        raise NotImplementedError
+
+    @overload
+    @abstractmethod
+    def __floordiv__(self, other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    @abstractmethod
+    def __floordiv__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+
+    @abstractmethod
+    def __floordiv__(self, other):
+        """Return element-wise ``a // b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __mod__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``a % b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __divmod__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], TimedeltaMatrixLike[M_co, N_co]]:
+        """Return element-wise ``divmod(a, b)``"""
+        raise NotImplementedError
+
+    @overload
+    @abstractmethod
+    def __rmul__(self, other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    @abstractmethod
+    def __rmul__(self, other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+
+    @abstractmethod
+    def __rmul__(self, other):
+        """Return element-wise ``b * a``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __neg__(self) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``-a``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def __abs__(self) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``abs(a)``"""
+        raise NotImplementedError
+
+    def __pos__(self) -> TimedeltaMatrixLike[M_co, N_co]:
+        """Return element-wise ``+a``"""
+        return copy.copy(self)
+
+    @abstractmethod
+    def lesser(self, other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a < b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def lesser_equal(self, other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a <= b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def greater(self, other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a > b``"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def greater_equal(self, other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        """Return element-wise ``a >= b``"""
+        raise NotImplementedError
+
+
+class SupportsLT(Protocol[T_contra]):
+    def __lt__(self, other: T_contra) -> Any: ...
+class SupportsGT(Protocol[T_contra]):
+    def __gt__(self, other: T_contra) -> Any: ...
+
+
+@overload
+def lexicographic_compare(
+    a: ShapedIterable[SupportsLT[T], Any, Any],
+    b: ShapedIterable[T, Any, Any],
+    /,
+) -> Literal[-1, 0, 1]: ...
+@overload
+def lexicographic_compare(
+    a: ShapedIterable[T, Any, Any],
+    b: ShapedIterable[SupportsGT[T], Any, Any],
+    /,
+) -> Literal[-1, 0, 1]: ...
+
+def lexicographic_compare(a, b, /):
+    """Return literal -1, 0, or 1 if two matrices lexicographically compare as
+    ``a < b``, ``a = b``, or ``a > b``, respectively
+
+    This function is used to implement the base comparison operators for
+    some matrix types.
+    """
+    if a is b:
+        return 0
+    for x, y in zip(a, b):
+        if x is y or x == y:
+            continue
+        return -1 if x < y else 1
+    u = a.shape
+    v = b.shape
+    if u is v:
+        return 0
+    for m, n in zip(u, v):
+        if m is n or m == n:
+            continue
+        return -1 if m < n else 1
+    return 0
