@@ -4,14 +4,15 @@ import copy
 import itertools
 import operator
 from collections.abc import Iterable, Iterator
+from datetime import datetime, timedelta
 from typing import (Any, Generic, Literal, Optional, SupportsIndex, TypeVar,
                     cast, overload)
 
 from typing_extensions import Self
 
-from .abc import (ComplexMatrixLike, IntegralMatrixLike, MatrixLike,
-                  RealMatrixLike, ShapedIndexable, ShapedIterable,
-                  StringMatrixLike)
+from .abc import (ComplexMatrixLike, DatetimeMatrixLike, IntegralMatrixLike,
+                  MatrixLike, RealMatrixLike, ShapedIndexable, ShapedIterable,
+                  StringMatrixLike, TimedeltaMatrixLike)
 from .rule import COL, ROW, Rule
 from .utilities.matrix_map import MatrixMap
 from .utilities.matrix_product import MatrixProduct
@@ -25,10 +26,15 @@ __all__ = [
     "RealMatrix",
     "IntegralMatrixOperatorsMixin",
     "IntegralMatrix",
-    "ConstantMatrix",
-    "ComplexConstantMatrix",
-    "RealConstantMatrix",
-    "IntegralConstantMatrix",
+    "TimedeltaMatrixOperatorsMixin",
+    "TimedeltaMatrix",
+    "MatrixFill",
+    "StringMatrixFill",
+    "ComplexMatrixFill",
+    "RealMatrixFill",
+    "IntegralMatrixFill",
+    "TimedeltaMatrixFill",
+    "DatetimeMatrixFill",
 ]
 
 T = TypeVar("T")
@@ -820,17 +826,203 @@ class IntegralMatrix(IntegralMatrixOperatorsMixin[M_co, N_co], IntegralMatrixLik
         return IntegralMatrixReverse(self)
 
 
-class ConstantMatrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co]):
+class TimedeltaMatrixOperatorsMixin(Generic[M_co, N_co]):
+
+    __slots__ = ()
+
+    def __add__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        if isinstance(other, TimedeltaMatrixLike):
+            return TimedeltaMatrix(MatrixMap(operator.__add__, self, other))
+        return NotImplemented
+
+    def __sub__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        if isinstance(other, TimedeltaMatrixLike):
+            return TimedeltaMatrix(MatrixMap(operator.__sub__, self, other))
+        return NotImplemented
+
+    @overload
+    def __mul__(self: ShapedIterable[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    def __mul__(self: ShapedIterable[timedelta, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+
+    def __mul__(self, other):
+        if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
+            return TimedeltaMatrix(MatrixMap(operator.__mul__, self, other))
+        return NotImplemented
+
+    @overload
+    def __truediv__(self: ShapedIterable[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    def __truediv__(self: ShapedIterable[timedelta, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    def __truediv__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+
+    def __truediv__(self, other):
+        if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
+            return TimedeltaMatrix(MatrixMap(operator.__truediv__, self, other))
+        if isinstance(other, TimedeltaMatrixLike):
+            return RealMatrix(MatrixMap(operator.__truediv__, self, other))
+        return NotImplemented
+
+    @overload
+    def __floordiv__(self: ShapedIterable[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    def __floordiv__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+
+    def __floordiv__(self, other):
+        if isinstance(other, IntegralMatrixLike):
+            return TimedeltaMatrix(MatrixMap(operator.__floordiv__, self, other))
+        if isinstance(other, TimedeltaMatrixLike):
+            return IntegralMatrix(MatrixMap(operator.__floordiv__, self, other))
+        return NotImplemented
+
+    def __mod__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        if isinstance(other, TimedeltaMatrixLike):
+            return TimedeltaMatrix(MatrixMap(operator.__mod__, self, other))
+        return NotImplemented
+
+    def __divmod__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], TimedeltaMatrixLike[M_co, N_co]]:
+        if isinstance(other, TimedeltaMatrixLike):
+            xs, ys = itertools.tee(MatrixMap(divmod, self, other))
+            shape = self.shape
+            return (
+                IntegralMatrix(
+                    array=map(operator.itemgetter(0), xs),  # type: ignore[arg-type]
+                    shape=shape,
+                ),
+                TimedeltaMatrix(
+                    array=map(operator.itemgetter(1), ys),  # type: ignore[arg-type]
+                    shape=shape,
+                ),
+            )
+        return NotImplemented
+
+    @overload
+    def __rmul__(self: ShapedIterable[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    @overload
+    def __rmul__(self: ShapedIterable[timedelta, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+
+    def __rmul__(self, other):
+        if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
+            return TimedeltaMatrix(MatrixMap(operator.__mul__, other, self))
+        return NotImplemented
+
+    def __neg__(self: ShapedIterable[timedelta, M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        return TimedeltaMatrix(MatrixMap(operator.__neg__, self))
+
+    def __abs__(self: ShapedIterable[timedelta, M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+        return TimedeltaMatrix(MatrixMap(abs, self))
+
+    def lesser(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        return IntegralMatrix(MatrixMap(operator.__lt__, self, other))
+
+    def lesser_equal(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        return IntegralMatrix(MatrixMap(operator.__le__, self, other))
+
+    def greater(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        return IntegralMatrix(MatrixMap(operator.__gt__, self, other))
+
+    def greater_equal(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        return IntegralMatrix(MatrixMap(operator.__ge__, self, other))
+
+
+class TimedeltaMatrix(TimedeltaMatrixOperatorsMixin[M_co, N_co], TimedeltaMatrixLike[M_co, N_co], Matrix[timedelta, M_co, N_co]):
+
+    __slots__ = ()
+
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> timedelta: ...
+    @overload
+    def __getitem__(self, key: slice) -> TimedeltaMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> timedelta: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, slice]) -> TimedeltaMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> TimedeltaMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> TimedeltaMatrixLike[Any, Any]: ...
+
+    def __getitem__(self, key):
+        return Matrix.__getitem__(self, key)
+
+
+class DatetimeMatrixOperatorsMixin(Generic[M_co, N_co]):
+
+    __slots__ = ()
+
+    def __add__(self: ShapedIterable[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]:
+        if isinstance(other, TimedeltaMatrixLike):
+            return DatetimeMatrix(MatrixMap(operator.__add__, self, other))
+        return NotImplemented
+
+    @overload
+    def __sub__(self: ShapedIterable[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
+    @overload
+    def __sub__(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+
+    def __sub__(self, other):
+        if isinstance(other, TimedeltaMatrixLike):
+            return DatetimeMatrix(MatrixMap(operator.__sub__, self, other))
+        if isinstance(other, DatetimeMatrixLike):
+            return TimedeltaMatrix(MatrixMap(operator.__sub__, self, other))
+        return NotImplemented
+
+    def __radd__(self: ShapedIterable[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]:
+        if isinstance(other, TimedeltaMatrixLike):
+            return DatetimeMatrix(MatrixMap(operator.__add__, other, self))
+        return NotImplemented
+
+    def __rsub__(self: ShapedIterable[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]:
+        if isinstance(other, TimedeltaMatrixLike):
+            return DatetimeMatrix(MatrixMap(operator.__sub__, other, self))
+        return NotImplemented
+
+    def lesser(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        return IntegralMatrix(MatrixMap(operator.__lt__, self, other))
+
+    def lesser_equal(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        return IntegralMatrix(MatrixMap(operator.__le__, self, other))
+
+    def greater(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        return IntegralMatrix(MatrixMap(operator.__gt__, self, other))
+
+    def greater_equal(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
+        return IntegralMatrix(MatrixMap(operator.__ge__, self, other))
+
+
+class DatetimeMatrix(DatetimeMatrixOperatorsMixin[M_co, N_co], DatetimeMatrixLike[M_co, N_co], Matrix[datetime, M_co, N_co]):
+
+    __slots__ = ()
+
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> datetime: ...
+    @overload
+    def __getitem__(self, key: slice) -> DatetimeMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> datetime: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, slice]) -> DatetimeMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> DatetimeMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> DatetimeMatrixLike[Any, Any]: ...
+
+    def __getitem__(self, key):
+        return Matrix.__getitem__(self, key)
+
+
+class MatrixFill(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co]):
 
     __slots__ = ("_value", "_shape")
 
     @overload
-    def __init__(self, value: ConstantMatrix[T_co, M_co, N_co]) -> None: ...
+    def __init__(self, value: MatrixFill[T_co, M_co, N_co]) -> None: ...
     @overload
     def __init__(self, value: T_co, shape: tuple[M_co, N_co]) -> None: ...
 
     def __init__(self, value, shape=None):
-        if isinstance(value, ConstantMatrix):
+        if isinstance(value, MatrixFill):
             self._value = value.value
             self._shape = value.shape
             return
@@ -931,7 +1123,37 @@ class ConstantMatrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_
         yield from itertools.repeat(self._value, times=len(self))
 
 
-class ComplexConstantMatrix(ComplexMatrixOperatorsMixin[M_co, N_co], ComplexMatrixLike[M_co, N_co], ConstantMatrix[complex, M_co, N_co]):
+class StringMatrixFill(StringMatrixOperatorsMixin[M_co, N_co], StringMatrixLike[M_co, N_co], MatrixFill[str, M_co, N_co]):
+
+    __slots__ = ()
+
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> str: ...
+    @overload
+    def __getitem__(self, key: slice) -> StringMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> str: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, slice]) -> StringMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> StringMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> StringMatrixLike[Any, Any]: ...
+
+    def __getitem__(self, key):
+        return MatrixFill.__getitem__(self, key)
+
+    def transpose(self) -> StringMatrixLike[N_co, M_co]:
+        return cast(StringMatrixLike[N_co, M_co], MatrixFill.transpose(self))
+
+    def flip(self, *, by: Rule = Rule.ROW) -> StringMatrixLike[M_co, N_co]:
+        return cast(StringMatrixLike[M_co, N_co], MatrixFill.flip(self, by=by))
+
+    def reverse(self) -> StringMatrixLike[M_co, N_co]:
+        return cast(StringMatrixLike[M_co, N_co], MatrixFill.reverse(self))
+
+
+class ComplexMatrixFill(ComplexMatrixOperatorsMixin[M_co, N_co], ComplexMatrixLike[M_co, N_co], MatrixFill[complex, M_co, N_co]):
 
     __slots__ = ()
 
@@ -949,19 +1171,19 @@ class ComplexConstantMatrix(ComplexMatrixOperatorsMixin[M_co, N_co], ComplexMatr
     def __getitem__(self, key: tuple[slice, slice]) -> ComplexMatrixLike[Any, Any]: ...
 
     def __getitem__(self, key):
-        return ConstantMatrix.__getitem__(self, key)
+        return MatrixFill.__getitem__(self, key)
 
     def transpose(self) -> ComplexMatrixLike[N_co, M_co]:
-        return cast(ComplexMatrixLike[N_co, M_co], ConstantMatrix.transpose(self))
+        return cast(ComplexMatrixLike[N_co, M_co], MatrixFill.transpose(self))
 
     def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrixLike[M_co, N_co]:
-        return cast(ComplexMatrixLike[M_co, N_co], ConstantMatrix.flip(self, by=by))
+        return cast(ComplexMatrixLike[M_co, N_co], MatrixFill.flip(self, by=by))
 
     def reverse(self) -> ComplexMatrixLike[M_co, N_co]:
-        return cast(ComplexMatrixLike[M_co, N_co], ConstantMatrix.reverse(self))
+        return cast(ComplexMatrixLike[M_co, N_co], MatrixFill.reverse(self))
 
 
-class RealConstantMatrix(RealMatrixOperatorsMixin[M_co, N_co], RealMatrixLike[M_co, N_co], ConstantMatrix[float, M_co, N_co]):
+class RealMatrixFill(RealMatrixOperatorsMixin[M_co, N_co], RealMatrixLike[M_co, N_co], MatrixFill[float, M_co, N_co]):
 
     __slots__ = ()
 
@@ -979,19 +1201,19 @@ class RealConstantMatrix(RealMatrixOperatorsMixin[M_co, N_co], RealMatrixLike[M_
     def __getitem__(self, key: tuple[slice, slice]) -> RealMatrixLike[Any, Any]: ...
 
     def __getitem__(self, key):
-        return ConstantMatrix.__getitem__(self, key)
+        return MatrixFill.__getitem__(self, key)
 
     def transpose(self) -> RealMatrixLike[N_co, M_co]:
-        return cast(RealMatrixLike[N_co, M_co], ConstantMatrix.transpose(self))
+        return cast(RealMatrixLike[N_co, M_co], MatrixFill.transpose(self))
 
     def flip(self, *, by: Rule = Rule.ROW) -> RealMatrixLike[M_co, N_co]:
-        return cast(RealMatrixLike[M_co, N_co], ConstantMatrix.flip(self, by=by))
+        return cast(RealMatrixLike[M_co, N_co], MatrixFill.flip(self, by=by))
 
     def reverse(self) -> RealMatrixLike[M_co, N_co]:
-        return cast(RealMatrixLike[M_co, N_co], ConstantMatrix.reverse(self))
+        return cast(RealMatrixLike[M_co, N_co], MatrixFill.reverse(self))
 
 
-class IntegralConstantMatrix(IntegralMatrixOperatorsMixin[M_co, N_co], IntegralMatrixLike[M_co, N_co], ConstantMatrix[int, M_co, N_co]):
+class IntegralMatrixFill(IntegralMatrixOperatorsMixin[M_co, N_co], IntegralMatrixLike[M_co, N_co], MatrixFill[int, M_co, N_co]):
 
     __slots__ = ()
 
@@ -1009,13 +1231,73 @@ class IntegralConstantMatrix(IntegralMatrixOperatorsMixin[M_co, N_co], IntegralM
     def __getitem__(self, key: tuple[slice, slice]) -> IntegralMatrixLike[Any, Any]: ...
 
     def __getitem__(self, key):
-        return ConstantMatrix.__getitem__(self, key)
+        return MatrixFill.__getitem__(self, key)
 
     def transpose(self) -> IntegralMatrixLike[N_co, M_co]:
-        return cast(IntegralMatrixLike[N_co, M_co], ConstantMatrix.transpose(self))
+        return cast(IntegralMatrixLike[N_co, M_co], MatrixFill.transpose(self))
 
     def flip(self, *, by: Rule = Rule.ROW) -> IntegralMatrixLike[M_co, N_co]:
-        return cast(IntegralMatrixLike[M_co, N_co], ConstantMatrix.flip(self, by=by))
+        return cast(IntegralMatrixLike[M_co, N_co], MatrixFill.flip(self, by=by))
 
     def reverse(self) -> IntegralMatrixLike[M_co, N_co]:
-        return cast(IntegralMatrixLike[M_co, N_co], ConstantMatrix.reverse(self))
+        return cast(IntegralMatrixLike[M_co, N_co], MatrixFill.reverse(self))
+
+
+class TimedeltaMatrixFill(TimedeltaMatrixOperatorsMixin[M_co, N_co], TimedeltaMatrixLike[M_co, N_co], MatrixFill[timedelta, M_co, N_co]):
+
+    __slots__ = ()
+
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> timedelta: ...
+    @overload
+    def __getitem__(self, key: slice) -> TimedeltaMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> timedelta: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, slice]) -> TimedeltaMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> TimedeltaMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> TimedeltaMatrixLike[Any, Any]: ...
+
+    def __getitem__(self, key):
+        return MatrixFill.__getitem__(self, key)
+
+    def transpose(self) -> TimedeltaMatrixLike[N_co, M_co]:
+        return cast(TimedeltaMatrixLike[N_co, M_co], MatrixFill.transpose(self))
+
+    def flip(self, *, by: Rule = Rule.ROW) -> TimedeltaMatrixLike[M_co, N_co]:
+        return cast(TimedeltaMatrixLike[M_co, N_co], MatrixFill.flip(self, by=by))
+
+    def reverse(self) -> TimedeltaMatrixLike[M_co, N_co]:
+        return cast(TimedeltaMatrixLike[M_co, N_co], MatrixFill.reverse(self))
+
+
+class DatetimeMatrixFill(DatetimeMatrixOperatorsMixin[M_co, N_co], DatetimeMatrixLike[M_co, N_co], MatrixFill[datetime, M_co, N_co]):
+
+    __slots__ = ()
+
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> datetime: ...
+    @overload
+    def __getitem__(self, key: slice) -> DatetimeMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, SupportsIndex]) -> datetime: ...
+    @overload
+    def __getitem__(self, key: tuple[SupportsIndex, slice]) -> DatetimeMatrixLike[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, SupportsIndex]) -> DatetimeMatrixLike[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> DatetimeMatrixLike[Any, Any]: ...
+
+    def __getitem__(self, key):
+        return MatrixFill.__getitem__(self, key)
+
+    def transpose(self) -> DatetimeMatrixLike[N_co, M_co]:
+        return cast(DatetimeMatrixLike[N_co, M_co], MatrixFill.transpose(self))
+
+    def flip(self, *, by: Rule = Rule.ROW) -> DatetimeMatrixLike[M_co, N_co]:
+        return cast(DatetimeMatrixLike[M_co, N_co], MatrixFill.flip(self, by=by))
+
+    def reverse(self) -> DatetimeMatrixLike[M_co, N_co]:
+        return cast(DatetimeMatrixLike[M_co, N_co], MatrixFill.reverse(self))

@@ -1334,7 +1334,7 @@ class DatetimeMatrixLike(MatrixLike[datetime, M_co, N_co], metaclass=ABCMeta):
         return NotImplemented
 
     @abstractmethod
-    def __add__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+    def __add__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]:
         """Return element-wise ``a + b``"""
         raise NotImplementedError
 
@@ -1351,7 +1351,7 @@ class DatetimeMatrixLike(MatrixLike[datetime, M_co, N_co], metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def __radd__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
+    def __radd__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]:
         """Return element-wise ``b + a``"""
         raise NotImplementedError
 
