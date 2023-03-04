@@ -725,7 +725,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __add__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args   = iter(other)
+            args = iter(other)
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -754,7 +754,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __sub__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args   = iter(other)
+            args = iter(other)
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -783,7 +783,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __mul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args   = iter(other)
+            args = iter(other)
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -822,7 +822,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __truediv__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args   = iter(other)
+            args = iter(other)
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -922,7 +922,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __radd__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -949,7 +949,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __rsub__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -976,7 +976,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __rmul__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -1008,7 +1008,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __rtruediv__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -1241,7 +1241,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __add__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -1270,7 +1270,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __sub__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -1299,7 +1299,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __mul__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -1333,7 +1333,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __truediv__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float, complex)):
             args = itertools.repeat(other)
@@ -1358,7 +1358,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __floordiv__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float)):
             args = itertools.repeat(other)
@@ -1383,7 +1383,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __mod__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float)):
             args = itertools.repeat(other)
@@ -1408,7 +1408,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __divmod__(self, other):
         if isinstance(other, IntegralMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float)):
             args = itertools.repeat(other)
@@ -2229,7 +2229,7 @@ class DatetimeMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __rsub__(self, other):
         if isinstance(other, TimedeltaMatrixLike):
-            args   = iter(other)
+            args = iter(other)
             Matrix = DatetimeMatrix
         elif isinstance(other, (timedelta, datetime)):
             args = itertools.repeat(other)
