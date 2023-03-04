@@ -262,15 +262,18 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
         return self._shape
 
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]:
+        raise NotImplementedError
         from .views.builtins import MatrixTranspose
         return MatrixTranspose(self)
 
     def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T_co, M_co, N_co]:
+        raise NotImplementedError
         from .views.builtins import MatrixColFlip, MatrixRowFlip
         MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
         return MatrixTransform(self)
 
     def reverse(self) -> MatrixLike[T_co, M_co, N_co]:
+        raise NotImplementedError
         from .views.builtins import MatrixReverse
         return MatrixReverse(self)
 
@@ -325,8 +328,6 @@ class StringMatrixOperatorsMixin(Generic[M_co, N_co]):
             array=map(operator.__add__, args, self),
             shape=shape,
         )
-
-    __rmul__ = __mul__  # Associative
 
     @overload
     def lesser(self: ShapedIterable[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
@@ -646,14 +647,14 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
     def __neg__(self: ShapedIterable[complex, M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]:
         shape = self.shape
         return ComplexMatrix(
-            array=map(operator.__neg__, self),
+            array=map(operator.__neg__, self),  # type: ignore[arg-type]
             shape=shape,
         )
 
     def __abs__(self: ShapedIterable[complex, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         shape = self.shape
         return RealMatrix(
-            array=map(abs, self),
+            array=map(abs, self),  # type: ignore[arg-type]
             shape=shape,
         )
 
@@ -686,15 +687,18 @@ class ComplexMatrix(ComplexMatrixOperatorsMixin[M_co, N_co], ComplexMatrixLike[M
         return Matrix.__getitem__(self, key)
 
     def transpose(self) -> ComplexMatrixLike[N_co, M_co]:
+        raise NotImplementedError
         from .views.builtins import ComplexMatrixTranspose
         return ComplexMatrixTranspose(self)
 
     def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrixLike[M_co, N_co]:
+        raise NotImplementedError
         from .views.builtins import ComplexMatrixColFlip, ComplexMatrixRowFlip
         ComplexMatrixTransform = (ComplexMatrixRowFlip, ComplexMatrixColFlip)[by.value]
         return ComplexMatrixTransform(self)
 
     def reverse(self) -> ComplexMatrixLike[M_co, N_co]:
+        raise NotImplementedError
         from .views.builtins import ComplexMatrixReverse
         return ComplexMatrixReverse(self)
 
@@ -1032,14 +1036,14 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
     def __neg__(self: ShapedIterable[float, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         shape = self.shape
         return RealMatrix(
-            array=map(operator.__neg__, self),
+            array=map(operator.__neg__, self),  # type: ignore[arg-type]
             shape=shape,
         )
 
     def __abs__(self: ShapedIterable[float, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         shape = self.shape
         return RealMatrix(
-            array=map(abs, self),
+            array=map(abs, self),  # type: ignore[arg-type]
             shape=shape,
         )
 
@@ -1145,15 +1149,18 @@ class RealMatrix(RealMatrixOperatorsMixin[M_co, N_co], RealMatrixLike[M_co, N_co
         return Matrix.__getitem__(self, key)
 
     def transpose(self) -> RealMatrixLike[N_co, M_co]:
+        raise NotImplementedError
         from .views.builtins import RealMatrixTranspose
         return RealMatrixTranspose(self)
 
     def flip(self, *, by: Rule = Rule.ROW) -> RealMatrixLike[M_co, N_co]:
+        raise NotImplementedError
         from .views.builtins import RealMatrixColFlip, RealMatrixRowFlip
         RealMatrixTransform = (RealMatrixRowFlip, RealMatrixColFlip)[by.value]
         return RealMatrixTransform(self)
 
     def reverse(self) -> RealMatrixLike[M_co, N_co]:
+        raise NotImplementedError
         from .views.builtins import RealMatrixReverse
         return RealMatrixReverse(self)
 
@@ -1464,15 +1471,15 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             args = itertools.repeat(other)
         else:
             return NotImplemented
-        args_x, args_y = itertools.tee(map(divmod, args, self))
+        args_x, args_y = itertools.tee(map(divmod, args, self))  # type: ignore[arg-type]
         shape = self.shape
         return (
             IntegralMatrix(
-                array=map(operator.itemgetter(0), args_x),
+                array=map(operator.itemgetter(0), args_x),  # type: ignore[arg-type]
                 shape=shape,
             ),
             IntegralMatrix(
-                array=map(operator.itemgetter(1), args_y),
+                array=map(operator.itemgetter(1), args_y),  # type: ignore[arg-type]
                 shape=shape,
             ),
         )
@@ -1535,21 +1542,21 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
     def __neg__(self: ShapedIterable[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__neg__, self),
+            array=map(operator.__neg__, self),  # type: ignore[arg-type]
             shape=shape,
         )
 
     def __abs__(self: ShapedIterable[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         shape = self.shape
         return IntegralMatrix(
-            array=map(abs, self),
+            array=map(abs, self),  # type: ignore[arg-type]
             shape=shape,
         )
 
     def __invert__(self: ShapedIterable[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__invert__, self),
+            array=map(operator.__invert__, self),  # type: ignore[arg-type]
             shape=shape,
         )
 
@@ -1655,16 +1662,19 @@ class IntegralMatrix(IntegralMatrixOperatorsMixin[M_co, N_co], IntegralMatrixLik
         return Matrix.__getitem__(self, key)
 
     def transpose(self) -> IntegralMatrixLike[N_co, M_co]:
+        raise NotImplementedError
         from .views.builtins import IntegralMatrixTranspose
         return IntegralMatrixTranspose(self)
 
     def flip(self, *, by: Rule = Rule.ROW) -> IntegralMatrixLike[M_co, N_co]:
+        raise NotImplementedError
         from .views.builtins import (IntegralMatrixColFlip,
                                      IntegralMatrixRowFlip)
         IntegralMatrixTransform = (IntegralMatrixRowFlip, IntegralMatrixColFlip)[by.value]
         return IntegralMatrixTransform(self)
 
     def reverse(self) -> IntegralMatrixLike[M_co, N_co]:
+        raise NotImplementedError
         from .views.builtins import IntegralMatrixReverse
         return IntegralMatrixReverse(self)
 
@@ -1860,19 +1870,17 @@ class TimedeltaMatrixOperatorsMixin(Generic[M_co, N_co]):
             shape=shape,
         )
 
-    __rmul__ = __mul__  # Associative
-
     def __neg__(self: ShapedIterable[timedelta, M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
         shape = self.shape
         return TimedeltaMatrix(
-            array=map(operator.__neg__, self),
+            array=map(operator.__neg__, self),  # type: ignore[arg-type]
             shape=shape,
         )
 
     def __abs__(self: ShapedIterable[timedelta, M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
         shape = self.shape
         return TimedeltaMatrix(
-            array=map(abs, self),
+            array=map(abs, self),  # type: ignore[arg-type]
             shape=shape,
         )
 
@@ -2013,8 +2021,6 @@ class DatetimeMatrixOperatorsMixin(Generic[M_co, N_co]):
             array=map(operator.__sub__, self, args),
             shape=shape,
         )
-
-    __radd__ = __add__  # Associative
 
     @overload
     def __rsub__(self: ShapedIterable[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
