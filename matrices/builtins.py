@@ -26,6 +26,8 @@ __all__ = [
     "IntegralMatrix",
     "TimedeltaMatrixOperatorsMixin",
     "TimedeltaMatrix",
+    "DatetimeMatrixOperatorsMixin",
+    "DatetimeMatrix",
 ]
 
 T = TypeVar("T")
