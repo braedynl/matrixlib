@@ -524,7 +524,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __matmul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike, ComplexMatrixLike)):
-            return ComplexMatrix(multiply(self, other))
+            return ComplexMatrix(matrix_dot(self, other))
         return NotImplemented
 
     @overload
@@ -636,7 +636,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __rmatmul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            return ComplexMatrix(multiply(other, self))
+            return ComplexMatrix(matrix_dot(other, self))
         return NotImplemented
 
     @overload
@@ -817,7 +817,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __matmul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            return RealMatrix(multiply(self, other))
+            return RealMatrix(matrix_dot(self, other))
         return NotImplemented
 
     @overload
@@ -1012,7 +1012,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __rmatmul__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]:  # type: ignore[misc]
         if isinstance(other, IntegralMatrixLike):
-            return RealMatrix(multiply(other, self))
+            return RealMatrix(matrix_dot(other, self))
         return NotImplemented
 
     @overload
@@ -1339,7 +1339,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __matmul__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> IntegralMatrixLike[M_co, P_co]:
         if isinstance(other, IntegralMatrixLike):
-            return IntegralMatrix(multiply(self, other))
+            return IntegralMatrix(matrix_dot(self, other))
         return NotImplemented
 
     @overload
@@ -2383,11 +2383,20 @@ class DatetimeMatrix(DatetimeMatrixOperatorsMixin[M_co, N_co], DatetimeMatrixLik
         return Matrix.__getitem__(self, key)
 
 
-def multiply(a, b):
-    """Return the matrix product of ``a`` and ``b``
+def vector_dot(a, b):
+    """Return the vector dot product of ``a`` and ``b``
 
-    Function used to implement the ``__matmul__()`` operator of the integral,
-    real, and complex matrix mixins.
+    This function is primarily intended as a helper for ``matrix_dot()``.
+    """
+    return sum(map(operator.mul, a, b))
+
+
+def matrix_dot(a, b):
+    """Return the matrix dot product of ``a`` and ``b`` (AKA the matrix
+    product)
+
+    Function used to implement the ``__matmul__()``/``__rmatmul__()`` operators
+    of the integral, real, and complex matrix operator mixins.
 
     Performs a variation of the naive matrix multiplication algorithm. This
     function makes a mild effort to keep a majority of the execution in C code,
@@ -2398,30 +2407,33 @@ def multiply(a, b):
     cast to a different sub-class - casting between ``Matrix`` sub-classes is
     an O(1) operation due to immutability optimizations).
     """
-    (m, n), (p, q) = (a.shape, b.shape)
+    m, n = a.shape
+    p, q = b.shape
 
     if n != p:
         raise ValueError(f"incompatible shapes, ({n = }) != ({p = })")
-    if not n:
-        return Matrix(
-            array=(0,) * (m * q),
-            shape=(m, q),
-        )
 
-    def multiply_arrays(a, b):
-        s = m * n
-        t = p * q
+    if n:
+        a = a.array
+        b = b.array
 
-        ix = range(0, s, n)
-        jx = range(0, q, 1)
+        mn = m * n
+        pq = p * q
 
-        return tuple(
-            sum(map(operator.mul, itertools.islice(a, i, i + n, 1), itertools.islice(b, j, j + t, q)))
+        ix = range(0, mn, n)
+        jx = range(0,  q, 1)
+
+        array = tuple(
+            vector_dot(
+                itertools.islice(a, i, i +  n, 1),
+                itertools.islice(b, j, j + pq, q),
+            )
             for i in ix
             for j in jx
         )
+    else:
+        array = (0,) * (m * q)
 
-    return Matrix(
-        array=multiply_arrays(a.array, b.array),
-        shape=(m, q),
-    )
+    shape = (m, q)
+
+    return Matrix(array, shape)
