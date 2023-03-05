@@ -2386,20 +2386,27 @@ class DatetimeMatrix(DatetimeMatrixOperatorsMixin[M_co, N_co], DatetimeMatrixLik
 def multiply(a, b):
     """Return the matrix product of ``a`` and ``b``
 
-    Implements a variation of the naive matrix multiplication algorithm. This
-    function does not perform any kind of parallelization, but does, however,
-    make an effort to keep a majority of the execution in C code.
+    Function used to implement the ``__matmul__()`` operator of the integral,
+    real, and complex matrix mixins.
+
+    Performs a variation of the naive matrix multiplication algorithm. This
+    function makes a mild effort to keep a majority of the execution in C code,
+    but can still be a timesink with larger matrices.
 
     Raises ``ValueError`` if the inner dimensions of ``a`` and ``b`` are
     unequal. Returns a basic ``Matrix`` instance (that you'd usually want to
-    cast to a different sub-class).
+    cast to a different sub-class - casting between ``Matrix`` sub-classes is
+    an O(1) operation due to immutability optimizations).
     """
     (m, n), (p, q) = (a.shape, b.shape)
 
     if n != p:
         raise ValueError(f"incompatible shapes, ({n = }) != ({p = })")
     if not n:
-        return Matrix(array=(0,) * (m * q), shape=(m, q))
+        return Matrix(
+            array=(0,) * (m * q),
+            shape=(m, q),
+        )
 
     def multiply_arrays(a, b):
         s = m * n
