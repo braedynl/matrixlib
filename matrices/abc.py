@@ -182,21 +182,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
     def __eq__(self, other: Any) -> bool:
         """Return true if the two matrices are equal, otherwise false"""
         if isinstance(other, MatrixLike):
-            return (
-                self.shape == other.shape
-                and
-                all((x is y or x == y) for x, y in zip(self, other))
-            )
-        return NotImplemented
-
-    def __ne__(self, other: Any) -> bool:
-        """Return true if the two matrices are not equal, otherwise false"""
-        if isinstance(other, MatrixLike):
-            return (
-                self.shape != other.shape
-                or
-                any(not (x is y or x == y) for x, y in zip(self, other))
-            )
+            return equate(self, other)
         return NotImplemented
 
     def __iter__(self) -> Iterator[T_co]:
@@ -2111,25 +2097,44 @@ class DatetimeMatrixLike(MatrixLike[datetime, M_co, N_co], metaclass=ABCMeta):
         raise NotImplementedError
 
 
+def equate(a, b):
+    """Return true if two matrices are equivalent, without using rich
+    comparison methods
+
+    This function is used to implement the base ``__eq__()`` method of
+    ``MatrixLike``.
+    """
+    if a is b:
+        return True
+    return (
+        a.shape == b.shape  # Potential O(1) short-circuit by comparing shapes first
+        and
+        all(x is y or x == y for x, y in zip(a.array, b.array))
+    )
+
+
 def compare(a, b):
     """Return literal -1, 0, or 1 if two matrices lexicographically compare as
     ``a < b``, ``a = b``, or ``a > b``, respectively
 
     This function is used to implement the base comparison operators for
-    some matrix types.
+    certain matrix types.
     """
     if a is b:
         return 0
-    for x, y in zip(a, b):
-        if x is y or x == y:
-            continue
-        return -1 if x < y else 1
-    u = a.shape
-    v = b.shape
-    if u is v:
+    def compare_arrays(a, b):
+        if a is b:
+            return 0
+        for x, y in zip(a, b):
+            if x is y or x == y:
+                continue
+            if x < y:
+                return -1
+            else:
+                return +1
         return 0
-    for m, n in zip(u, v):
-        if m is n or m == n:
-            continue
-        return -1 if m < n else 1
-    return 0
+    return (
+        compare_arrays(a.array, b.array)
+        or
+        compare_arrays(a.shape, b.shape)
+    )

@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import itertools
 import operator
-from collections.abc import Iterable
+from abc import abstractmethod
+from collections.abc import Iterable, Sequence
 from datetime import datetime, timedelta
-from typing import (Any, Generic, Literal, Optional, SupportsIndex, TypeVar,
-                    overload)
+from typing import (Any, Generic, Literal, Optional, Protocol, SupportsIndex,
+                    TypeVar, overload)
 
 from typing_extensions import Self
 
 from .abc import (ComplexMatrixLike, DatetimeMatrixLike, IntegralMatrixLike,
-                  MatrixLike, RealMatrixLike, ShapedIndexable, ShapedIterable,
-                  StringMatrixLike, TimedeltaMatrixLike)
+                  MatrixLike, RealMatrixLike, Shaped, ShapedIndexable,
+                  ShapedIterable, StringMatrixLike, TimedeltaMatrixLike)
 from .rule import COL, ROW, Rule
 
 __all__ = [
@@ -42,6 +43,14 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
 
 
+class SupportsMatrixParts(Shaped[M_co, N_co], Protocol[T_co, M_co, N_co]):
+
+    @property
+    @abstractmethod
+    def array(self) -> Sequence[T_co]:
+        raise NotImplementedError
+
+
 class MatrixOperatorsMixin(Generic[T_co, M_co, N_co]):
     """Mixin class that defines the "operator methods" of ``MatrixLike`` using
     built-in matrix types
@@ -50,34 +59,36 @@ class MatrixOperatorsMixin(Generic[T_co, M_co, N_co]):
     __slots__ = ()
 
     @overload
-    def equal(self: ShapedIterable[T_co, M_co, N_co], other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def equal(self: SupportsMatrixParts[T_co, M_co, N_co], other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def equal(self: ShapedIterable[T_co, M_co, N_co], other: Any) -> IntegralMatrixLike[M_co, N_co]: ...
+    def equal(self: SupportsMatrixParts[T_co, M_co, N_co], other: Any) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def equal(self, other):
+        a = self.array
         if isinstance(other, MatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__eq__, self, args),
+            array=map(operator.__eq__, a, b),
             shape=shape,
         )
 
     @overload
-    def not_equal(self: ShapedIterable[T_co, M_co, N_co], other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def not_equal(self: SupportsMatrixParts[T_co, M_co, N_co], other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def not_equal(self: ShapedIterable[T_co, M_co, N_co], other: Any) -> IntegralMatrixLike[M_co, N_co]: ...
+    def not_equal(self: SupportsMatrixParts[T_co, M_co, N_co], other: Any) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def not_equal(self, other):
+        a = self.array
         if isinstance(other, MatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__ne__, self, args),
+            array=map(operator.__ne__, a, b),
             shape=shape,
         )
 
@@ -264,19 +275,12 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
 
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]:
         raise NotImplementedError
-        from .views.builtins import MatrixTranspose
-        return MatrixTranspose(self)
 
     def flip(self, *, by: Rule = Rule.ROW) -> MatrixLike[T_co, M_co, N_co]:
         raise NotImplementedError
-        from .views.builtins import MatrixColFlip, MatrixRowFlip
-        MatrixTransform = (MatrixRowFlip, MatrixColFlip)[by.value]
-        return MatrixTransform(self)
 
     def reverse(self) -> MatrixLike[T_co, M_co, N_co]:
         raise NotImplementedError
-        from .views.builtins import MatrixReverse
-        return MatrixReverse(self)
 
 
 class StringMatrixOperatorsMixin(Generic[M_co, N_co]):
@@ -284,113 +288,120 @@ class StringMatrixOperatorsMixin(Generic[M_co, N_co]):
     __slots__ = ()
 
     @overload
-    def __add__(self: ShapedIterable[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> StringMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> StringMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[str, M_co, N_co], other: str) -> StringMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[str, M_co, N_co], other: str) -> StringMatrixLike[M_co, N_co]: ...
 
     def __add__(self, other):
+        a = self.array
         if isinstance(other, StringMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, str):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return StringMatrix(
-            array=map(operator.__add__, self, args),
+            array=map(operator.__add__, a, b),
             shape=shape,
         )
 
     @overload
-    def __mul__(self: ShapedIterable[str, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> StringMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[str, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> StringMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[str, M_co, N_co], other: int) -> StringMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[str, M_co, N_co], other: int) -> StringMatrixLike[M_co, N_co]: ...
 
     def __mul__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return StringMatrix(
-            array=map(operator.__mul__, self, args),
+            array=map(operator.__mul__, a, b),
             shape=shape,
         )
 
-    def __radd__(self: ShapedIterable[str, M_co, N_co], other: str) -> StringMatrixLike[M_co, N_co]:
+    def __radd__(self: SupportsMatrixParts[str, M_co, N_co], other: str) -> StringMatrixLike[M_co, N_co]:
+        a = self.array
         if isinstance(other, str):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return StringMatrix(
-            array=map(operator.__add__, args, self),
+            array=map(operator.__add__, b, a),
             shape=shape,
         )
 
     @overload
-    def lesser(self: ShapedIterable[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser(self: ShapedIterable[str, M_co, N_co], other: str) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[str, M_co, N_co], other: str) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser(self, other):
+        a = self.array
         if isinstance(other, StringMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__lt__, self, args),
+            array=map(operator.__lt__, a, b),
             shape=shape,
         )
 
     @overload
-    def lesser_equal(self: ShapedIterable[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser_equal(self: ShapedIterable[str, M_co, N_co], other: str) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[str, M_co, N_co], other: str) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser_equal(self, other):
+        a = self.array
         if isinstance(other, StringMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__le__, self, args),
+            array=map(operator.__le__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater(self: ShapedIterable[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater(self: ShapedIterable[str, M_co, N_co], other: str) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[str, M_co, N_co], other: str) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater(self, other):
+        a = self.array
         if isinstance(other, StringMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__gt__, self, args),
+            array=map(operator.__gt__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater_equal(self: ShapedIterable[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[str, M_co, N_co], other: StringMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater_equal(self: ShapedIterable[str, M_co, N_co], other: str) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[str, M_co, N_co], other: str) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater_equal(self, other):
+        a = self.array
         if isinstance(other, StringMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__ge__, self, args),
+            array=map(operator.__ge__, a, b),
             shape=shape,
         )
 
@@ -424,80 +435,83 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
     __slots__ = ()
 
     @overload
-    def __add__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[complex, M_co, N_co], other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[complex, M_co, N_co], other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __add__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike, ComplexMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return ComplexMatrix(
-            array=map(operator.__add__, self, args),
+            array=map(operator.__add__, a, b),
             shape=shape,
         )
 
     @overload
-    def __sub__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[complex, M_co, N_co], other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[complex, M_co, N_co], other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __sub__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike, ComplexMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return ComplexMatrix(
-            array=map(operator.__sub__, self, args),
+            array=map(operator.__sub__, a, b),
             shape=shape,
         )
 
     @overload
-    def __mul__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[complex, M_co, N_co], other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[complex, M_co, N_co], other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __mul__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike, ComplexMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return ComplexMatrix(
-            array=map(operator.__mul__, self, args),
+            array=map(operator.__mul__, a, b),
             shape=shape,
         )
 
@@ -514,100 +528,104 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
         return NotImplemented
 
     @overload
-    def __truediv__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[complex, M_co, N_co], other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: ComplexMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __truediv__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike, ComplexMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return ComplexMatrix(
-            array=map(operator.__truediv__, self, args),
+            array=map(operator.__truediv__, a, b),
             shape=shape,
         )
 
     @overload
-    def __radd__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __radd__(self: ShapedIterable[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __radd__(self: ShapedIterable[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __radd__(self: ShapedIterable[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __radd__(self: ShapedIterable[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __radd__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return ComplexMatrix(
-            array=map(operator.__add__, args, self),
+            array=map(operator.__add__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rsub__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rsub__(self: ShapedIterable[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __rsub__(self: ShapedIterable[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rsub__(self: ShapedIterable[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __rsub__(self: ShapedIterable[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __rsub__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return ComplexMatrix(
-            array=map(operator.__sub__, args, self),
+            array=map(operator.__sub__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rmul__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rmul__(self: ShapedIterable[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __rmul__(self: ShapedIterable[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rmul__(self: ShapedIterable[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __rmul__(self: ShapedIterable[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __rmul__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return ComplexMatrix(
-            array=map(operator.__mul__, args, self),
+            array=map(operator.__mul__, b, a),
             shape=shape,
         )
 
@@ -622,48 +640,46 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
         return NotImplemented
 
     @overload
-    def __rtruediv__(self: ShapedIterable[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rtruediv__(self: ShapedIterable[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: int) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __rtruediv__(self: ShapedIterable[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rtruediv__(self: ShapedIterable[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: float) -> ComplexMatrixLike[M_co, N_co]: ...
     @overload
-    def __rtruediv__(self: ShapedIterable[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[complex, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __rtruediv__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return ComplexMatrix(
-            array=map(operator.__truediv__, args, self),
+            array=map(operator.__truediv__, b, a),
             shape=shape,
         )
 
-    def __neg__(self: ShapedIterable[complex, M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def __neg__(self: SupportsMatrixParts[complex, M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]:
         return ComplexMatrix(
-            array=map(operator.__neg__, self),  # type: ignore[arg-type]
-            shape=shape,
+            array=map(operator.__neg__, self.array),  # type: ignore[arg-type]
+            shape=self.shape,
         )
 
-    def __abs__(self: ShapedIterable[complex, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def __abs__(self: SupportsMatrixParts[complex, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         return RealMatrix(
-            array=map(abs, self),  # type: ignore[arg-type]
-            shape=shape,
+            array=map(abs, self.array),  # type: ignore[arg-type]
+            shape=self.shape,
         )
 
-    def conjugate(self: ShapedIterable[complex, M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def conjugate(self: SupportsMatrixParts[complex, M_co, N_co]) -> ComplexMatrixLike[M_co, N_co]:
         return ComplexMatrix(
-            array=map(lambda x: x.conjugate(), self),
-            shape=shape,
+            array=map(lambda x: x.conjugate(), self.array),
+            shape=self.shape,
         )
 
 
@@ -689,19 +705,12 @@ class ComplexMatrix(ComplexMatrixOperatorsMixin[M_co, N_co], ComplexMatrixLike[M
 
     def transpose(self) -> ComplexMatrixLike[N_co, M_co]:
         raise NotImplementedError
-        from .views.builtins import ComplexMatrixTranspose
-        return ComplexMatrixTranspose(self)
 
     def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrixLike[M_co, N_co]:
         raise NotImplementedError
-        from .views.builtins import ComplexMatrixColFlip, ComplexMatrixRowFlip
-        ComplexMatrixTransform = (ComplexMatrixRowFlip, ComplexMatrixColFlip)[by.value]
-        return ComplexMatrixTransform(self)
 
     def reverse(self) -> ComplexMatrixLike[M_co, N_co]:
         raise NotImplementedError
-        from .views.builtins import ComplexMatrixReverse
-        return ComplexMatrixReverse(self)
 
 
 class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
@@ -712,22 +721,23 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
     __slots__ = ()
 
     @overload
-    def __add__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __add__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -736,27 +746,28 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__add__, self, args),
+            array=map(operator.__add__, a, b),
             shape=shape,
         )
 
     @overload
-    def __sub__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __sub__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -765,27 +776,28 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__sub__, self, args),
+            array=map(operator.__sub__, a, b),
             shape=shape,
         )
 
     @overload
-    def __mul__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __mul__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -794,7 +806,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__mul__, self, args),
+            array=map(operator.__mul__, a, b),
             shape=shape,
         )
 
@@ -809,22 +821,23 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
         return NotImplemented
 
     @overload
-    def __truediv__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __truediv__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -833,98 +846,102 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__truediv__, self, args),
+            array=map(operator.__truediv__, a, b),
             shape=shape,
         )
 
     @overload
-    def __floordiv__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __floordiv__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __floordiv__(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __floordiv__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
 
     def __floordiv__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return RealMatrix(
-            array=map(operator.__floordiv__, self, args),
+            array=map(operator.__floordiv__, a, b),
             shape=shape,
         )
 
     @overload
-    def __mod__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __mod__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __mod__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __mod__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __mod__(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __mod__(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __mod__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __mod__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
 
     def __mod__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return RealMatrix(
-            array=map(operator.__mod__, self, args),
+            array=map(operator.__mod__, a, b),
             shape=shape,
         )
 
     @overload
-    def __divmod__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    def __divmod__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
     @overload
-    def __divmod__(self: ShapedIterable[float, M_co, N_co], other: int) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    def __divmod__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
     @overload
-    def __divmod__(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    def __divmod__(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
     @overload
-    def __divmod__(self: ShapedIterable[float, M_co, N_co], other: float) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    def __divmod__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
 
     def __divmod__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
-        args_x, args_y = itertools.tee(map(divmod, self, args))
+        c, d = itertools.tee(map(divmod, a, b))
         shape = self.shape
         return (
             RealMatrix(
-                array=map(operator.itemgetter(0), args_x),
+                array=map(operator.itemgetter(0), c),
                 shape=shape,
             ),
             RealMatrix(
-                array=map(operator.itemgetter(1), args_y),
+                array=map(operator.itemgetter(1), d),
                 shape=shape,
             ),
         )
 
     @overload
-    def __radd__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __radd__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __radd__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __radd__(self: ShapedIterable[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __radd__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -933,25 +950,26 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__add__, args, self),
+            array=map(operator.__add__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rsub__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rsub__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rsub__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rsub__(self: ShapedIterable[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __rsub__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -960,25 +978,26 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__sub__, args, self),
+            array=map(operator.__sub__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rmul__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rmul__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rmul__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rmul__(self: ShapedIterable[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __rmul__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -987,7 +1006,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__mul__, args, self),
+            array=map(operator.__mul__, b, a),
             shape=shape,
         )
 
@@ -997,20 +1016,21 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
         return NotImplemented
 
     @overload
-    def __rtruediv__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rtruediv__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rtruediv__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rtruediv__(self: ShapedIterable[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[float, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __rtruediv__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = RealMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -1019,168 +1039,173 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__truediv__, args, self),
+            array=map(operator.__truediv__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rfloordiv__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __rfloordiv__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rfloordiv__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __rfloordiv__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rfloordiv__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rfloordiv__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
 
     def __rfloordiv__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return RealMatrix(
-            array=map(operator.__floordiv__, args, self),
+            array=map(operator.__floordiv__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rmod__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __rmod__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rmod__(self: ShapedIterable[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __rmod__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rmod__(self: ShapedIterable[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rmod__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
 
     def __rmod__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return RealMatrix(
-            array=map(operator.__mod__, args, self),
+            array=map(operator.__mod__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rdivmod__(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    def __rdivmod__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...  # type: ignore[misc]
     @overload
-    def __rdivmod__(self: ShapedIterable[float, M_co, N_co], other: int) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    def __rdivmod__(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
     @overload
-    def __rdivmod__(self: ShapedIterable[float, M_co, N_co], other: float) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    def __rdivmod__(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
 
     def __rdivmod__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
-        args_x, args_y = itertools.tee(map(divmod, args, self))
+        c, d = itertools.tee(map(divmod, b, a))
         shape = self.shape
         return (
             RealMatrix(
-                array=map(operator.itemgetter(0), args_x),
+                array=map(operator.itemgetter(0), c),
                 shape=shape,
             ),
             RealMatrix(
-                array=map(operator.itemgetter(1), args_y),
+                array=map(operator.itemgetter(1), d),
                 shape=shape,
             ),
         )
 
-    def __neg__(self: ShapedIterable[float, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def __neg__(self: SupportsMatrixParts[float, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         return RealMatrix(
-            array=map(operator.__neg__, self),  # type: ignore[arg-type]
-            shape=shape,
+            array=map(operator.__neg__, self.array),  # type: ignore[arg-type]
+            shape=self.shape,
         )
 
-    def __abs__(self: ShapedIterable[float, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def __abs__(self: SupportsMatrixParts[float, M_co, N_co]) -> RealMatrixLike[M_co, N_co]:
         return RealMatrix(
-            array=map(abs, self),  # type: ignore[arg-type]
-            shape=shape,
+            array=map(abs, self.array),  # type: ignore[arg-type]
+            shape=self.shape,
         )
 
     @overload
-    def lesser(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser(self: ShapedIterable[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser(self: ShapedIterable[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__lt__, self, args),
+            array=map(operator.__lt__, a, b),
             shape=shape,
         )
 
     @overload
-    def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser_equal(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__le__, self, args),
+            array=map(operator.__le__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater(self: ShapedIterable[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater(self: ShapedIterable[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__gt__, self, args),
+            array=map(operator.__gt__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater_equal(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater_equal(self: ShapedIterable[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater_equal(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater_equal(self: ShapedIterable[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater_equal(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__ge__, self, args),
+            array=map(operator.__ge__, a, b),
             shape=shape,
         )
 
@@ -1207,19 +1232,12 @@ class RealMatrix(RealMatrixOperatorsMixin[M_co, N_co], RealMatrixLike[M_co, N_co
 
     def transpose(self) -> RealMatrixLike[N_co, M_co]:
         raise NotImplementedError
-        from .views.builtins import RealMatrixTranspose
-        return RealMatrixTranspose(self)
 
     def flip(self, *, by: Rule = Rule.ROW) -> RealMatrixLike[M_co, N_co]:
         raise NotImplementedError
-        from .views.builtins import RealMatrixColFlip, RealMatrixRowFlip
-        RealMatrixTransform = (RealMatrixRowFlip, RealMatrixColFlip)[by.value]
-        return RealMatrixTransform(self)
 
     def reverse(self) -> RealMatrixLike[M_co, N_co]:
         raise NotImplementedError
-        from .views.builtins import RealMatrixReverse
-        return RealMatrixReverse(self)
 
 
 class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
@@ -1230,20 +1248,21 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
     __slots__ = ()
 
     @overload
-    def __add__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __add__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             elif isinstance(other, float):
@@ -1254,25 +1273,26 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__add__, self, args),
+            array=map(operator.__add__, a, b),
             shape=shape,
         )
 
     @overload
-    def __sub__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __sub__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             elif isinstance(other, float):
@@ -1283,25 +1303,26 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__sub__, self, args),
+            array=map(operator.__sub__, a, b),
             shape=shape,
         )
 
     @overload
-    def __mul__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __mul__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             elif isinstance(other, float):
@@ -1312,7 +1333,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__mul__, self, args),
+            array=map(operator.__mul__, a, b),
             shape=shape,
         )
 
@@ -1322,20 +1343,21 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
         return NotImplemented
 
     @overload
-    def __truediv__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[int, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __truediv__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -1344,23 +1366,24 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__truediv__, self, args),
+            array=map(operator.__truediv__, a, b),
             shape=shape,
         )
 
     @overload
-    def __floordiv__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __floordiv__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __floordiv__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
 
     def __floordiv__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, float):
                 Matrix = RealMatrix
             else:
@@ -1369,23 +1392,24 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__floordiv__, self, args),
+            array=map(operator.__floordiv__, a, b),
             shape=shape,
         )
 
     @overload
-    def __mod__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __mod__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __mod__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __mod__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __mod__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __mod__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
 
     def __mod__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, float):
                 Matrix = RealMatrix
             else:
@@ -1394,142 +1418,149 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__mod__, self, args),
+            array=map(operator.__mod__, a, b),
             shape=shape,
         )
 
     @overload
-    def __divmod__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]: ...
+    def __divmod__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]: ...
     @overload
-    def __divmod__(self: ShapedIterable[int, M_co, N_co], other: int) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]: ...
+    def __divmod__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]: ...
     @overload
-    def __divmod__(self: ShapedIterable[int, M_co, N_co], other: float) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
+    def __divmod__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
 
     def __divmod__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = IntegralMatrix
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, float):
                 Matrix = RealMatrix
             else:
                 Matrix = IntegralMatrix
         else:
             return NotImplemented
-        args_x, args_y = itertools.tee(map(divmod, self, args))
+        c, d = itertools.tee(map(divmod, a, b))
         shape = self.shape
         return (
             Matrix(
-                array=map(operator.itemgetter(0), args_x),
+                array=map(operator.itemgetter(0), c),
                 shape=shape,
             ),
             Matrix(
-                array=map(operator.itemgetter(1), args_y),
+                array=map(operator.itemgetter(1), d),
                 shape=shape,
             ),
         )
 
     @overload
-    def __lshift__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __lshift__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __lshift__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __lshift__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def __lshift__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__lshift__, self, args),
+            array=map(operator.__lshift__, a, b),
             shape=shape,
         )
 
     @overload
-    def __rshift__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __rshift__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __rshift__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __rshift__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def __rshift__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__rshift__, self, args),
+            array=map(operator.__rshift__, a, b),
             shape=shape,
         )
 
     @overload
-    def __and__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __and__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __and__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __and__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def __and__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__and__, self, args),
+            array=map(operator.__and__, a, b),
             shape=shape,
         )
 
     @overload
-    def __xor__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __xor__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __xor__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __xor__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def __xor__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__xor__, self, args),
+            array=map(operator.__xor__, a, b),
             shape=shape,
         )
 
     @overload
-    def __or__(self: ShapedIterable[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __or__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __or__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __or__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def __or__(self, other):
+        a = self.array
         if isinstance(other, IntegralMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__or__, self, args),
+            array=map(operator.__or__, a, b),
             shape=shape,
         )
 
     @overload
-    def __radd__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __radd__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __radd__(self: ShapedIterable[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __radd__(self: SupportsMatrixParts[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __radd__(self, other):
+        a = self.array
         if isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             elif isinstance(other, float):
@@ -1540,20 +1571,21 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__add__, args, self),
+            array=map(operator.__add__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rsub__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __rsub__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rsub__(self: ShapedIterable[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __rsub__(self, other):
+        a = self.array
         if isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             elif isinstance(other, float):
@@ -1564,20 +1596,21 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__sub__, args, self),
+            array=map(operator.__sub__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rmul__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __rmul__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rmul__(self: ShapedIterable[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rmul__(self: SupportsMatrixParts[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __rmul__(self, other):
+        a = self.array
         if isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             elif isinstance(other, float):
@@ -1588,20 +1621,21 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__mul__, args, self),
+            array=map(operator.__mul__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rtruediv__(self: ShapedIterable[int, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rtruediv__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __rtruediv__(self: ShapedIterable[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
+    def __rtruediv__(self: SupportsMatrixParts[int, M_co, N_co], other: complex) -> ComplexMatrixLike[M_co, N_co]: ...
 
     def __rtruediv__(self, other):
+        a = self.array
         if isinstance(other, (int, float, complex)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, complex):
                 Matrix = ComplexMatrix
             else:
@@ -1610,18 +1644,19 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__truediv__, args, self),
+            array=map(operator.__truediv__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rfloordiv__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __rfloordiv__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __rfloordiv__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rfloordiv__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
 
     def __rfloordiv__(self, other):
+        a = self.array
         if isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, float):
                 Matrix = RealMatrix
             else:
@@ -1630,18 +1665,19 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__floordiv__, args, self),
+            array=map(operator.__floordiv__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rmod__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __rmod__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __rmod__(self: ShapedIterable[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
+    def __rmod__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> RealMatrixLike[M_co, N_co]: ...
 
     def __rmod__(self, other):
+        a = self.array
         if isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, float):
                 Matrix = RealMatrix
             else:
@@ -1650,190 +1686,197 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__mod__, args, self),
+            array=map(operator.__mod__, b, a),
             shape=shape,
         )
 
     @overload
-    def __rdivmod__(self: ShapedIterable[int, M_co, N_co], other: int) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]: ...
+    def __rdivmod__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> tuple[IntegralMatrixLike[M_co, N_co], IntegralMatrixLike[M_co, N_co]]: ...
     @overload
-    def __rdivmod__(self: ShapedIterable[int, M_co, N_co], other: float) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
+    def __rdivmod__(self: SupportsMatrixParts[int, M_co, N_co], other: float) -> tuple[RealMatrixLike[M_co, N_co], RealMatrixLike[M_co, N_co]]: ...
 
     def __rdivmod__(self, other):
+        a = self.array
         if isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, float):
                 Matrix = RealMatrix
             else:
                 Matrix = IntegralMatrix
         else:
             return NotImplemented
-        args_x, args_y = itertools.tee(map(divmod, args, self))
+        c, d = itertools.tee(map(divmod, b, a))
         shape = self.shape
         return (
             Matrix(
-                array=map(operator.itemgetter(0), args_x),
+                array=map(operator.itemgetter(0), c),
                 shape=shape,
             ),
             Matrix(
-                array=map(operator.itemgetter(1), args_y),
+                array=map(operator.itemgetter(1), d),
                 shape=shape,
             ),
         )
 
-    def __rlshift__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+    def __rlshift__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+        a = self.array
         if isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__lshift__, args, self),
+            array=map(operator.__lshift__, b, a),
             shape=shape,
         )
 
-    def __rrshift__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+    def __rrshift__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+        a = self.array
         if isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__rshift__, args, self),
+            array=map(operator.__rshift__, b, a),
             shape=shape,
         )
 
-    def __rand__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+    def __rand__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+        a = self.array
         if isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__and__, args, self),
+            array=map(operator.__and__, b, a),
             shape=shape,
         )
 
-    def __rxor__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+    def __rxor__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+        a = self.array
         if isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__xor__, args, self),
+            array=map(operator.__xor__, b, a),
             shape=shape,
         )
 
-    def __ror__(self: ShapedIterable[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+    def __ror__(self: SupportsMatrixParts[int, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]:
+        a = self.array
         if isinstance(other, int):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__or__, args, self),
+            array=map(operator.__or__, b, a),
             shape=shape,
         )
 
-    def __neg__(self: ShapedIterable[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def __neg__(self: SupportsMatrixParts[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         return IntegralMatrix(
-            array=map(operator.__neg__, self),  # type: ignore[arg-type]
-            shape=shape,
+            array=map(operator.__neg__, self.array),  # type: ignore[arg-type]
+            shape=self.shape,
         )
 
-    def __abs__(self: ShapedIterable[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def __abs__(self: SupportsMatrixParts[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         return IntegralMatrix(
-            array=map(abs, self),  # type: ignore[arg-type]
-            shape=shape,
+            array=map(abs, self.array),  # type: ignore[arg-type]
+            shape=self.shape,
         )
 
-    def __invert__(self: ShapedIterable[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def __invert__(self: SupportsMatrixParts[int, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]:
         return IntegralMatrix(
-            array=map(operator.__invert__, self),  # type: ignore[arg-type]
-            shape=shape,
+            array=map(operator.__invert__, self.array),  # type: ignore[arg-type]
+            shape=self.shape,
         )
 
     @overload
-    def lesser(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser(self: ShapedIterable[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser(self: ShapedIterable[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__lt__, self, args),
+            array=map(operator.__lt__, a, b),
             shape=shape,
         )
 
     @overload
-    def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser_equal(self: ShapedIterable[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser_equal(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__le__, self, args),
+            array=map(operator.__le__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater(self: ShapedIterable[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater(self: ShapedIterable[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__gt__, self, args),
+            array=map(operator.__gt__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater_equal(self: ShapedIterable[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater_equal(self: ShapedIterable[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[float, M_co, N_co], other: int) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater_equal(self: ShapedIterable[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater_equal(self: ShapedIterable[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[float, M_co, N_co], other: float) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater_equal(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__ge__, self, args),
+            array=map(operator.__ge__, a, b),
             shape=shape,
         )
 
@@ -1860,20 +1903,12 @@ class IntegralMatrix(IntegralMatrixOperatorsMixin[M_co, N_co], IntegralMatrixLik
 
     def transpose(self) -> IntegralMatrixLike[N_co, M_co]:
         raise NotImplementedError
-        from .views.builtins import IntegralMatrixTranspose
-        return IntegralMatrixTranspose(self)
 
     def flip(self, *, by: Rule = Rule.ROW) -> IntegralMatrixLike[M_co, N_co]:
         raise NotImplementedError
-        from .views.builtins import (IntegralMatrixColFlip,
-                                     IntegralMatrixRowFlip)
-        IntegralMatrixTransform = (IntegralMatrixRowFlip, IntegralMatrixColFlip)[by.value]
-        return IntegralMatrixTransform(self)
 
     def reverse(self) -> IntegralMatrixLike[M_co, N_co]:
         raise NotImplementedError
-        from .views.builtins import IntegralMatrixReverse
-        return IntegralMatrixReverse(self)
 
 
 class TimedeltaMatrixOperatorsMixin(Generic[M_co, N_co]):
@@ -1881,85 +1916,89 @@ class TimedeltaMatrixOperatorsMixin(Generic[M_co, N_co]):
     __slots__ = ()
 
     @overload
-    def __add__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]: ...
 
     def __add__(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, timedelta):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return TimedeltaMatrix(
-            array=map(operator.__add__, self, args),
+            array=map(operator.__add__, a, b),
             shape=shape,
         )
 
     @overload
-    def __sub__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]: ...
 
     def __sub__(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, timedelta):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return TimedeltaMatrix(
-            array=map(operator.__sub__, self, args),
+            array=map(operator.__sub__, a, b),
             shape=shape,
         )
 
     @overload
-    def __mul__(self: ShapedIterable[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[timedelta, M_co, N_co], other: int) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: int) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[timedelta, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __mul__(self: ShapedIterable[timedelta, M_co, N_co], other: float) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __mul__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: float) -> TimedeltaMatrixLike[M_co, N_co]: ...
 
     def __mul__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, (int, float)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return TimedeltaMatrix(
-            array=map(operator.__mul__, self, args),
+            array=map(operator.__mul__, a, b),
             shape=shape,
         )
 
     @overload
-    def __truediv__(self: ShapedIterable[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[timedelta, M_co, N_co], other: int) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: int) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[timedelta, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: RealMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[timedelta, M_co, N_co], other: float) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: float) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> RealMatrixLike[M_co, N_co]: ...
     @overload
-    def __truediv__(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> RealMatrixLike[M_co, N_co]: ...
+    def __truediv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> RealMatrixLike[M_co, N_co]: ...
 
     def __truediv__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike, TimedeltaMatrixLike)):
-            args = iter(other)
+            b = other.array
             if isinstance(other, TimedeltaMatrixLike):
                 Matrix = RealMatrix
             else:
                 Matrix = TimedeltaMatrix
         elif isinstance(other, (int, float, timedelta)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, timedelta):
                 Matrix = RealMatrix
             else:
@@ -1968,28 +2007,29 @@ class TimedeltaMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__truediv__, self, args),
+            array=map(operator.__truediv__, a, b),
             shape=shape,
         )
 
     @overload
-    def __floordiv__(self: ShapedIterable[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: IntegralMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __floordiv__(self: ShapedIterable[timedelta, M_co, N_co], other: int) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: int) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __floordiv__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def __floordiv__(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
+    def __floordiv__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def __floordiv__(self, other):
+        a = self.array
         if isinstance(other, (IntegralMatrixLike, TimedeltaMatrixLike)):
-            args = iter(other)
+            b = other.array
             if isinstance(other, TimedeltaMatrixLike):
                 Matrix = IntegralMatrix
             else:
                 Matrix = TimedeltaMatrix
         elif isinstance(other, (int, timedelta)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, timedelta):
                 Matrix = IntegralMatrix
             else:
@@ -1998,150 +2038,156 @@ class TimedeltaMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__floordiv__, self, args),
+            array=map(operator.__floordiv__, a, b),
             shape=shape,
         )
 
     @overload
-    def __mod__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __mod__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __mod__(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __mod__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]: ...
 
     def __mod__(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, timedelta):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return TimedeltaMatrix(
-            array=map(operator.__mod__, self, args),
+            array=map(operator.__mod__, a, b),
             shape=shape,
         )
 
     @overload
-    def __divmod__(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], TimedeltaMatrixLike[M_co, N_co]]: ...
+    def __divmod__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> tuple[IntegralMatrixLike[M_co, N_co], TimedeltaMatrixLike[M_co, N_co]]: ...
     @overload
-    def __divmod__(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> tuple[IntegralMatrixLike[M_co, N_co], TimedeltaMatrixLike[M_co, N_co]]: ...
+    def __divmod__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> tuple[IntegralMatrixLike[M_co, N_co], TimedeltaMatrixLike[M_co, N_co]]: ...
 
     def __divmod__(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, timedelta):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
-        args_x, args_y = itertools.tee(map(divmod, self, args))
+        c, d = itertools.tee(map(divmod, a, b))
         shape = self.shape
         return (
             IntegralMatrix(
-                array=map(operator.itemgetter(0), args_x),
+                array=map(operator.itemgetter(0), c),
                 shape=shape,
             ),
             TimedeltaMatrix(
-                array=map(operator.itemgetter(1), args_y),
+                array=map(operator.itemgetter(1), d),
                 shape=shape,
             ),
         )
 
-    def __radd__(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]:
+    def __radd__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]:
+        a = self.array
         if isinstance(other, timedelta):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return TimedeltaMatrix(
-            array=map(operator.__add__, args, self),
+            array=map(operator.__add__, b, a),
             shape=shape,
         )
 
-    def __rsub__(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]:
+    def __rsub__(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> TimedeltaMatrixLike[M_co, N_co]:
+        a = self.array
         if isinstance(other, timedelta):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return TimedeltaMatrix(
-            array=map(operator.__sub__, args, self),
+            array=map(operator.__sub__, b, a),
             shape=shape,
         )
 
-    def __neg__(self: ShapedIterable[timedelta, M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def __neg__(self: SupportsMatrixParts[timedelta, M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
         return TimedeltaMatrix(
-            array=map(operator.__neg__, self),  # type: ignore[arg-type]
-            shape=shape,
+            array=map(operator.__neg__, self.array),  # type: ignore[arg-type]
+            shape=self.shape,
         )
 
-    def __abs__(self: ShapedIterable[timedelta, M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
-        shape = self.shape
+    def __abs__(self: SupportsMatrixParts[timedelta, M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]:
         return TimedeltaMatrix(
-            array=map(abs, self),  # type: ignore[arg-type]
-            shape=shape,
+            array=map(abs, self.array),  # type: ignore[arg-type]
+            shape=self.shape,
         )
 
     @overload
-    def lesser(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__lt__, self, args),
+            array=map(operator.__lt__, a, b),
             shape=shape,
         )
 
     @overload
-    def lesser_equal(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser_equal(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser_equal(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__le__, self, args),
+            array=map(operator.__le__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__gt__, self, args),
+            array=map(operator.__gt__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater_equal(self: ShapedIterable[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[timedelta, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater_equal(self: ShapedIterable[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[timedelta, M_co, N_co], other: timedelta) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater_equal(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__ge__, self, args),
+            array=map(operator.__ge__, a, b),
             shape=shape,
         )
 
@@ -2172,41 +2218,43 @@ class DatetimeMatrixOperatorsMixin(Generic[M_co, N_co]):
     __slots__ = ()
 
     @overload
-    def __add__(self: ShapedIterable[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
     @overload
-    def __add__(self: ShapedIterable[datetime, M_co, N_co], other: timedelta) -> DatetimeMatrixLike[M_co, N_co]: ...
+    def __add__(self: SupportsMatrixParts[datetime, M_co, N_co], other: timedelta) -> DatetimeMatrixLike[M_co, N_co]: ...
 
     def __add__(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
         elif isinstance(other, timedelta):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         else:
             return NotImplemented
         shape = self.shape
         return DatetimeMatrix(
-            array=map(operator.__add__, self, args),
+            array=map(operator.__add__, a, b),
             shape=shape,
         )
 
     @overload
-    def __sub__(self: ShapedIterable[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[datetime, M_co, N_co], other: timedelta) -> DatetimeMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[datetime, M_co, N_co], other: timedelta) -> DatetimeMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> TimedeltaMatrixLike[M_co, N_co]: ...
     @overload
-    def __sub__(self: ShapedIterable[datetime, M_co, N_co], other: datetime) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __sub__(self: SupportsMatrixParts[datetime, M_co, N_co], other: datetime) -> TimedeltaMatrixLike[M_co, N_co]: ...
 
     def __sub__(self, other):
+        a = self.array
         if isinstance(other, (TimedeltaMatrixLike, DatetimeMatrixLike)):
-            args = iter(other)
+            b = other.array
             if isinstance(other, DatetimeMatrixLike):
                 Matrix = TimedeltaMatrix
             else:
                 Matrix = DatetimeMatrix
         elif isinstance(other, (timedelta, datetime)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, datetime):
                 Matrix = TimedeltaMatrix
             else:
@@ -2215,23 +2263,24 @@ class DatetimeMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__sub__, self, args),
+            array=map(operator.__sub__, a, b),
             shape=shape,
         )
 
     @overload
-    def __rsub__(self: ShapedIterable[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[datetime, M_co, N_co], other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
     @overload
-    def __rsub__(self: ShapedIterable[datetime, M_co, N_co], other: timedelta) -> DatetimeMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[datetime, M_co, N_co], other: timedelta) -> DatetimeMatrixLike[M_co, N_co]: ...
     @overload
-    def __rsub__(self: ShapedIterable[datetime, M_co, N_co], other: datetime) -> TimedeltaMatrixLike[M_co, N_co]: ...
+    def __rsub__(self: SupportsMatrixParts[datetime, M_co, N_co], other: datetime) -> TimedeltaMatrixLike[M_co, N_co]: ...
 
     def __rsub__(self, other):
+        a = self.array
         if isinstance(other, TimedeltaMatrixLike):
-            args = iter(other)
+            b = other.array
             Matrix = DatetimeMatrix
         elif isinstance(other, (timedelta, datetime)):
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
             if isinstance(other, datetime):
                 Matrix = TimedeltaMatrix
             else:
@@ -2240,71 +2289,75 @@ class DatetimeMatrixOperatorsMixin(Generic[M_co, N_co]):
             return NotImplemented
         shape = self.shape
         return Matrix(
-            array=map(operator.__sub__, args, self),
+            array=map(operator.__sub__, b, a),
             shape=shape,
         )
 
     @overload
-    def lesser(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser(self: ShapedIterable[datetime, M_co, N_co], other: datetime) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser(self: SupportsMatrixParts[datetime, M_co, N_co], other: datetime) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser(self, other):
+        a = self.array
         if isinstance(other, DatetimeMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__lt__, self, args),
+            array=map(operator.__lt__, a, b),
             shape=shape,
         )
 
     @overload
-    def lesser_equal(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def lesser_equal(self: ShapedIterable[datetime, M_co, N_co], other: datetime) -> IntegralMatrixLike[M_co, N_co]: ...
+    def lesser_equal(self: SupportsMatrixParts[datetime, M_co, N_co], other: datetime) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def lesser_equal(self, other):
+        a = self.array
         if isinstance(other, DatetimeMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__le__, self, args),
+            array=map(operator.__le__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater(self: ShapedIterable[datetime, M_co, N_co], other: datetime) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater(self: SupportsMatrixParts[datetime, M_co, N_co], other: datetime) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater(self, other):
+        a = self.array
         if isinstance(other, DatetimeMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__gt__, self, args),
+            array=map(operator.__gt__, a, b),
             shape=shape,
         )
 
     @overload
-    def greater_equal(self: ShapedIterable[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[datetime, M_co, N_co], other: DatetimeMatrixLike[M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
-    def greater_equal(self: ShapedIterable[datetime, M_co, N_co], other: datetime) -> IntegralMatrixLike[M_co, N_co]: ...
+    def greater_equal(self: SupportsMatrixParts[datetime, M_co, N_co], other: datetime) -> IntegralMatrixLike[M_co, N_co]: ...
 
     def greater_equal(self, other):
+        a = self.array
         if isinstance(other, DatetimeMatrixLike):
-            args = iter(other)
+            b = other.array
         else:
-            args = itertools.repeat(other)
+            b = itertools.repeat(other)
         shape = self.shape
         return IntegralMatrix(
-            array=map(operator.__ge__, self, args),
+            array=map(operator.__ge__, a, b),
             shape=shape,
         )
 
@@ -2334,12 +2387,12 @@ def multiply(a, b):
     """Return the matrix product of ``a`` and ``b``
 
     Implements a variation of the naive matrix multiplication algorithm. This
-    function does not perform any kind of parallelization, but, does make an
-    effort to keep a majority of the execution in C code.
+    function does not perform any kind of parallelization, but does, however,
+    make an effort to keep a majority of the execution in C code.
 
-    Raises ``ValueError`` if the inner dimensions of ``a`` and ``b`` are not
-    equal. Returns a basic ``Matrix`` instance (that you'd usually want to cast
-    to a different sub-class).
+    Raises ``ValueError`` if the inner dimensions of ``a`` and ``b`` are
+    unequal. Returns a basic ``Matrix`` instance (that you'd usually want to
+    cast to a different sub-class).
     """
     (m, n), (p, q) = (a.shape, b.shape)
 
@@ -2348,7 +2401,7 @@ def multiply(a, b):
     if not n:
         return Matrix(array=(0,) * (m * q), shape=(m, q))
 
-    def product_array(a, b):
+    def multiply_arrays(a, b):
         s = m * n
         t = p * q
 
@@ -2362,6 +2415,6 @@ def multiply(a, b):
         )
 
     return Matrix(
-        array=product_array(a.array, b.array),
+        array=multiply_arrays(a.array, b.array),
         shape=(m, q),
     )
