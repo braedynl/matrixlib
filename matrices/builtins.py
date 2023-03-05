@@ -13,7 +13,6 @@ from .abc import (ComplexMatrixLike, DatetimeMatrixLike, IntegralMatrixLike,
                   MatrixLike, RealMatrixLike, ShapedIndexable, ShapedIterable,
                   StringMatrixLike, TimedeltaMatrixLike)
 from .rule import COL, ROW, Rule
-from .utilities.matrix_product import MatrixProduct
 
 __all__ = [
     "MatrixOperatorsMixin",
@@ -511,7 +510,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __matmul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike, ComplexMatrixLike)):
-            return ComplexMatrix(MatrixProduct(self, other))
+            return ComplexMatrix(multiply(self, other))
         return NotImplemented
 
     @overload
@@ -619,7 +618,7 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __rmatmul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            return ComplexMatrix(MatrixProduct(other, self))
+            return ComplexMatrix(multiply(other, self))
         return NotImplemented
 
     @overload
@@ -806,7 +805,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __matmul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            return RealMatrix(MatrixProduct(self, other))
+            return RealMatrix(multiply(self, other))
         return NotImplemented
 
     @overload
@@ -994,7 +993,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __rmatmul__(self: ShapedIndexable[float, M_co, N_co], other: IntegralMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]:  # type: ignore[misc]
         if isinstance(other, IntegralMatrixLike):
-            return RealMatrix(MatrixProduct(other, self))
+            return RealMatrix(multiply(other, self))
         return NotImplemented
 
     @overload
@@ -1319,7 +1318,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
 
     def __matmul__(self: ShapedIndexable[int, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> IntegralMatrixLike[M_co, P_co]:
         if isinstance(other, IntegralMatrixLike):
-            return IntegralMatrix(MatrixProduct(self, other))
+            return IntegralMatrix(multiply(self, other))
         return NotImplemented
 
     @overload
@@ -2329,3 +2328,40 @@ class DatetimeMatrix(DatetimeMatrixOperatorsMixin[M_co, N_co], DatetimeMatrixLik
 
     def __getitem__(self, key):
         return Matrix.__getitem__(self, key)
+
+
+def multiply(a, b):
+    """Return the matrix product of ``a`` and ``b``
+
+    Implements a variation of the naive matrix multiplication algorithm. This
+    function does not perform any kind of parallelization, but, does make an
+    effort to keep a majority of the execution in C code.
+
+    Raises ``ValueError`` if the inner dimensions of ``a`` and ``b`` are not
+    equal. Returns a basic ``Matrix`` instance (that you'd usually want to cast
+    to a different sub-class).
+    """
+    (m, n), (p, q) = (a.shape, b.shape)
+
+    if n != p:
+        raise ValueError(f"incompatible shapes, ({n = }) != ({p = })")
+    if not n:
+        return Matrix(array=(0,) * (m * q), shape=(m, q))
+
+    def product_array(a, b):
+        s = m * n
+        t = p * q
+
+        ix = range(0, s, n)
+        jx = range(0, q, 1)
+
+        return tuple(
+            sum(map(operator.mul, itertools.islice(a, i, i + n, 1), itertools.islice(b, j, j + t, q)))
+            for i in ix
+            for j in jx
+        )
+
+    return Matrix(
+        array=product_array(a.array, b.array),
+        shape=(m, q),
+    )

@@ -28,9 +28,7 @@ __all__ = [
     "DatetimeMatrixLike",
 ]
 
-T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
-T_contra = TypeVar("T_contra", contravariant=True)
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
@@ -382,25 +380,25 @@ class StringMatrixLike(MatrixLike[str, M_co, N_co], metaclass=ABCMeta):
     def __lt__(self, other: StringMatrixLike) -> bool:
         """Return true if lexicographic ``a < b``, otherwise false"""
         if isinstance(other, StringMatrixLike):
-            return lexicographic_compare(self, other) < 0
+            return compare(self, other) < 0
         return NotImplemented
 
     def __le__(self, other: StringMatrixLike) -> bool:
         """Return true if lexicographic ``a <= b``, otherwise false"""
         if isinstance(other, StringMatrixLike):
-            return lexicographic_compare(self, other) <= 0
+            return compare(self, other) <= 0
         return NotImplemented
 
     def __gt__(self, other: StringMatrixLike) -> bool:
         """Return true if lexicographic ``a > b``, otherwise false"""
         if isinstance(other, StringMatrixLike):
-            return lexicographic_compare(self, other) > 0
+            return compare(self, other) > 0
         return NotImplemented
 
     def __ge__(self, other: StringMatrixLike) -> bool:
         """Return true if lexicographic ``a >= b``, otherwise false"""
         if isinstance(other, StringMatrixLike):
-            return lexicographic_compare(self, other) >= 0
+            return compare(self, other) >= 0
         return NotImplemented
 
     @overload
@@ -807,7 +805,7 @@ class RealMatrixLike(MatrixLike[float, M_co, N_co], metaclass=ABCMeta):
     def __lt__(self, other):
         """Return true if lexicographic ``a < b``, otherwise false"""
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            return lexicographic_compare(self, other) < 0
+            return compare(self, other) < 0
         return NotImplemented
 
     @overload
@@ -818,7 +816,7 @@ class RealMatrixLike(MatrixLike[float, M_co, N_co], metaclass=ABCMeta):
     def __le__(self, other):
         """Return true if lexicographic ``a <= b``, otherwise false"""
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            return lexicographic_compare(self, other) <= 0
+            return compare(self, other) <= 0
         return NotImplemented
 
     @overload
@@ -829,7 +827,7 @@ class RealMatrixLike(MatrixLike[float, M_co, N_co], metaclass=ABCMeta):
     def __gt__(self, other):
         """Return true if lexicographic ``a > b``, otherwise false"""
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            return lexicographic_compare(self, other) > 0
+            return compare(self, other) > 0
         return NotImplemented
 
     @overload
@@ -840,7 +838,7 @@ class RealMatrixLike(MatrixLike[float, M_co, N_co], metaclass=ABCMeta):
     def __ge__(self, other):
         """Return true if lexicographic ``a >= b``, otherwise false"""
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
-            return lexicographic_compare(self, other) >= 0
+            return compare(self, other) >= 0
         return NotImplemented
 
     @overload
@@ -1264,25 +1262,25 @@ class IntegralMatrixLike(MatrixLike[int, M_co, N_co], metaclass=ABCMeta):
     def __lt__(self, other: IntegralMatrixLike) -> bool:
         """Return true if lexicographic ``a < b``, otherwise false"""
         if isinstance(other, IntegralMatrixLike):
-            return lexicographic_compare(self, other) < 0
+            return compare(self, other) < 0
         return NotImplemented
 
     def __le__(self, other: IntegralMatrixLike) -> bool:
         """Return true if lexicographic ``a <= b``, otherwise false"""
         if isinstance(other, IntegralMatrixLike):
-            return lexicographic_compare(self, other) <= 0
+            return compare(self, other) <= 0
         return NotImplemented
 
     def __gt__(self, other: IntegralMatrixLike) -> bool:
         """Return true if lexicographic ``a > b``, otherwise false"""
         if isinstance(other, IntegralMatrixLike):
-            return lexicographic_compare(self, other) > 0
+            return compare(self, other) > 0
         return NotImplemented
 
     def __ge__(self, other: IntegralMatrixLike) -> bool:
         """Return true if lexicographic ``a >= b``, otherwise false"""
         if isinstance(other, IntegralMatrixLike):
-            return lexicographic_compare(self, other) >= 0
+            return compare(self, other) >= 0
         return NotImplemented
 
     @overload
@@ -1742,25 +1740,25 @@ class TimedeltaMatrixLike(MatrixLike[timedelta, M_co, N_co], metaclass=ABCMeta):
     def __lt__(self, other: TimedeltaMatrixLike) -> bool:
         """Return true if lexicographic ``a < b``, otherwise false"""
         if isinstance(other, TimedeltaMatrixLike):
-            return lexicographic_compare(self, other) < 0
+            return compare(self, other) < 0
         return NotImplemented
 
     def __le__(self, other: TimedeltaMatrixLike) -> bool:
         """Return true if lexicographic ``a <= b``, otherwise false"""
         if isinstance(other, TimedeltaMatrixLike):
-            return lexicographic_compare(self, other) <= 0
+            return compare(self, other) <= 0
         return NotImplemented
 
     def __gt__(self, other: TimedeltaMatrixLike) -> bool:
         """Return true if lexicographic ``a > b``, otherwise false"""
         if isinstance(other, TimedeltaMatrixLike):
-            return lexicographic_compare(self, other) > 0
+            return compare(self, other) > 0
         return NotImplemented
 
     def __ge__(self, other: TimedeltaMatrixLike) -> bool:
         """Return true if lexicographic ``a >= b``, otherwise false"""
         if isinstance(other, TimedeltaMatrixLike):
-            return lexicographic_compare(self, other) >= 0
+            return compare(self, other) >= 0
         return NotImplemented
 
     @overload
@@ -1987,25 +1985,25 @@ class DatetimeMatrixLike(MatrixLike[datetime, M_co, N_co], metaclass=ABCMeta):
     def __lt__(self, other: DatetimeMatrixLike) -> bool:
         """Return true if lexicographic ``a < b``, otherwise false"""
         if isinstance(other, DatetimeMatrixLike):
-            return lexicographic_compare(self, other) < 0
+            return compare(self, other) < 0
         return NotImplemented
 
     def __le__(self, other: DatetimeMatrixLike) -> bool:
         """Return true if lexicographic ``a <= b``, otherwise false"""
         if isinstance(other, DatetimeMatrixLike):
-            return lexicographic_compare(self, other) <= 0
+            return compare(self, other) <= 0
         return NotImplemented
 
     def __gt__(self, other: DatetimeMatrixLike) -> bool:
         """Return true if lexicographic ``a > b``, otherwise false"""
         if isinstance(other, DatetimeMatrixLike):
-            return lexicographic_compare(self, other) > 0
+            return compare(self, other) > 0
         return NotImplemented
 
     def __ge__(self, other: DatetimeMatrixLike) -> bool:
         """Return true if lexicographic ``a >= b``, otherwise false"""
         if isinstance(other, DatetimeMatrixLike):
-            return lexicographic_compare(self, other) >= 0
+            return compare(self, other) >= 0
         return NotImplemented
 
     @overload
@@ -2113,26 +2111,7 @@ class DatetimeMatrixLike(MatrixLike[datetime, M_co, N_co], metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class SupportsLT(Protocol[T_contra]):
-    def __lt__(self, other: T_contra) -> Any: ...
-class SupportsGT(Protocol[T_contra]):
-    def __gt__(self, other: T_contra) -> Any: ...
-
-
-@overload
-def lexicographic_compare(
-    a: ShapedIterable[SupportsLT[T], Any, Any],
-    b: ShapedIterable[T, Any, Any],
-    /,
-) -> Literal[-1, 0, 1]: ...
-@overload
-def lexicographic_compare(
-    a: ShapedIterable[T, Any, Any],
-    b: ShapedIterable[SupportsGT[T], Any, Any],
-    /,
-) -> Literal[-1, 0, 1]: ...
-
-def lexicographic_compare(a, b, /):
+def compare(a, b):
     """Return literal -1, 0, or 1 if two matrices lexicographically compare as
     ``a < b``, ``a = b``, or ``a > b``, respectively
 
