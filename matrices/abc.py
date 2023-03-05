@@ -13,9 +13,7 @@ from typing_extensions import Self
 from .rule import Rule
 
 __all__ = [
-    "Indexable",
     "Shaped",
-    "ShapedIndexable",
     "ShapedIterable",
     "ShapedCollection",
     "ShapedSequence",
@@ -33,16 +31,6 @@ T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
-
-
-@runtime_checkable
-class Indexable(Protocol[T_co]):
-    """Protocol for classes that support vector ``__getitem__()`` access"""
-
-    @abstractmethod
-    def __getitem__(self, key: int) -> T_co:
-        """Return the value corresponding to ``key``"""
-        raise NotImplementedError
 
 
 @runtime_checkable
@@ -74,24 +62,6 @@ class Shaped(Sized, Protocol[M_co, N_co]):
     def size(self) -> int:
         """The product of the shape"""
         return len(self)
-
-
-@runtime_checkable
-class ShapedIndexable(Shaped[M_co, N_co], Indexable[T_co], Protocol[T_co, M_co, N_co]):
-    """Protocol for classes that support ``shape``, and index-based
-    ``__getitem__()``
-    """
-
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: int) -> T_co: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: tuple[int, int]) -> T_co: ...
-
-    @abstractmethod
-    def __getitem__(self, key):
-        raise NotImplementedError
 
 
 @runtime_checkable

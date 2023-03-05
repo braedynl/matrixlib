@@ -11,8 +11,8 @@ from typing import (Any, Generic, Literal, Optional, Protocol, SupportsIndex,
 from typing_extensions import Self
 
 from .abc import (ComplexMatrixLike, DatetimeMatrixLike, IntegralMatrixLike,
-                  MatrixLike, RealMatrixLike, Shaped, ShapedIndexable,
-                  ShapedIterable, StringMatrixLike, TimedeltaMatrixLike)
+                  MatrixLike, RealMatrixLike, Shaped, ShapedIterable,
+                  StringMatrixLike, TimedeltaMatrixLike)
 from .rule import COL, ROW, Rule
 
 __all__ = [
@@ -516,11 +516,11 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
         )
 
     @overload
-    def __matmul__(self: ShapedIndexable[complex, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
+    def __matmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
     @overload
-    def __matmul__(self: ShapedIndexable[complex, M_co, N_co], other: RealMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
+    def __matmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
     @overload
-    def __matmul__(self: ShapedIndexable[complex, M_co, N_co], other: ComplexMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
+    def __matmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: ComplexMatrixLike[N_co, P_co]) -> ComplexMatrixLike[M_co, P_co]: ...
 
     def __matmul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike, ComplexMatrixLike)):
@@ -630,9 +630,9 @@ class ComplexMatrixOperatorsMixin(Generic[M_co, N_co]):
         )
 
     @overload
-    def __rmatmul__(self: ShapedIndexable[complex, M_co, N_co], other: IntegralMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...  # type: ignore[misc]
+    def __rmatmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: IntegralMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...  # type: ignore[misc]
     @overload
-    def __rmatmul__(self: ShapedIndexable[complex, M_co, N_co], other: RealMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...  # type: ignore[misc]
+    def __rmatmul__(self: SupportsMatrixParts[complex, M_co, N_co], other: RealMatrixLike[P_co, M_co]) -> ComplexMatrixLike[P_co, N_co]: ...  # type: ignore[misc]
 
     def __rmatmul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
@@ -811,9 +811,9 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
         )
 
     @overload
-    def __matmul__(self: ShapedIndexable[float, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> RealMatrixLike[M_co, P_co]: ...
+    def __matmul__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> RealMatrixLike[M_co, P_co]: ...
     @overload
-    def __matmul__(self: ShapedIndexable[float, M_co, N_co], other: RealMatrixLike[N_co, P_co]) -> RealMatrixLike[M_co, P_co]: ...
+    def __matmul__(self: SupportsMatrixParts[float, M_co, N_co], other: RealMatrixLike[N_co, P_co]) -> RealMatrixLike[M_co, P_co]: ...
 
     def __matmul__(self, other):
         if isinstance(other, (IntegralMatrixLike, RealMatrixLike)):
@@ -1010,7 +1010,7 @@ class RealMatrixOperatorsMixin(Generic[M_co, N_co]):
             shape=shape,
         )
 
-    def __rmatmul__(self: ShapedIndexable[float, M_co, N_co], other: IntegralMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]:  # type: ignore[misc]
+    def __rmatmul__(self: SupportsMatrixParts[float, M_co, N_co], other: IntegralMatrixLike[P_co, M_co]) -> RealMatrixLike[P_co, N_co]:  # type: ignore[misc]
         if isinstance(other, IntegralMatrixLike):
             return RealMatrix(multiply(other, self))
         return NotImplemented
@@ -1337,7 +1337,7 @@ class IntegralMatrixOperatorsMixin(Generic[M_co, N_co]):
             shape=shape,
         )
 
-    def __matmul__(self: ShapedIndexable[int, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> IntegralMatrixLike[M_co, P_co]:
+    def __matmul__(self: SupportsMatrixParts[int, M_co, N_co], other: IntegralMatrixLike[N_co, P_co]) -> IntegralMatrixLike[M_co, P_co]:
         if isinstance(other, IntegralMatrixLike):
             return IntegralMatrix(multiply(self, other))
         return NotImplemented
