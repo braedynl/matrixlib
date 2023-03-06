@@ -146,7 +146,13 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @abstractmethod
     def __getitem__(self, key):
-        """Return the value or sub-matrix corresponding to ``key``"""
+        """Return the value or sub-matrix corresponding to ``key``
+
+        For sake of rule-based ``key`` construction, this method should accept
+        instances of ``list`` in the same manner as it does instances of
+        ``tuple``. See the base implementation of ``slices()`` for an example
+        of why this is useful.
+        """
         raise NotImplementedError
 
     def __eq__(self, other: Any) -> bool:
@@ -251,11 +257,20 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         """
         return self.shape[by.value]
 
-    def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
+    @overload
+    def values(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[T_co]: ...
+    @overload
+    def values(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[T_co]: ...
+    @overload
+    def values(self, *, by: Rule, reverse: bool = False) -> Iterator[T_co]: ...
+    @overload
+    def values(self, *, reverse: bool = False) -> Iterator[T_co]: ...
+
+    def values(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator that yields the matrix's items in row or
         column-major order
         """
-        values: Any = reversed if reverse else iter  # MyPy doesn't handle this expression well
+        values = reversed if reverse else iter
         row_indices = range(self.nrows)
         col_indices = range(self.ncols)
         if by is Rule.ROW:
@@ -279,14 +294,14 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
     def slices(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator that yields shallow copies of each row or column"""
         values = reversed if reverse else iter
-        if by is Rule.ROW:
-            row_indices = range(self.nrows)
-            for row_index in values(row_indices):
-                yield self[row_index, :]
-        else:
-            col_indices = range(self.ncols)
-            for col_index in values(col_indices):
-                yield self[:, col_index]
+        key = [None, None]
+        i = ( by).value
+        j = (~by).value
+        key[j] = slice(None)
+        indices = range(self.n(by))
+        for index in values(indices):
+            key[i] = index
+            yield self[key]
 
     def _resolve_vector_index(self, key: SupportsIndex) -> int:
         index = operator.index(key)

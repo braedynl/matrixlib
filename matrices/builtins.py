@@ -174,7 +174,7 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
     def __getitem__(self, key):
         array = self.array
 
-        if isinstance(key, tuple):
+        if isinstance(key, (tuple, list)):
             row_key, col_key = key
             ncols = self.ncols
 
