@@ -5,8 +5,8 @@ import operator
 from abc import abstractmethod
 from collections.abc import Iterable, Sequence
 from datetime import datetime, timedelta
-from typing import (Any, Generic, Literal, Optional, Protocol, SupportsIndex,
-                    TypeVar, overload)
+from typing import (Any, Generic, Literal, Protocol, SupportsIndex, TypeVar,
+                    overload)
 
 from typing_extensions import Self
 
@@ -100,9 +100,9 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
     @overload
     def __init__(self, array: ShapedIterable[T_co, M_co, N_co]) -> None: ...
     @overload
-    def __init__(self, array: Iterable[T_co] = (), shape: tuple[Optional[M_co], Optional[N_co]] = (None, None)) -> None: ...
+    def __init__(self, array: Iterable[T_co] = (), shape: tuple[M_co, N_co] = (0, 0)) -> None: ...
 
-    def __init__(self, array=(), shape=(None, None)):
+    def __init__(self, array=(), shape=(0, 0)):
         if isinstance(array, Matrix):
             self._array = array._array
             self._shape = array._shape
@@ -110,41 +110,22 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
 
         self._array = tuple(array)
         try:
-            shape = array.shape  # Avoids having to instance-check with ShapedIterable,
-        except AttributeError:   # which is painfully slow
+            shape = array.shape
+        except AttributeError:
             pass
         else:
             self._shape = shape
             return
 
-        nrows = shape[0]
-        ncols = shape[1]
-        nvals = len(self._array)
-
-        # We remake the shape in 3/4 cases (where one or both dimensions are None). If
-        # both dimensions are given, we maintain a reference for potential savings
-        remake = True
-
-        if nrows is None and ncols is None:
-            nrows = 1
-            ncols = nvals
-        elif nrows is None:
-            nrows, loss = divmod(nvals, ncols) if ncols else (0, nvals)
-            if loss:
-                raise ValueError(f"cannot interpret array of size {nvals} as shape M × {ncols}")
-        elif ncols is None:
-            ncols, loss = divmod(nvals, nrows) if nrows else (0, nvals)
-            if loss:
-                raise ValueError(f"cannot interpret array of size {nvals} as shape {nrows} × N")
-        else:
-            remake = False
-            if nvals != nrows * ncols:
-                raise ValueError(f"cannot interpret array of size {nvals} as shape {nrows} × {ncols}")
+        size = len(self._array)
+        nrows, ncols = shape
 
         if nrows < 0 or ncols < 0:
-            raise ValueError("dimensions must be non-negative")
+            raise ValueError("shape must contain non-negative values")
+        if size != nrows * ncols:
+            raise ValueError(f"cannot interpret array of size {size} as shape ({nrows}, {ncols})")
 
-        self._shape = (nrows, ncols) if remake else shape
+        self._shape = shape
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
