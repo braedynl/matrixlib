@@ -77,7 +77,7 @@ class ShapedCollection(ShapedIterable[T_co, M_co, N_co], Collection[T_co], Proto
     ``__iter__()``, and ``__contains__()``
     """
 
-    def __contains__(self, value: Any) -> bool:
+    def __contains__(self, value: object) -> bool:
         """Return true if the collection contains ``value``, otherwise false"""
         for x in self:
             if x is value or x == value:
@@ -155,7 +155,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Return true if the two matrices are equal, otherwise false"""
         if isinstance(other, MatrixLike):
             return equate(self, other)
@@ -205,10 +205,10 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def equal(self, other: MatrixLike[object, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def equal(self, other: Any) -> IntegralMatrixLike[M_co, N_co]: ...
+    def equal(self, other: object) -> IntegralMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def equal(self, other):
@@ -217,10 +217,10 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @overload
     @abstractmethod
-    def not_equal(self, other: MatrixLike[Any, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
+    def not_equal(self, other: MatrixLike[object, M_co, N_co]) -> IntegralMatrixLike[M_co, N_co]: ...
     @overload
     @abstractmethod
-    def not_equal(self, other: Any) -> IntegralMatrixLike[M_co, N_co]: ...
+    def not_equal(self, other: object) -> IntegralMatrixLike[M_co, N_co]: ...
 
     @abstractmethod
     def not_equal(self, other):
