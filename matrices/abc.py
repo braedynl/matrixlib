@@ -173,15 +173,17 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     @property
     def array(self) -> Sequence[T_co]:
-        """A sequence of the matrix's elements
+        """A sequence of the matrix's elements, aligned in row-major order
 
         This property serves two purposes, in allowing for matrix data to be
         matched via a ``match``-``case`` statement (for Python 3.10 or later),
-        and in allowing for matrix permutations to have faster access times.
+        and in allowing for some methods to avoid traversing through layers of
+        abstraction for performance benefits.
 
-        If the matrix implementation composes a ``Sequence`` type that can be
-        safely exposed, it should be returned by this property. Otherwise, the
-        matrix itself should be returned (the default).
+        If the matrix implementation composes a ``Sequence`` type that has fast
+        access times, and is safely exposable, it should be returned by this
+        property. Otherwise, the matrix itself should be returned (the
+        default).
         """
         return self
 
