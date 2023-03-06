@@ -162,20 +162,24 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         return NotImplemented
 
     def __iter__(self) -> Iterator[T_co]:
-        """Return an iterator over the values of the matrix in row-major order"""
+        """Return an iterator over the values of the matrix in row-major order
+
+        This method uses ``array``'s ``__iter__()`` definition if available.
+        """
         if (array := self.array) is not self:
-            yield from iter(array)
-            return
-        yield from self.values()
+            return iter(array)
+        return self.values()
 
     def __reversed__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in reverse
         row-major order
+
+        This method uses ``array``'s ``__reversed__()`` definition if
+        available.
         """
         if (array := self.array) is not self:
-            yield from reversed(array)
-            return
-        yield from self.values(reverse=True)
+            return reversed(array)
+        return self.values(reverse=True)
 
     def __deepcopy__(self, memo: Optional[dict[int, Any]] = None) -> Self:
         """Return the matrix"""
@@ -297,7 +301,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
         key = [None, None]
         i = ( by).value
         j = (~by).value
-        key[j] = slice(None)
+        key[j]  = slice(None)
         indices = range(self.n(by))
         for index in values(indices):
             key[i] = index
