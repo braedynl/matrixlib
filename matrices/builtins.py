@@ -114,6 +114,10 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
 
         Raises ``ValueError`` if any of the given dimensions are negative, or
         if their product does not equal the size of ``array``.
+
+        This constructor can be used as a means to cast between matrix types
+        quickly. Casting between sub-classes of ``Matrix``, specifically, is an
+        O(1) operation due to immutable storage optimizations.
         """
         if type(array) is cls:
             return array
