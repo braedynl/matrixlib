@@ -3,10 +3,10 @@ from __future__ import annotations
 import itertools
 import operator
 from abc import abstractmethod
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import datetime, timedelta
-from typing import (Any, Generic, Literal, Protocol, SupportsIndex, TypeVar,
-                    overload)
+from typing import (Any, Generic, Literal, Optional, Protocol, SupportsIndex,
+                    TypeVar, overload)
 
 from typing_extensions import Self
 
@@ -98,34 +98,57 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
     __slots__ = ("_array", "_shape")
 
     @overload
-    def __init__(self, array: ShapedIterable[T_co, M_co, N_co]) -> None: ...
+    def __new__(cls, array: ShapedIterable[T_co, M_co, N_co]) -> Self: ...
     @overload
-    def __init__(self, array: Iterable[T_co] = (), shape: tuple[M_co, N_co] = (0, 0)) -> None: ...
+    def __new__(cls, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> Self: ...
 
-    def __init__(self, array=(), shape=(0, 0)):
+    def __new__(cls, array=(), shape=None):
+        """Create a matrix from the contents of ``array``, interpreting its
+        dimensions as ``shape``
+
+        If ``shape`` is unspecified or ``None``, the matrix will be a row
+        vector with dimensions ``(1, N)``, where ``N`` is the size of
+        ``array``. Note that this case will also apply when ``array`` is empty
+        or unspecified (meaning that an empty construction call will result in
+        a ``(1, 0)`` matrix being created).
+
+        Raises ``ValueError`` if any of the given dimensions are negative, or
+        if their product does not equal the size of ``array``.
+        """
+        if type(array) is cls:
+            return array
+
+        self = super().__new__(cls)
+
         if isinstance(array, Matrix):
             self._array = array._array
             self._shape = array._shape
-            return
+            return self
 
         self._array = tuple(array)
         try:
-            shape = array.shape
+            self._shape = array.shape
         except AttributeError:
             pass
         else:
-            self._shape = shape
-            return
+            return self
 
         size = len(self._array)
+
+        if shape is None:
+            self._shape = (1, size)
+            return self
+
         nrows, ncols = shape
 
         if nrows < 0 or ncols < 0:
             raise ValueError("shape must contain non-negative values")
         if size != nrows * ncols:
-            raise ValueError(f"cannot interpret array of size {size} as shape ({nrows}, {ncols})")
+            raise ValueError(f"cannot interpret iterable of size {size} as shape {shape}")
 
         self._shape = shape
+
+        return self
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
@@ -246,13 +269,30 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
 
         return cls(array=array, shape=(nrows, ncols))
 
+    @classmethod
+    def from_indicator(cls, indicator: Callable[[int, int], T_co], shape: tuple[M_co, N_co]) -> Self:
+        """Construct a matrix from an ``indicator`` function that maps row,
+        column index pairings to a value of the matrix
+        """
+        nrows, ncols = shape
+        ix = range(nrows)
+        jx = range(ncols)
+        return cls(
+            array=tuple(
+                indicator(i, j)
+                for i in ix
+                for j in jx
+            ),
+            shape=shape,
+        )
+
     @property
     def array(self) -> tuple[T_co, ...]:
-        return self._array
+        return self._array  # type: ignore[attr-defined]
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
-        return self._shape
+        return self._shape  # type: ignore[attr-defined]
 
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]:
         raise NotImplementedError
