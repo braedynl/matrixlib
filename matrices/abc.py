@@ -157,12 +157,18 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
     def __iter__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in row-major order"""
+        if (array := self.array) is not self:
+            yield from iter(array)
+            return
         yield from self.values()
 
     def __reversed__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
+        if (array := self.array) is not self:
+            yield from reversed(array)
+            return
         yield from self.values(reverse=True)
 
     def __deepcopy__(self, memo: Optional[dict[int, Any]] = None) -> Self:
@@ -172,6 +178,7 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
     __copy__ = __deepcopy__
 
     @property
+    @abstractmethod
     def array(self) -> Sequence[T_co]:
         """A sequence of the matrix's elements, aligned in row-major order
 
@@ -182,10 +189,9 @@ class MatrixLike(ShapedSequence[T_co, M_co, N_co], metaclass=ABCMeta):
 
         If the matrix implementation composes a ``Sequence`` type that has fast
         access times, and is safely exposable, it should be returned by this
-        property. Otherwise, the matrix itself should be returned (the
-        default).
+        property. Otherwise, the matrix itself should be returned.
         """
-        return self
+        raise NotImplementedError
 
     @overload
     @abstractmethod
@@ -1995,10 +2001,8 @@ class DatetimeMatrixLike(MatrixLike[datetime, M_co, N_co], metaclass=ABCMeta):
         raise NotImplementedError
 
     @overload
-    @abstractmethod
     def __radd__(self, other: TimedeltaMatrixLike[M_co, N_co]) -> DatetimeMatrixLike[M_co, N_co]: ...
     @overload
-    @abstractmethod
     def __radd__(self, other: timedelta) -> DatetimeMatrixLike[M_co, N_co]: ...
 
     def __radd__(self, other):
