@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import itertools
 import operator
-from abc import abstractmethod
 from collections.abc import Callable, Iterable, Sequence
 from typing import (Any, Generic, Literal, Optional, Protocol, SupportsIndex,
                     TypeVar, overload)
@@ -40,7 +39,6 @@ P_co = TypeVar("P_co", covariant=True, bound=int)
 class SupportsMatrixParts(Shaped[M_co, N_co], Protocol[T_co, M_co, N_co]):
 
     @property
-    @abstractmethod
     def array(self) -> Sequence[T_co]:
         raise NotImplementedError
 
