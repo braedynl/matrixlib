@@ -95,31 +95,20 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
     def __new__(cls, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> Self: ...
 
     def __new__(cls, array=(), shape=None):
-        """Create a matrix from the contents of ``array``, interpreting its
-        dimensions as ``shape``
-
-        If ``shape`` is unspecified or ``None``, the matrix will be a row
-        vector with dimensions ``(1, N)``, where ``N`` is the size of
-        ``array``. Note that this case will also apply when ``array`` is empty
-        or unspecified (meaning that an empty construction call will result in
-        a ``(1, 0)`` matrix being created).
-
-        Raises ``ValueError`` if any of the given dimensions are negative, or
-        if their product does not equal the size of ``array``.
-
-        This constructor can be used as a means to cast between matrix types
-        quickly. Casting between sub-classes of ``Matrix``, specifically, is an
-        O(1) operation due to immutable storage optimizations.
-        """
-        if type(array) is cls:
+        if type(array) is cls:  # Quick test to see if we can just return a new reference
             return array
+        return super().__new__(cls)
 
-        self = super().__new__(cls)
+    @overload
+    def __init__(self, array: ShapedIterable[T_co, M_co, N_co]) -> None: ...
+    @overload
+    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
+    def __init__(self, array=(), shape=None):
         if isinstance(array, Matrix):
             self._array = array._array
             self._shape = array._shape
-            return self
+            return
 
         self._array = tuple(array)
         try:
@@ -127,13 +116,13 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
         except AttributeError:
             pass
         else:
-            return self
+            return
 
         size = len(self._array)
 
         if shape is None:
             self._shape = (1, size)
-            return self
+            return
 
         nrows, ncols = shape
 
@@ -143,8 +132,6 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
             raise ValueError(f"cannot interpret iterable of size {size} as shape {shape}")
 
         self._shape = shape
-
-        return self
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
@@ -284,11 +271,11 @@ class Matrix(MatrixOperatorsMixin[T_co, M_co, N_co], MatrixLike[T_co, M_co, N_co
 
     @property
     def array(self) -> tuple[T_co, ...]:
-        return self._array  # type: ignore[attr-defined]
+        return self._array
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
-        return self._shape  # type: ignore[attr-defined]
+        return self._shape
 
     def transpose(self) -> MatrixLike[T_co, N_co, M_co]:
         raise NotImplementedError
