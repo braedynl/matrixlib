@@ -79,7 +79,7 @@ class MatrixPermutationMixin(Generic[T_co, M_co, N_co], metaclass=ABCMeta):
         permute_matrix_index = self._permute_matrix_index
 
         if isinstance(key, (tuple, list)):
-            col_key, row_key = key
+            row_key, col_key = key
 
             if isinstance(row_key, slice):
                 row_indices = self._resolve_matrix_slice(row_key, by=ROW)
