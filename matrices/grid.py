@@ -188,9 +188,20 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
 
     __slots__ = ("_array", "_shape")
 
-    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None:
+    @overload
+    def __init__(self, array: AbstractGrid[M_co, N_co, T_co]) -> None: ...
+    @overload
+    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
+
+    def __init__(self, array=(), shape=None):
+        if isinstance(array, Grid):
+            self._array = array.array
+            self._shape = array.shape
+            return
         self._array = tuple(array)
-        if shape is None:
+        if isinstance(array, AbstractGrid):
+            self._shape = array.shape
+        elif shape is None:
             self._shape = (1, len(self._array))
         else:
             self._shape = shape
