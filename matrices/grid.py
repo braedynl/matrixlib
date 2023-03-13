@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterable, Iterator, Reversible, Sequence
 from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
                     overload)
 
@@ -12,12 +12,24 @@ from .rule import COL, ROW, Rule
 
 __all__ = ["AbstractGrid", "AbstractGridPermutation", "Grid"]
 
+T = TypeVar("T")
+
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 EvenNumber: TypeAlias = Literal[-4, -2, 0, 2, 4]
 OddNumber: TypeAlias  = Literal[-3, -1, 1, 3]
+
+
+@overload
+def values(iterable: Reversible[T], /, *, reverse: Literal[True]) -> Iterator[T]: ...
+@overload
+def values(iterable: Iterable[T], /, *, reverse: bool = False) -> Iterator[T]: ...
+
+def values(iterable, /, *, reverse=False):
+    func = reversed if reverse else iter
+    return func(iterable)
 
 
 class AbstractGrid(Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
@@ -130,16 +142,15 @@ class AbstractGrid(Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta)
         return self.shape[by.value]
 
     def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
-        values: Any = reversed if reverse else iter
         row_indices = range(self.nrows)
         col_indices = range(self.ncols)
         if by is Rule.ROW:
-            for row_index in values(row_indices):
-                for col_index in values(col_indices):
+            for row_index in values(row_indices, reverse=reverse):
+                for col_index in values(col_indices, reverse=reverse):
                     yield self[row_index, col_index]
         else:
-            for col_index in values(col_indices):
-                for row_index in values(row_indices):
+            for col_index in values(col_indices, reverse=reverse):
+                for row_index in values(row_indices, reverse=reverse):
                     yield self[row_index, col_index]
 
     @overload
@@ -152,11 +163,9 @@ class AbstractGrid(Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta)
     def slices(self, *, reverse: bool = False) -> Iterator[AbstractGrid[Literal[1], N_co, T_co]]: ...
 
     def slices(self, *, by=Rule.ROW, reverse=False):
-        values = reversed if reverse else iter
         key = Key()
         key[~by] = slice(None)
-        indices = range(self.n(by))
-        for index in values(indices):
+        for index in values(range(self.n(by)), reverse=reverse):
             key[by] = index
             yield self[key]
 
