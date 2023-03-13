@@ -7,6 +7,7 @@ from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
 
 from typing_extensions import Self, TypeAlias
 
+from .abc import Shaped
 from .key import Key
 from .rule import COL, ROW, Rule
 
@@ -31,7 +32,7 @@ def values(iterable, /, *, reverse=False):
     return (reversed if reverse else iter)(iterable)
 
 
-class AbstractGrid(Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
+class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
@@ -95,14 +96,6 @@ class AbstractGrid(Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta)
     @abstractmethod
     def shape(self) -> tuple[M_co, N_co]:
         raise NotImplementedError
-
-    @property
-    def nrows(self) -> M_co:
-        return self.shape[0]
-
-    @property
-    def ncols(self) -> N_co:
-        return self.shape[1]
 
     def transpose(self) -> AbstractGrid[N_co, M_co, T_co]:
         GridPermutation = GridTranspose
@@ -236,9 +229,6 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
     def __hash__(self) -> int:
         return hash((self.array, self.shape))
 
-    def __len__(self) -> int:
-        return len(self.array)
-
     @overload
     def __getitem__(self, key: int) -> T_co: ...
     @overload
@@ -337,9 +327,6 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(target={self.target!r})"
-
-    def __len__(self) -> int:
-        return self.nrows * self.ncols
 
     @overload
     def __getitem__(self, key: int) -> T_co: ...
