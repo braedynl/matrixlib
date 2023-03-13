@@ -28,8 +28,7 @@ def values(iterable: Reversible[T], /, *, reverse: Literal[True]) -> Iterator[T]
 def values(iterable: Iterable[T], /, *, reverse: bool = False) -> Iterator[T]: ...
 
 def values(iterable, /, *, reverse=False):
-    func = reversed if reverse else iter
-    return func(iterable)
+    return (reversed if reverse else iter)(iterable)
 
 
 class AbstractGrid(Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
@@ -274,7 +273,7 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
                 if isinstance(col_key, slice):
                     col_indices = self._resolve_matrix_slice(col_key, by=COL)
                     return Grid(
-                        array=(
+                        array=tuple(
                             array[row_index * ncols + col_index]
                             for row_index in row_indices
                             for col_index in col_indices
@@ -284,7 +283,7 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
 
                 col_index = self._resolve_matrix_index(col_key, by=COL)
                 return Grid(
-                    array=(
+                    array=tuple(
                         array[row_index * ncols + col_index]
                         for row_index in row_indices
                     ),
@@ -296,7 +295,7 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
             if isinstance(col_key, slice):
                 col_indices = self._resolve_matrix_slice(col_key, by=COL)
                 return Grid(
-                    array=(
+                    array=tuple(
                         array[row_index * ncols + col_index]
                         for col_index in col_indices
                     ),
@@ -377,7 +376,7 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
                 if isinstance(col_key, slice):
                     col_indices = self._resolve_matrix_slice(col_key, by=COL)
                     return Grid(
-                        array=(
+                        array=tuple(
                             array[permute_matrix_index(row_index, col_index)]
                             for row_index in row_indices
                             for col_index in col_indices
@@ -387,7 +386,7 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
 
                 col_index = self._resolve_matrix_index(col_key, by=COL)
                 return Grid(
-                    array=(
+                    array=tuple(
                         array[permute_matrix_index(row_index, col_index)]
                         for row_index in row_indices
                     ),
@@ -399,7 +398,7 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
             if isinstance(col_key, slice):
                 col_indices = self._resolve_matrix_slice(col_key, by=COL)
                 return Grid(
-                    array=(
+                    array=tuple(
                         array[permute_matrix_index(row_index, col_index)]
                         for col_index in col_indices
                     ),
@@ -414,7 +413,7 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
         if isinstance(key, slice):
             val_indices = self._resolve_vector_slice(key)
             return Grid(
-                array=(
+                array=tuple(
                     array[permute_vector_index(val_index)]
                     for val_index in val_indices
                 ),
