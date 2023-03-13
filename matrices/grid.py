@@ -197,7 +197,7 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
     def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
     def __init__(self, array=(), shape=None):
-        if isinstance(array, Grid):
+        if type(array) is Grid:
             self._array = array.array
             self._shape = array.shape
             return
