@@ -174,6 +174,9 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
             key[by] = index
             yield self[key]
 
+    def materialize(self) -> AbstractGrid[M_co, N_co, T_co]:
+        return self
+
     def _resolve_vector_index(self, key: int) -> int:
         bound = len(self)
         if key < 0:
@@ -211,9 +214,9 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
     def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
     def __init__(self, array=(), shape=None):
-        if type(array) is Grid:
-            self._array = array.array
-            self._shape = array.shape
+        if isinstance(array, Grid):
+            self._array = array._array
+            self._shape = array._shape
             return
         self._array = tuple(array)
         if isinstance(array, AbstractGrid):
@@ -439,6 +442,9 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
 
     def n(self, by):
         return self.nrows if by is Rule.ROW else self.ncols
+
+    def materialize(self) -> AbstractGrid[M_co, N_co, T_co]:
+        return Grid(self)
 
     @abstractmethod
     def _permute_vector_index(self, val_index: int) -> int:
