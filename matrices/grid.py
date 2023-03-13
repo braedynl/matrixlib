@@ -145,12 +145,24 @@ class AbstractGrid(Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta)
         row_indices = range(self.nrows)
         col_indices = range(self.ncols)
         if by is Rule.ROW:
-            for row_index in values(row_indices, reverse=reverse):
-                for col_index in values(col_indices, reverse=reverse):
+            for row_index in values(
+                row_indices,
+                reverse=reverse,
+            ):
+                for col_index in values(
+                    col_indices,
+                    reverse=reverse,
+                ):
                     yield self[row_index, col_index]
         else:
-            for col_index in values(col_indices, reverse=reverse):
-                for row_index in values(row_indices, reverse=reverse):
+            for col_index in values(
+                col_indices,
+                reverse=reverse,
+            ):
+                for row_index in values(
+                    row_indices,
+                    reverse=reverse,
+                ):
                     yield self[row_index, col_index]
 
     @overload
@@ -163,9 +175,10 @@ class AbstractGrid(Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta)
     def slices(self, *, reverse: bool = False) -> Iterator[AbstractGrid[Literal[1], N_co, T_co]]: ...
 
     def slices(self, *, by=Rule.ROW, reverse=False):
+        indices = range(self.n(by))
         key = Key()
         key[~by] = slice(None)
-        for index in values(range(self.n(by)), reverse=reverse):
+        for index in values(indices, reverse=reverse):
             key[by] = index
             yield self[key]
 
