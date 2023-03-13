@@ -4,7 +4,6 @@ from typing import Protocol, TypeVar
 
 __all__ = ["Shaped"]
 
-T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
