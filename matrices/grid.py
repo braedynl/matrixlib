@@ -8,19 +8,25 @@ from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
 from typing_extensions import Self, TypeAlias
 
 from .abc import Shaped
-from .key import Key
 from .rule import COL, ROW, Rule
 
-__all__ = ["AbstractGrid", "AbstractGridPermutation", "Grid"]
+__all__ = [
+    "EvenNumber",
+    "OddNumber",
+    "AbstractGrid",
+    "AbstractGridPermutation",
+    "Grid",
+]
 
 T = TypeVar("T")
+S = TypeVar("S")
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
-EvenNumber: TypeAlias = Literal[-4, -2, 0, 2, 4]
-OddNumber: TypeAlias  = Literal[-3, -1, 1, 3]
+EvenNumber: TypeAlias = Literal[-8, -6, -4, -2, 0, 2, 4, 6, 8]
+OddNumber: TypeAlias  = Literal[-7, -5, -3, -1, 1, 3, 5, 7]
 
 
 @overload
@@ -65,18 +71,6 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
     @overload
     @abstractmethod
     def __getitem__(self, key: tuple[slice, slice]) -> AbstractGrid[Any, Any, T_co]: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: Key[int, int]) -> T_co: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: Key[int, slice]) -> AbstractGrid[Literal[1], Any, T_co]: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: Key[slice, int]) -> AbstractGrid[Any, Literal[1], T_co]: ...
-    @overload
-    @abstractmethod
-    def __getitem__(self, key: Key[slice, slice]) -> AbstractGrid[Any, Any, T_co]: ...
 
     @abstractmethod
     def __getitem__(self, key):
@@ -139,26 +133,14 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
     def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
         row_indices = range(self.nrows)
         col_indices = range(self.ncols)
-        if by is Rule.ROW:
-            for row_index in values(
-                row_indices,
-                reverse=reverse,
-            ):
-                for col_index in values(
-                    col_indices,
-                    reverse=reverse,
-                ):
-                    yield self[row_index, col_index]
-        else:
-            for col_index in values(
-                col_indices,
-                reverse=reverse,
-            ):
-                for row_index in values(
-                    row_indices,
-                    reverse=reverse,
-                ):
-                    yield self[row_index, col_index]
+        outer_indices, inner_indices = (
+            (row_indices, col_indices)
+            if by is Rule.ROW else
+            (col_indices, row_indices)
+        )
+        for outer_index in values(outer_indices, reverse=reverse):
+            for inner_index in values(inner_indices, reverse=reverse):
+                yield self[outer_index, inner_index]
 
     @overload
     def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[AbstractGrid[Literal[1], N_co, T_co]]: ...
@@ -171,10 +153,10 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         indices = range(self.n(by))
-        key = Key()
-        key[~by] = slice(None)
+        key = [None, None]
+        key[(~by).value] = slice(None)
         for index in values(indices, reverse=reverse):
-            key[by] = index
+            key[(by).value] = index
             yield self[key]
 
     def _resolve_vector_index(self, key: int) -> int:
@@ -247,19 +229,11 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
     def __getitem__(self, key: tuple[slice, int]) -> Grid[Any, Literal[1], T_co]: ...
     @overload
     def __getitem__(self, key: tuple[slice, slice]) -> Grid[Any, Any, T_co]: ...
-    @overload
-    def __getitem__(self, key: Key[int, int]) -> T_co: ...
-    @overload
-    def __getitem__(self, key: Key[int, slice]) -> Grid[Literal[1], Any, T_co]: ...
-    @overload
-    def __getitem__(self, key: Key[slice, int]) -> Grid[Any, Literal[1], T_co]: ...
-    @overload
-    def __getitem__(self, key: Key[slice, slice]) -> Grid[Any, Any, T_co]: ...
 
     def __getitem__(self, key):
         array = self.array
 
-        if isinstance(key, (tuple, Key)):
+        if isinstance(key, (tuple, list)):
             row_key, col_key = key
             ncols = self.ncols
 
@@ -346,19 +320,11 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
     def __getitem__(self, key: tuple[slice, int]) -> Grid[Any, Literal[1], T_co]: ...
     @overload
     def __getitem__(self, key: tuple[slice, slice]) -> Grid[Any, Any, T_co]: ...
-    @overload
-    def __getitem__(self, key: Key[int, int]) -> T_co: ...
-    @overload
-    def __getitem__(self, key: Key[int, slice]) -> Grid[Literal[1], Any, T_co]: ...
-    @overload
-    def __getitem__(self, key: Key[slice, int]) -> Grid[Any, Literal[1], T_co]: ...
-    @overload
-    def __getitem__(self, key: Key[slice, slice]) -> Grid[Any, Any, T_co]: ...
 
     def __getitem__(self, key):
         array = self.target.array
 
-        if isinstance(key, (tuple, Key)):
+        if isinstance(key, (tuple, list)):
             row_key, col_key = key
 
             permute_matrix_index = self._permute_matrix_index
