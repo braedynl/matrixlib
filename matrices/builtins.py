@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import itertools
+import operator
 from collections.abc import Iterable, Iterator, Sequence
 from typing import Any, Generic, Literal, Optional, TypeVar, Union, overload
 
@@ -41,10 +43,12 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         return self
 
     def __repr__(self) -> str:
+        """Return a canonical representation of the matrix"""
         matrix = self.materialize()
         return f"{self.__class__.__name__}(array={matrix.array!r}, shape={matrix.shape!r})"
 
     def __eq__(self, other: object) -> bool:
+        """Return true if the two matrices are equal, otherwise false"""
         if self is other:
             return True
         if isinstance(other, Matrix):
@@ -52,6 +56,7 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         return NotImplemented
 
     def __hash__(self) -> int:
+        """Return a hash of the matrix"""
         return hash(self.grid)
 
     @overload
@@ -68,21 +73,28 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __getitem__(self, key: tuple[slice, slice]) -> Matrix[Any, Any, T_co]: ...
 
     def __getitem__(self, key):
+        """Return the value or sub-matrix corresponding to ``key``"""
         value = self.grid[key]
         if isinstance(value, AbstractGrid):
             return self.__class__(value)
         return value
 
     def __iter__(self) -> Iterator[T_co]:
+        """Return an iterator over the values of the matrix in row-major order"""
         return iter(self.grid)
 
     def __reversed__(self) -> Iterator[T_co]:
+        """Return an iterator over the values of the matrix in reverse
+        row-major order
+        """
         return reversed(self.grid)
 
     def __contains__(self, value: object) -> bool:
+        """Return true if the matrix contains ``value``, otherwise false"""
         return value in self.grid
 
     def __deepcopy__(self, memo=None) -> Self:
+        """Return the matrix"""
         return self
 
     __copy__ = __deepcopy__
@@ -171,3 +183,37 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     def slices(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator over the rows or columns of the matrix"""
         return map(self.__class__, self.grid.slices(by=by, reverse=reverse))
+
+    @overload
+    def equal(self, other: Matrix[M_co, N_co, object]) -> Matrix[M_co, N_co, bool]: ...
+    @overload
+    def equal(self, other: object) -> Matrix[M_co, N_co, bool]: ...
+
+    def equal(self, other):
+        """Return element-wise ``a == b``"""
+        if isinstance(other, Matrix):
+            b = iter(other)
+        else:
+            b = itertools.repeat(other)
+        a = iter(self)
+        return Matrix(
+            array=map(operator.__eq__, a, b),
+            shape=self.shape,
+        )
+
+    @overload
+    def not_equal(self, other: Matrix[M_co, N_co, object]) -> Matrix[M_co, N_co, bool]: ...
+    @overload
+    def not_equal(self, other: object) -> Matrix[M_co, N_co, bool]: ...
+
+    def not_equal(self, other):
+        """Return element-wise ``a != b``"""
+        if isinstance(other, Matrix):
+            b = iter(other)
+        else:
+            b = itertools.repeat(other)
+        a = iter(self)
+        return Matrix(
+            array=map(operator.__ne__, a, b),
+            shape=self.shape,
+        )

@@ -11,17 +11,21 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 class Shaped(Sized, Protocol[M_co, N_co]):
 
     def __len__(self) -> int:
+        """Return the shape's product"""
         return self.nrows * self.ncols
 
     @property
     @abstractmethod
     def shape(self) -> tuple[M_co, N_co]:
+        """The number of rows and columns as a ``tuple``"""
         raise NotImplementedError
 
     @property
     def nrows(self) -> M_co:
+        """The number of rows"""
         return self.shape[0]
 
     @property
     def ncols(self) -> N_co:
+        """The number of columns"""
         return self.shape[1]

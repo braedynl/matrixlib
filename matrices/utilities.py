@@ -209,6 +209,15 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
         else:
             self._shape = shape
 
+        if __debug__:
+            nrows, ncols = self._shape
+            n = len(self._array)
+
+            if nrows < 0 or ncols < 0:
+                raise ValueError("shape must contain non-negative values")
+            if n != nrows * ncols:
+                raise ValueError(f"cannot interpret size {n} iterable as shape ({nrows}, {ncols})")
+
         return self
 
     def __repr__(self) -> str:
