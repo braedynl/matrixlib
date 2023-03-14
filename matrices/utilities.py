@@ -133,14 +133,14 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
     def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
         row_indices = range(self.nrows)
         col_indices = range(self.ncols)
-        outer_indices, inner_indices = (
-            (row_indices, col_indices)
-            if by is Rule.ROW else
-            (col_indices, row_indices)
-        )
-        for outer_index in values(outer_indices, reverse=reverse):
-            for inner_index in values(inner_indices, reverse=reverse):
-                yield self[outer_index, inner_index]
+        if by is Rule.ROW:
+            for row_index in values(row_indices, reverse=reverse):
+                for col_index in values(col_indices, reverse=reverse):
+                    yield self[row_index, col_index]
+        else:
+            for col_index in values(col_indices, reverse=reverse):
+                for row_index in values(row_indices, reverse=reverse):
+                    yield self[row_index, col_index]
 
     @overload
     def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[AbstractGrid[Literal[1], N_co, T_co]]: ...
