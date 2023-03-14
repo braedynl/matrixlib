@@ -3,19 +3,15 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator, Sequence
 from typing import Any, Generic, Literal, Optional, TypeVar, Union, overload
 
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self
 
-from ..abc import Shaped
-from ..grid import AbstractGrid, Grid
-from ..key import Key
-from ..rule import Rule
+from .abc import Shaped
+from .grid import AbstractGrid, EvenNumber, Grid, OddNumber
+from .rule import Rule
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
-
-EvenNumber: TypeAlias = Literal[-4, -2, 0, 2, 4]
-OddNumber: TypeAlias  = Literal[-3, -1, 1, 3]
 
 
 class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
@@ -70,14 +66,6 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __getitem__(self, key: tuple[slice, int]) -> Matrix[Any, Literal[1], T_co]: ...
     @overload
     def __getitem__(self, key: tuple[slice, slice]) -> Matrix[Any, Any, T_co]: ...
-    @overload
-    def __getitem__(self, key: Key[int, int]) -> T_co: ...
-    @overload
-    def __getitem__(self, key: Key[int, slice]) -> Matrix[Literal[1], Any, T_co]: ...
-    @overload
-    def __getitem__(self, key: Key[slice, int]) -> Matrix[Any, Literal[1], T_co]: ...
-    @overload
-    def __getitem__(self, key: Key[slice, slice]) -> Matrix[Any, Any, T_co]: ...
 
     def __getitem__(self, key):
         value = self.grid[key]
