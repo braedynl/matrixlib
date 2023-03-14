@@ -6,8 +6,8 @@ from typing import Any, Generic, Literal, Optional, TypeVar, Union, overload
 from typing_extensions import Self
 
 from .abc import Shaped
-from .grid import AbstractGrid, EvenNumber, Grid, OddNumber
 from .rule import Rule
+from .utilities import AbstractGrid, EvenNumber, Grid, OddNumber
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
