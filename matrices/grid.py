@@ -123,6 +123,9 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
     def reverse(self) -> AbstractGrid[M_co, N_co, T_co]:
         return self.rotate(2)
 
+    def materialize(self) -> AbstractGrid[M_co, N_co, T_co]:
+        return self
+
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...
     @overload
@@ -173,9 +176,6 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
         for index in values(indices, reverse=reverse):
             key[by] = index
             yield self[key]
-
-    def materialize(self) -> AbstractGrid[M_co, N_co, T_co]:
-        return self
 
     def _resolve_vector_index(self, key: int) -> int:
         bound = len(self)
@@ -436,6 +436,9 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
     def target(self) -> AbstractGrid[int, int, T_co]:
         return self._target
 
+    def materialize(self) -> AbstractGrid[M_co, N_co, T_co]:
+        return Grid(self)
+
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...
     @overload
@@ -445,9 +448,6 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
 
     def n(self, by):
         return self.nrows if by is Rule.ROW else self.ncols
-
-    def materialize(self) -> AbstractGrid[M_co, N_co, T_co]:
-        return Grid(self)
 
     @abstractmethod
     def _permute_vector_index(self, val_index: int) -> int:
