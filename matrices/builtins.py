@@ -127,13 +127,12 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     def materialize(self) -> Matrix[M_co, N_co, T_co]:
         """Return a materialized copy of the matrix
 
-        Certain methods (specifically ``transpose()``, ``flip()``,
-        ``rotate()``, and ``reverse()``) may, internally, produce a view onto
-        an existing in-memory sequence to preserve memory. As views "stack"
-        onto one another, access times can become slower.
+        Certain methods may, internally, produce a view onto an existing
+        sequence to preserve memory. As views "stack" onto one another, access
+        times can become slower.
 
         This method addresses said issue by copying the elements into a new
-        sequence - a process that we call "materialization". The resultant
+        sequence - a process that we call "materialization". The resulting
         matrix instance will have access times identical to that of an instance
         created from an array-and-shape pairing, but note that this may consume
         significant amounts of memory (depending on the size of the matrix).
