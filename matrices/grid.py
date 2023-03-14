@@ -209,15 +209,16 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
     __slots__ = ("_array", "_shape")
 
     @overload
-    def __init__(self, array: AbstractGrid[M_co, N_co, T_co]) -> None: ...
+    def __new__(cls, array: AbstractGrid[M_co, N_co, T_co]) -> Self: ...
     @overload
-    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
+    def __new__(cls, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> Self: ...
 
-    def __init__(self, array=(), shape=None):
-        if isinstance(array, Grid):
-            self._array = array._array
-            self._shape = array._shape
-            return
+    def __new__(cls, array=(), shape=None):
+        if type(array) is cls:
+            return array
+
+        self = super().__new__(cls)
+
         self._array = tuple(array)
         if isinstance(array, AbstractGrid):
             self._shape = array.shape
@@ -225,6 +226,8 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
             self._shape = (1, len(self._array))
         else:
             self._shape = shape
+
+        return self
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
@@ -314,11 +317,11 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
 
     @property
     def array(self) -> tuple[T_co, ...]:
-        return self._array
+        return self._array  # type: ignore[attr-defined]
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
-        return self._shape  # type: ignore[return-value]
+        return self._shape  # type: ignore[attr-defined]
 
 
 class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta):
