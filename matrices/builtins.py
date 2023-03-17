@@ -81,10 +81,10 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def __getitem__(self, key):
         """Return the value or sub-matrix corresponding to ``key``"""
-        value = self.grid[key]
-        if isinstance(value, AbstractGrid):
-            return Matrix(value)
-        return value
+        result = self.grid[key]
+        if isinstance(result, Grid):
+            return Matrix(result)
+        return result
 
     def __iter__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in row-major order"""
@@ -192,39 +192,37 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         return map(Matrix, self.grid.slices(by=by, reverse=reverse))
 
     @overload
-    def equal(self, other: Matrix[M_co, N_co, object]) -> IntegerMatrix[M_co, N_co, bool]: ...
+    def equal(self, other: Matrix[M_co, N_co, object]) -> Matrix[M_co, N_co, bool]: ...
     @overload
-    def equal(self, other: object) -> IntegerMatrix[M_co, N_co, bool]: ...
+    def equal(self, other: object) -> Matrix[M_co, N_co, bool]: ...
 
     def equal(self, other):
         """Return element-wise ``a == b``"""
+        a = self
         if isinstance(other, Matrix):
-            b = iter(other)
+            b = other
         else:
             b = itertools.repeat(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
+        return Matrix(
             array=map(operator.__eq__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
-    def not_equal(self, other: Matrix[M_co, N_co, object]) -> IntegerMatrix[M_co, N_co, bool]: ...
+    def not_equal(self, other: Matrix[M_co, N_co, object]) -> Matrix[M_co, N_co, bool]: ...
     @overload
-    def not_equal(self, other: object) -> IntegerMatrix[M_co, N_co, bool]: ...
+    def not_equal(self, other: object) -> Matrix[M_co, N_co, bool]: ...
 
     def not_equal(self, other):
         """Return element-wise ``a != b``"""
+        a = self
         if isinstance(other, Matrix):
-            b = iter(other)
+            b = other
         else:
             b = itertools.repeat(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
+        return Matrix(
             array=map(operator.__ne__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
 
@@ -246,54 +244,100 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
     def __getitem__(self, key: tuple[slice, slice]) -> ComplexMatrix[Any, Any, C_co]: ...
 
     def __getitem__(self, key):
-        value = super().__getitem__(key)
-        if isinstance(value, Matrix):
-            return ComplexMatrix(value)
-        return value
+        result = super().__getitem__(key)
+        if isinstance(result, Matrix):
+            return ComplexMatrix(result)
+        return result
 
-    def __add__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]:
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, int], other: int) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, float], other: float) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+
+    def __add__(self, other):
+        a = self
         if isinstance(other, ComplexMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, (complex, float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return ComplexMatrix(
             array=map(operator.__add__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __sub__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]:
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, int], other: int) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, float], other: float) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+
+    def __sub__(self, other):
+        a = self
         if isinstance(other, ComplexMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, (complex, float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return ComplexMatrix(
             array=map(operator.__sub__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __mul__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]:
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, int], other: int) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, float], other: float) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+
+    def __mul__(self, other):
+        a = self
         if isinstance(other, ComplexMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, (complex, float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return ComplexMatrix(
             array=map(operator.__mul__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __matmul__(self, other: ComplexMatrix[N_co, P_co, complex]) -> ComplexMatrix[M_co, P_co, complex]:
+    @overload
+    def __matmul__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[N_co, P_co, int]) -> ComplexMatrix[M_co, P_co, int]: ...
+    @overload
+    def __matmul__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[N_co, P_co, float]) -> ComplexMatrix[M_co, P_co, float]: ...
+    @overload
+    def __matmul__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[N_co, P_co, complex]) -> ComplexMatrix[M_co, P_co, complex]: ...
+
+    def __matmul__(self, other):
+        if not isinstance(other, ComplexMatrix):
+            return NotImplemented
+
         m, n =  self.shape
         p, q = other.shape
 
@@ -313,7 +357,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
             ix = range(0, mn, n)
             jx = range(0,  q, 1)
 
-            array = tuple(  # XXX: allow Grid to hold any sequence type? list comp for potential speed-up
+            array = tuple(
                 sum_prod(
                     map(get_lhs, range(i, i +  n, 1)),
                     map(get_rhs, range(j, j + pq, q)),
@@ -327,113 +371,138 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
         shape = (m, q)
 
-        return ComplexMatrix(array, shape)  # TODO: overrides
+        return ComplexMatrix(array, shape)
 
-    def __truediv__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]:
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, float], other: float) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+
+    def __truediv__(self, other):
+        a = self
         if isinstance(other, ComplexMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, (complex, float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return ComplexMatrix(
             array=map(operator.__truediv__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __radd__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]:
+    @overload
+    def __radd__(self: ComplexMatrix[M_co, N_co, int], other: int) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __radd__(self: ComplexMatrix[M_co, N_co, float], other: float) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __radd__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+
+    def __radd__(self, other):
+        a = self
         if isinstance(other, (complex, float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return ComplexMatrix(
             array=map(operator.__add__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __rsub__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]:
+    @overload
+    def __rsub__(self: ComplexMatrix[M_co, N_co, int], other: int) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __rsub__(self: ComplexMatrix[M_co, N_co, float], other: float) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __rsub__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+
+    def __rsub__(self, other):
+        a = self
         if isinstance(other, (complex, float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return ComplexMatrix(
             array=map(operator.__sub__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __rmul__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]:
+    @overload
+    def __rmul__(self: ComplexMatrix[M_co, N_co, int], other: int) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __rmul__(self: ComplexMatrix[M_co, N_co, float], other: float) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __rmul__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+
+    def __rmul__(self, other):
+        a = self
         if isinstance(other, (complex, float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return ComplexMatrix(
             array=map(operator.__mul__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __rtruediv__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]:
+    @overload
+    def __rtruediv__(self: ComplexMatrix[M_co, N_co, float], other: float) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __rtruediv__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+
+    def __rtruediv__(self, other):
+        a = self
         if isinstance(other, (complex, float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return ComplexMatrix(
             array=map(operator.__truediv__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
-    def __neg__(self: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...  # type: ignore[misc]
+    def __neg__(self: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
     @overload
-    def __neg__(self: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...  # type: ignore[misc]
+    def __neg__(self: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
     @overload
-    def __neg__(self) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __neg__(self: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __neg__(self):
-        shape = self.shape
-        a = iter(self)
+        a = self
         return ComplexMatrix(
             array=map(operator.__neg__, a),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
-    def __pos__(self: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...  # type: ignore[misc]
+    def __pos__(self: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
     @overload
-    def __pos__(self: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...  # type: ignore[misc]
+    def __pos__(self: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
     @overload
-    def __pos__(self) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __pos__(self: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __pos__(self):
-        shape = self.shape
-        a = iter(self)
+        a = self
         return ComplexMatrix(
             array=map(operator.__pos__, a),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
-    def __abs__(self: ComplexMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...  # type: ignore[misc]
+    def __abs__(self: ComplexMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __abs__(self: ComplexMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...  # type: ignore[misc]
-    @overload
-    def __abs__(self) -> RealMatrix[M_co, N_co, float]: ...
+    def __abs__(self: ComplexMatrix[M_co, N_co, complex]) -> RealMatrix[M_co, N_co, float]: ...
 
     def __abs__(self):
-        shape = self.shape
-        a = iter(self)
+        a = self
         return RealMatrix(
             array=map(abs, a),
-            shape=shape,
+            shape=a.shape,
         )
 
     def transpose(self) -> ComplexMatrix[N_co, M_co, C_co]:
@@ -473,26 +542,25 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         return map(ComplexMatrix, super().slices(by=by, reverse=reverse))
 
     @overload
-    def conjugate(self: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...  # type: ignore[misc]
+    def conjugate(self: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
     @overload
-    def conjugate(self: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...  # type: ignore[misc]
+    def conjugate(self: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
     @overload
-    def conjugate(self) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def conjugate(self: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def conjugate(self):
-        shape = self.shape
-        a = iter(self)
+        a = self
         return ComplexMatrix(
             array=map(lambda x: x.conjugate(), a),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
-    def transjugate(self: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[N_co, M_co, int]: ...  # type: ignore[misc]
+    def transjugate(self: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[N_co, M_co, int]: ...
     @overload
-    def transjugate(self: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[N_co, M_co, float]: ...  # type: ignore[misc]
+    def transjugate(self: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[N_co, M_co, float]: ...
     @overload
-    def transjugate(self) -> ComplexMatrix[N_co, M_co, complex]: ...
+    def transjugate(self: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[N_co, M_co, complex]: ...
 
     def transjugate(self):
         return self.transpose().conjugate()
@@ -540,259 +608,304 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
     def __getitem__(self, key: tuple[slice, slice]) -> RealMatrix[Any, Any, R_co]: ...
 
     def __getitem__(self, key):
-        value = super().__getitem__(key)
-        if isinstance(value, ComplexMatrix):
-            return RealMatrix(value)
-        return value
+        result = super().__getitem__(key)
+        if isinstance(result, ComplexMatrix):
+            return RealMatrix(result)
+        return result
 
+    @overload  # type: ignore[override]
+    def __add__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __add__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]: ...
+    def __add__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
     @overload
-    def __add__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __add__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __add__(self, other):
-        if isinstance(other, RealMatrix):
-            b = iter(other)
-        elif isinstance(other, (float, int)):
-            b = itertools.repeat(other)
-        else:
-            return super().__add__(other)
-        shape = self.shape
-        a = iter(self)
-        return RealMatrix(
-            array=map(operator.__add__, a, b),
-            shape=shape,
-        )
+        result = super().__add__(other)
+        if isinstance(other, (RealMatrix, float, int)):
+            return RealMatrix(result)
+        return result
 
+    @overload  # type: ignore[override]
+    def __sub__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __sub__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]: ...
+    def __sub__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
     @overload
-    def __sub__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __sub__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __sub__(self, other):
-        if isinstance(other, RealMatrix):
-            b = iter(other)
-        elif isinstance(other, (float, int)):
-            b = itertools.repeat(other)
-        else:
-            return super().__sub__(other)
-        shape = self.shape
-        a = iter(self)
-        return RealMatrix(
-            array=map(operator.__sub__, a, b),
-            shape=shape,
-        )
+        result = super().__sub__(other)
+        if isinstance(other, (RealMatrix, float, int)):
+            return RealMatrix(result)
+        return result
 
+    @overload  # type: ignore[override]
+    def __mul__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __mul__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]: ...
+    def __mul__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
     @overload
-    def __mul__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __mul__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __mul__(self, other):
-        if isinstance(other, RealMatrix):
-            b = iter(other)
-        elif isinstance(other, (float, int)):
-            b = itertools.repeat(other)
-        else:
-            return super().__mul__(other)
-        shape = self.shape
-        a = iter(self)
-        return RealMatrix(
-            array=map(operator.__mul__, a, b),
-            shape=shape,
-        )
+        result = super().__mul__(other)
+        if isinstance(other, (RealMatrix, float, int)):
+            return RealMatrix(result)
+        return result
 
+    @overload  # type: ignore[override]
+    def __matmul__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, P_co, int]) -> RealMatrix[M_co, P_co, int]: ...
     @overload
-    def __truediv__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]: ...
+    def __matmul__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, P_co, float]) -> RealMatrix[M_co, P_co, float]: ...
     @overload
-    def __truediv__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __matmul__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[N_co, P_co, int]) -> ComplexMatrix[M_co, P_co, int]: ...
+    @overload
+    def __matmul__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[N_co, P_co, float]) -> ComplexMatrix[M_co, P_co, float]: ...
+    @overload
+    def __matmul__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[N_co, P_co, complex]) -> ComplexMatrix[M_co, P_co, complex]: ...
+
+    def __matmul__(self, other):
+        result = super().__matmul__(other)
+        if isinstance(other, RealMatrix):
+            return RealMatrix(result)
+        return result
+
+    @overload  # type: ignore[override]
+    def __truediv__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __truediv__(self, other):
-        if isinstance(other, RealMatrix):
-            b = iter(other)
-        elif isinstance(other, (float, int)):
-            b = itertools.repeat(other)
-        else:
-            return super().__truediv__(other)
-        shape = self.shape
-        a = iter(self)
-        return RealMatrix(
-            array=map(operator.__truediv__, a, b),
-            shape=shape,
-        )
+        result = super().__truediv__(other)
+        if isinstance(other, (RealMatrix, float, int)):
+            return RealMatrix(result)
+        return result
 
-    def __floordiv__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]:
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+
+    def __floordiv__(self, other):
+        a = self
         if isinstance(other, RealMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, (float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return RealMatrix(
             array=map(operator.__floordiv__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __mod__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]:
+    @overload
+    def __mod__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __mod__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __mod__(self: RealMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __mod__(self: RealMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+
+    def __mod__(self, other):
+        a = self
         if isinstance(other, RealMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, (float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return RealMatrix(
             array=map(operator.__mod__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __divmod__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]:
+    @overload
+    def __divmod__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> tuple[RealMatrix[M_co, N_co, int], RealMatrix[M_co, N_co, int]]: ...
+    @overload
+    def __divmod__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]: ...
+    @overload
+    def __divmod__(self: RealMatrix[M_co, N_co, int], other: int) -> tuple[RealMatrix[M_co, N_co, int], RealMatrix[M_co, N_co, int]]: ...
+    @overload
+    def __divmod__(self: RealMatrix[M_co, N_co, float], other: float) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]: ...
+
+    def __divmod__(self, other):
+        a = self
         if isinstance(other, RealMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, (float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
-        c, d = itertools.tee(map(divmod, a, b))  # type: ignore[arg-type]
+        c, d = itertools.tee(map(divmod, a, b))
         return (
             RealMatrix(
-                array=map(operator.itemgetter(0), c),  # type: ignore[arg-type]
-                shape=shape,
+                array=map(operator.itemgetter(0), c),
+                shape=a.shape,
             ),
             RealMatrix(
-                array=map(operator.itemgetter(1), d),  # type: ignore[arg-type]
-                shape=shape,
+                array=map(operator.itemgetter(1), d),
+                shape=a.shape,
             ),
         )
 
     @overload
-    def __radd__(self, other: float) -> RealMatrix[M_co, N_co, float]: ...
+    def __radd__(self: ComplexMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __radd__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __radd__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __radd__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __radd__(self, other):
+        result = super().__radd__(other)
         if isinstance(other, (float, int)):
-            b = itertools.repeat(other)
-        else:
-            return super().__radd__(other)
-        shape = self.shape
-        a = iter(self)
-        return RealMatrix(
-            array=map(operator.__add__, b, a),
-            shape=shape,
-        )
+            return RealMatrix(result)
+        return result
 
     @overload
-    def __rsub__(self, other: float) -> RealMatrix[M_co, N_co, float]: ...
+    def __rsub__(self: ComplexMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __rsub__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __rsub__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __rsub__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __rsub__(self, other):
+        result = super().__rsub__(other)
         if isinstance(other, (float, int)):
-            b = itertools.repeat(other)
-        else:
-            return super().__rsub__(other)
-        shape = self.shape
-        a = iter(self)
-        return RealMatrix(
-            array=map(operator.__sub__, b, a),
-            shape=shape,
-        )
+            return RealMatrix(result)
+        return result
 
     @overload
-    def __rmul__(self, other: float) -> RealMatrix[M_co, N_co, float]: ...
+    def __rmul__(self: ComplexMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __rmul__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __rmul__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __rmul__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __rmul__(self, other):
+        result = super().__rmul__(other)
         if isinstance(other, (float, int)):
-            b = itertools.repeat(other)
-        else:
-            return super().__rmul__(other)
-        shape = self.shape
-        a = iter(self)
-        return RealMatrix(
-            array=map(operator.__mul__, b, a),
-            shape=shape,
-        )
+            return RealMatrix(result)
+        return result
 
     @overload
-    def __rtruediv__(self, other: float) -> RealMatrix[M_co, N_co, float]: ...
+    def __rtruediv__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
     @overload
-    def __rtruediv__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __rtruediv__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __rtruediv__(self, other):
+        result = super().__rtruediv__(other)
         if isinstance(other, (float, int)):
-            b = itertools.repeat(other)
-        else:
-            return super().__rtruediv__(other)
-        shape = self.shape
-        a = iter(self)
-        return RealMatrix(
-            array=map(operator.__truediv__, b, a),
-            shape=shape,
-        )
+            return RealMatrix(result)
+        return result
 
-    def __rfloordiv__(self, other: float) -> RealMatrix[M_co, N_co, float]:
+    @overload
+    def __rfloordiv__(self: RealMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __rfloordiv__(self: RealMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+
+    def __rfloordiv__(self, other):
+        a = self
         if isinstance(other, (float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return RealMatrix(
             array=map(operator.__floordiv__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __rmod__(self, other: float) -> RealMatrix[M_co, N_co, float]:
+    @overload
+    def __rmod__(self: RealMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __rmod__(self: RealMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+
+    def __rmod__(self, other):
+        a = self
         if isinstance(other, (float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return RealMatrix(
             array=map(operator.__mod__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __rdivmod__(self, other: float) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]:
+    @overload
+    def __rdivmod__(self: RealMatrix[M_co, N_co, int], other: int) -> tuple[RealMatrix[M_co, N_co, int], RealMatrix[M_co, N_co, int]]: ...
+    @overload
+    def __rdivmod__(self: RealMatrix[M_co, N_co, float], other: float) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]: ...
+
+    def __rdivmod__(self, other):
+        a = self
         if isinstance(other, (float, int)):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
-        c, d = itertools.tee(map(divmod, b, a))  # type: ignore[arg-type]
+        c, d = itertools.tee(map(divmod, b, a))
         return (
             RealMatrix(
-                array=map(operator.itemgetter(0), c),  # type: ignore[arg-type]
-                shape=shape,
+                array=map(operator.itemgetter(0), c),
+                shape=a.shape,
             ),
             RealMatrix(
-                array=map(operator.itemgetter(1), d),  # type: ignore[arg-type]
-                shape=shape,
+                array=map(operator.itemgetter(1), d),
+                shape=a.shape,
             ),
         )
 
     @overload
-    def __neg__(self: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...  # type: ignore[misc]
+    def __neg__(self: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __neg__(self) -> RealMatrix[M_co, N_co, float]: ...
+    def __neg__(self: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
 
     def __neg__(self):
         return RealMatrix(super().__neg__())
 
     @overload
-    def __pos__(self: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...  # type: ignore[misc]
+    def __pos__(self: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __pos__(self) -> RealMatrix[M_co, N_co, float]: ...
+    def __pos__(self: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
 
     def __pos__(self):
         return RealMatrix(super().__pos__())
@@ -834,17 +947,17 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         return map(RealMatrix, super().slices(by=by, reverse=reverse))
 
     @overload
-    def conjugate(self: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...  # type: ignore[misc]
+    def conjugate(self: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def conjugate(self) -> RealMatrix[M_co, N_co, float]: ...
+    def conjugate(self: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
 
     def conjugate(self):
         return RealMatrix(super().conjugate())
 
     @overload
-    def transjugate(self: RealMatrix[M_co, N_co, int]) -> RealMatrix[N_co, M_co, int]: ...  # type: ignore[misc]
+    def transjugate(self: RealMatrix[M_co, N_co, int]) -> RealMatrix[N_co, M_co, int]: ...
     @overload
-    def transjugate(self) -> RealMatrix[N_co, M_co, float]: ...
+    def transjugate(self: RealMatrix[M_co, N_co, float]) -> RealMatrix[N_co, M_co, float]: ...
 
     def transjugate(self):
         return RealMatrix(super().transjugate())
@@ -885,433 +998,419 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
     def __getitem__(self, key: tuple[slice, slice]) -> IntegerMatrix[Any, Any, I_co]: ...
 
     def __getitem__(self, key):
-        value = super().__getitem__(key)
-        if isinstance(value, RealMatrix):
-            return IntegerMatrix(value)
-        return value
+        result = super().__getitem__(key)
+        if isinstance(result, RealMatrix):
+            return IntegerMatrix(result)
+        return result
 
     @overload  # type: ignore[override]
-    def __add__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __add__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __add__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]: ...
+    def __add__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __add__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __add__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __add__(self, other):
-        if isinstance(other, IntegerMatrix):
-            b = iter(other)
-        elif isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__add__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__add__, a, b),
-            shape=shape,
-        )
+        result = super().__add__(other)
+        if isinstance(other, (IntegerMatrix, int)):
+            return IntegerMatrix(result)
+        return result
 
     @overload  # type: ignore[override]
-    def __sub__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __sub__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __sub__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]: ...
+    def __sub__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __sub__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __sub__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __sub__(self, other):
-        if isinstance(other, IntegerMatrix):
-            b = iter(other)
-        elif isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__sub__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__sub__, a, b),
-            shape=shape,
-        )
+        result = super().__sub__(other)
+        if isinstance(other, (IntegerMatrix, int)):
+            return IntegerMatrix(result)
+        return result
 
     @overload  # type: ignore[override]
-    def __mul__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __mul__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __mul__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]: ...
+    def __mul__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __mul__(self, other: Union[ComplexMatrix[M_co, N_co, complex], complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __mul__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[M_co, N_co, int]) -> ComplexMatrix[M_co, N_co, int]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[M_co, N_co, complex]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __mul__(self, other):
-        if isinstance(other, IntegerMatrix):
-            b = iter(other)
-        elif isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__mul__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__mul__, a, b),
-            shape=shape,
-        )
+        result = super().__mul__(other)
+        if isinstance(other, (IntegerMatrix, int)):
+            return IntegerMatrix(result)
+        return result
 
+    @overload  # type: ignore[override]
+    def __matmul__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, P_co, int]) -> IntegerMatrix[M_co, P_co, int]: ...
     @overload
-    def __floordiv__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __matmul__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, P_co, int]) -> RealMatrix[M_co, P_co, int]: ...
     @overload
-    def __floordiv__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]: ...
+    def __matmul__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, P_co, float]) -> RealMatrix[M_co, P_co, float]: ...
+    @overload
+    def __matmul__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[N_co, P_co, int]) -> ComplexMatrix[M_co, P_co, int]: ...
+    @overload
+    def __matmul__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[N_co, P_co, float]) -> ComplexMatrix[M_co, P_co, float]: ...
+    @overload
+    def __matmul__(self: ComplexMatrix[M_co, N_co, complex], other: ComplexMatrix[N_co, P_co, complex]) -> ComplexMatrix[M_co, P_co, complex]: ...
+
+    def __matmul__(self, other):
+        result = super().__matmul__(other)
+        if isinstance(other, IntegerMatrix):
+            return IntegerMatrix(result)
+        return result
+
+    @overload  # type: ignore[override]
+    def __floordiv__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
 
     def __floordiv__(self, other):
-        if isinstance(other, IntegerMatrix):
-            b = iter(other)
-        elif isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__floordiv__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__floordiv__, a, b),
-            shape=shape,
-        )
+        result = super().__floordiv__(other)
+        if isinstance(other, (IntegerMatrix, int)):
+            return IntegerMatrix(result)
+        return result
 
+    @overload  # type: ignore[override]
+    def __mod__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __mod__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __mod__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
     @overload
-    def __mod__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> RealMatrix[M_co, N_co, float]: ...
+    def __mod__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __mod__(self: RealMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __mod__(self: RealMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
 
     def __mod__(self, other):
-        if isinstance(other, IntegerMatrix):
-            b = iter(other)
-        elif isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__mod__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__mod__, a, b),
-            shape=shape,
-        )
+        result = super().__mod__(other)
+        if isinstance(other, (IntegerMatrix, int)):
+            return IntegerMatrix(result)
+        return result
 
+    @overload  # type: ignore[override]
+    def __divmod__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> tuple[IntegerMatrix[M_co, N_co, int], IntegerMatrix[M_co, N_co, int]]: ...
     @overload
-    def __divmod__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> tuple[IntegerMatrix[M_co, N_co, int], IntegerMatrix[M_co, N_co, int]]: ...
+    def __divmod__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, N_co, int]) -> tuple[RealMatrix[M_co, N_co, int], RealMatrix[M_co, N_co, int]]: ...
     @overload
-    def __divmod__(self, other: Union[RealMatrix[M_co, N_co, float], float]) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]: ...
+    def __divmod__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, N_co, float]) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]: ...
+    @overload
+    def __divmod__(self: RealMatrix[M_co, N_co, int], other: int) -> tuple[IntegerMatrix[M_co, N_co, int], IntegerMatrix[M_co, N_co, int]]: ...
+    @overload
+    def __divmod__(self: RealMatrix[M_co, N_co, float], other: float) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]: ...
 
     def __divmod__(self, other):
-        if isinstance(other, IntegerMatrix):
-            b = iter(other)
-        elif isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__divmod__(other)
-        shape = self.shape
-        a = iter(self)
-        c, d = itertools.tee(map(divmod, a, b))
-        return (
-            IntegerMatrix(
-                array=map(operator.itemgetter(0), c),
-                shape=shape,
-            ),
-            IntegerMatrix(
-                array=map(operator.itemgetter(1), d),
-                shape=shape,
-            ),
-        )
+        result = super().__divmod__(other)
+        if isinstance(other, (IntegerMatrix, int)):
+            return tuple(map(IntegerMatrix, result))
+        return result
 
-    def __lshift__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]:
+    @overload
+    def __lshift__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __lshift__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+
+    def __lshift__(self, other):
+        a = self
         if isinstance(other, IntegerMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__lshift__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __rshift__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]:
+    @overload
+    def __rshift__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __rshift__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+
+    def __rshift__(self, other):
+        a = self
         if isinstance(other, IntegerMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__rshift__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
-    def __and__(self: IntegerMatrix[M_co, N_co, bool], other: Union[IntegerMatrix[M_co, N_co, bool], bool]) -> IntegerMatrix[M_co, N_co, bool]: ...
+    def __and__(self: IntegerMatrix[M_co, N_co, bool], other: IntegerMatrix[M_co, N_co, bool]) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
-    def __and__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __and__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __and__(self: IntegerMatrix[M_co, N_co, bool], other: bool) -> IntegerMatrix[M_co, N_co, bool]: ...
+    @overload
+    def __and__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
 
     def __and__(self, other):
+        a = self
         if isinstance(other, IntegerMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__and__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
-    def __xor__(self: IntegerMatrix[M_co, N_co, bool], other: Union[IntegerMatrix[M_co, N_co, bool], bool]) -> IntegerMatrix[M_co, N_co, bool]: ...
+    def __xor__(self: IntegerMatrix[M_co, N_co, bool], other: IntegerMatrix[M_co, N_co, bool]) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
-    def __xor__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __xor__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __xor__(self: IntegerMatrix[M_co, N_co, bool], other: bool) -> IntegerMatrix[M_co, N_co, bool]: ...
+    @overload
+    def __xor__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
 
     def __xor__(self, other):
+        a = self
         if isinstance(other, IntegerMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__xor__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
-    def __or__(self: IntegerMatrix[M_co, N_co, bool], other: Union[IntegerMatrix[M_co, N_co, bool], bool]) -> IntegerMatrix[M_co, N_co, bool]: ...
+    def __or__(self: IntegerMatrix[M_co, N_co, bool], other: IntegerMatrix[M_co, N_co, bool]) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
-    def __or__(self, other: Union[IntegerMatrix[M_co, N_co, int], int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __or__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
+    @overload
+    def __or__(self: IntegerMatrix[M_co, N_co, bool], other: bool) -> IntegerMatrix[M_co, N_co, bool]: ...
+    @overload
+    def __or__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
 
     def __or__(self, other):
+        a = self
         if isinstance(other, IntegerMatrix):
-            b = iter(other)
+            b = other
         elif isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__or__, a, b),
-            shape=shape,
+            shape=a.shape,
         )
 
-    @overload  # type: ignore[override]
-    def __radd__(self, other: int) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __radd__(self, other: float) -> RealMatrix[M_co, N_co, float]: ...
+    def __radd__(self: ComplexMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __radd__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __radd__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __radd__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __radd__(self, other):
+        result = super().__radd__(other)
         if isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__radd__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__add__, b, a),
-            shape=shape,
-        )
+            return IntegerMatrix(result)
+        return result
 
-    @overload  # type: ignore[override]
-    def __rsub__(self, other: int) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __rsub__(self, other: float) -> RealMatrix[M_co, N_co, float]: ...
+    def __rsub__(self: ComplexMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __rsub__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __rsub__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __rsub__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __rsub__(self, other):
+        result = super().__rsub__(other)
         if isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__rsub__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__sub__, b, a),
-            shape=shape,
-        )
+            return IntegerMatrix(result)
+        return result
 
-    @overload  # type: ignore[override]
-    def __rmul__(self, other: int) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __rmul__(self, other: float) -> RealMatrix[M_co, N_co, float]: ...
+    def __rmul__(self: ComplexMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __rmul__(self, other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
+    def __rmul__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
+    @overload
+    def __rmul__(self: ComplexMatrix[M_co, N_co, complex], other: complex) -> ComplexMatrix[M_co, N_co, complex]: ...
 
     def __rmul__(self, other):
+        result = super().__rmul__(other)
         if isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__rmul__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__mul__, b, a),
-            shape=shape,
-        )
+            return IntegerMatrix(result)
+        return result
 
     @overload
-    def __rfloordiv__(self, other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __rfloordiv__(self: RealMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __rfloordiv__(self, other: float) -> RealMatrix[M_co, N_co, float]: ...
+    def __rfloordiv__(self: RealMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
 
     def __rfloordiv__(self, other):
+        result = super().__rfloordiv__(other)
         if isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__rfloordiv__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__floordiv__, b, a),
-            shape=shape,
-        )
+            return IntegerMatrix(result)
+        return result
 
     @overload
-    def __rmod__(self, other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __rmod__(self: RealMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
     @overload
-    def __rmod__(self, other: float) -> RealMatrix[M_co, N_co, float]: ...
+    def __rmod__(self: RealMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
 
     def __rmod__(self, other):
+        result = super().__rmod__(other)
         if isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__rmod__(other)
-        shape = self.shape
-        a = iter(self)
-        return IntegerMatrix(
-            array=map(operator.__mod__, b, a),
-            shape=shape,
-        )
+            return IntegerMatrix(result)
+        return result
 
     @overload
-    def __rdivmod__(self, other: int) -> tuple[IntegerMatrix[M_co, N_co, int], IntegerMatrix[M_co, N_co, int]]: ...
+    def __rdivmod__(self: RealMatrix[M_co, N_co, int], other: int) -> tuple[IntegerMatrix[M_co, N_co, int], IntegerMatrix[M_co, N_co, int]]: ...
     @overload
-    def __rdivmod__(self, other: float) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]: ...
+    def __rdivmod__(self: RealMatrix[M_co, N_co, float], other: float) -> tuple[RealMatrix[M_co, N_co, float], RealMatrix[M_co, N_co, float]]: ...
 
     def __rdivmod__(self, other):
+        result = super().__rdivmod__(other)
         if isinstance(other, int):
-            b = itertools.repeat(other)
-        else:
-            return super().__rdivmod__(other)
-        shape = self.shape
-        a = iter(self)
-        c, d = itertools.tee(map(divmod, b, a))
-        return (
-            IntegerMatrix(
-                array=map(operator.itemgetter(0), c),
-                shape=shape,
-            ),
-            IntegerMatrix(
-                array=map(operator.itemgetter(1), d),
-                shape=shape,
-            ),
-        )
+            return tuple(map(IntegerMatrix, result))
+        return result
 
-    def __rlshift__(self, other: int) -> IntegerMatrix[M_co, N_co, int]:
+    def __rlshift__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]:
+        a = self
         if isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__lshift__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __rrshift__(self, other: int) -> IntegerMatrix[M_co, N_co, int]:
+    def __rrshift__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]:
+        a = self
         if isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__rshift__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
     def __rxor__(self: IntegerMatrix[M_co, N_co, bool], other: bool) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
-    def __rxor__(self, other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __rxor__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
 
     def __rxor__(self, other):
+        a = self
         if isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__xor__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
     def __rand__(self: IntegerMatrix[M_co, N_co, bool], other: bool) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
-    def __rand__(self, other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __rand__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
 
     def __rand__(self, other):
+        a = self
         if isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__and__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
     @overload
     def __ror__(self: IntegerMatrix[M_co, N_co, bool], other: bool) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
-    def __ror__(self, other: int) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __ror__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]: ...
 
     def __ror__(self, other):
+        a = self
         if isinstance(other, int):
             b = itertools.repeat(other)
         else:
             return NotImplemented
-        shape = self.shape
-        a = iter(self)
         return IntegerMatrix(
             array=map(operator.__or__, b, a),
-            shape=shape,
+            shape=a.shape,
         )
 
-    def __neg__(self) -> IntegerMatrix[M_co, N_co, int]:
+    def __neg__(self: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]:
         return IntegerMatrix(super().__neg__())
 
-    def __pos__(self) -> IntegerMatrix[M_co, N_co, int]:
+    def __pos__(self: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]:
         return IntegerMatrix(super().__pos__())
 
-    def __abs__(self) -> IntegerMatrix[M_co, N_co, int]:
+    def __abs__(self: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]:
         return IntegerMatrix(super().__abs__())
 
     @overload
     def __invert__(self: IntegerMatrix[M_co, N_co, bool]) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
-    def __invert__(self) -> IntegerMatrix[M_co, N_co, int]: ...
+    def __invert__(self: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]: ...
 
     def __invert__(self):
-        shape = self.shape
-        a = iter(self)
+        a = self
         return IntegerMatrix(
             array=map(operator.__invert__, a),
-            shape=shape,
+            shape=a.shape,
         )
 
     def transpose(self) -> IntegerMatrix[N_co, M_co, I_co]:
@@ -1350,8 +1449,8 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
     def slices(self, *, by=Rule.ROW, reverse=False):
         return map(IntegerMatrix, super().slices(by=by, reverse=reverse))
 
-    def conjugate(self) -> IntegerMatrix[M_co, N_co, int]:
+    def conjugate(self: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[M_co, N_co, int]:
         return IntegerMatrix(super().conjugate())
 
-    def transjugate(self) -> IntegerMatrix[N_co, M_co, int]:
+    def transjugate(self: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[N_co, M_co, int]:
         return IntegerMatrix(super().transjugate())
