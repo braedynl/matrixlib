@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Iterator, Reversible, Sequence
-from typing import (Any, Final, Generic, Literal, Optional, TypeVar, Union,
-                    final, overload)
+from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
+                    overload)
 
 from typing_extensions import Self, TypeAlias
 
@@ -189,9 +189,27 @@ class Grid(BaseGrid[M_co, N_co, T_co]):
 
     __slots__ = ("array", "shape")
 
-    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None:
-        self.array: Final[tuple[T_co, ... ]] = tuple(array)
-        self.shape: Final[tuple[M_co, N_co]] = (1, len(self.array)) if shape is None else shape  # type: ignore[assignment]
+    @overload
+    def __init__(self, array: BaseGrid[M_co, N_co, T_co]) -> None: ...
+    @overload
+    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
+
+    def __init__(self, array=(), shape=None):
+        self.array: tuple[T_co, ... ]  # type: ignore
+        self.shape: tuple[M_co, N_co]  # type: ignore
+
+        if type(array) is Grid:
+            self.array = array.array
+            self.shape = array.shape
+            return
+
+        self.array = tuple(array)
+        if isinstance(array, BaseGrid):
+            self.shape = array.shape
+        elif shape is None:
+            self.shape = (1, len(self.array))
+        else:
+            self.shape = shape
 
         if not __debug__:
             return
@@ -412,7 +430,7 @@ class BaseGridPermutationF(BaseGridPermutation[M_co, N_co, T_co], metaclass=ABCM
     __slots__ = ("target",)
 
     def __init__(self, target: BaseGrid[M_co, N_co, T_co]) -> None:
-        self.target: Final[BaseGrid[M_co, N_co, T_co]] = target
+        self.target: BaseGrid[M_co, N_co, T_co] = target
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -432,7 +450,7 @@ class BaseGridPermutationR(BaseGridPermutation[M_co, N_co, T_co], metaclass=ABCM
     __slots__ = ("target",)
 
     def __init__(self, target: BaseGrid[N_co, M_co, T_co]) -> None:
-        self.target: Final[BaseGrid[N_co, M_co, T_co]] = target
+        self.target: BaseGrid[N_co, M_co, T_co] = target
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
