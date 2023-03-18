@@ -3,13 +3,14 @@ from __future__ import annotations
 import itertools
 import operator
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Any, Generic, Literal, Optional, TypeVar, Union, overload
+from typing import (Any, Final, Generic, Literal, Optional, TypeVar, Union,
+                    overload)
 
 from typing_extensions import Self
 
 from .abc import Shaped
 from .rule import Rule
-from .utilities import AbstractGrid, EvenNumber, Grid, OddNumber
+from .utilities import BaseGrid, EvenNumber, Grid, OddNumber
 
 T_co = TypeVar("T_co", covariant=True)
 
@@ -24,30 +25,27 @@ I_co = TypeVar("I_co", covariant=True, bound=int)
 
 class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
-    __slots__ = ("_grid",)
+    __slots__ = ("grid",)
     __match_args__ = ("array", "shape")
 
     @overload
-    def __new__(cls, array: AbstractGrid[M_co, N_co, T_co]) -> Self: ...
+    def __init__(self, array: BaseGrid[M_co, N_co, T_co]) -> None: ...
     @overload
-    def __new__(cls, array: Matrix[M_co, N_co, T_co]) -> Self: ...
+    def __init__(self, array: Matrix[M_co, N_co, T_co]) -> None: ...
     @overload
-    def __new__(cls, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> Self: ...
+    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
-    def __new__(cls, array=(), shape=None):
-        if type(array) is cls:
-            return array
+    def __init__(self, array, shape):
+        self.grid: Final[BaseGrid[M_co, N_co, T_co]]  # type: ignore
 
-        self = super().__new__(cls)
-
-        if isinstance(array, AbstractGrid):
-            self._grid = array
+        if isinstance(array, BaseGrid):
+            grid = array
         elif isinstance(array, Matrix):
-            self._grid = array._grid
+            grid = array.grid
         else:
-            self._grid = Grid(array, shape)
+            grid = Grid(array, shape)
 
-        return self
+        self.grid = grid
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
@@ -113,10 +111,6 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     @property
     def shape(self) -> tuple[M_co, N_co]:
         return self.grid.shape
-
-    @property
-    def grid(self) -> AbstractGrid[M_co, N_co, T_co]:
-        return self._grid  # type: ignore[attr-defined]
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix"""
@@ -683,9 +677,9 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         return result
 
     @overload  # type: ignore[override]
-    def __matmul__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, P_co, int]) -> RealMatrix[M_co, P_co, int]: ...
+    def __matmul__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[N_co, P_co, int]) -> RealMatrix[M_co, P_co, int]: ...
     @overload
-    def __matmul__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, P_co, float]) -> RealMatrix[M_co, P_co, float]: ...
+    def __matmul__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[N_co, P_co, float]) -> RealMatrix[M_co, P_co, float]: ...
     @overload
     def __matmul__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[N_co, P_co, int]) -> ComplexMatrix[M_co, P_co, int]: ...
     @overload
@@ -1079,11 +1073,11 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         return result
 
     @overload  # type: ignore[override]
-    def __matmul__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[M_co, P_co, int]) -> IntegerMatrix[M_co, P_co, int]: ...
+    def __matmul__(self: IntegerMatrix[M_co, N_co, int], other: IntegerMatrix[N_co, P_co, int]) -> IntegerMatrix[M_co, P_co, int]: ...
     @overload
-    def __matmul__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[M_co, P_co, int]) -> RealMatrix[M_co, P_co, int]: ...
+    def __matmul__(self: RealMatrix[M_co, N_co, int], other: RealMatrix[N_co, P_co, int]) -> RealMatrix[M_co, P_co, int]: ...
     @overload
-    def __matmul__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[M_co, P_co, float]) -> RealMatrix[M_co, P_co, float]: ...
+    def __matmul__(self: RealMatrix[M_co, N_co, float], other: RealMatrix[N_co, P_co, float]) -> RealMatrix[M_co, P_co, float]: ...
     @overload
     def __matmul__(self: ComplexMatrix[M_co, N_co, int], other: ComplexMatrix[N_co, P_co, int]) -> ComplexMatrix[M_co, P_co, int]: ...
     @overload

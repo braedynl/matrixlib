@@ -13,8 +13,7 @@ from .rule import COL, ROW, Rule
 __all__ = [
     "EvenNumber",
     "OddNumber",
-    "AbstractGrid",
-    "AbstractGridPermutation",
+    "BaseGrid",
     "Grid",
 ]
 
@@ -38,14 +37,14 @@ def values(iterable, /, *, reverse=False):
     return (reversed if reverse else iter)(iterable)
 
 
-class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
+class BaseGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
     def __eq__(self, other: object) -> bool:
         if self is other:
             return True
-        if isinstance(other, AbstractGrid):
+        if isinstance(other, BaseGrid):
             return (
                 self.shape == other.shape
                 and
@@ -58,19 +57,19 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
     def __getitem__(self, key: int) -> T_co: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: slice) -> AbstractGrid[Literal[1], Any, T_co]: ...
+    def __getitem__(self, key: slice) -> BaseGrid[Literal[1], Any, T_co]: ...
     @overload
     @abstractmethod
     def __getitem__(self, key: tuple[int, int]) -> T_co: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[int, slice]) -> AbstractGrid[Literal[1], Any, T_co]: ...
+    def __getitem__(self, key: tuple[int, slice]) -> BaseGrid[Literal[1], Any, T_co]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[slice, int]) -> AbstractGrid[Any, Literal[1], T_co]: ...
+    def __getitem__(self, key: tuple[slice, int]) -> BaseGrid[Any, Literal[1], T_co]: ...
     @overload
     @abstractmethod
-    def __getitem__(self, key: tuple[slice, slice]) -> AbstractGrid[Any, Any, T_co]: ...
+    def __getitem__(self, key: tuple[slice, slice]) -> BaseGrid[Any, Any, T_co]: ...
 
     @abstractmethod
     def __getitem__(self, key):
@@ -91,22 +90,22 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
     def shape(self) -> tuple[M_co, N_co]:
         raise NotImplementedError
 
-    def transpose(self) -> AbstractGrid[N_co, M_co, T_co]:
+    def transpose(self) -> BaseGrid[N_co, M_co, T_co]:
         GridPermutation = GridTranspose
         return GridPermutation(self)
 
-    def flip(self, *, by: Rule = Rule.ROW) -> AbstractGrid[M_co, N_co, T_co]:
+    def flip(self, *, by: Rule = Rule.ROW) -> BaseGrid[M_co, N_co, T_co]:
         GridPermutation = (GridRowFlip, GridColFlip)[by.value]
         return GridPermutation(self)
 
     @overload
-    def rotate(self, n: EvenNumber) -> AbstractGrid[M_co, N_co, T_co]: ...
+    def rotate(self, n: EvenNumber) -> BaseGrid[M_co, N_co, T_co]: ...
     @overload
-    def rotate(self, n: OddNumber) -> AbstractGrid[N_co, M_co, T_co]: ...
+    def rotate(self, n: OddNumber) -> BaseGrid[N_co, M_co, T_co]: ...
     @overload
-    def rotate(self, n: int) -> Union[AbstractGrid[M_co, N_co, T_co], AbstractGrid[N_co, M_co, T_co]]: ...
+    def rotate(self, n: int) -> Union[BaseGrid[M_co, N_co, T_co], BaseGrid[N_co, M_co, T_co]]: ...
     @overload
-    def rotate(self) -> AbstractGrid[N_co, M_co, T_co]: ...
+    def rotate(self) -> BaseGrid[N_co, M_co, T_co]: ...
 
     def rotate(self, n=1):
         if (n := n % 4):
@@ -114,10 +113,10 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
             return GridPermutation(self)
         return self
 
-    def reverse(self) -> AbstractGrid[M_co, N_co, T_co]:
+    def reverse(self) -> BaseGrid[M_co, N_co, T_co]:
         return self.rotate(2)
 
-    def materialize(self) -> AbstractGrid[M_co, N_co, T_co]:
+    def materialize(self) -> BaseGrid[M_co, N_co, T_co]:
         return self
 
     @overload
@@ -143,13 +142,13 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
                     yield self[row_index, col_index]
 
     @overload
-    def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[AbstractGrid[Literal[1], N_co, T_co]]: ...
+    def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[BaseGrid[Literal[1], N_co, T_co]]: ...
     @overload
-    def slices(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[AbstractGrid[M_co, Literal[1], T_co]]: ...
+    def slices(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[BaseGrid[M_co, Literal[1], T_co]]: ...
     @overload
-    def slices(self, *, by: Rule, reverse: bool = False) -> Iterator[AbstractGrid[Any, Any, T_co]]: ...
+    def slices(self, *, by: Rule, reverse: bool = False) -> Iterator[BaseGrid[Any, Any, T_co]]: ...
     @overload
-    def slices(self, *, reverse: bool = False) -> Iterator[AbstractGrid[Literal[1], N_co, T_co]]: ...
+    def slices(self, *, reverse: bool = False) -> Iterator[BaseGrid[Literal[1], N_co, T_co]]: ...
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         indices = range(self.n(by))
@@ -186,7 +185,7 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
 
 
 @final
-class Grid(AbstractGrid[M_co, N_co, T_co]):
+class Grid(BaseGrid[M_co, N_co, T_co]):
 
     __slots__ = ("array", "shape")
 
@@ -284,7 +283,7 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
         return value in self.array
 
 
-class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta):
+class BaseGridPermutation(BaseGrid[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
@@ -383,10 +382,10 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
 
     @property
     @abstractmethod
-    def target(self) -> AbstractGrid[Any, Any, T_co]:
+    def target(self) -> BaseGrid[Any, Any, T_co]:
         raise NotImplementedError
 
-    def materialize(self) -> AbstractGrid[M_co, N_co, T_co]:
+    def materialize(self) -> BaseGrid[M_co, N_co, T_co]:
         return Grid(self.array, self.shape)
 
     @overload
@@ -408,12 +407,12 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
         raise NotImplementedError
 
 
-class AbstractGridPermutationF(AbstractGridPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
+class BaseGridPermutationF(BaseGridPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ("target",)
 
-    def __init__(self, target: AbstractGrid[M_co, N_co, T_co]) -> None:
-        self.target: Final[AbstractGrid[M_co, N_co, T_co]] = target
+    def __init__(self, target: BaseGrid[M_co, N_co, T_co]) -> None:
+        self.target: Final[BaseGrid[M_co, N_co, T_co]] = target
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -428,12 +427,12 @@ class AbstractGridPermutationF(AbstractGridPermutation[M_co, N_co, T_co], metacl
         return self.target.ncols
 
 
-class AbstractGridPermutationR(AbstractGridPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
+class BaseGridPermutationR(BaseGridPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ("target",)
 
-    def __init__(self, target: AbstractGrid[N_co, M_co, T_co]) -> None:
-        self.target: Final[AbstractGrid[N_co, M_co, T_co]] = target
+    def __init__(self, target: BaseGrid[N_co, M_co, T_co]) -> None:
+        self.target: Final[BaseGrid[N_co, M_co, T_co]] = target
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -450,11 +449,11 @@ class AbstractGridPermutationR(AbstractGridPermutation[M_co, N_co, T_co], metacl
 
 
 @final
-class GridTranspose(AbstractGridPermutationR[M_co, N_co, T_co]):
+class GridTranspose(BaseGridPermutationR[M_co, N_co, T_co]):
 
     __slots__ = ()
 
-    def transpose(self) -> AbstractGrid[N_co, M_co, T_co]:
+    def transpose(self) -> BaseGrid[N_co, M_co, T_co]:
         return self.target
 
     def _permute_vector_index(self, val_index: int) -> int:
@@ -471,11 +470,11 @@ class GridTranspose(AbstractGridPermutationR[M_co, N_co, T_co]):
 
 
 @final
-class GridRowFlip(AbstractGridPermutationF[M_co, N_co, T_co]):
+class GridRowFlip(BaseGridPermutationF[M_co, N_co, T_co]):
 
     __slots__ = ()
 
-    def flip(self, *, by: Rule = Rule.ROW) -> AbstractGrid[M_co, N_co, T_co]:
+    def flip(self, *, by: Rule = Rule.ROW) -> BaseGrid[M_co, N_co, T_co]:
         return self.target if by is Rule.ROW else super().flip(by=by)
 
     def _permute_vector_index(self, val_index: int) -> int:
@@ -493,11 +492,11 @@ class GridRowFlip(AbstractGridPermutationF[M_co, N_co, T_co]):
 
 
 @final
-class GridColFlip(AbstractGridPermutationF[M_co, N_co, T_co]):
+class GridColFlip(BaseGridPermutationF[M_co, N_co, T_co]):
 
     __slots__ = ()
 
-    def flip(self, *, by: Rule = Rule.ROW) -> AbstractGrid[M_co, N_co, T_co]:
+    def flip(self, *, by: Rule = Rule.ROW) -> BaseGrid[M_co, N_co, T_co]:
         return self.target if by is Rule.COL else super().flip(by=by)
 
     def _permute_vector_index(self, val_index: int) -> int:
@@ -515,18 +514,18 @@ class GridColFlip(AbstractGridPermutationF[M_co, N_co, T_co]):
 
 
 @final
-class GridRotation90(AbstractGridPermutationR[M_co, N_co, T_co]):
+class GridRotation90(BaseGridPermutationR[M_co, N_co, T_co]):
 
     __slots__ = ()
 
     @overload
-    def rotate(self, n: EvenNumber) -> AbstractGrid[M_co, N_co, T_co]: ...
+    def rotate(self, n: EvenNumber) -> BaseGrid[M_co, N_co, T_co]: ...
     @overload
-    def rotate(self, n: OddNumber) -> AbstractGrid[N_co, M_co, T_co]: ...
+    def rotate(self, n: OddNumber) -> BaseGrid[N_co, M_co, T_co]: ...
     @overload
-    def rotate(self, n: int) -> Union[AbstractGrid[M_co, N_co, T_co], AbstractGrid[N_co, M_co, T_co]]: ...
+    def rotate(self, n: int) -> Union[BaseGrid[M_co, N_co, T_co], BaseGrid[N_co, M_co, T_co]]: ...
     @overload
-    def rotate(self) -> AbstractGrid[N_co, M_co, T_co]: ...
+    def rotate(self) -> BaseGrid[N_co, M_co, T_co]: ...
 
     def rotate(self, n=1):
         return self.target if n % 4 == 3 else super().rotate(n)
@@ -546,18 +545,18 @@ class GridRotation90(AbstractGridPermutationR[M_co, N_co, T_co]):
 
 
 @final
-class GridRotation180(AbstractGridPermutationF[M_co, N_co, T_co]):
+class GridRotation180(BaseGridPermutationF[M_co, N_co, T_co]):
 
     __slots__ = ()
 
     @overload
-    def rotate(self, n: EvenNumber) -> AbstractGrid[M_co, N_co, T_co]: ...
+    def rotate(self, n: EvenNumber) -> BaseGrid[M_co, N_co, T_co]: ...
     @overload
-    def rotate(self, n: OddNumber) -> AbstractGrid[N_co, M_co, T_co]: ...
+    def rotate(self, n: OddNumber) -> BaseGrid[N_co, M_co, T_co]: ...
     @overload
-    def rotate(self, n: int) -> Union[AbstractGrid[M_co, N_co, T_co], AbstractGrid[N_co, M_co, T_co]]: ...
+    def rotate(self, n: int) -> Union[BaseGrid[M_co, N_co, T_co], BaseGrid[N_co, M_co, T_co]]: ...
     @overload
-    def rotate(self) -> AbstractGrid[N_co, M_co, T_co]: ...
+    def rotate(self) -> BaseGrid[N_co, M_co, T_co]: ...
 
     def rotate(self, n=1):
         return self.target if n % 4 == 2 else super().rotate(n)
@@ -575,18 +574,18 @@ class GridRotation180(AbstractGridPermutationF[M_co, N_co, T_co]):
 
 
 @final
-class GridRotation270(AbstractGridPermutationR[M_co, N_co, T_co]):
+class GridRotation270(BaseGridPermutationR[M_co, N_co, T_co]):
 
     __slots__ = ()
 
     @overload
-    def rotate(self, n: EvenNumber) -> AbstractGrid[M_co, N_co, T_co]: ...
+    def rotate(self, n: EvenNumber) -> BaseGrid[M_co, N_co, T_co]: ...
     @overload
-    def rotate(self, n: OddNumber) -> AbstractGrid[N_co, M_co, T_co]: ...
+    def rotate(self, n: OddNumber) -> BaseGrid[N_co, M_co, T_co]: ...
     @overload
-    def rotate(self, n: int) -> Union[AbstractGrid[M_co, N_co, T_co], AbstractGrid[N_co, M_co, T_co]]: ...
+    def rotate(self, n: int) -> Union[BaseGrid[M_co, N_co, T_co], BaseGrid[N_co, M_co, T_co]]: ...
     @overload
-    def rotate(self) -> AbstractGrid[N_co, M_co, T_co]: ...
+    def rotate(self) -> BaseGrid[N_co, M_co, T_co]: ...
 
     def rotate(self, n=1):
         return self.target if n % 4 == 1 else super().rotate(n)
