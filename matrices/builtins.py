@@ -970,6 +970,74 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
             return 0
         return inner(self, other) or inner(self.shape, other.shape)
 
+    @overload
+    def lesser(self, other: RealMatrix[M_co, N_co, float]) -> IntegerMatrix[M_co, N_co, bool]: ...
+    @overload
+    def lesser(self, other: float) -> IntegerMatrix[M_co, N_co, bool]: ...
+
+    def lesser(self, other):
+        """Return element-wise ``a < b``"""
+        if isinstance(other, RealMatrix):
+            b = other
+        else:
+            b = itertools.repeat(other)
+        a = self
+        return IntegerMatrix(
+            array=map(operator.__lt__, a, b),
+            shape=a.shape,
+        )
+
+    @overload
+    def lesser_equal(self, other: RealMatrix[M_co, N_co, float]) -> IntegerMatrix[M_co, N_co, bool]: ...
+    @overload
+    def lesser_equal(self, other: float) -> IntegerMatrix[M_co, N_co, bool]: ...
+
+    def lesser_equal(self, other):
+        """Return element-wise ``a <= b``"""
+        if isinstance(other, RealMatrix):
+            b = other
+        else:
+            b = itertools.repeat(other)
+        a = self
+        return IntegerMatrix(
+            array=map(operator.__le__, a, b),
+            shape=a.shape,
+        )
+
+    @overload
+    def greater(self, other: RealMatrix[M_co, N_co, float]) -> IntegerMatrix[M_co, N_co, bool]: ...
+    @overload
+    def greater(self, other: float) -> IntegerMatrix[M_co, N_co, bool]: ...
+
+    def greater(self, other):
+        """Return element-wise ``a > b``"""
+        if isinstance(other, RealMatrix):
+            b = other
+        else:
+            b = itertools.repeat(other)
+        a = self
+        return IntegerMatrix(
+            array=map(operator.__gt__, a, b),
+            shape=a.shape,
+        )
+
+    @overload
+    def greater_equal(self, other: RealMatrix[M_co, N_co, float]) -> IntegerMatrix[M_co, N_co, bool]: ...
+    @overload
+    def greater_equal(self, other: float) -> IntegerMatrix[M_co, N_co, bool]: ...
+
+    def greater_equal(self, other):
+        """Return element-wise ``a >= b``"""
+        if isinstance(other, RealMatrix):
+            b = other
+        else:
+            b = itertools.repeat(other)
+        a = self
+        return IntegerMatrix(
+            array=map(operator.__ge__, a, b),
+            shape=a.shape,
+        )
+
 
 class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
