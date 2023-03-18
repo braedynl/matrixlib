@@ -183,9 +183,9 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         return map(Matrix, self.grid.slices(by=by, reverse=reverse))
 
     @overload
-    def equal(self, other: Matrix[M_co, N_co, object]) -> Matrix[M_co, N_co, bool]: ...
+    def equal(self, other: Matrix[M_co, N_co, object]) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
-    def equal(self, other: object) -> Matrix[M_co, N_co, bool]: ...
+    def equal(self, other: object) -> IntegerMatrix[M_co, N_co, bool]: ...
 
     def equal(self, other):
         """Return element-wise ``a == b``"""
@@ -194,15 +194,15 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         else:
             b = itertools.repeat(other)
         a = self
-        return Matrix(
+        return IntegerMatrix(
             array=map(operator.__eq__, a, b),
             shape=a.shape,
         )
 
     @overload
-    def not_equal(self, other: Matrix[M_co, N_co, object]) -> Matrix[M_co, N_co, bool]: ...
+    def not_equal(self, other: Matrix[M_co, N_co, object]) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
-    def not_equal(self, other: object) -> Matrix[M_co, N_co, bool]: ...
+    def not_equal(self, other: object) -> IntegerMatrix[M_co, N_co, bool]: ...
 
     def not_equal(self, other):
         """Return element-wise ``a != b``"""
@@ -211,7 +211,7 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         else:
             b = itertools.repeat(other)
         a = self
-        return Matrix(
+        return IntegerMatrix(
             array=map(operator.__ne__, a, b),
             shape=a.shape,
         )
