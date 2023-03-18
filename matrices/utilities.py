@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Iterator, Reversible, Sequence
-from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
-                    overload)
+from typing import (Any, Final, Generic, Literal, Optional, TypeVar, Union,
+                    final, overload)
 
 from typing_extensions import Self, TypeAlias
 
@@ -188,37 +188,22 @@ class AbstractGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]
 @final
 class Grid(AbstractGrid[M_co, N_co, T_co]):
 
-    __slots__ = ("_array", "_shape")
+    __slots__ = ("array", "shape")
 
-    @overload
-    def __new__(cls, array: AbstractGrid[M_co, N_co, T_co]) -> Self: ...
-    @overload
-    def __new__(cls, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> Self: ...
+    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None:
+        self.array: Final[tuple[T_co, ... ]] = tuple(array)
+        self.shape: Final[tuple[M_co, N_co]] = (1, len(self.array)) if shape is None else shape  # type: ignore[assignment]
 
-    def __new__(cls, array=(), shape=None):
-        if type(array) is cls:
-            return array
+        if not __debug__:
+            return
 
-        self = super().__new__(cls)
+        nrows, ncols = self.shape
+        nvals = len(self.array)
 
-        self._array = tuple(array)
-        if isinstance(array, AbstractGrid):
-            self._shape = array.shape
-        elif shape is None:
-            self._shape = (1, len(self._array))
-        else:
-            self._shape = shape
-
-        if __debug__:
-            nrows, ncols = self._shape
-            n = len(self._array)
-
-            if nrows < 0 or ncols < 0:
-                raise ValueError("shape must contain non-negative values")
-            if n != nrows * ncols:
-                raise ValueError(f"cannot interpret size {n} iterable as shape ({nrows}, {ncols})")
-
-        return self
+        if nrows < 0 or ncols < 0:
+            raise ValueError("shape must contain non-negative values")
+        if nvals != nrows * ncols:
+            raise ValueError(f"cannot interpret size {nvals} iterable as shape ({nrows}, {ncols})")
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
@@ -298,21 +283,10 @@ class Grid(AbstractGrid[M_co, N_co, T_co]):
     def __contains__(self, value: object) -> bool:
         return value in self.array
 
-    @property
-    def array(self) -> tuple[T_co, ...]:
-        return self._array  # type: ignore[attr-defined]
-
-    @property
-    def shape(self) -> tuple[M_co, N_co]:
-        return self._shape  # type: ignore[attr-defined]
-
 
 class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta):
 
-    __slots__ = ("_target",)
-
-    def __init__(self, target: AbstractGrid[int, int, T_co]) -> None:
-        self._target: AbstractGrid[int, int, T_co] = target
+    __slots__ = ()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(target={self.target!r})"
@@ -408,11 +382,12 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
         return self
 
     @property
-    def target(self) -> AbstractGrid[int, int, T_co]:
-        return self._target
+    @abstractmethod
+    def target(self) -> AbstractGrid[Any, Any, T_co]:
+        raise NotImplementedError
 
     def materialize(self) -> AbstractGrid[M_co, N_co, T_co]:
-        return Grid(self)
+        return Grid(self.array, self.shape)
 
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...
@@ -435,11 +410,10 @@ class AbstractGridPermutation(AbstractGrid[M_co, N_co, T_co], metaclass=ABCMeta)
 
 class AbstractGridPermutationF(AbstractGridPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
 
-    __slots__ = ()
+    __slots__ = ("target",)
 
     def __init__(self, target: AbstractGrid[M_co, N_co, T_co]) -> None:
-        super().__init__(target)
-        self._target: AbstractGrid[M_co, N_co, T_co]
+        self.target: Final[AbstractGrid[M_co, N_co, T_co]] = target
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -453,18 +427,13 @@ class AbstractGridPermutationF(AbstractGridPermutation[M_co, N_co, T_co], metacl
     def ncols(self) -> N_co:
         return self.target.ncols
 
-    @property
-    def target(self) -> AbstractGrid[M_co, N_co, T_co]:
-        return self._target
-
 
 class AbstractGridPermutationR(AbstractGridPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
 
-    __slots__ = ()
+    __slots__ = ("target",)
 
     def __init__(self, target: AbstractGrid[N_co, M_co, T_co]) -> None:
-        super().__init__(target)
-        self._target: AbstractGrid[N_co, M_co, T_co]
+        self.target: Final[AbstractGrid[N_co, M_co, T_co]] = target
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -478,10 +447,6 @@ class AbstractGridPermutationR(AbstractGridPermutation[M_co, N_co, T_co], metacl
     @property
     def ncols(self) -> N_co:
         return self.target.nrows
-
-    @property
-    def target(self) -> AbstractGrid[N_co, M_co, T_co]:
-        return self._target
 
 
 @final
