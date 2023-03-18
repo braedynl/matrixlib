@@ -37,20 +37,17 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def __init__(self, array, shape):
         self.grid: Final[BaseGrid[M_co, N_co, T_co]]  # type: ignore
-
         if isinstance(array, BaseGrid):
-            grid = array
+            self.grid = array
         elif isinstance(array, Matrix):
-            grid = array.grid
+            self.grid = array.grid
         else:
-            grid = Grid(array, shape)
-
-        self.grid = grid
+            self.grid = Grid(array, shape)
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
-        temp = self.materialize()
-        return f"{self.__class__.__name__}(array={temp.array!r}, shape={temp.shape!r})"
+        self = self.materialize()
+        return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
 
     def __eq__(self, other: object) -> bool:
         """Return true if the two matrices are equal, otherwise false"""
