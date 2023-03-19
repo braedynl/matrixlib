@@ -337,9 +337,6 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         m, n =  self.shape
         p, q = other.shape
 
-        if n != p:
-            raise ValueError(f"incompatible shapes, ({n = }) != ({p = })")
-
         if n:
 
             def sum_prod(a, b):
