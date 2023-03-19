@@ -181,7 +181,13 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     def rotate(self) -> Matrix[N_co, M_co, T_co]: ...
 
     def rotate(self, n=1):
-        """Return a rotated view of the matrix"""
+        """Return a rotated view of the matrix
+
+        Rotates the matrix ``n`` times in increments of 90 degrees. The matrix
+        is rotated counter-clockwise if ``n`` is positive, and clockwise if
+        ``n`` is negative. All integers are accepted, but many (particularly
+        those outside of a small range near zero) will lose typing precision.
+        """
         return Matrix(self.data.rotate(n))
 
     def reverse(self) -> Matrix[M_co, N_co, T_co]:
@@ -221,7 +227,9 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         return self.data.n(by)
 
     def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
-        """Return an iterator over the values of the matrix"""
+        """Return an iterator over the values of the matrix in row or
+        column-major order
+        """
         return self.data.values(by=by, reverse=reverse)
 
     @overload
