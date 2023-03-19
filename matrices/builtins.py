@@ -25,7 +25,7 @@ I_co = TypeVar("I_co", covariant=True, bound=int)
 
 class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
-    __slots__ = ("grid",)
+    __slots__ = ("data",)
     __match_args__ = ("array", "shape")
 
     @overload
@@ -36,13 +36,13 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
     def __init__(self, array=(), shape=None):
-        self.grid: Final[BaseGrid[M_co, N_co, T_co]]  # type: ignore
+        self.data: Final[BaseGrid[M_co, N_co, T_co]]  # type: ignore
         if isinstance(array, BaseGrid):
-            self.grid = array
+            self.data = array
         elif isinstance(array, Matrix):
-            self.grid = array.grid
+            self.data = array.data
         else:
-            self.grid = Grid(array, shape)
+            self.data = Grid(array, shape)
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
@@ -55,12 +55,12 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         if self is other:
             return True
         if isinstance(other, Matrix):
-            return self.grid == other.grid
+            return self.data == other.data
         return NotImplemented
 
     def __hash__(self) -> int:
         """Return a hash of the matrix"""
-        return hash(self.grid)
+        return hash(self.data)
 
     @overload
     def __getitem__(self, key: int) -> T_co: ...
@@ -77,24 +77,24 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def __getitem__(self, key):
         """Return the value or sub-matrix corresponding to ``key``"""
-        result = self.grid[key]
+        result = self.data[key]
         if isinstance(result, Grid):
             return Matrix(result)
         return result
 
     def __iter__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in row-major order"""
-        return iter(self.grid)
+        return iter(self.data)
 
     def __reversed__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
-        return reversed(self.grid)
+        return reversed(self.data)
 
     def __contains__(self, value: object) -> bool:
         """Return true if the matrix contains ``value``, otherwise false"""
-        return value in self.grid
+        return value in self.data
 
     def __deepcopy__(self, memo=None) -> Self:
         """Return the matrix"""
@@ -157,19 +157,19 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         is/has been materialized. See the ``materialize()`` method for more
         details.
         """
-        return self.grid.array
+        return self.data.array
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
-        return self.grid.shape
+        return self.data.shape
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix"""
-        return Matrix(self.grid.transpose())
+        return Matrix(self.data.transpose())
 
     def flip(self, *, by: Rule = Rule.ROW) -> Matrix[M_co, N_co, T_co]:
         """Return a flipped view of the matrix"""
-        return Matrix(self.grid.flip(by=by))
+        return Matrix(self.data.flip(by=by))
 
     @overload
     def rotate(self, n: EvenNumber) -> Matrix[M_co, N_co, T_co]: ...
@@ -182,7 +182,7 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def rotate(self, n=1):
         """Return a rotated view of the matrix"""
-        return Matrix(self.grid.rotate(n))
+        return Matrix(self.data.rotate(n))
 
     def reverse(self) -> Matrix[M_co, N_co, T_co]:
         """Return a reversed view of the matrix"""
@@ -207,7 +207,7 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         matrices "materialized", as they store a sequence, or reference to a
         sequence, whose elements already exist in the desired arrangement.
         """
-        return Matrix(self.grid.materialize())
+        return Matrix(self.data.materialize())
 
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...
@@ -218,11 +218,11 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def n(self, by):
         """Return the dimension corresponding to the given ``Rule``"""
-        return self.grid.n(by)
+        return self.data.n(by)
 
     def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix"""
-        return self.grid.values(by=by, reverse=reverse)
+        return self.data.values(by=by, reverse=reverse)
 
     @overload
     def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[Matrix[Literal[1], N_co, T_co]]: ...
@@ -235,7 +235,7 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator over the rows or columns of the matrix"""
-        return map(Matrix, self.grid.slices(by=by, reverse=reverse))
+        return map(Matrix, self.data.slices(by=by, reverse=reverse))
 
     @overload
     def equal(self, other: Matrix[M_co, N_co, object]) -> IntegerMatrix[M_co, N_co, bool]: ...
