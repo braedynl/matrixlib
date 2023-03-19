@@ -159,7 +159,7 @@ class BaseGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], me
         if key < 0:
             key += bound
         if key < 0 or key >= bound:
-            raise IndexError(f"there are {bound} items but index is {key}")
+            raise IndexError(f"there are {bound} values but index is {key}")
         return key
 
     def _resolve_matrix_index(self, key: int, *, by: Rule = Rule.ROW) -> int:
