@@ -90,6 +90,10 @@ class BaseGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], me
     def shape(self) -> tuple[M_co, N_co]:
         raise NotImplementedError
 
+    @abstractmethod
+    def materialize(self) -> BaseGrid[M_co, N_co, T_co]:
+        raise NotImplementedError
+
     def transpose(self) -> BaseGrid[N_co, M_co, T_co]:
         GridPermutation = GridTranspose
         return GridPermutation(self)
@@ -115,9 +119,6 @@ class BaseGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], me
 
     def reverse(self) -> BaseGrid[M_co, N_co, T_co]:
         return self.rotate(2)
-
-    def materialize(self) -> BaseGrid[M_co, N_co, T_co]:
-        return self
 
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...
@@ -300,6 +301,9 @@ class Grid(BaseGrid[M_co, N_co, T_co]):
     def __contains__(self, value: object) -> bool:
         return value in self.array
 
+    def materialize(self) -> Grid[M_co, N_co, T_co]:
+        return self
+
 
 class BaseGridPermutation(BaseGrid[M_co, N_co, T_co], metaclass=ABCMeta):
 
@@ -403,8 +407,8 @@ class BaseGridPermutation(BaseGrid[M_co, N_co, T_co], metaclass=ABCMeta):
     def target(self) -> BaseGrid[Any, Any, T_co]:
         raise NotImplementedError
 
-    def materialize(self) -> BaseGrid[M_co, N_co, T_co]:
-        return Grid(self.array, self.shape)
+    def materialize(self) -> Grid[M_co, N_co, T_co]:
+        return Grid(self)
 
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...
