@@ -46,8 +46,9 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
-        self = self.materialize()
-        return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
+        array = ", ".join(map(repr, self      ))
+        shape = ", ".join(map(repr, self.shape))
+        return f"{self.__class__.__name__}(array=({array}), shape=({shape}))"
 
     def __eq__(self, other: object) -> bool:
         """Return true if the two matrices are equal, otherwise false"""
