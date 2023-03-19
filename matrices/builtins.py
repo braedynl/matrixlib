@@ -340,8 +340,6 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
             raise ValueError(f"incompatible shapes, ({n = }) != ({p = })")
 
         if n:
-            get_lhs =  self.__getitem__
-            get_rhs = other.__getitem__
 
             def sum_prod(a, b):
                 return sum(map(operator.mul, a, b))
@@ -354,8 +352,8 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
             array = tuple(
                 sum_prod(
-                    map(get_lhs, range(i, i +  n, 1)),
-                    map(get_rhs, range(j, j + pq, q)),
+                    map( self.__getitem__, range(i, i +  n, 1)),
+                    map(other.__getitem__, range(j, j + pq, q)),
                 )
                 for i in ix
                 for j in jx
@@ -973,7 +971,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
     def transjugate(self):
         return RealMatrix(super().transjugate())
 
-    def compare(self, other: RealMatrix) -> Literal[-1, 0, 1]:
+    def compare(self, other: RealMatrix[Any, Any, float]) -> Literal[-1, 0, 1]:
         """Return literal -1, 0, or +1 if the matrix lexicographically compares
         less than, equal, or greater than ``other``, respectively
 
