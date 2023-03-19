@@ -124,8 +124,8 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         else:
             array.extend(row)
 
-        nrows += 1
-        ncols += len(array)
+        nrows = 1
+        ncols = len(array)
 
         if __debug__:
             for row in rows:
@@ -145,6 +145,18 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     @property
     def array(self) -> Sequence[T_co]:
+        """Return the underlying sequence of matrix values, aligned in
+        row-major order
+
+        This is usually a built-in ``tuple``. Certain methods produce sequence
+        viewers that "shift" indices to different positions as a means to
+        emulate a materialized sequence of the desired ordering. This preserves
+        memory, but slows access time.
+
+        If this sequence is a ``tuple``, it is safe to assume that the matrix
+        is/has been materialized. See the ``materialize()`` method for more
+        details.
+        """
         return self.grid.array
 
     @property
@@ -179,15 +191,16 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     def materialize(self) -> Matrix[M_co, N_co, T_co]:
         """Return a materialized copy of the matrix
 
-        Certain methods may, internally, produce a view onto an existing
-        sequence to preserve memory. As views "stack" onto one another, access
-        times can become slower.
+        Certain methods internally produce a view onto an existing sequence to
+        preserve memory. As views "stack" onto one another, access times can
+        become slower.
 
-        This method addresses said issue by copying the elements into a new
-        sequence - a process that we call "materialization". The resulting
-        matrix instance will have access times identical to that of an instance
-        created from an array-and-shape pairing, but note that this may consume
-        significant amounts of memory (depending on the size of the matrix).
+        This method addresses said issue by shallowly placing the elements into
+        a new sequence - a process that we call "materialization". The
+        resulting matrix instance will have access times identical to that of
+        an instance created from an array-and-shape pairing, but note that this
+        may consume significant amounts of memory (depending on the size of the
+        matrix).
 
         If the matrix does not store a kind of view, this method returns a
         matrix that is semantically equivalent to the original. We call such
@@ -600,7 +613,11 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
     def transjugate(self: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[N_co, M_co, complex]: ...
 
     def transjugate(self):
-        """Return the conjugate transpose"""
+        """Return the conjugate transpose
+
+        The returned matrix may or may not be a view depending on the active
+        class.
+        """
         return self.transpose().conjugate()
 
 
@@ -608,25 +625,25 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     __slots__ = ()
 
-    def __lt__(self, other: RealMatrix) -> bool:
+    def __lt__(self, other: RealMatrix[Any, Any, float]) -> bool:
         """Return true if lexicographic ``a < b``, otherwise false"""
         if isinstance(other, RealMatrix):
             return self.compare(other) < 0
         return NotImplemented
 
-    def __le__(self, other: RealMatrix) -> bool:
+    def __le__(self, other: RealMatrix[Any, Any, float]) -> bool:
         """Return true if lexicographic ``a <= b``, otherwise false"""
         if isinstance(other, RealMatrix):
             return self.compare(other) <= 0
         return NotImplemented
 
-    def __gt__(self, other: RealMatrix) -> bool:
+    def __gt__(self, other: RealMatrix[Any, Any, float]) -> bool:
         """Return true if lexicographic ``a > b``, otherwise false"""
         if isinstance(other, RealMatrix):
             return self.compare(other) > 0
         return NotImplemented
 
-    def __ge__(self, other: RealMatrix) -> bool:
+    def __ge__(self, other: RealMatrix[Any, Any, float]) -> bool:
         """Return true if lexicographic ``a >= b``, otherwise false"""
         if isinstance(other, RealMatrix):
             return self.compare(other) >= 0
@@ -1007,8 +1024,9 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         return RealMatrix(super().transjugate())
 
     def compare(self, other: RealMatrix[Any, Any, float]) -> Literal[-1, 0, 1]:
-        """Return literal -1, 0, or +1 if the matrix lexicographically compares
-        less than, equal, or greater than ``other``, respectively
+        """Return literal ``-1``, ``0``, or ``+1`` if the matrix
+        lexicographically compares less than, equal, or greater than ``other``,
+        respectively
 
         Matrices are lexicographically compared values first, shapes second -
         similar to how built-in sequences compare values first, lengths second.
