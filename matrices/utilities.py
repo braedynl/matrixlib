@@ -85,11 +85,6 @@ class BaseGrid(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], me
     def array(self) -> Sequence[T_co]:
         raise NotImplementedError
 
-    @property
-    @abstractmethod
-    def shape(self) -> tuple[M_co, N_co]:
-        raise NotImplementedError
-
     @abstractmethod
     def materialize(self) -> BaseGrid[M_co, N_co, T_co]:
         raise NotImplementedError
