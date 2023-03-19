@@ -487,11 +487,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
     def __pos__(self):
         """Return element-wise ``+a``"""
-        a = self
-        return ComplexMatrix(
-            array=map(operator.__pos__, a),
-            shape=a.shape,
-        )
+        return self
 
     @overload
     def __abs__(self: ComplexMatrix[M_co, N_co, int]) -> RealMatrix[M_co, N_co, int]: ...
@@ -961,7 +957,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
     def conjugate(self: RealMatrix[M_co, N_co, float]) -> RealMatrix[M_co, N_co, float]: ...
 
     def conjugate(self):
-        return RealMatrix(super().conjugate())
+        return self
 
     @overload
     def transjugate(self: RealMatrix[M_co, N_co, int]) -> RealMatrix[N_co, M_co, int]: ...
