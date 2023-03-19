@@ -46,7 +46,7 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
-        array = ", ".join(map(repr, self      ))
+        array = ", ".join(map(repr, self))
         shape = ", ".join(map(repr, self.shape))
         return f"{self.__class__.__name__}(array=({array}), shape=({shape}))"
 
@@ -101,6 +101,47 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         return self
 
     __copy__ = __deepcopy__
+
+    @classmethod
+    def from_nesting(cls, nesting: Iterable[Iterable[T_co]]) -> Self:
+        """Construct a matrix from a singly-nested iterable, using the
+        shallowest iterable's length to deduce the number of rows, and the
+        nested iterables' length to deduce the number of columns
+
+        Raises ``ValueError`` if the length of the nested iterables is
+        inconsistent (debug-only).
+        """
+        array: list[T_co] = []
+
+        nrows = 0
+        ncols = 0
+
+        rows = iter(nesting)
+        try:
+            row = next(rows)
+        except StopIteration:
+            return cls(array, (nrows, ncols))
+        else:
+            array.extend(row)
+
+        nrows += 1
+        ncols += len(array)
+
+        if __debug__:
+            for row in rows:
+                n = 0
+                for val in row:
+                    array.append(val)
+                    n += 1
+                if n != ncols:
+                    raise ValueError(f"row at index {nrows} has length {n}, but precedent rows have length {ncols}")
+                nrows += 1
+        else:
+            for row in rows:
+                array.extend(row)
+                nrows += 1
+
+        return cls(array, (nrows, ncols))
 
     @property
     def array(self) -> Sequence[T_co]:
@@ -972,7 +1013,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         Matrices are lexicographically compared values first, shapes second -
         similar to how built-in sequences compare values first, lengths second.
         """
-        def inner(a, b):
+        def inner(a: Iterable[float], b: Iterable[float]) -> Literal[-1, 0, 1]:
             if a is b:
                 return 0
             for x, y in zip(a, b):
