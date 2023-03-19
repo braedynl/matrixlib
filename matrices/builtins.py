@@ -35,7 +35,7 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     @overload
     def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
-    def __init__(self, array, shape):
+    def __init__(self, array=(), shape=None):
         self.grid: Final[BaseGrid[M_co, N_co, T_co]]  # type: ignore
         if isinstance(array, BaseGrid):
             self.grid = array
