@@ -78,7 +78,9 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __getitem__(self, key):
         """Return the value or sub-matrix corresponding to ``key``"""
         result = self.data[key]
-        if isinstance(result, Grid):
+        if isinstance(key, slice):
+            return Matrix(result)
+        if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
             return Matrix(result)
         return result
 
@@ -299,7 +301,9 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
     def __getitem__(self, key):
         result = super().__getitem__(key)
-        if isinstance(result, Matrix):
+        if isinstance(key, slice):
+            return ComplexMatrix(result)
+        if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
             return ComplexMatrix(result)
         return result
 
@@ -675,7 +679,9 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __getitem__(self, key):
         result = super().__getitem__(key)
-        if isinstance(result, ComplexMatrix):
+        if isinstance(key, slice):
+            return RealMatrix(result)
+        if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
             return RealMatrix(result)
         return result
 
@@ -1140,7 +1146,9 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __getitem__(self, key):
         result = super().__getitem__(key)
-        if isinstance(result, RealMatrix):
+        if isinstance(key, slice):
+            return IntegerMatrix(result)
+        if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
             return IntegerMatrix(result)
         return result
 
