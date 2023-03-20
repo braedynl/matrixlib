@@ -10,7 +10,7 @@ from typing_extensions import Self
 
 from .abc import Shaped
 from .rule import Rule
-from .utilities import BaseGrid, EvenNumber, Grid, OddNumber
+from .utilities import EvenNumber, Grid, Mesh, OddNumber
 
 T_co = TypeVar("T_co", covariant=True)
 
@@ -27,13 +27,13 @@ class SupportsMatrixProperties(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
 
     @property
     @abstractmethod
-    def data(self) -> BaseGrid[M_co, N_co, T_co]:
+    def data(self) -> Mesh[M_co, N_co, T_co]:
         """The matrix's grid object
 
-        Every matrix holds an instance of a ``BaseGrid`` class that provides
-        the "hybrid" one/two-dimensional interface for the matrix. Certain
+        Every matrix holds an instance of a ``Mesh`` class that provides the
+        "hybrid" one/two-dimensional interface for the matrix. Certain
         operations that permute the matrix's values (such as transposition,
-        rotation, etc.) are implemented as ``BaseGrid`` sub-classes that "move"
+        rotation, etc.) are implemented as ``Mesh`` sub-classes that "move"
         indices to their permuted positions before in-memory access occurs.
 
         This composition structure allows for "permutation types" to exist
@@ -48,8 +48,8 @@ class SupportsMatrixProperties(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
     def array(self) -> Sequence[T_co]:
         """The underlying sequence of matrix values, aligned in row-major order
 
-        This is usually a built-in ``tuple``, but may vary depending on the
-        matrix's history of permutations.
+        This is usually a built-in ``tuple``, but may vary depending on how the
+        matrix was created.
         """
         return self.data.array
 
@@ -64,15 +64,15 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
     __match_args__ = ("array", "shape")
 
     @overload
-    def __init__(self, array: BaseGrid[M_co, N_co, T_co]) -> None: ...
+    def __init__(self, array: Mesh[M_co, N_co, T_co]) -> None: ...
     @overload
     def __init__(self, array: Matrix[M_co, N_co, T_co]) -> None: ...
     @overload
     def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
     def __init__(self, array=(), shape=None):
-        self.data: BaseGrid[M_co, N_co, T_co]  # type: ignore
-        if isinstance(array, BaseGrid):
+        self.data: Mesh[M_co, N_co, T_co]  # type: ignore
+        if isinstance(array, Mesh):
             self.data = array
         elif isinstance(array, Matrix):
             self.data = array.data
