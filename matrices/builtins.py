@@ -46,9 +46,9 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
-        array = ", ".join(map(repr, self))
-        shape = ", ".join(map(repr, self.shape))
-        return f"{self.__class__.__name__}(array=({array}), shape=({shape}))"
+        array_values = ", ".join(map(repr, self))
+        shape_values = ", ".join(map(repr, self.shape))
+        return f"{self.__class__.__name__}(array=({array_values}), shape=({shape_values}))"
 
     def __eq__(self, other: object) -> bool:
         """Return true if the two matrices are equal, otherwise false"""
@@ -396,35 +396,38 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         if not isinstance(other, ComplexMatrix):
             return NotImplemented
 
-        m, n =  self.shape
-        p, q = other.shape
+        a =  self
+        b = other
 
-        if n:
+        m, n = a.shape
+        p, q = b.shape
 
-            def sum_prod(a, b):
+        if not n:
+            return ComplexMatrix((0,) * (m * q), (m, q))
+
+        def matrix_product(a, b):
+
+            def vector_product(a, b):
                 return sum(map(operator.mul, a, b))
+
+            get_a = a.__getitem__
+            get_b = b.__getitem__
 
             mn = m * n
             pq = p * q
 
             ix = range(0, mn, n)
             jx = range(0,  q, 1)
+            for i in ix:
+                kx = range(i, i + n, 1)
+                for j in jx:
+                    lx = range(j, j + pq, q)
+                    yield vector_product(
+                        map(get_a, kx),
+                        map(get_b, lx),
+                    )
 
-            array = tuple(
-                sum_prod(
-                    map( self.__getitem__, range(i, i +  n, 1)),
-                    map(other.__getitem__, range(j, j + pq, q)),
-                )
-                for i in ix
-                for j in jx
-            )
-
-        else:
-            array = (0,) * (m * q)
-
-        shape = (m, q)
-
-        return ComplexMatrix(array, shape)
+        return ComplexMatrix(matrix_product(a, b), (m, q))
 
     @overload
     def __truediv__(self: ComplexMatrix[M_co, N_co, float], other: ComplexMatrix[M_co, N_co, float]) -> ComplexMatrix[M_co, N_co, float]: ...
