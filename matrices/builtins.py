@@ -209,7 +209,7 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
 
     def reverse(self) -> Matrix[M_co, N_co, T_co]:
         """Return a reversed view of the matrix"""
-        return self.rotate(2)
+        return Matrix(self.data.reverse())
 
     def materialize(self) -> Matrix[M_co, N_co, T_co]:
         """Return a materialized copy of the matrix
