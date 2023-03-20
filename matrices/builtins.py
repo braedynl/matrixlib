@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import itertools
 import operator
+from abc import abstractmethod
 from collections.abc import Iterable, Iterator, Sequence
-from typing import (Any, Final, Generic, Literal, Optional, TypeVar, Union,
-                    overload)
+from typing import Any, Literal, Optional, Protocol, TypeVar, Union, overload
 
 from typing_extensions import Self
 
@@ -23,7 +23,42 @@ R_co = TypeVar("R_co", covariant=True, bound=float)
 I_co = TypeVar("I_co", covariant=True, bound=int)
 
 
-class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
+class SupportsMatrixProperties(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
+
+    @property
+    @abstractmethod
+    def data(self) -> BaseGrid[M_co, N_co, T_co]:
+        """The matrix's grid object
+
+        Every matrix holds an instance of a ``BaseGrid`` class that provides
+        the "hybrid" one/two-dimensional interface for the matrix. Certain
+        operations that permute the matrix's values (such as transposition,
+        rotation, etc.) are implemented as ``BaseGrid`` sub-classes that "move"
+        indices to their permuted positions before in-memory access occurs.
+
+        This composition structure allows for "permutation types" to exist
+        beneath the ``Matrix`` abstraction layer - allowing for easier
+        ``Matrix`` sub-classing, since, the implementor would not have to
+        create a set of permutation sub-classes that each provide an interface
+        alike the material sub-class.
+        """
+        raise NotImplementedError
+
+    @property
+    def array(self) -> Sequence[T_co]:
+        """The underlying sequence of matrix values, aligned in row-major order
+
+        This is usually a built-in ``tuple``, but may vary depending on the
+        matrix's history of permutations.
+        """
+        return self.data.array
+
+    @property
+    def shape(self) -> tuple[M_co, N_co]:
+        return self.data.shape
+
+
+class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
 
     __slots__ = ("data",)
     __match_args__ = ("array", "shape")
@@ -36,7 +71,7 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
     def __init__(self, array=(), shape=None):
-        self.data: Final[BaseGrid[M_co, N_co, T_co]]  # type: ignore
+        self.data: BaseGrid[M_co, N_co, T_co]  # type: ignore
         if isinstance(array, BaseGrid):
             self.data = array
         elif isinstance(array, Matrix):
@@ -144,26 +179,6 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
                 nrows += 1
 
         return cls(array, (nrows, ncols))
-
-    @property
-    def array(self) -> Sequence[T_co]:
-        """Return the underlying sequence of matrix values, aligned in
-        row-major order
-
-        This is usually a built-in ``tuple``. Certain methods produce sequence
-        viewers that "shift" indices to different positions as a means to
-        emulate a materialized sequence of the desired ordering. This preserves
-        memory, but slows access time.
-
-        If this sequence is a ``tuple``, it is safe to assume that the matrix
-        is/has been materialized. See the ``materialize()`` method for more
-        details.
-        """
-        return self.data.array
-
-    @property
-    def shape(self) -> tuple[M_co, N_co]:
-        return self.data.shape
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix"""
