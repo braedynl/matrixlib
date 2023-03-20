@@ -85,12 +85,11 @@ class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metacl
         raise NotImplementedError
 
     def transpose(self) -> Mesh[N_co, M_co, T_co]:
-        GridPermutation = GridTranspose
-        return GridPermutation(self)
+        return MeshTranspose(self)
 
     def flip(self, *, by: Rule = Rule.ROW) -> Mesh[M_co, N_co, T_co]:
-        GridPermutation = (GridRowFlip, GridColFlip)[by.value]
-        return GridPermutation(self)
+        MeshPermutation = (MeshRowFlip, MeshColFlip)[by.value]
+        return MeshPermutation(self)
 
     @overload
     def rotate(self, n: EvenNumber) -> Mesh[M_co, N_co, T_co]: ...
@@ -103,8 +102,8 @@ class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metacl
 
     def rotate(self, n=1):
         if (n := n % 4):
-            GridPermutation = (GridRotation90, GridRotation180, GridRotation270)[n - 1]
-            return GridPermutation(self)
+            MeshPermutation = (MeshRotation090, MeshRotation180, MeshRotation270)[n - 1]
+            return MeshPermutation(self)
         return self
 
     def reverse(self) -> Mesh[M_co, N_co, T_co]:
@@ -173,126 +172,6 @@ class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metacl
     def _resolve_matrix_slice(self, key: slice, *, by: Rule = Rule.ROW) -> range:
         bound = self.n(by)
         return range(*key.indices(bound))
-
-
-@final
-class Grid(Mesh[M_co, N_co, T_co]):
-
-    __slots__ = ("array", "shape")
-
-    @overload
-    def __init__(self, array: Mesh[M_co, N_co, T_co]) -> None: ...
-    @overload
-    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
-
-    def __init__(self, array=(), shape=None):
-        self.array: tuple[T_co, ... ]  # type: ignore
-        self.shape: tuple[M_co, N_co]  # type: ignore
-
-        if type(array) is Grid:
-            self.array = array.array
-            self.shape = array.shape
-            return
-
-        self.array = tuple(array)
-        if isinstance(array, Mesh):
-            self.shape = array.shape
-        elif shape is None:
-            self.shape = (1, len(self.array))
-        else:
-            self.shape = shape
-
-        if not __debug__:
-            return
-
-        nrows, ncols = self.shape
-        nvals = len(self.array)
-
-        if nrows < 0 or ncols < 0:
-            raise ValueError("shape must contain non-negative values")
-        if nvals != nrows * ncols:
-            raise ValueError(f"cannot interpret size {nvals} iterable as shape ({nrows}, {ncols})")
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
-
-    def __hash__(self) -> int:
-        return hash((self.array, self.shape))
-
-    @overload
-    def __getitem__(self, key: int) -> T_co: ...
-    @overload
-    def __getitem__(self, key: slice) -> Grid[Literal[1], Any, T_co]: ...
-    @overload
-    def __getitem__(self, key: tuple[int, int]) -> T_co: ...
-    @overload
-    def __getitem__(self, key: tuple[int, slice]) -> Grid[Literal[1], Any, T_co]: ...
-    @overload
-    def __getitem__(self, key: tuple[slice, int]) -> Grid[Any, Literal[1], T_co]: ...
-    @overload
-    def __getitem__(self, key: tuple[slice, slice]) -> Grid[Any, Any, T_co]: ...
-
-    def __getitem__(self, key):
-        array = self.array
-
-        if isinstance(key, (tuple, list)):
-            row_key, col_key = key
-            ncols = self.ncols
-
-            if isinstance(row_key, slice):
-                row_indices = self._resolve_matrix_slice(row_key, by=ROW)
-
-                if isinstance(col_key, slice):
-                    col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                    return Grid(
-                        array=tuple(
-                            array[row_index * ncols + col_index]
-                            for row_index in row_indices
-                            for col_index in col_indices
-                        ),
-                        shape=(len(row_indices), len(col_indices)),
-                    )
-
-                col_index = self._resolve_matrix_index(col_key, by=COL)
-                return Grid(
-                    array=tuple(
-                        array[row_index * ncols + col_index]
-                        for row_index in row_indices
-                    ),
-                    shape=(len(row_indices), 1),
-                )
-
-            row_index = self._resolve_matrix_index(row_key, by=ROW)
-
-            if isinstance(col_key, slice):
-                col_indices = self._resolve_matrix_slice(col_key, by=COL)
-                return Grid(
-                    array=tuple(
-                        array[row_index * ncols + col_index]
-                        for col_index in col_indices
-                    ),
-                    shape=(1, len(col_indices)),
-                )
-
-            col_index = self._resolve_matrix_index(col_key, by=COL)
-            return array[row_index * ncols + col_index]
-
-        if isinstance(key, slice):
-            return Grid(array[key])
-
-        return array[key]
-
-    def __iter__(self) -> Iterator[T_co]:
-        return iter(self.array)
-
-    def __reversed__(self) -> Iterator[T_co]:
-        return reversed(self.array)
-
-    def __contains__(self, value: object) -> bool:
-        return value in self.array
-
-    def materialize(self) -> Grid[M_co, N_co, T_co]:
-        return self
 
 
 class MeshPermutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
@@ -464,7 +343,7 @@ class MeshPermutationR(MeshPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
 
 
 @final
-class GridTranspose(MeshPermutationR[M_co, N_co, T_co]):
+class MeshTranspose(MeshPermutationR[M_co, N_co, T_co]):
 
     __slots__ = ()
 
@@ -485,7 +364,7 @@ class GridTranspose(MeshPermutationR[M_co, N_co, T_co]):
 
 
 @final
-class GridRowFlip(MeshPermutationF[M_co, N_co, T_co]):
+class MeshRowFlip(MeshPermutationF[M_co, N_co, T_co]):
 
     __slots__ = ()
 
@@ -507,7 +386,7 @@ class GridRowFlip(MeshPermutationF[M_co, N_co, T_co]):
 
 
 @final
-class GridColFlip(MeshPermutationF[M_co, N_co, T_co]):
+class MeshColFlip(MeshPermutationF[M_co, N_co, T_co]):
 
     __slots__ = ()
 
@@ -529,7 +408,7 @@ class GridColFlip(MeshPermutationF[M_co, N_co, T_co]):
 
 
 @final
-class GridRotation90(MeshPermutationR[M_co, N_co, T_co]):
+class MeshRotation090(MeshPermutationR[M_co, N_co, T_co]):
 
     __slots__ = ()
 
@@ -560,7 +439,7 @@ class GridRotation90(MeshPermutationR[M_co, N_co, T_co]):
 
 
 @final
-class GridRotation180(MeshPermutationF[M_co, N_co, T_co]):
+class MeshRotation180(MeshPermutationF[M_co, N_co, T_co]):
 
     __slots__ = ()
 
@@ -589,7 +468,7 @@ class GridRotation180(MeshPermutationF[M_co, N_co, T_co]):
 
 
 @final
-class GridRotation270(MeshPermutationR[M_co, N_co, T_co]):
+class MeshRotation270(MeshPermutationR[M_co, N_co, T_co]):
 
     __slots__ = ()
 
@@ -617,3 +496,123 @@ class GridRotation270(MeshPermutationR[M_co, N_co, T_co]):
         col_index = self.ncols - col_index - 1
         val_index = col_index * self.nrows + row_index
         return val_index
+
+
+@final
+class Grid(Mesh[M_co, N_co, T_co]):
+
+    __slots__ = ("array", "shape")
+
+    @overload
+    def __init__(self, array: Mesh[M_co, N_co, T_co]) -> None: ...
+    @overload
+    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
+
+    def __init__(self, array=(), shape=None):
+        self.array: tuple[T_co, ... ]  # type: ignore
+        self.shape: tuple[M_co, N_co]  # type: ignore
+
+        if type(array) is Grid:
+            self.array = array.array
+            self.shape = array.shape
+            return
+
+        self.array = tuple(array)
+        if isinstance(array, Mesh):
+            self.shape = array.shape
+        elif shape is None:
+            self.shape = (1, len(self.array))
+        else:
+            self.shape = shape
+
+        if not __debug__:
+            return
+
+        nrows, ncols = self.shape
+        nvals = len(self.array)
+
+        if nrows < 0 or ncols < 0:
+            raise ValueError("shape must contain non-negative values")
+        if nvals != nrows * ncols:
+            raise ValueError(f"cannot interpret size {nvals} iterable as shape ({nrows}, {ncols})")
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
+
+    def __hash__(self) -> int:
+        return hash((self.array, self.shape))
+
+    @overload
+    def __getitem__(self, key: int) -> T_co: ...
+    @overload
+    def __getitem__(self, key: slice) -> Grid[Literal[1], Any, T_co]: ...
+    @overload
+    def __getitem__(self, key: tuple[int, int]) -> T_co: ...
+    @overload
+    def __getitem__(self, key: tuple[int, slice]) -> Grid[Literal[1], Any, T_co]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, int]) -> Grid[Any, Literal[1], T_co]: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, slice]) -> Grid[Any, Any, T_co]: ...
+
+    def __getitem__(self, key):
+        array = self.array
+
+        if isinstance(key, (tuple, list)):
+            row_key, col_key = key
+            ncols = self.ncols
+
+            if isinstance(row_key, slice):
+                row_indices = self._resolve_matrix_slice(row_key, by=ROW)
+
+                if isinstance(col_key, slice):
+                    col_indices = self._resolve_matrix_slice(col_key, by=COL)
+                    return Grid(
+                        array=tuple(
+                            array[row_index * ncols + col_index]
+                            for row_index in row_indices
+                            for col_index in col_indices
+                        ),
+                        shape=(len(row_indices), len(col_indices)),
+                    )
+
+                col_index = self._resolve_matrix_index(col_key, by=COL)
+                return Grid(
+                    array=tuple(
+                        array[row_index * ncols + col_index]
+                        for row_index in row_indices
+                    ),
+                    shape=(len(row_indices), 1),
+                )
+
+            row_index = self._resolve_matrix_index(row_key, by=ROW)
+
+            if isinstance(col_key, slice):
+                col_indices = self._resolve_matrix_slice(col_key, by=COL)
+                return Grid(
+                    array=tuple(
+                        array[row_index * ncols + col_index]
+                        for col_index in col_indices
+                    ),
+                    shape=(1, len(col_indices)),
+                )
+
+            col_index = self._resolve_matrix_index(col_key, by=COL)
+            return array[row_index * ncols + col_index]
+
+        if isinstance(key, slice):
+            return Grid(array[key])
+
+        return array[key]
+
+    def __iter__(self) -> Iterator[T_co]:
+        return iter(self.array)
+
+    def __reversed__(self) -> Iterator[T_co]:
+        return reversed(self.array)
+
+    def __contains__(self, value: object) -> bool:
+        return value in self.array
+
+    def materialize(self) -> Grid[M_co, N_co, T_co]:
+        return self

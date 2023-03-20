@@ -28,7 +28,7 @@ class SupportsMatrixProperties(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
     @property
     @abstractmethod
     def data(self) -> Mesh[M_co, N_co, T_co]:
-        """The matrix's grid object
+        """The matrix's mesh object
 
         Every matrix holds an instance of a ``Mesh`` class that provides the
         "hybrid" one/two-dimensional interface for the matrix. Certain
