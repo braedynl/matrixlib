@@ -262,6 +262,24 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
         """Return an iterator over the rows or columns of the matrix"""
         return map(Matrix, self.data.slices(by=by, reverse=reverse))
 
+    def string(self, *, field_width: int = 8) -> str:
+        """Return a string representation of the matrix
+
+        Writes all contained values to "fields" of a multi-line string. If the
+        value's string (retrieved from its ``__str__()`` implementation)
+        exceeds ``field_width``, it is replaced by an ellipsis character
+        (``…``, U+2026).
+
+        Raises ``ValueError`` if ``field_width`` is not positive.
+
+        This method is primarily intended for use in interactive sessions.
+        Relying on this method for serialization (or similar) is discouraged,
+        as its format may change without regard for backwards compatability.
+        """
+        return self.data.string(field_width=field_width)
+
+    __str__ = string
+
     @overload
     def equal(self, other: Matrix[M_co, N_co, object]) -> IntegerMatrix[M_co, N_co, bool]: ...
     @overload
@@ -1057,7 +1075,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         Matrices are lexicographically compared values first, shapes second -
         similar to how built-in sequences compare values first, lengths second.
         """
-        def inner(a: Iterable[float], b: Iterable[float]) -> Literal[-1, 0, 1]:
+        def compare(a: Iterable[float], b: Iterable[float]) -> Literal[-1, 0, 1]:
             if a is b:
                 return 0
             for x, y in zip(a, b):
@@ -1065,7 +1083,11 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
                     continue
                 return -1 if x < y else 1
             return 0
-        return inner(self, other) or inner(self.shape, other.shape)
+        return (
+            compare(self, other)
+            or
+            compare(self.shape, other.shape)
+        )
 
     @overload
     def lesser(self, other: RealMatrix[M_co, N_co, float]) -> IntegerMatrix[M_co, N_co, bool]: ...

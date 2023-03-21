@@ -148,6 +148,31 @@ class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metacl
             key[(by).value] = index
             yield self[key]
 
+    def string(self, *, field_width: int = 8) -> str:
+        if field_width <= 0:
+            raise ValueError("field width must be positive")
+
+        placeholder = "…".rjust(field_width)
+        outer: list[str] = []
+
+        for row in self.slices():
+            inner: list[str] = []
+
+            inner.append("|")
+            for val in row:
+                field = str(val)
+                if len(field) > field_width:
+                    inner.append(placeholder)
+                else:
+                    inner.append(field.rjust(field_width))
+            inner.append("|")
+
+            outer.append(" ".join(inner))
+
+        outer.append(f"({self.nrows} × {self.ncols})")
+
+        return "\n".join(outer)
+
     def _resolve_vector_index(self, key: int) -> int:
         bound = len(self)
         if key < 0:
