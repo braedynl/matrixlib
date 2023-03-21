@@ -867,16 +867,13 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         else:
             return NotImplemented
         a = self
-        c, d = itertools.tee(map(divmod, a, b))
-        return (
+        return tuple(
             RealMatrix(
-                array=map(operator.itemgetter(0), c),
+                array=map(operator.itemgetter(i), tee),
                 shape=a.shape,
-            ),
-            RealMatrix(
-                array=map(operator.itemgetter(1), d),
-                shape=a.shape,
-            ),
+            )
+            for i, tee in
+            enumerate(itertools.tee(map(divmod, a, b)))
         )
 
     @overload
@@ -975,16 +972,13 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         else:
             return NotImplemented
         a = self
-        c, d = itertools.tee(map(divmod, b, a))
-        return (
+        return tuple(
             RealMatrix(
-                array=map(operator.itemgetter(0), c),
+                array=map(operator.itemgetter(i), tee),
                 shape=a.shape,
-            ),
-            RealMatrix(
-                array=map(operator.itemgetter(1), d),
-                shape=a.shape,
-            ),
+            )
+            for i, tee in
+            enumerate(itertools.tee(map(divmod, b, a)))
         )
 
     @overload
