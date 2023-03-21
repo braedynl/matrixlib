@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Iterator, Reversible, Sequence
 from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
@@ -153,10 +154,10 @@ class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metacl
             raise ValueError("field width must be positive")
 
         placeholder = "…".rjust(field_width)
-        outer: list[str] = []
+        outer = list[str]()
 
         for row in self.slices():
-            inner: list[str] = []
+            inner = list[str]()
 
             inner.append("|")
             for val in row:
@@ -202,9 +203,6 @@ class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metacl
 class MeshPermutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ()
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(target={self.target!r})"
 
     def __hash__(self) -> int:
         return hash(self.materialize())
@@ -333,6 +331,9 @@ class MeshPermutationF(MeshPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
     def __init__(self, target: Mesh[M_co, N_co, T_co]) -> None:
         self.target: Mesh[M_co, N_co, T_co] = target
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(target={self.target!r})"
+
     @property
     def shape(self) -> tuple[M_co, N_co]:
         return self.target.shape
@@ -352,6 +353,9 @@ class MeshPermutationR(MeshPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
 
     def __init__(self, target: Mesh[N_co, M_co, T_co]) -> None:
         self.target: Mesh[N_co, M_co, T_co] = target
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(target={self.target!r})"
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -543,6 +547,7 @@ class Grid(Mesh[M_co, N_co, T_co]):
             return
 
         self.array = tuple(array)
+
         if isinstance(array, Mesh):
             self.shape = array.shape
         elif shape is None:
@@ -550,16 +555,15 @@ class Grid(Mesh[M_co, N_co, T_co]):
         else:
             self.shape = shape
 
-        if not __debug__:
-            return
-
-        nrows, ncols = self.shape
-        nvals = len(self.array)
-
-        if nrows < 0 or ncols < 0:
-            raise ValueError("shape must contain non-negative values")
-        if nvals != nrows * ncols:
-            raise ValueError(f"cannot interpret size {nvals} iterable as shape ({nrows}, {ncols})")
+        if __debug__:
+            if any(lambda n: n < 0, self.shape):
+                raise ValueError("shape must contain non-negative values")
+            if (
+                (nvals := len(self.array))
+                !=
+                ((nrows := self.shape[0]) * (ncols := self.shape[1]))
+            ):
+                raise ValueError(f"cannot interpret size {nvals} iterable as shape {nrows} × {ncols}")
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"

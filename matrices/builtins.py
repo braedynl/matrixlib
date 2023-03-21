@@ -85,6 +85,10 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
         shape_values = ", ".join(map(repr, self.shape))
         return f"{self.__class__.__name__}(array=({array_values}), shape=({shape_values}))"
 
+    def __str__(self) -> str:
+        """Return a string representation of the matrix"""
+        return self.string()
+
     def __eq__(self, other: object) -> bool:
         """Return true if the two matrices are equal, otherwise false"""
         if self is other:
@@ -277,8 +281,6 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
         as its format may change without regard for backwards compatability.
         """
         return self.data.string(field_width=field_width)
-
-    __str__ = string
 
     @overload
     def equal(self, other: Matrix[M_co, N_co, object]) -> IntegerMatrix[M_co, N_co, bool]: ...
