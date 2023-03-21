@@ -555,12 +555,12 @@ class Grid(Mesh[M_co, N_co, T_co]):
             self.shape = shape
 
         if __debug__:
-            if any(lambda n: n < 0, self.shape):
+            if any(n < 0 for n in self.shape):
                 raise ValueError("shape must contain non-negative values")
             if (
-                (nvals := len(self.array))
-                !=
                 ((nrows := self.shape[0]) * (ncols := self.shape[1]))
+                !=
+                (nvals := len(self.array))
             ):
                 raise ValueError(f"cannot interpret size {nvals} iterable as shape {nrows} × {ncols}")
 
