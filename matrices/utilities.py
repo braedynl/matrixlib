@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Iterator, Reversible, Sequence
 from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
