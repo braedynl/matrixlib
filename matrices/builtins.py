@@ -300,10 +300,11 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
     def string(self, *, field_width: int = 8) -> str:
         """Return a string representation of the matrix
 
-        Writes all contained values to "fields" of a multi-line string. If the
-        value's string (retrieved from its ``__str__()`` implementation)
-        exceeds ``field_width``, it is replaced by an ellipsis character
-        (``…``, U+2026).
+        Writes all contained values to fields of a multi-line string. If the
+        value's string representation exceeds ``field_width``, it is truncated,
+        with its last character slot re-purposed to an include an ellipsis
+        character (``…``, U+2026) - signifying that the field width must be
+        larger for the value to appear in its entirety.
 
         Raises ``ValueError`` if ``field_width`` is not positive.
 
@@ -314,7 +315,6 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         if field_width <= 0:
             raise ValueError("field width must be positive")
 
-        placeholder = "…".rjust(field_width)
         outer = list[str]()
 
         for row in self.slices():
@@ -324,7 +324,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
             for val in row:
                 field = str(val)
                 if len(field) > field_width:
-                    inner.append(placeholder)
+                    inner.append(field[:field_width - 1] + "…")
                 else:
                     inner.append(field.rjust(field_width))
             inner.append("|")
