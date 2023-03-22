@@ -6,7 +6,8 @@ import operator
 import sys
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Any, Generic, Literal, Optional, TypeVar, Union, overload
+from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
+                    overload)
 
 from typing_extensions import Self
 
@@ -157,11 +158,15 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         """Return true if the matrix contains ``value``, otherwise false"""
         return value in self.mesh
 
+    @final
     def __deepcopy__(self, memo=None) -> Self:
         """Return the matrix"""
         return self
 
-    __copy__ = __deepcopy__
+    @final
+    def __copy__(self) -> Self:
+        """Return the matrix"""
+        return self
 
     @classmethod
     def from_nesting(cls, nesting: Iterable[Iterable[T_co]]) -> Self:
