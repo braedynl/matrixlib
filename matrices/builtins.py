@@ -503,13 +503,15 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         if not isinstance(other, ComplexMatrix):
             return NotImplemented
 
-        a =  self
+        a = self
+        u = self.shape
+
         b = other
+        v = other.shape
 
-        m, n = a.shape
-        p, q = b.shape
+        (m, n), (p, q) = (u, v)
 
-        if not n:
+        if (not n) or (not p):
             return ComplexMatrix((0,) * (m * q), (m, q))
 
         def matrix_product(a, b):
