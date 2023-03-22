@@ -28,7 +28,7 @@ class MatrixParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
 
     @property
     @abstractmethod
-    def data(self) -> Mesh[M_co, N_co, T_co]:
+    def mesh(self) -> Mesh[M_co, N_co, T_co]:
         """The matrix's mesh object
 
         Every matrix holds an instance of a ``Mesh`` class that provides the
@@ -63,16 +63,16 @@ class MatrixParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
         reason not to attempt or rely on mutating operations of the returned
         sequence.
         """
-        return self.data.array
+        return self.mesh.array
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
-        return self.data.shape
+        return self.mesh.shape
 
 
 class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
-    __slots__ = ("data",)
+    __slots__ = ("mesh",)
 
     if sys.version_info >= (3, 10):
         __match_args__ = ("array", "shape")
@@ -85,13 +85,13 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
     def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
     def __init__(self, array=(), shape=None):
-        self.data: Mesh[M_co, N_co, T_co]  # type: ignore
+        self.mesh: Mesh[M_co, N_co, T_co]  # type: ignore
         if isinstance(array, Mesh):
-            self.data = array
+            self.mesh = array
         elif isinstance(array, Matrix):
-            self.data = array.data
+            self.mesh = array.mesh
         else:
-            self.data = Grid(array, shape)
+            self.mesh = Grid(array, shape)
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
@@ -108,7 +108,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         if self is other:
             return True
         if isinstance(other, Matrix):
-            return self.data == other.data
+            return self.mesh == other.mesh
         return NotImplemented
 
     def __hash__(self) -> int:
@@ -116,7 +116,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
         Matrices are hashable if its values are also hashable.
         """
-        return hash(self.data)
+        return hash(self.mesh)
 
     @overload
     def __getitem__(self, key: int) -> T_co: ...
@@ -133,7 +133,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
     def __getitem__(self, key):
         """Return the value or sub-matrix corresponding to ``key``"""
-        result = self.data[key]
+        result = self.mesh[key]
         if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
             return Matrix(result)
         if isinstance(key, slice):
@@ -142,17 +142,17 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
     def __iter__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in row-major order"""
-        return iter(self.data)
+        return iter(self.mesh)
 
     def __reversed__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
-        return reversed(self.data)
+        return reversed(self.mesh)
 
     def __contains__(self, value: object) -> bool:
         """Return true if the matrix contains ``value``, otherwise false"""
-        return value in self.data
+        return value in self.mesh
 
     def __deepcopy__(self, memo=None) -> Self:
         """Return the matrix"""
@@ -203,11 +203,11 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix"""
-        return Matrix(self.data.transpose())
+        return Matrix(self.mesh.transpose())
 
     def flip(self, *, by: Rule = Rule.ROW) -> Matrix[M_co, N_co, T_co]:
         """Return a flipped view of the matrix"""
-        return Matrix(self.data.flip(by=by))
+        return Matrix(self.mesh.flip(by=by))
 
     @overload
     def rotate(self, n: EvenNumber) -> Matrix[M_co, N_co, T_co]: ...
@@ -226,11 +226,11 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         ``n`` is negative. All integers are accepted, but many (particularly
         those outside of a small range near zero) will lose typing precision.
         """
-        return Matrix(self.data.rotate(n))
+        return Matrix(self.mesh.rotate(n))
 
     def reverse(self) -> Matrix[M_co, N_co, T_co]:
         """Return a reversed view of the matrix"""
-        return Matrix(self.data.reverse())
+        return Matrix(self.mesh.reverse())
 
     def materialize(self) -> Matrix[M_co, N_co, T_co]:
         """Return a materialized copy of the matrix
@@ -257,7 +257,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         different places, it's much more time-efficient to materialize it, and
         maintain the resulting material matrix as a substituting variable.
         """
-        return Matrix(self.data.materialize())
+        return Matrix(self.mesh.materialize())
 
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...
@@ -268,13 +268,13 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
     def n(self, by):
         """Return the dimension corresponding to the given ``Rule``"""
-        return self.data.n(by)
+        return self.mesh.n(by)
 
     def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in row or
         column-major order
         """
-        return self.data.values(by=by, reverse=reverse)
+        return self.mesh.values(by=by, reverse=reverse)
 
     @overload
     def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[Matrix[Literal[1], N_co, T_co]]: ...
@@ -287,7 +287,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator over the rows or columns of the matrix"""
-        return map(Matrix, self.data.slices(by=by, reverse=reverse))
+        return map(Matrix, self.mesh.slices(by=by, reverse=reverse))
 
     def string(self, *, field_width: int = 8) -> str:
         """Return a string representation of the matrix
