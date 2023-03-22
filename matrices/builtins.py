@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import math
 import operator
 import sys
 from abc import abstractmethod
@@ -72,7 +73,7 @@ class MatrixParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
 
 class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
-    __slots__ = ("mesh",)
+    __slots__ = ("__weakref__", "mesh")
 
     if sys.version_info >= (3, 10):
         __match_args__ = ("array", "shape")
@@ -336,12 +337,15 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         """Return element-wise ``a == b``"""
         if isinstance(other, Matrix):
             b = other
+            v = other.shape
         else:
             b = itertools.repeat(other)
+            v = self.shape
         a = self
+        u = self.shape
         return IntegerMatrix(
             array=map(operator.__eq__, a, b),
-            shape=a.shape,
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -353,12 +357,15 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         """Return element-wise ``a != b``"""
         if isinstance(other, Matrix):
             b = other
+            v = other.shape
         else:
             b = itertools.repeat(other)
+            v = self.shape
         a = self
+        u = self.shape
         return IntegerMatrix(
             array=map(operator.__ne__, a, b),
-            shape=a.shape,
+            shape=min(u, v, key=math.prod),
         )
 
 
@@ -414,7 +421,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         u = self.shape
         return ComplexMatrix(
             array=map(operator.__add__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -444,7 +451,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         u = self.shape
         return ComplexMatrix(
             array=map(operator.__sub__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -474,7 +481,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         u = self.shape
         return ComplexMatrix(
             array=map(operator.__mul__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -545,7 +552,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         u = self.shape
         return ComplexMatrix(
             array=map(operator.__truediv__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -910,7 +917,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         u = self.shape
         return RealMatrix(
             array=map(operator.__floordiv__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -936,7 +943,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         u = self.shape
         return RealMatrix(
             array=map(operator.__mod__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -963,7 +970,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         return tuple(
             RealMatrix(
                 array=map(operator.itemgetter(i), tee),
-                shape=min(u, v),
+                shape=min(u, v, key=math.prod),
             )
             for i, tee in
             enumerate(itertools.tee(map(divmod, a, b)))
@@ -1176,12 +1183,15 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         """Return element-wise ``a < b``"""
         if isinstance(other, RealMatrix):
             b = other
+            v = other.shape
         else:
             b = itertools.repeat(other)
+            v = self.shape
         a = self
+        u = self.shape
         return IntegerMatrix(
             array=map(operator.__lt__, a, b),
-            shape=a.shape,
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -1193,12 +1203,15 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         """Return element-wise ``a <= b``"""
         if isinstance(other, RealMatrix):
             b = other
+            v = other.shape
         else:
             b = itertools.repeat(other)
+            v = self.shape
         a = self
+        u = self.shape
         return IntegerMatrix(
             array=map(operator.__le__, a, b),
-            shape=a.shape,
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -1210,12 +1223,15 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         """Return element-wise ``a > b``"""
         if isinstance(other, RealMatrix):
             b = other
+            v = other.shape
         else:
             b = itertools.repeat(other)
+            v = self.shape
         a = self
+        u = self.shape
         return IntegerMatrix(
             array=map(operator.__gt__, a, b),
-            shape=a.shape,
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -1227,12 +1243,15 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         """Return element-wise ``a >= b``"""
         if isinstance(other, RealMatrix):
             b = other
+            v = other.shape
         else:
             b = itertools.repeat(other)
+            v = self.shape
         a = self
+        u = self.shape
         return IntegerMatrix(
             array=map(operator.__ge__, a, b),
-            shape=a.shape,
+            shape=min(u, v, key=math.prod),
         )
 
 
@@ -1425,7 +1444,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         u = self.shape
         return IntegerMatrix(
             array=map(operator.__lshift__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -1447,7 +1466,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         u = self.shape
         return IntegerMatrix(
             array=map(operator.__rshift__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -1473,7 +1492,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         u = self.shape
         return IntegerMatrix(
             array=map(operator.__and__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -1499,7 +1518,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         u = self.shape
         return IntegerMatrix(
             array=map(operator.__xor__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
@@ -1525,7 +1544,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         u = self.shape
         return IntegerMatrix(
             array=map(operator.__or__, a, b),
-            shape=min(u, v),
+            shape=min(u, v, key=math.prod),
         )
 
     @overload
