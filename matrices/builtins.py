@@ -31,7 +31,7 @@ class MatrixParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
         """The matrix's mesh object
 
         Every matrix holds an instance of a ``Mesh`` class that provides the
-        "hybrid" one/two-dimensional interface for the matrix. Certain
+        core "hybrid" one/two-dimensional interface for the matrix. Certain
         operations that permute the matrix's values (such as transposition,
         rotation, etc.) are implemented as ``Mesh`` sub-classes that "move"
         indices to their permuted positions before in-memory access occurs.
@@ -59,7 +59,8 @@ class MatrixParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
         otherwise the shape can fall "out-of-sync" with it.
 
         The behavior explained above is subject to change, giving additional
-        reason not to attempt mutating operations on the returned sequence.
+        reason not to attempt or rely on mutating operations of the returned
+        sequence.
         """
         return self.data.array
 
@@ -228,9 +229,10 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
     def materialize(self) -> Matrix[M_co, N_co, T_co]:
         """Return a materialized copy of the matrix
 
-        Certain methods internally produce a view onto an existing sequence to
-        preserve memory. As views "stack" onto one another, access times can
-        become slower.
+        Certain methods (particularly those that permute the matrix's values in
+        some fashion) construct a view onto the underlying sequence to preserve
+        memory. These views can "stack" onto one another, which can drastically
+        increase access time.
 
         This method addresses said issue by shallowly placing the elements into
         a new sequence - a process that we call "materialization". The
@@ -241,8 +243,13 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
         If the matrix does not store a kind of view, this method returns a
         matrix that is semantically equivalent to the original. We call such
-        matrices "materialized", as they store a sequence, or reference to a
-        sequence, whose elements already exist in the desired arrangement.
+        matrices "materialized", or "material", as they store a sequence whose
+        elements already exist in the desired order.
+
+        Think of materialization as being akin to compiling regular
+        expressions: if the same matrix permutation is required in many
+        different places, it's much more time-efficient to materialize it, and
+        maintain the resulting material matrix as a substituting variable.
         """
         return Matrix(self.data.materialize())
 
