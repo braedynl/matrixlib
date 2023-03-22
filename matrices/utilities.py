@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Iterator, Reversible, Sequence
-from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
+from typing import (Any, Literal, Optional, Protocol, TypeVar, Union, final,
                     overload)
 
-from typing_extensions import Self, TypeAlias
+from typing_extensions import TypeAlias
 
 from .abc import Shaped
 from .rule import COL, ROW, Rule
@@ -32,20 +32,17 @@ def values(iterable, /, *, reverse=False):
     return (reversed if reverse else iter)(iterable)
 
 
-class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
+class MeshParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
+
+    @property
+    @abstractmethod
+    def array(self) -> Sequence[T_co]:
+        raise NotImplementedError
+
+
+class Mesh(MeshParts[M_co, N_co, T_co], Sequence[T_co], metaclass=ABCMeta):
 
     __slots__ = ()
-
-    def __eq__(self, other: object) -> bool:
-        if self is other:
-            return True
-        if isinstance(other, Mesh):
-            return (
-                self.shape == other.shape
-                and
-                all(x is y or x == y for x, y in zip(self, other))
-            )
-        return NotImplemented
 
     @overload
     @abstractmethod
@@ -68,16 +65,6 @@ class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metacl
 
     @abstractmethod
     def __getitem__(self, key):
-        raise NotImplementedError
-
-    def __deepcopy__(self, memo=None) -> Self:
-        return self
-
-    __copy__ = __deepcopy__
-
-    @property
-    @abstractmethod
-    def array(self) -> Sequence[T_co]:
         raise NotImplementedError
 
     @abstractmethod
@@ -148,31 +135,6 @@ class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metacl
             key[(by).value] = index
             yield self[key]
 
-    def string(self, *, field_width: int = 8) -> str:
-        if field_width <= 0:
-            raise ValueError("field width must be positive")
-
-        placeholder = "…".rjust(field_width)
-        outer = list[str]()
-
-        for row in self.slices():
-            inner = list[str]()
-
-            inner.append("|")
-            for val in row:
-                field = str(val)
-                if len(field) > field_width:
-                    inner.append(placeholder)
-                else:
-                    inner.append(field.rjust(field_width))
-            inner.append("|")
-
-            outer.append(" ".join(inner))
-
-        outer.append(f"({self.nrows} × {self.ncols})")
-
-        return "\n".join(outer)
-
     def _resolve_vector_index(self, key: int) -> int:
         bound = len(self)
         if key < 0:
@@ -199,9 +161,23 @@ class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metacl
         return range(*key.indices(bound))
 
 
-class MeshPermutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
+class MeshPermutationParts(MeshParts[M_co, N_co, T_co], Protocol[M_co, N_co, T_co]):
 
-    __slots__ = ()
+    @property
+    @abstractmethod
+    def target(self) -> Mesh[Any, Any, T_co]:
+        raise NotImplementedError
+
+
+class MeshPermutation(MeshPermutationParts[M_co, N_co, T_co], Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
+
+    __slots__ = ("target",)
+
+    def __init__(self, target: Mesh[Any, Any, T_co]) -> None:
+        self.target: Mesh[Any, Any, T_co] = target
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(target={self.target!r})"
 
     def __hash__(self) -> int:
         return hash(self.materialize())
@@ -296,11 +272,6 @@ class MeshPermutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
     def array(self) -> Sequence[T_co]:
         return self
 
-    @property
-    @abstractmethod
-    def target(self) -> Mesh[Any, Any, T_co]:
-        raise NotImplementedError
-
     def materialize(self) -> Grid[M_co, N_co, T_co]:
         return Grid(self)
 
@@ -325,13 +296,11 @@ class MeshPermutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
 
 class MeshPermutationF(MeshPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
 
-    __slots__ = ("target",)
+    __slots__ = ()
 
     def __init__(self, target: Mesh[M_co, N_co, T_co]) -> None:
-        self.target: Mesh[M_co, N_co, T_co] = target
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(target={self.target!r})"
+        super().__init__(target)
+        self.target: Mesh[M_co, N_co, T_co]
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -348,13 +317,11 @@ class MeshPermutationF(MeshPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
 
 class MeshPermutationR(MeshPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
 
-    __slots__ = ("target",)
+    __slots__ = ()
 
     def __init__(self, target: Mesh[N_co, M_co, T_co]) -> None:
-        self.target: Mesh[N_co, M_co, T_co] = target
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(target={self.target!r})"
+        super().__init__(target)
+        self.target: Mesh[N_co, M_co, T_co]
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -537,38 +504,40 @@ class Grid(Mesh[M_co, N_co, T_co]):
     def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
     def __init__(self, array=(), shape=None):
-        self.array: tuple[T_co, ... ]  # type: ignore
+        self.array: Sequence[T_co]     # type: ignore
         self.shape: tuple[M_co, N_co]  # type: ignore
-
-        if type(array) is Grid:
-            self.array = array.array
-            self.shape = array.shape
-            return
-
-        self.array = tuple(array)
 
         if isinstance(array, Mesh):
             self.shape = array.shape
-        elif shape is None:
-            self.shape = (1, len(self.array))
-        else:
-            self.shape = shape
+            if type(array) is Grid:
+                self.array = array.array
+            else:
+                self.array = tuple(array)
+            return
 
-        if __debug__:
-            if any(n < 0 for n in self.shape):
-                raise ValueError("shape must contain non-negative values")
-            if (
-                ((nrows := self.shape[0]) * (ncols := self.shape[1]))
-                !=
-                (nvals := len(self.array))
-            ):
-                raise ValueError(f"cannot interpret size {nvals} iterable as shape {nrows} × {ncols}")
+        if isinstance(array, Sequence):
+            self.array = array
+        else:
+            self.array = tuple(array)
+        if shape:
+            if __debug__:
+                if any(n < 0 for n in shape):
+                    raise ValueError("shape must contain non-negative values")
+                if (
+                    ((nrows := shape[0]) * (ncols := shape[1]))
+                    !=
+                    (size := len(self.array))
+                ):
+                    raise ValueError(f"cannot interpret size {size} iterable as shape {nrows} × {ncols}")
+            self.shape = shape
+        else:
+            self.shape = (1, len(self.array))
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
 
     def __hash__(self) -> int:
-        return hash((self.array, self.shape))
+        return hash((tuple(self.array), tuple(self.shape)))
 
     @overload
     def __getitem__(self, key: int) -> T_co: ...

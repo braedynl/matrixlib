@@ -23,7 +23,7 @@ R_co = TypeVar("R_co", covariant=True, bound=float)
 I_co = TypeVar("I_co", covariant=True, bound=int)
 
 
-class SupportsMatrixProperties(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
+class MatrixParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
 
     @property
     @abstractmethod
@@ -37,10 +37,8 @@ class SupportsMatrixProperties(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
         indices to their permuted positions before in-memory access occurs.
 
         This composition structure allows for "permutation types" to exist
-        beneath the ``Matrix`` abstraction layer - allowing for easier
-        ``Matrix`` sub-classing, since, the implementor would not have to
-        create a set of permutation sub-classes that each provide an interface
-        alike the material sub-class.
+        beneath the ``Matrix`` abstraction layer, thus allowing for easier
+        ``Matrix`` sub-classing.
         """
         raise NotImplementedError
 
@@ -50,6 +48,18 @@ class SupportsMatrixProperties(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
 
         This is usually a built-in ``tuple``, but may vary depending on how the
         matrix was created.
+
+        The current implementation maintains a direct reference to instances of
+        ``Sequence`` when passed to the ``Matrix`` constructor. This means that
+        mutable sequence types, like built-in ``list``, are left "un-copied",
+        and continue to remain un-copied when returned by this property.
+
+        In general, you should treat the array as being "owned" by the matrix
+        instance - i.e., do not attempt to modify the array when it is exposed,
+        otherwise the shape can fall "out-of-sync" with it.
+
+        The behavior explained above is subject to change, giving additional
+        reason not to attempt mutating operations on the returned sequence.
         """
         return self.data.array
 
@@ -58,7 +68,7 @@ class SupportsMatrixProperties(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
         return self.data.shape
 
 
-class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
+class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
     __slots__ = ("data",)
     __match_args__ = ("array", "shape")
@@ -81,9 +91,9 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
-        array_values = ", ".join(map(repr, self))
-        shape_values = ", ".join(map(repr, self.shape))
-        return f"{self.__class__.__name__}(array=({array_values}), shape=({shape_values}))"
+        array = ", ".join(map(repr, self))
+        shape = ", ".join(map(repr, self.shape))
+        return f"{self.__class__.__name__}(array=({array}), shape=({shape}))"
 
     def __str__(self) -> str:
         """Return a string representation of the matrix"""
@@ -94,7 +104,11 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
         if self is other:
             return True
         if isinstance(other, Matrix):
-            return self.data == other.data
+            return (
+                self.shape == other.shape
+                and
+                all(x is y or x == y for x, y in zip(self, other))
+            )
         return NotImplemented
 
     def __hash__(self) -> int:
@@ -117,9 +131,9 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
     def __getitem__(self, key):
         """Return the value or sub-matrix corresponding to ``key``"""
         result = self.data[key]
-        if isinstance(key, slice):
-            return Matrix(result)
         if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
+            return Matrix(result)
+        if isinstance(key, slice):
             return Matrix(result)
         return result
 
@@ -174,7 +188,7 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
                 for val in row:
                     array.append(val)
                     n += 1
-                if n != ncols:
+                if ncols != n:
                     raise ValueError(f"row at index {nrows} has length {n}, but precedent rows have length {ncols}")
                 nrows += 1
         else:
@@ -280,7 +294,29 @@ class Matrix(SupportsMatrixProperties[M_co, N_co, T_co], Sequence[T_co]):
         Relying on this method for serialization (or similar) is discouraged,
         as its format may change without regard for backwards compatability.
         """
-        return self.data.string(field_width=field_width)
+        if field_width <= 0:
+            raise ValueError("field width must be positive")
+
+        placeholder = "…".rjust(field_width)
+        outer = list[str]()
+
+        for row in self.slices():
+            inner = list[str]()
+
+            inner.append("|")
+            for val in row:
+                field = str(val)
+                if len(field) > field_width:
+                    inner.append(placeholder)
+                else:
+                    inner.append(field.rjust(field_width))
+            inner.append("|")
+
+            outer.append(" ".join(inner))
+
+        outer.append(f"({self.nrows} × {self.ncols})")
+
+        return "\n".join(outer)
 
     @overload
     def equal(self, other: Matrix[M_co, N_co, object]) -> IntegerMatrix[M_co, N_co, bool]: ...
@@ -336,9 +372,9 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
     def __getitem__(self, key):
         result = super().__getitem__(key)
-        if isinstance(key, slice):
-            return ComplexMatrix(result)
         if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
+            return ComplexMatrix(result)
+        if isinstance(key, slice):
             return ComplexMatrix(result)
         return result
 
@@ -714,9 +750,9 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __getitem__(self, key):
         result = super().__getitem__(key)
-        if isinstance(key, slice):
-            return RealMatrix(result)
         if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
+            return RealMatrix(result)
+        if isinstance(key, slice):
             return RealMatrix(result)
         return result
 
@@ -1179,9 +1215,9 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __getitem__(self, key):
         result = super().__getitem__(key)
-        if isinstance(key, slice):
-            return IntegerMatrix(result)
         if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
+            return IntegerMatrix(result)
+        if isinstance(key, slice):
             return IntegerMatrix(result)
         return result
 
