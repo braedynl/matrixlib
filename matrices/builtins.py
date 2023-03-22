@@ -4,9 +4,9 @@ import itertools
 import math
 import operator
 import sys
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Any, Literal, Optional, Protocol, TypeVar, Union, overload
+from typing import Any, Generic, Literal, Optional, TypeVar, Union, overload
 
 from typing_extensions import Self
 
@@ -25,7 +25,9 @@ R_co = TypeVar("R_co", covariant=True, bound=float)
 I_co = TypeVar("I_co", covariant=True, bound=int)
 
 
-class MatrixParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
+class MatrixParts(Shaped[M_co, N_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
+
+    __slots__ = ()
 
     @property
     @abstractmethod

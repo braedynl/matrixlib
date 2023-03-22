@@ -1,6 +1,6 @@
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections.abc import Sized
-from typing import Protocol, TypeVar
+from typing import Generic, TypeVar
 
 __all__ = ["Shaped"]
 
@@ -8,7 +8,9 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class Shaped(Sized, Protocol[M_co, N_co]):
+class Shaped(Sized, Generic[M_co, N_co], metaclass=ABCMeta):
+
+    __slots__ = ()
 
     def __len__(self) -> int:
         """Return the shape's product"""

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Iterator, Reversible, Sequence
-from typing import (Any, Literal, Optional, Protocol, TypeVar, Union, final,
+from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
                     overload)
 
 from typing_extensions import TypeAlias
@@ -32,7 +32,7 @@ def values(iterable, /, *, reverse=False):
     return (reversed if reverse else iter)(iterable)
 
 
-class MeshParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
+class MeshParts(Shaped[M_co, N_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
     @property
     @abstractmethod
@@ -172,7 +172,7 @@ class Mesh(MeshParts[M_co, N_co, T_co], Sequence[T_co], metaclass=ABCMeta):
         return range(*key.indices(bound))
 
 
-class MeshPermutationParts(MeshParts[M_co, N_co, T_co], Protocol[M_co, N_co, T_co]):
+class MeshPermutationParts(MeshParts[M_co, N_co, T_co], metaclass=ABCMeta):
 
     @property
     @abstractmethod
