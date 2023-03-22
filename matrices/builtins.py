@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import operator
+import sys
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator, Sequence
 from typing import Any, Literal, Optional, Protocol, TypeVar, Union, overload
@@ -72,7 +73,9 @@ class MatrixParts(Shaped[M_co, N_co], Protocol[M_co, N_co, T_co]):
 class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
     __slots__ = ("data",)
-    __match_args__ = ("array", "shape")
+
+    if sys.version_info >= (3, 10):
+        __match_args__ = ("array", "shape")
 
     @overload
     def __init__(self, array: Mesh[M_co, N_co, T_co]) -> None: ...
@@ -109,7 +112,10 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         return NotImplemented
 
     def __hash__(self) -> int:
-        """Return a hash of the matrix"""
+        """Return a hash of the matrix
+
+        Matrices are hashable if its values are also hashable.
+        """
         return hash(self.data)
 
     @overload
