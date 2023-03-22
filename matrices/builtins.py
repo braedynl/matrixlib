@@ -104,11 +104,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         if self is other:
             return True
         if isinstance(other, Matrix):
-            return (
-                self.shape == other.shape
-                and
-                all(x is y or x == y for x, y in zip(self, other))
-            )
+            return self.data == other.data
         return NotImplemented
 
     def __hash__(self) -> int:

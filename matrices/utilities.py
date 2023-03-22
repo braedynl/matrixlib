@@ -44,6 +44,20 @@ class Mesh(MeshParts[M_co, N_co, T_co], Sequence[T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+        if isinstance(other, Mesh):
+            return (
+                self.shape == other.shape
+                and
+                all(x is y or x == y for x, y in zip(self, other))
+            )
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash((tuple(self.array), tuple(self.shape)))
+
     @overload
     @abstractmethod
     def __getitem__(self, key: int) -> T_co: ...
@@ -178,9 +192,6 @@ class MeshPermutation(MeshPermutationParts[M_co, N_co, T_co], Mesh[M_co, N_co, T
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(target={self.target!r})"
-
-    def __hash__(self) -> int:
-        return hash(self.materialize())
 
     @overload
     def __getitem__(self, key: int) -> T_co: ...
@@ -535,9 +546,6 @@ class Grid(Mesh[M_co, N_co, T_co]):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
-
-    def __hash__(self) -> int:
-        return hash((tuple(self.array), tuple(self.shape)))
 
     @overload
     def __getitem__(self, key: int) -> T_co: ...
