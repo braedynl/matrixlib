@@ -1,21 +1,24 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal, final, overload
+from typing import Final, Literal, final, overload
 
 __all__ = ["Rule", "ROW", "COL"]
 
 
 @final
 class Rule(Enum):
-    """The direction by which to operate within a matrix
+    """Enum used to dictate row or column-wise interpretation
 
-    Rule values are usable as an index that retrieves the rule's corresponding
-    dimension from a matrix's shape (or any two-element sequence type).
+    Each member maps to an index that will retrieve its corresponding dimension
+    from a matrix shape (or any two-element sequence).
+
+    ``Rule`` should not be sub-classed, as many functions make the assumption
+    that the class has just two members with values ``0`` and ``1``.
     """
 
-    ROW: Literal[0] = 0  #: Retrieves the item at the zeroth index
-    COL: Literal[1] = 1  #: Retrieves the item at the first index
+    ROW: Literal[0] = 0  #: Maps to literal ``0``
+    COL: Literal[1] = 1  #: Maps to literal ``1``
 
     @overload
     def __invert__(self: Literal[Rule.ROW]) -> Literal[Rule.COL]: ...  # type: ignore[misc]
@@ -34,5 +37,5 @@ class Rule(Enum):
         return ("row", "column")[self.value]
 
 
-ROW: Literal[Rule.ROW] = Rule.ROW
-COL: Literal[Rule.COL] = Rule.COL
+ROW: Final[Literal[Rule.ROW]] = Rule.ROW  #: Equivalent to ``Rule.ROW``
+COL: Final[Literal[Rule.COL]] = Rule.COL  #: Equivalent to ``Rule.COL``
