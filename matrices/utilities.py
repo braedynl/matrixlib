@@ -32,15 +32,7 @@ def values(iterable, /, *, reverse=False):
     return (reversed if reverse else iter)(iterable)
 
 
-class MeshParts(Shaped[M_co, N_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
-
-    @property
-    @abstractmethod
-    def array(self) -> Sequence[T_co]:
-        raise NotImplementedError
-
-
-class Mesh(MeshParts[M_co, N_co, T_co], Sequence[T_co], metaclass=ABCMeta):
+class Mesh(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
@@ -76,6 +68,11 @@ class Mesh(MeshParts[M_co, N_co, T_co], Sequence[T_co], metaclass=ABCMeta):
 
     @abstractmethod
     def __getitem__(self, key):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def array(self) -> Sequence[T_co]:
         raise NotImplementedError
 
     @abstractmethod
@@ -172,15 +169,7 @@ class Mesh(MeshParts[M_co, N_co, T_co], Sequence[T_co], metaclass=ABCMeta):
         return range(*key.indices(bound))
 
 
-class MeshPermutationParts(MeshParts[M_co, N_co, T_co], metaclass=ABCMeta):
-
-    @property
-    @abstractmethod
-    def target(self) -> Mesh[Any, Any, T_co]:
-        raise NotImplementedError
-
-
-class MeshPermutation(MeshPermutationParts[M_co, N_co, T_co], Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
+class MeshPermutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ("target")
 

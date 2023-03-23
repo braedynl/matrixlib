@@ -4,7 +4,6 @@ import itertools
 import math
 import operator
 import sys
-from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable, Iterator, Sequence
 from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
                     overload)
@@ -26,32 +25,7 @@ R_co = TypeVar("R_co", covariant=True, bound=float)
 I_co = TypeVar("I_co", covariant=True, bound=int)
 
 
-class MatrixParts(Shaped[M_co, N_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):
-
-    __slots__ = ()
-
-    @property
-    @abstractmethod
-    def mesh(self) -> Mesh[M_co, N_co, T_co]:
-        """The matrix's mesh object"""
-        raise NotImplementedError
-
-    @property
-    def array(self) -> Sequence[T_co]:
-        """The underlying sequence of matrix values, aligned in row-major order
-
-        This object will always have an implementation of the ``Sequence``
-        interface, at minimum. We make no guarantee of any concrete types, as
-        it depends on a variety of internal conditions.
-        """
-        return self.mesh.array
-
-    @property
-    def shape(self) -> tuple[M_co, N_co]:
-        return self.mesh.shape
-
-
-class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
+class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     """A "hybrid" one and two-rank immutable sequence
 
     Each matrix holds a ``Mesh`` object that provides the core operations for
@@ -113,6 +87,9 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         """
         return hash(self.mesh)
 
+    def __len__(self) -> int:
+        return len(self.mesh)
+
     @overload
     def __getitem__(self, key: int) -> T_co: ...
     @overload
@@ -159,6 +136,28 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         """Return the matrix"""
         return self
 
+    @property
+    def shape(self) -> tuple[M_co, N_co]:
+        return self.mesh.shape
+
+    @property
+    def nrows(self) -> M_co:
+        return self.mesh.nrows
+
+    @property
+    def ncols(self) -> N_co:
+        return self.mesh.ncols
+
+    @property
+    def array(self) -> Sequence[T_co]:
+        """The underlying sequence of matrix values, aligned in row-major order
+
+        This object will, at minimum, have an implementation of the
+        ``Sequence`` interface. We make no guarantee of any concrete types, as
+        it depends on a variety of internal conditions.
+        """
+        return self.mesh.array
+
     @classmethod
     def from_nesting(cls, nesting: Iterable[Iterable[T_co]]) -> Self:
         """Construct a matrix from a singly-nested iterable, using the
@@ -184,19 +183,17 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         nrows = 1
         ncols = len(array)
 
-        if __debug__:
-            for row in rows:
+        for row in rows:
+            if __debug__:
                 n = 0
                 for val in row:
                     array.append(val)
                     n += 1
                 if ncols != n:
                     raise ValueError(f"row at index {nrows} has length {n}, but precedent rows have length {ncols}")
-                nrows += 1
-        else:
-            for row in rows:
+            else:
                 array.extend(row)
-                nrows += 1
+            nrows += 1
 
         return cls(array, (nrows, ncols))
 
@@ -205,7 +202,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
         Raises ``ValueError`` if ``value`` is not present.
         """
-        return super().index(value, start, stop)
+        return super().index(value, start, stop)  # type: ignore[arg-type]
 
     def count(self, value: Any) -> int:
         """Return the number of times ``value`` appears in the matrix"""
@@ -379,6 +376,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
 
 class ComplexMatrix(Matrix[M_co, N_co, C_co]):
+    """Built-in ``Matrix`` sub-class constrained to instances of ``complex``"""
 
     __slots__ = ()
 
@@ -754,6 +752,9 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
 
 class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
+    """Built-in ``ComplexMatrix`` sub-class constrained to instances of
+    ``float``
+    """
 
     __slots__ = ()
 
@@ -1267,6 +1268,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
 
 class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
+    """Built-in ``RealMatrix`` sub-class constrained to instances of ``int``"""
 
     __slots__ = ()
 

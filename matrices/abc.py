@@ -9,6 +9,9 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
 class Shaped(Sized, Generic[M_co, N_co], metaclass=ABCMeta):
+    """ABC for classes that provide the ``__len__()`` method, alongside the
+    ``shape``, ``nrows``, and ``ncols`` properties.
+    """
 
     __slots__ = ()
 
