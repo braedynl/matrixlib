@@ -52,7 +52,10 @@ class MatrixParts(Shaped[M_co, N_co], Generic[M_co, N_co, T_co], metaclass=ABCMe
         """The underlying sequence of matrix values, aligned in row-major order
 
         This is usually a built-in ``tuple``, but may vary depending on how the
-        matrix was created.
+        matrix was created. Certain operations that permute the matrix's values
+        (such as transposition, rotation, etc.) will construct a ``Mesh`` that
+        views an in-memory sequence - in this scenario, the matrix's ``array``
+        becomes identical to its ``mesh``.
         """
         return self.mesh.array
 
