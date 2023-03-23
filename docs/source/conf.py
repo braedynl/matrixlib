@@ -11,7 +11,7 @@ import sys
 
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 
-# -- Project information -----------------------------------------------------
+# Project information
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'Matrices-Py'
@@ -19,7 +19,7 @@ copyright = '2023, Braedyn L'
 author = 'Braedyn L'
 release = '0.3.0'
 
-# -- General configuration ---------------------------------------------------
+# General configuration
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
@@ -30,7 +30,12 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 
-# -- Options for HTML output -------------------------------------------------
+# Autodoc configuration
+# https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+
+autodoc_member_order = "bysource"
+
+# Options for HTML output
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'furo'
