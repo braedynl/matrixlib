@@ -5,7 +5,7 @@ from collections.abc import Iterable, Iterator, Reversible, Sequence
 from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
                     overload)
 
-from typing_extensions import TypeAlias
+from typing_extensions import Self, TypeAlias
 
 from .abc import Shaped
 from .rule import COL, ROW, Rule
@@ -182,7 +182,7 @@ class MeshPermutationParts(MeshParts[M_co, N_co, T_co], metaclass=ABCMeta):
 
 class MeshPermutation(MeshPermutationParts[M_co, N_co, T_co], Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
 
-    __slots__ = ("target",)
+    __slots__ = ("target")
 
     def __init__(self, target: Mesh[Any, Any, T_co]) -> None:
         self.target: Mesh[Any, Any, T_co] = target
@@ -267,24 +267,12 @@ class MeshPermutation(MeshPermutationParts[M_co, N_co, T_co], Mesh[M_co, N_co, T
         val_index = self._resolve_vector_index(key)
         return array[permute_vector_index(val_index)]
 
-    def __iter__(self) -> Iterator[T_co]:
-        return self.values()
-
-    def __reversed__(self) -> Iterator[T_co]:
-        return self.values(reverse=True)
-
-    def __contains__(self, value: object) -> bool:
-        for x in self:
-            if x is value or x == value:
-                return True
-        return False
-
     @property
-    def array(self) -> Sequence[T_co]:
+    def array(self) -> Self:
         return self
 
     def materialize(self) -> Grid[M_co, N_co, T_co]:
-        return Grid(self)
+        return Grid(self, self.shape)
 
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...
@@ -310,8 +298,8 @@ class MeshPermutationF(MeshPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
     __slots__ = ()
 
     def __init__(self, target: Mesh[M_co, N_co, T_co]) -> None:
-        super().__init__(target)
         self.target: Mesh[M_co, N_co, T_co]
+        super().__init__(target)
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -331,8 +319,8 @@ class MeshPermutationR(MeshPermutation[M_co, N_co, T_co], metaclass=ABCMeta):
     __slots__ = ()
 
     def __init__(self, target: Mesh[N_co, M_co, T_co]) -> None:
-        super().__init__(target)
         self.target: Mesh[N_co, M_co, T_co]
+        super().__init__(target)
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
@@ -510,27 +498,22 @@ class Grid(Mesh[M_co, N_co, T_co]):
     __slots__ = ("array", "shape")
 
     @overload
-    def __init__(self, array: Mesh[M_co, N_co, T_co]) -> None: ...
+    def __init__(self: Grid[Literal[1], Any, T_co], array: Iterable[T_co]) -> None: ...
     @overload
-    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
+    def __init__(self, array: Optional[Iterable[T_co]] = None, shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
-    def __init__(self, array=(), shape=None):
-        self.array: Sequence[T_co]     # type: ignore
+    def __init__(self, array=None, shape=None):
+        self.array: tuple[T_co, ... ]  # type: ignore
         self.shape: tuple[M_co, N_co]  # type: ignore
 
-        if isinstance(array, Mesh):
-            self.shape = array.shape
-            if type(array) is Grid:
-                self.array = array.array
-            else:
-                self.array = tuple(array)
-            return
-
-        if isinstance(array, Sequence):
-            self.array = array
+        if array is None:
+            self.array = ()
         else:
             self.array = tuple(array)
-        if shape:
+
+        if shape is None:
+            self.shape = (1, len(self.array))
+        else:
             if __debug__:
                 if any(n < 0 for n in shape):
                     raise ValueError("shape must contain non-negative values")
@@ -540,15 +523,13 @@ class Grid(Mesh[M_co, N_co, T_co]):
                     (size := len(self.array))
                 ):
                     raise ValueError(f"cannot interpret size {size} iterable as shape {nrows} × {ncols}")
-            self.shape = shape
-        else:
-            self.shape = (1, len(self.array))
+            self.shape = tuple(shape)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
+        return f"Grid(array={self.array!r}, shape={self.shape!r})"
 
     def __hash__(self) -> int:
-        return hash((tuple(self.array), tuple(self.shape)))
+        return hash((self.array, self.shape))
 
     @overload
     def __getitem__(self, key: int) -> T_co: ...
@@ -622,5 +603,5 @@ class Grid(Mesh[M_co, N_co, T_co]):
     def __contains__(self, value: object) -> bool:
         return value in self.array
 
-    def materialize(self) -> Grid[M_co, N_co, T_co]:
+    def materialize(self) -> Self:
         return self

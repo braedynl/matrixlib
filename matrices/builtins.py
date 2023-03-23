@@ -86,9 +86,11 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
     @overload
     def __init__(self, array: Matrix[M_co, N_co, T_co]) -> None: ...
     @overload
-    def __init__(self, array: Iterable[T_co] = (), shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
+    def __init__(self: Matrix[Literal[1], Any, T_co], array: Iterable[T_co]) -> None: ...
+    @overload
+    def __init__(self, array: Optional[Iterable[T_co]] = None, shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
 
-    def __init__(self, array=(), shape=None):
+    def __init__(self, array=None, shape=None):
         self.mesh: Mesh[M_co, N_co, T_co]  # type: ignore
         if isinstance(array, Mesh):
             self.mesh = array
