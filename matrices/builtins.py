@@ -53,19 +53,6 @@ class MatrixParts(Shaped[M_co, N_co], Generic[M_co, N_co, T_co], metaclass=ABCMe
 
         This is usually a built-in ``tuple``, but may vary depending on how the
         matrix was created.
-
-        The current implementation maintains a direct reference to instances of
-        ``Sequence`` when passed to the ``Matrix`` constructor. This means that
-        mutable sequence types, like built-in ``list``, are left "un-copied",
-        and continue to remain un-copied when returned by this property.
-
-        In general, you should treat the array as being "owned" by the matrix
-        instance - i.e., do not attempt to modify the array when it is exposed,
-        otherwise the shape can fall "out-of-sync" with it.
-
-        The behavior explained above is subject to change, giving additional
-        reason not to attempt or rely on mutating operations of the returned
-        sequence.
         """
         return self.mesh.array
 
