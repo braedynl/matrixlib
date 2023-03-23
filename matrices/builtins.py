@@ -33,29 +33,16 @@ class MatrixParts(Shaped[M_co, N_co], Generic[M_co, N_co, T_co], metaclass=ABCMe
     @property
     @abstractmethod
     def mesh(self) -> Mesh[M_co, N_co, T_co]:
-        """The matrix's mesh object
-
-        Every matrix holds an instance of a ``Mesh`` class that provides the
-        core "hybrid" one/two-dimensional interface for the matrix. Certain
-        operations that permute the matrix's values (such as transposition,
-        rotation, etc.) are implemented as ``Mesh`` sub-classes that "move"
-        indices to their permuted positions before in-memory access occurs.
-
-        This composition structure allows for "permutation types" to exist
-        beneath the ``Matrix`` abstraction layer, thus allowing for easier
-        ``Matrix`` sub-classing.
-        """
+        """The matrix's mesh object"""
         raise NotImplementedError
 
     @property
     def array(self) -> Sequence[T_co]:
         """The underlying sequence of matrix values, aligned in row-major order
 
-        This is usually a built-in ``tuple``, but may vary depending on how the
-        matrix was created. Certain operations that permute the matrix's values
-        (such as transposition, rotation, etc.) will construct a ``Mesh`` that
-        views an in-memory sequence - in this scenario, the matrix's ``array``
-        becomes identical to its ``mesh``.
+        This object will always have an implementation of the ``Sequence``
+        interface, at minimum. We make no guarantee of any concrete types, as
+        it depends on a variety of internal conditions.
         """
         return self.mesh.array
 
@@ -65,6 +52,18 @@ class MatrixParts(Shaped[M_co, N_co], Generic[M_co, N_co, T_co], metaclass=ABCMe
 
 
 class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
+    """A "hybrid" one and two-rank immutable sequence
+
+    Each matrix holds a ``Mesh`` object that provides the core operations for
+    the ``Matrix`` class. Certain operations that permute the matrix's values,
+    such as transposition and rotation, are implemented as ``Mesh`` sub-classes
+    that "move" indices to their permuted positions before in-memory access
+    occurs.
+
+    This compositional relationship allows for the "permutation types" to exist
+    below the ``Matrix`` abstraction, allowing for easier sub-classing of
+    ``Matrix``.
+    """
 
     __slots__ = ("__weakref__", "mesh")
 
@@ -201,6 +200,17 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
 
         return cls(array, (nrows, ncols))
 
+    def index(self, value: Any, start: int = 0, stop: Optional[int] = None) -> int:
+        """Return the first index where ``value`` appears in the matrix
+
+        Raises ``ValueError`` if ``value`` is not present.
+        """
+        return super().index(value, start, stop)
+
+    def count(self, value: Any) -> int:
+        """Return the number of times ``value`` appears in the matrix"""
+        return super().count(value)
+
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix"""
         return Matrix(self.mesh.transpose())
@@ -255,7 +265,7 @@ class Matrix(MatrixParts[M_co, N_co, T_co], Sequence[T_co]):
         Think of materialization as being akin to compiling regular
         expressions: if the same matrix permutation is required in many
         different places, it's much more time-efficient to materialize it, and
-        maintain the resulting material matrix as a substituting variable.
+        use the resulting material matrix as a substituting variable.
         """
         return Matrix(self.mesh.materialize())
 
