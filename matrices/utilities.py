@@ -534,7 +534,7 @@ class Rotation270(ReversePermutation[M_co, N_co, T_co]):
         return val_index
 
 
-class Normalization(Mesh[M_co, N_co, T_co]):
+class Materialization(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
@@ -654,7 +654,7 @@ class Normalization(Mesh[M_co, N_co, T_co]):
 
 
 @final
-class Grid(Normalization[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
+class Grid(Materialization[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
 
     __slots__ = ("array", "shape")
 
@@ -669,14 +669,14 @@ class Grid(Normalization[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
                 (size := len(self.array))
             ):
                 raise ValueError(f"cannot interpret size {size} iterable as shape {nrows} × {ncols}")
-        self.shape: tuple[M_co, N_co] = shape
+        self.shape: tuple[M_co, N_co] = tuple(shape)  # type: ignore[assignment]
 
     def __repr__(self) -> str:
         return f"Grid(array={self.array!r}, shape={self.shape!r})"
 
 
 @final
-class RowGrid(Normalization[Literal[1], N_co, T_co], Generic[N_co, T_co]):
+class RowGrid(Materialization[Literal[1], N_co, T_co], Generic[N_co, T_co]):
 
     __slots__ = ("array")
 
@@ -714,7 +714,7 @@ class RowGrid(Normalization[Literal[1], N_co, T_co], Generic[N_co, T_co]):
 
 
 @final
-class ColGrid(Normalization[M_co, Literal[1], T_co], Generic[M_co, T_co]):
+class ColGrid(Materialization[M_co, Literal[1], T_co], Generic[M_co, T_co]):
 
     __slots__ = ("array")
 
