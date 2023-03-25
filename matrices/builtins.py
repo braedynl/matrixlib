@@ -10,9 +10,8 @@ from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
 
 from typing_extensions import Self
 
-from .abc import Shaped
 from .rule import Rule
-from .utilities import EvenNumber, Grid, Mesh, OddNumber
+from .utilities import ColGrid, EvenNumber, Grid, Mesh, OddNumber, RowGrid
 
 T_co = TypeVar("T_co", covariant=True)
 
@@ -25,7 +24,7 @@ R_co = TypeVar("R_co", covariant=True, bound=float)
 I_co = TypeVar("I_co", covariant=True, bound=int)
 
 
-class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
+class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     """A "hybrid" one and two-rank immutable sequence
 
     Each matrix holds a ``Mesh`` object that provides the core operations for
@@ -49,18 +48,32 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
     @overload
     def __init__(self, array: Matrix[M_co, N_co, T_co]) -> None: ...
     @overload
-    def __init__(self: Matrix[Literal[1], Any, T_co], array: Iterable[T_co]) -> None: ...
+    def __init__(self: Matrix[Literal[1], Any, T_co], array: Iterable[T_co], shape: Literal[Rule.ROW]) -> None: ...
     @overload
-    def __init__(self, array: Optional[Iterable[T_co]] = None, shape: Optional[tuple[M_co, N_co]] = None) -> None: ...
+    def __init__(self: Matrix[Any, Literal[1], T_co], array: Iterable[T_co], shape: Literal[Rule.COL]) -> None: ...
+    @overload
+    def __init__(self, array: Iterable[T_co], shape: Rule) -> None: ...
+    @overload
+    def __init__(self, array: Iterable[T_co], shape: tuple[M_co, N_co]) -> None: ...
 
-    def __init__(self, array=None, shape=None):
+    def __init__(self, array=(), shape=None):
         self.mesh: Mesh[M_co, N_co, T_co]  # type: ignore
-        if isinstance(array, Mesh):
-            self.mesh = array
-        elif isinstance(array, Matrix):
-            self.mesh = array.mesh
-        else:
+        if shape is None:
+            if isinstance(array, Mesh):
+                self.mesh = array
+            else:
+                self.mesh = array.mesh
+            return
+        if isinstance(array, Matrix):
+            array = array.array
+        if isinstance(shape, tuple):
             self.mesh = Grid(array, shape)
+        elif shape is Rule.ROW:
+            self.mesh = RowGrid(array)
+        elif shape is Rule.COL:
+            self.mesh = ColGrid(array)
+        else:
+            raise RuntimeError
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
@@ -137,18 +150,6 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         return self
 
     @property
-    def shape(self) -> tuple[M_co, N_co]:
-        return self.mesh.shape
-
-    @property
-    def nrows(self) -> M_co:
-        return self.mesh.nrows
-
-    @property
-    def ncols(self) -> N_co:
-        return self.mesh.ncols
-
-    @property
     def array(self) -> Sequence[T_co]:
         """The underlying sequence of matrix values, aligned in row-major order
 
@@ -157,6 +158,21 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
         it depends on a variety of internal conditions.
         """
         return self.mesh.array
+
+    @property
+    def shape(self) -> tuple[M_co, N_co]:
+        """The number of rows and columns as a ``tuple``"""
+        return self.mesh.shape
+
+    @property
+    def nrows(self) -> M_co:
+        """The number of rows"""
+        return self.mesh.nrows
+
+    @property
+    def ncols(self) -> N_co:
+        """The number of columns"""
+        return self.mesh.ncols
 
     @classmethod
     def from_nesting(cls, nesting: Iterable[Iterable[T_co]]) -> Self:
@@ -202,11 +218,11 @@ class Matrix(Shaped[M_co, N_co], Sequence[T_co], Generic[M_co, N_co, T_co]):
 
         Raises ``ValueError`` if ``value`` is not present.
         """
-        return super().index(value, start, stop)  # type: ignore[arg-type]
+        return self.mesh.index(value, start, stop)  # type: ignore[arg-type]
 
     def count(self, value: Any) -> int:
         """Return the number of times ``value`` appears in the matrix"""
-        return super().count(value)
+        return self.mesh.count(value)
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix"""
