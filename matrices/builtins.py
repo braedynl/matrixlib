@@ -5,6 +5,7 @@ import math
 import operator
 import sys
 from collections.abc import Iterable, Iterator, Sequence
+from numbers import Complex, Integral, Real
 from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
                     overload)
 
@@ -119,9 +120,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __getitem__(self, key):
         """Return the value or sub-matrix corresponding to ``key``"""
         result = self.mesh[key]
-        if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
-            return Matrix(result)
-        if isinstance(key, slice):
+        if isinstance(result, Mesh):
             return Matrix(result)
         return result
 
@@ -411,9 +410,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
     def __getitem__(self, key):
         result = super().__getitem__(key)
-        if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
-            return ComplexMatrix(result)
-        if isinstance(key, slice):
+        if isinstance(result, Matrix):
             return ComplexMatrix(result)
         return result
 
@@ -435,7 +432,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         if isinstance(other, ComplexMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, (complex, float, int)):
+        elif isinstance(other, Complex):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -465,7 +462,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         if isinstance(other, ComplexMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, (complex, float, int)):
+        elif isinstance(other, Complex):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -495,7 +492,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         if isinstance(other, ComplexMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, (complex, float, int)):
+        elif isinstance(other, Complex):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -568,7 +565,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
         if isinstance(other, ComplexMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, (complex, float, int)):
+        elif isinstance(other, Complex):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -589,7 +586,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
     def __radd__(self, other):
         """Return element-wise ``b + a``"""
-        if isinstance(other, (complex, float, int)):
+        if isinstance(other, Complex):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -609,7 +606,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
     def __rsub__(self, other):
         """Return element-wise ``b - a``"""
-        if isinstance(other, (complex, float, int)):
+        if isinstance(other, Complex):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -629,7 +626,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
     def __rmul__(self, other):
         """Return element-wise ``b * a``"""
-        if isinstance(other, (complex, float, int)):
+        if isinstance(other, Complex):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -647,7 +644,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
     def __rtruediv__(self, other):
         """Return element-wise ``b / a``"""
-        if isinstance(other, (complex, float, int)):
+        if isinstance(other, Complex):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -813,9 +810,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __getitem__(self, key):
         result = super().__getitem__(key)
-        if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
-            return RealMatrix(result)
-        if isinstance(key, slice):
+        if isinstance(result, ComplexMatrix):
             return RealMatrix(result)
         return result
 
@@ -838,7 +833,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __add__(self, other):
         result = super().__add__(other)
-        if isinstance(other, (RealMatrix, float, int)):
+        if isinstance(other, (RealMatrix, Real)):
             return RealMatrix(result)
         return result
 
@@ -861,7 +856,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __sub__(self, other):
         result = super().__sub__(other)
-        if isinstance(other, (RealMatrix, float, int)):
+        if isinstance(other, (RealMatrix, Real)):
             return RealMatrix(result)
         return result
 
@@ -884,7 +879,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __mul__(self, other):
         result = super().__mul__(other)
-        if isinstance(other, (RealMatrix, float, int)):
+        if isinstance(other, (RealMatrix, Real)):
             return RealMatrix(result)
         return result
 
@@ -918,7 +913,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __truediv__(self, other):
         result = super().__truediv__(other)
-        if isinstance(other, (RealMatrix, float, int)):
+        if isinstance(other, (RealMatrix, Real)):
             return RealMatrix(result)
         return result
 
@@ -936,7 +931,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         if isinstance(other, RealMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, (float, int)):
+        elif isinstance(other, Real):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -962,7 +957,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         if isinstance(other, RealMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, (float, int)):
+        elif isinstance(other, Real):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -988,7 +983,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
         if isinstance(other, RealMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, (float, int)):
+        elif isinstance(other, Real):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -1013,7 +1008,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __radd__(self, other):
         result = super().__radd__(other)
-        if isinstance(other, (float, int)):
+        if isinstance(other, Real):
             return RealMatrix(result)
         return result
 
@@ -1026,7 +1021,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __rsub__(self, other):
         result = super().__rsub__(other)
-        if isinstance(other, (float, int)):
+        if isinstance(other, Real):
             return RealMatrix(result)
         return result
 
@@ -1039,7 +1034,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __rmul__(self, other):
         result = super().__rmul__(other)
-        if isinstance(other, (float, int)):
+        if isinstance(other, Real):
             return RealMatrix(result)
         return result
 
@@ -1050,7 +1045,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __rtruediv__(self, other):
         result = super().__rtruediv__(other)
-        if isinstance(other, (float, int)):
+        if isinstance(other, Real):
             return RealMatrix(result)
         return result
 
@@ -1061,7 +1056,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __rfloordiv__(self, other):
         """Return element-wise ``b // a``"""
-        if isinstance(other, (float, int)):
+        if isinstance(other, Real):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -1079,7 +1074,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __rmod__(self, other):
         """Return element-wise ``b % a``"""
-        if isinstance(other, (float, int)):
+        if isinstance(other, Real):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -1097,7 +1092,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def __rdivmod__(self, other):
         """Return element-wise ``divmod(b, a)``"""
-        if isinstance(other, (float, int)):
+        if isinstance(other, Real):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -1303,9 +1298,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __getitem__(self, key):
         result = super().__getitem__(key)
-        if isinstance(key, tuple) and (isinstance(key[0], slice) or isinstance(key[1], slice)):
-            return IntegerMatrix(result)
-        if isinstance(key, slice):
+        if isinstance(result, RealMatrix):
             return IntegerMatrix(result)
         return result
 
@@ -1330,7 +1323,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __add__(self, other):
         result = super().__add__(other)
-        if isinstance(other, (IntegerMatrix, int)):
+        if isinstance(other, (IntegerMatrix, Integral)):
             return IntegerMatrix(result)
         return result
 
@@ -1355,7 +1348,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __sub__(self, other):
         result = super().__sub__(other)
-        if isinstance(other, (IntegerMatrix, int)):
+        if isinstance(other, (IntegerMatrix, Integral)):
             return IntegerMatrix(result)
         return result
 
@@ -1380,7 +1373,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __mul__(self, other):
         result = super().__mul__(other)
-        if isinstance(other, (IntegerMatrix, int)):
+        if isinstance(other, (IntegerMatrix, Integral)):
             return IntegerMatrix(result)
         return result
 
@@ -1416,7 +1409,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __floordiv__(self, other):
         result = super().__floordiv__(other)
-        if isinstance(other, (IntegerMatrix, int)):
+        if isinstance(other, (IntegerMatrix, Integral)):
             return IntegerMatrix(result)
         return result
 
@@ -1433,7 +1426,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __mod__(self, other):
         result = super().__mod__(other)
-        if isinstance(other, (IntegerMatrix, int)):
+        if isinstance(other, (IntegerMatrix, Integral)):
             return IntegerMatrix(result)
         return result
 
@@ -1450,7 +1443,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __divmod__(self, other):
         result = super().__divmod__(other)
-        if isinstance(other, (IntegerMatrix, int)):
+        if isinstance(other, (IntegerMatrix, Integral)):
             return tuple(map(IntegerMatrix, result))
         return result
 
@@ -1464,7 +1457,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         if isinstance(other, IntegerMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, int):
+        elif isinstance(other, Integral):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -1486,7 +1479,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         if isinstance(other, IntegerMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, int):
+        elif isinstance(other, Integral):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -1512,7 +1505,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         if isinstance(other, IntegerMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, int):
+        elif isinstance(other, Integral):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -1538,7 +1531,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         if isinstance(other, IntegerMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, int):
+        elif isinstance(other, Integral):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -1564,7 +1557,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
         if isinstance(other, IntegerMatrix):
             b = other
             v = other.shape
-        elif isinstance(other, int):
+        elif isinstance(other, Integral):
             b = itertools.repeat(other)
             v = self.shape
         else:
@@ -1585,7 +1578,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __radd__(self, other):
         result = super().__radd__(other)
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             return IntegerMatrix(result)
         return result
 
@@ -1598,7 +1591,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __rsub__(self, other):
         result = super().__rsub__(other)
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             return IntegerMatrix(result)
         return result
 
@@ -1611,7 +1604,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __rmul__(self, other):
         result = super().__rmul__(other)
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             return IntegerMatrix(result)
         return result
 
@@ -1622,7 +1615,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __rfloordiv__(self, other):
         result = super().__rfloordiv__(other)
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             return IntegerMatrix(result)
         return result
 
@@ -1633,7 +1626,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __rmod__(self, other):
         result = super().__rmod__(other)
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             return IntegerMatrix(result)
         return result
 
@@ -1644,13 +1637,13 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __rdivmod__(self, other):
         result = super().__rdivmod__(other)
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             return tuple(map(IntegerMatrix, result))
         return result
 
     def __rlshift__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]:
         """Return element-wise ``b << a``"""
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -1663,7 +1656,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __rrshift__(self: IntegerMatrix[M_co, N_co, int], other: int) -> IntegerMatrix[M_co, N_co, int]:
         """Return element-wise ``b >> a``"""
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -1681,7 +1674,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __rand__(self, other):
         """Return element-wise ``b & a``"""
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -1699,7 +1692,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __rxor__(self, other):
         """Return element-wise ``b ^ a``"""
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             b = itertools.repeat(other)
         else:
             return NotImplemented
@@ -1717,7 +1710,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def __ror__(self, other):
         """Return element-wise ``b | a``"""
-        if isinstance(other, int):
+        if isinstance(other, Integral):
             b = itertools.repeat(other)
         else:
             return NotImplemented
