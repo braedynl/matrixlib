@@ -115,7 +115,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def __str__(self) -> str:
         """Return a string representation of the matrix"""
-        return self.string()
+        return self.format()
 
     def __eq__(self, other: object) -> bool:
         """Return true if the two matrices are equal, otherwise false"""
@@ -342,8 +342,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """Return an iterator over the rows or columns of the matrix"""
         return map(Matrix, self.mesh.slices(by=by, reverse=reverse))
 
-    def string(self, *, field_width: int = 8) -> str:
-        """Return a string representation of the matrix
+    def format(self, *, field_width: int = 8) -> str:
+        """Return a formatted string representation of the matrix
 
         Writes all contained values to fields of a multi-line string. If the
         value's string representation exceeds ``field_width``, it is truncated,
