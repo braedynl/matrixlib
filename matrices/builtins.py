@@ -11,8 +11,9 @@ from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
 
 from typing_extensions import Self
 
+from .meshes import (NIL, Box, Col, EvenNumber, Grid, Mesh, NilCol, NilRow,
+                     OddNumber, Row)
 from .rule import Rule
-from .utilities import ColGrid, EvenNumber, Grid, Mesh, OddNumber, RowGrid
 
 T_co = TypeVar("T_co", covariant=True)
 
@@ -66,21 +67,51 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 self.mesh = array.mesh
             return
         if isinstance(array, Matrix):
-            array = array.array
-        if isinstance(shape, tuple):
-            self.mesh = Grid(array, shape)
-        elif shape is Rule.ROW:
-            self.mesh = RowGrid(array)
-        elif shape is Rule.COL:
-            self.mesh = ColGrid(array)
+            array = tuple(array.array)
         else:
-            raise RuntimeError
+            array = tuple(array)
+        if isinstance(shape, Rule):
+            if shape is Rule.ROW:
+                self.mesh = Row(array)
+            else:
+                self.mesh = Col(array)
+        else:
+            shape = tuple(shape)
+            nrows, ncols = shape
+            if __debug__:
+                test_size = nrows * ncols
+                true_size = len(array)
+                if nrows < 0 or ncols < 0:
+                    raise ValueError("shape values must be non-negative")
+                if test_size != true_size:
+                    raise ValueError(f"cannot interpret size {true_size} iterable as shape {nrows} × {ncols}")
+            if ncols > 1:
+                if nrows > 1:
+                    self.mesh = Grid(array, shape)
+                elif nrows:
+                    self.mesh = Row(array)
+                else:
+                    self.mesh = NilRow(ncols)
+            elif ncols:
+                if nrows > 1:
+                    self.mesh = Col(array)
+                elif nrows:
+                    self.mesh = Box(array[0])
+                else:
+                    self.mesh = NilRow(ncols)
+            else:
+                if nrows > 1:
+                    self.mesh = NilCol(nrows)
+                elif nrows:
+                    self.mesh = NilCol(nrows)
+                else:
+                    self.mesh = NIL
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
         array = ", ".join(map(repr, self))
         shape = ", ".join(map(repr, self.shape))
-        return f"{self.__class__.__name__}(array=({array}), shape=({shape}))"
+        return f"{self.__class__.__name__}(array=[{array}], shape=({shape}))"
 
     def __str__(self) -> str:
         """Return a string representation of the matrix"""

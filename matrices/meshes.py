@@ -1,21 +1,25 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterable, Iterator, Sequence
-from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
-                    overload)
+from collections.abc import Iterator, Sequence
+from typing import (Any, Final, Generic, Literal, Optional, TypeVar, Union,
+                    final, overload)
 
 from typing_extensions import Self, TypeAlias
 
 from .rule import COL, ROW, Rule
 
 __all__ = [
+    "NIL",
     "EvenNumber",
     "OddNumber",
     "Mesh",
     "Grid",
-    "RowGrid",
-    "ColGrid",
+    "NilRow",
+    "NilCol",
+    "Box",
+    "Row",
+    "Col",
 ]
 
 T_co = TypeVar("T_co", covariant=True)
@@ -236,7 +240,7 @@ class Permutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
                     )
 
                 col_index = self.resolve_matrix_index(col_key, by=COL)
-                return ColGrid(
+                return Col(
                     array=tuple(
                         array[permute_matrix_index(row_index, col_index)]
                         for row_index in row_indices
@@ -247,7 +251,7 @@ class Permutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
 
             if isinstance(col_key, slice):
                 col_indices = self.resolve_matrix_slice(col_key, by=COL)
-                return RowGrid(
+                return Row(
                     array=tuple(
                         array[permute_matrix_index(row_index, col_index)]
                         for col_index in col_indices
@@ -261,7 +265,7 @@ class Permutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
 
         if isinstance(key, slice):
             val_indices = self.resolve_vector_slice(key)
-            return RowGrid(
+            return Row(
                 array=tuple(
                     array[permute_vector_index(val_index)]
                     for val_index in val_indices
@@ -281,7 +285,7 @@ class Permutation(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
         raise NotImplementedError
 
     def materialize(self) -> Mesh[M_co, N_co, T_co]:
-        return Grid(self, self.shape)
+        return Grid(tuple(self), self.shape)
 
     def transpose(self) -> Mesh[N_co, M_co, T_co]:
         return Transpose(self)
@@ -579,7 +583,7 @@ class Materialization(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
                     )
 
                 col_index = self.resolve_matrix_index(col_key, by=COL)
-                return ColGrid(
+                return Col(
                     array=tuple(
                         array[row_index * ncols + col_index]
                         for row_index in row_indices
@@ -590,7 +594,7 @@ class Materialization(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
 
             if isinstance(col_key, slice):
                 col_indices = self.resolve_matrix_slice(col_key, by=COL)
-                return RowGrid(
+                return Row(
                     array=tuple(
                         array[row_index * ncols + col_index]
                         for col_index in col_indices
@@ -601,7 +605,7 @@ class Materialization(Mesh[M_co, N_co, T_co], metaclass=ABCMeta):
             return array[row_index * ncols + col_index]
 
         if isinstance(key, slice):
-            return RowGrid(array[key])
+            return Row(array[key])
 
         return array[key]
 
@@ -658,40 +662,196 @@ class Grid(Materialization[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
 
     __slots__ = ("array", "shape")
 
-    def __init__(self, array: Iterable[T_co], shape: tuple[M_co, N_co]) -> None:
-        self.array: tuple[T_co, ...] = tuple(array)
-        if __debug__:
-            if any(n < 0 for n in shape):  # type: ignore[operator]
-                raise ValueError("shape must contain non-negative values")
-            if (
-                ((nrows := shape[0]) * (ncols := shape[1]))
-                !=
-                (size := len(self.array))
-            ):
-                raise ValueError(f"cannot interpret size {size} iterable as shape {nrows} × {ncols}")
-        self.shape: tuple[M_co, N_co] = tuple(shape)  # type: ignore[assignment]
+    def __init__(self, array: tuple[T_co, ...], shape: tuple[M_co, N_co]) -> None:
+        self.array: tuple[T_co, ... ] = array
+        self.shape: tuple[M_co, N_co] = shape
 
     def __repr__(self) -> str:
         return f"Grid(array={self.array!r}, shape={self.shape!r})"
 
 
 @final
-class RowGrid(Materialization[Literal[1], N_co, T_co], Generic[N_co, T_co]):
+class Nil(Materialization[Literal[0], Literal[0], T_co], Generic[T_co]):
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:
+        return "Nil()"
+
+    def __len__(self) -> Literal[0]:
+        return 0
+
+    @property
+    def array(self) -> tuple[T_co, ...]:
+        return ()
+
+    @property
+    def shape(self) -> tuple[Literal[0], Literal[0]]:
+        return (0, 0)
+
+    def transpose(self) -> Mesh[Literal[0], Literal[0], T_co]:
+        return self
+
+    def flip(self, *, by: Rule = Rule.ROW) -> Mesh[Literal[0], Literal[0], T_co]:
+        return self
+
+    @overload
+    def rotate(self, n: EvenNumber) -> Mesh[Literal[0], Literal[0], T_co]: ...
+    @overload
+    def rotate(self, n: OddNumber) -> Mesh[Literal[0], Literal[0], T_co]: ...
+    @overload
+    def rotate(self, n: int) -> Mesh[Literal[0], Literal[0], T_co]: ...
+    @overload
+    def rotate(self) -> Mesh[Literal[0], Literal[0], T_co]: ...
+
+    def rotate(self, n=1):
+        return self
+
+
+@final
+class NilRow(Materialization[Literal[0], N_co, T_co], Generic[N_co, T_co]):
+
+    __slots__ = ("ncols")
+
+    def __init__(self, ncols: N_co) -> None:
+        self.ncols: N_co = ncols
+
+    def __repr__(self) -> str:
+        return f"NilRow({self.ncols!r})"
+
+    def __len__(self) -> Literal[0]:
+        return 0
+
+    @property
+    def array(self) -> tuple[T_co, ...]:
+        return ()
+
+    @property
+    def shape(self) -> tuple[Literal[0], N_co]:
+        return (0, self.ncols)
+
+    def transpose(self) -> Mesh[N_co, Literal[0], T_co]:
+        return NilCol(self.ncols)
+
+    def flip(self, *, by: Rule = Rule.ROW) -> Mesh[Literal[0], N_co, T_co]:
+        return self
+
+    @overload
+    def rotate(self, n: EvenNumber) -> Mesh[Literal[0], N_co, T_co]: ...
+    @overload
+    def rotate(self, n: OddNumber) -> Mesh[N_co, Literal[0], T_co]: ...
+    @overload
+    def rotate(self, n: int) -> Mesh[Any, Any, T_co]: ...
+    @overload
+    def rotate(self) -> Mesh[N_co, Literal[0], T_co]: ...
+
+    def rotate(self, n=1):
+        if n % 2:
+            return self.transpose()
+        return self
+
+
+@final
+class NilCol(Materialization[M_co, Literal[0], T_co], Generic[M_co, T_co]):
+
+    __slots__ = ("nrows")
+
+    def __init__(self, nrows: M_co) -> None:
+        self.nrows: M_co = nrows
+
+    def __repr__(self) -> str:
+        return f"NilCol({self.nrows!r})"
+
+    def __len__(self) -> Literal[0]:
+        return 0
+
+    @property
+    def array(self) -> tuple[T_co, ...]:
+        return ()
+
+    @property
+    def shape(self) -> tuple[M_co, Literal[0]]:
+        return (self.nrows, 0)
+
+    def transpose(self) -> Mesh[Literal[0], M_co, T_co]:
+        return NilRow(self.nrows)
+
+    def flip(self, *, by: Rule = Rule.ROW) -> Mesh[M_co, Literal[0], T_co]:
+        return self
+
+    @overload
+    def rotate(self, n: EvenNumber) -> Mesh[M_co, Literal[0], T_co]: ...
+    @overload
+    def rotate(self, n: OddNumber) -> Mesh[Literal[0], M_co, T_co]: ...
+    @overload
+    def rotate(self, n: int) -> Mesh[Any, Any, T_co]: ...
+    @overload
+    def rotate(self) -> Mesh[Literal[0], M_co, T_co]: ...
+
+    def rotate(self, n=1):
+        if n % 2:
+            return self.transpose()
+        return self
+
+
+@final
+class Box(Materialization[Literal[1], Literal[1], T_co], Generic[T_co]):
+
+    __slots__ = ("value")
+
+    def __init__(self, value: T_co) -> None:
+        self.value = value
+
+    def __repr__(self) -> str:
+        return f"Box({self.value!r})"
+
+    def __len__(self) -> Literal[1]:
+        return 1
+
+    @property
+    def array(self) -> tuple[T_co]:
+        return (self.value,)
+
+    @property
+    def shape(self) -> tuple[Literal[1], Literal[1]]:
+        return (1, 1)
+
+    def transpose(self) -> Mesh[Literal[1], Literal[1], T_co]:
+        return self
+
+    def flip(self, *, by: Rule = Rule.ROW) -> Mesh[Literal[1], Literal[1], T_co]:
+        return self
+
+    @overload
+    def rotate(self, n: EvenNumber) -> Mesh[Literal[1], Literal[1], T_co]: ...
+    @overload
+    def rotate(self, n: OddNumber) -> Mesh[Literal[1], Literal[1], T_co]: ...
+    @overload
+    def rotate(self, n: int) -> Mesh[Literal[1], Literal[1], T_co]: ...
+    @overload
+    def rotate(self) -> Mesh[Literal[1], Literal[1], T_co]: ...
+
+    def rotate(self, n=1):
+        return self
+
+
+@final
+class Row(Materialization[Literal[1], N_co, T_co], Generic[N_co, T_co]):
 
     __slots__ = ("array")
 
-    def __init__(self, array: Iterable[T_co]) -> None:
-        self.array: tuple[T_co, ...] = tuple(array)
+    def __init__(self, array: tuple[T_co, ...]) -> None:
+        self.array: tuple[T_co, ...] = array
 
     def __repr__(self) -> str:
-        return f"RowGrid(array={self.array!r})"
+        return f"Row({self.array!r})"
 
     @property
     def shape(self) -> tuple[Literal[1], N_co]:
         return (1, len(self.array))  # type: ignore[return-value]
 
     def transpose(self) -> Mesh[N_co, Literal[1], T_co]:
-        return ColGrid(self.array)
+        return Col(self.array)
 
     def flip(self, *, by: Rule = Rule.ROW) -> Mesh[Literal[1], N_co, T_co]:
         if by is Rule.ROW:
@@ -714,22 +874,22 @@ class RowGrid(Materialization[Literal[1], N_co, T_co], Generic[N_co, T_co]):
 
 
 @final
-class ColGrid(Materialization[M_co, Literal[1], T_co], Generic[M_co, T_co]):
+class Col(Materialization[M_co, Literal[1], T_co], Generic[M_co, T_co]):
 
     __slots__ = ("array")
 
-    def __init__(self, array: Iterable[T_co]) -> None:
-        self.array: tuple[T_co, ...] = tuple(array)
+    def __init__(self, array: tuple[T_co, ...]) -> None:
+        self.array: tuple[T_co, ...] = array
 
     def __repr__(self) -> str:
-        return f"ColGrid(array={self.array!r})"
+        return f"Col({self.array!r})"
 
     @property
     def shape(self) -> tuple[M_co, Literal[1]]:
         return (len(self.array), 1)  # type: ignore[return-value]
 
     def transpose(self) -> Mesh[Literal[1], M_co, T_co]:
-        return RowGrid(self.array)
+        return Row(self.array)
 
     def flip(self, *, by: Rule = Rule.ROW) -> Mesh[M_co, Literal[1], T_co]:
         if by is Rule.COL:
@@ -749,3 +909,6 @@ class ColGrid(Materialization[M_co, Literal[1], T_co], Generic[M_co, T_co]):
         if n % 4 == 1:
             return self.transpose()
         return super().rotate(n)
+
+
+NIL: Final[Nil] = Nil()
