@@ -368,6 +368,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """
         if field_width <= 0:
             raise ValueError("field width must be positive")
+        if not self:
+            return f"Empty matrix ({self.nrows} × {self.ncols})"
 
         outer = list[str]()
 

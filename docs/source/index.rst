@@ -38,9 +38,16 @@ Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl
     :hidden:
     :caption: api reference
 
-    abc
-    builtins
-    rule
+    api_builtins
+    api_rule
+
+.. toctree::
+    :hidden:
+    :caption: user guide
+
+    guide_basics
+    guide_construction
+    guide_rules
 
 .. toctree::
     :hidden:

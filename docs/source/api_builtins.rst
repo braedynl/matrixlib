@@ -4,8 +4,8 @@ Built-ins
 .. automodule:: matrices.builtins
 
     .. autoclass:: Matrix
-        :special-members: __repr__, __str__, __eq__, __hash__, __getitem__, __iter__, __reversed__, __contains__, __deepcopy__, __copy__
-        :members: from_nesting, array, shape, nrows, ncols, index, count, transpose, flip, rotate, reverse, materialize, n, values, slices, string, equal, not_equal
+        :special-members: __init__, __repr__, __str__, __eq__, __hash__, __len__, __getitem__, __iter__, __reversed__, __contains__, __deepcopy__, __copy__
+        :members: from_nesting, array, shape, nrows, ncols, index, count, transpose, flip, rotate, reverse, materialize, n, values, slices, format, equal, not_equal
 
     .. autoclass:: ComplexMatrix
         :special-members: __getitem__, __add__, __sub__, __mul__, __matmul__, __truediv__, __radd__, __rsub__, __rmul__, __rtruediv__, __neg__, __pos__, __abs__
