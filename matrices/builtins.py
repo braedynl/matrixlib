@@ -29,15 +29,9 @@ I_co = TypeVar("I_co", covariant=True, bound=int)
 class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     """A "hybrid" one and two-rank immutable sequence
 
-    Each matrix holds a ``Mesh`` object that provides the core operations for
-    the ``Matrix`` class. Certain operations that permute the matrix's values,
-    such as transposition and rotation, are implemented as ``Mesh`` sub-classes
-    that "move" indices to their permuted positions before in-memory access
-    occurs.
-
-    This compositional relationship allows for the "permutation types" to exist
-    below the ``Matrix`` abstraction, allowing for easier sub-classing of
-    ``Matrix``.
+    Implements the ``collections.abc.Sequence`` interface, alongside
+    two-dimensional transformations and access abilities. Provides only a few
+    vectorized operations that are usable on objects of any type.
     """
 
     __slots__ = ("__weakref__", "mesh")
@@ -59,6 +53,21 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __init__(self, array: Iterable[T_co], shape: tuple[M_co, N_co]) -> None: ...
 
     def __init__(self, array=(), shape=None):
+        """Construct a matrix from an iterable and shape, or from another
+        matrix instance
+
+        If ``shape`` is a ``Rule``, ``array`` is interpreted as either a row or
+        column vector, depending on the given member.
+
+        Raises ``ValueError`` if any of the shape's values are negative, or if
+        the shape's product does not equal the length of ``array``
+        (debug-only).
+
+        Construction-by-matrix (what we call "casting"), is a constant-time
+        operation. Providing a matrix with some ``shape`` is usually a
+        constant-time operation as well, but can vary depending on its material
+        state (this is also how matrices can be "re-shaped").
+        """
         self.mesh: Mesh[M_co, N_co, T_co]  # type: ignore
         if shape is None:
             if isinstance(array, Mesh):
@@ -75,37 +84,37 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 self.mesh = Row(array)
             else:
                 self.mesh = Col(array)
-        else:
-            shape = tuple(shape)
-            nrows, ncols = shape
-            if __debug__:
-                test_size = nrows * ncols
-                true_size = len(array)
-                if nrows < 0 or ncols < 0:
-                    raise ValueError("shape values must be non-negative")
-                if test_size != true_size:
-                    raise ValueError(f"cannot interpret size {true_size} iterable as shape {nrows} × {ncols}")
-            if ncols > 1:
-                if nrows > 1:
-                    self.mesh = Grid(array, shape)
-                elif nrows:
-                    self.mesh = Row(array)
-                else:
-                    self.mesh = NilRow(ncols)
-            elif ncols:
-                if nrows > 1:
-                    self.mesh = Col(array)
-                elif nrows:
-                    self.mesh = Box(array[0])
-                else:
-                    self.mesh = NilRow(ncols)
+            return
+        shape = tuple(shape)
+        nrows, ncols = shape
+        if __debug__:
+            test_size = nrows * ncols
+            true_size = len(array)
+            if nrows < 0 or ncols < 0:
+                raise ValueError("shape values must be non-negative")
+            if test_size != true_size:
+                raise ValueError(f"cannot interpret size {true_size} iterable as shape {nrows} × {ncols}")
+        if ncols > 1:
+            if nrows > 1:
+                self.mesh = Grid(array, shape)
+            elif nrows:
+                self.mesh = Row(array)
             else:
-                if nrows > 1:
-                    self.mesh = NilCol(nrows)
-                elif nrows:
-                    self.mesh = NilCol(nrows)
-                else:
-                    self.mesh = NIL
+                self.mesh = NilRow(ncols)
+        elif ncols:
+            if nrows > 1:
+                self.mesh = Col(array)
+            elif nrows:
+                self.mesh = Box(array[0])
+            else:
+                self.mesh = NilRow(ncols)
+        else:
+            if nrows > 1:
+                self.mesh = NilCol(nrows)
+            elif nrows:
+                self.mesh = NilCol(nrows)
+            else:
+                self.mesh = NIL
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
@@ -254,6 +263,33 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """Return the number of times ``value`` appears in the matrix"""
         return self.mesh.count(value)
 
+    def materialize(self) -> Matrix[M_co, N_co, T_co]:
+        """Return a materialized copy of the matrix
+
+        Certain methods (particularly those that permute the matrix's values in
+        some fashion) construct a view onto the underlying sequence to preserve
+        memory. These views can "stack" onto one another, which can drastically
+        increase access time.
+
+        This method addresses said issue by shallowly placing the elements into
+        a new sequence - a process that we call "materialization". The
+        resulting matrix instance will have access times identical to that of
+        an instance created from an array-and-shape pairing, but note that this
+        may consume significant amounts of memory (depending on the size of the
+        matrix).
+
+        If the matrix does not store a kind of view, this method returns a
+        matrix that is semantically equivalent to the original. We call such
+        matrices "materialized", or "material", as they store a sequence whose
+        elements already exist in the desired order.
+
+        Think of materialization as being akin to compiling regular
+        expressions: if the same matrix permutation is required in many
+        different places, it's much more time-efficient to materialize it, and
+        use the resulting material matrix as a substituting variable.
+        """
+        return Matrix(self.mesh.materialize())
+
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix"""
         return Matrix(self.mesh.transpose())
@@ -284,33 +320,6 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def reverse(self) -> Matrix[M_co, N_co, T_co]:
         """Return a reversed view of the matrix"""
         return Matrix(self.mesh.reverse())
-
-    def materialize(self) -> Matrix[M_co, N_co, T_co]:
-        """Return a materialized copy of the matrix
-
-        Certain methods (particularly those that permute the matrix's values in
-        some fashion) construct a view onto the underlying sequence to preserve
-        memory. These views can "stack" onto one another, which can drastically
-        increase access time.
-
-        This method addresses said issue by shallowly placing the elements into
-        a new sequence - a process that we call "materialization". The
-        resulting matrix instance will have access times identical to that of
-        an instance created from an array-and-shape pairing, but note that this
-        may consume significant amounts of memory (depending on the size of the
-        matrix).
-
-        If the matrix does not store a kind of view, this method returns a
-        matrix that is semantically equivalent to the original. We call such
-        matrices "materialized", or "material", as they store a sequence whose
-        elements already exist in the desired order.
-
-        Think of materialization as being akin to compiling regular
-        expressions: if the same matrix permutation is required in many
-        different places, it's much more time-efficient to materialize it, and
-        use the resulting material matrix as a substituting variable.
-        """
-        return Matrix(self.mesh.materialize())
 
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...

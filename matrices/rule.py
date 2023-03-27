@@ -33,7 +33,7 @@ class Rule(Enum):
 
     @property
     def handle(self) -> Literal["row", "column"]:
-        """The rule's non-Pythonized name"""
+        """The rule's un-Pythonized name"""
         return ("row", "column")[self.value]
 
 
