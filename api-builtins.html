@@ -211,6 +211,7 @@
         <article role="main">
           <section id="module-matrices.builtins">
 <span id="built-ins"></span><span id="api-builtins"></span><h1>Built-ins<a class="headerlink" href="#module-matrices.builtins" title="Permalink to this heading">#</a></h1>
+<p>Built-in matrix type definitions</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="matrices.builtins.Matrix">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matrices.builtins.</span></span><span class="sig-name descname"><span class="pre">Matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mesh</span><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">T_co</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matrices.builtins.Matrix" title="Permalink to this definition">#</a></dt>
@@ -663,6 +664,30 @@ as its format may change without regard for backwards compatability.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="matrices.builtins.ComplexMatrix.materialize">
+<span class="sig-name descname"><span class="pre">materialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.ComplexMatrix" title="matrices.builtins.ComplexMatrix"><span class="pre">ComplexMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">C_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.ComplexMatrix.materialize" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a materialized copy of the matrix</p>
+<p>Certain methods (particularly those that permute the matrix’s values in
+some fashion) construct a view onto the underlying sequence to preserve
+memory. These views can “stack” onto one another, which can drastically
+increase access time.</p>
+<p>This method addresses said issue by shallowly placing the elements into
+a new sequence - a process that we call “materialization”. The
+resulting matrix instance will have access times identical to that of
+an instance created from an array-and-shape pairing, but note that this
+may consume significant amounts of memory (depending on the size of the
+matrix).</p>
+<p>If the matrix does not store a kind of view, this method returns a
+matrix that is semantically equivalent to the original. We call such
+matrices “materialized”, or “material”, as they store a sequence whose
+elements already exist in the desired order.</p>
+<p>Think of materialization as being akin to compiling regular
+expressions: if the same matrix permutation is required in many
+different places, it’s much more time-efficient to materialize it, and
+use the resulting material matrix as a substituting variable.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="matrices.builtins.ComplexMatrix.transpose">
 <span class="sig-name descname"><span class="pre">transpose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.ComplexMatrix" title="matrices.builtins.ComplexMatrix"><span class="pre">ComplexMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">C_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.ComplexMatrix.transpose" title="Permalink to this definition">#</a></dt>
 <dd><p>Return a transposed view of the matrix</p>
@@ -694,30 +719,6 @@ those outside of a small range near zero) will lose typing precision.</p>
 <dt class="sig sig-object py" id="matrices.builtins.ComplexMatrix.reverse">
 <span class="sig-name descname"><span class="pre">reverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.ComplexMatrix" title="matrices.builtins.ComplexMatrix"><span class="pre">ComplexMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">C_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.ComplexMatrix.reverse" title="Permalink to this definition">#</a></dt>
 <dd><p>Return a reversed view of the matrix</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="matrices.builtins.ComplexMatrix.materialize">
-<span class="sig-name descname"><span class="pre">materialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.ComplexMatrix" title="matrices.builtins.ComplexMatrix"><span class="pre">ComplexMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">C_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.ComplexMatrix.materialize" title="Permalink to this definition">#</a></dt>
-<dd><p>Return a materialized copy of the matrix</p>
-<p>Certain methods (particularly those that permute the matrix’s values in
-some fashion) construct a view onto the underlying sequence to preserve
-memory. These views can “stack” onto one another, which can drastically
-increase access time.</p>
-<p>This method addresses said issue by shallowly placing the elements into
-a new sequence - a process that we call “materialization”. The
-resulting matrix instance will have access times identical to that of
-an instance created from an array-and-shape pairing, but note that this
-may consume significant amounts of memory (depending on the size of the
-matrix).</p>
-<p>If the matrix does not store a kind of view, this method returns a
-matrix that is semantically equivalent to the original. We call such
-matrices “materialized”, or “material”, as they store a sequence whose
-elements already exist in the desired order.</p>
-<p>Think of materialization as being akin to compiling regular
-expressions: if the same matrix permutation is required in many
-different places, it’s much more time-efficient to materialize it, and
-use the resulting material matrix as a substituting variable.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1014,6 +1015,30 @@ class.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="matrices.builtins.RealMatrix.materialize">
+<span class="sig-name descname"><span class="pre">materialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.RealMatrix" title="matrices.builtins.RealMatrix"><span class="pre">RealMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">R_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.RealMatrix.materialize" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a materialized copy of the matrix</p>
+<p>Certain methods (particularly those that permute the matrix’s values in
+some fashion) construct a view onto the underlying sequence to preserve
+memory. These views can “stack” onto one another, which can drastically
+increase access time.</p>
+<p>This method addresses said issue by shallowly placing the elements into
+a new sequence - a process that we call “materialization”. The
+resulting matrix instance will have access times identical to that of
+an instance created from an array-and-shape pairing, but note that this
+may consume significant amounts of memory (depending on the size of the
+matrix).</p>
+<p>If the matrix does not store a kind of view, this method returns a
+matrix that is semantically equivalent to the original. We call such
+matrices “materialized”, or “material”, as they store a sequence whose
+elements already exist in the desired order.</p>
+<p>Think of materialization as being akin to compiling regular
+expressions: if the same matrix permutation is required in many
+different places, it’s much more time-efficient to materialize it, and
+use the resulting material matrix as a substituting variable.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="matrices.builtins.RealMatrix.transpose">
 <span class="sig-name descname"><span class="pre">transpose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.RealMatrix" title="matrices.builtins.RealMatrix"><span class="pre">RealMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">R_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.RealMatrix.transpose" title="Permalink to this definition">#</a></dt>
 <dd><p>Return a transposed view of the matrix</p>
@@ -1045,30 +1070,6 @@ those outside of a small range near zero) will lose typing precision.</p>
 <dt class="sig sig-object py" id="matrices.builtins.RealMatrix.reverse">
 <span class="sig-name descname"><span class="pre">reverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.RealMatrix" title="matrices.builtins.RealMatrix"><span class="pre">RealMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">R_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.RealMatrix.reverse" title="Permalink to this definition">#</a></dt>
 <dd><p>Return a reversed view of the matrix</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="matrices.builtins.RealMatrix.materialize">
-<span class="sig-name descname"><span class="pre">materialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.RealMatrix" title="matrices.builtins.RealMatrix"><span class="pre">RealMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">R_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.RealMatrix.materialize" title="Permalink to this definition">#</a></dt>
-<dd><p>Return a materialized copy of the matrix</p>
-<p>Certain methods (particularly those that permute the matrix’s values in
-some fashion) construct a view onto the underlying sequence to preserve
-memory. These views can “stack” onto one another, which can drastically
-increase access time.</p>
-<p>This method addresses said issue by shallowly placing the elements into
-a new sequence - a process that we call “materialization”. The
-resulting matrix instance will have access times identical to that of
-an instance created from an array-and-shape pairing, but note that this
-may consume significant amounts of memory (depending on the size of the
-matrix).</p>
-<p>If the matrix does not store a kind of view, this method returns a
-matrix that is semantically equivalent to the original. We call such
-matrices “materialized”, or “material”, as they store a sequence whose
-elements already exist in the desired order.</p>
-<p>Think of materialization as being akin to compiling regular
-expressions: if the same matrix permutation is required in many
-different places, it’s much more time-efficient to materialize it, and
-use the resulting material matrix as a substituting variable.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1468,6 +1469,30 @@ similar to how built-in sequences compare values first, lengths second.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="matrices.builtins.IntegerMatrix.materialize">
+<span class="sig-name descname"><span class="pre">materialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.IntegerMatrix" title="matrices.builtins.IntegerMatrix"><span class="pre">IntegerMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">I_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.IntegerMatrix.materialize" title="Permalink to this definition">#</a></dt>
+<dd><p>Return a materialized copy of the matrix</p>
+<p>Certain methods (particularly those that permute the matrix’s values in
+some fashion) construct a view onto the underlying sequence to preserve
+memory. These views can “stack” onto one another, which can drastically
+increase access time.</p>
+<p>This method addresses said issue by shallowly placing the elements into
+a new sequence - a process that we call “materialization”. The
+resulting matrix instance will have access times identical to that of
+an instance created from an array-and-shape pairing, but note that this
+may consume significant amounts of memory (depending on the size of the
+matrix).</p>
+<p>If the matrix does not store a kind of view, this method returns a
+matrix that is semantically equivalent to the original. We call such
+matrices “materialized”, or “material”, as they store a sequence whose
+elements already exist in the desired order.</p>
+<p>Think of materialization as being akin to compiling regular
+expressions: if the same matrix permutation is required in many
+different places, it’s much more time-efficient to materialize it, and
+use the resulting material matrix as a substituting variable.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="matrices.builtins.IntegerMatrix.transpose">
 <span class="sig-name descname"><span class="pre">transpose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.IntegerMatrix" title="matrices.builtins.IntegerMatrix"><span class="pre">IntegerMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">I_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.IntegerMatrix.transpose" title="Permalink to this definition">#</a></dt>
 <dd><p>Return a transposed view of the matrix</p>
@@ -1499,30 +1524,6 @@ those outside of a small range near zero) will lose typing precision.</p>
 <dt class="sig sig-object py" id="matrices.builtins.IntegerMatrix.reverse">
 <span class="sig-name descname"><span class="pre">reverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.IntegerMatrix" title="matrices.builtins.IntegerMatrix"><span class="pre">IntegerMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">I_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.IntegerMatrix.reverse" title="Permalink to this definition">#</a></dt>
 <dd><p>Return a reversed view of the matrix</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="matrices.builtins.IntegerMatrix.materialize">
-<span class="sig-name descname"><span class="pre">materialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.builtins.IntegerMatrix" title="matrices.builtins.IntegerMatrix"><span class="pre">IntegerMatrix</span></a><span class="p"><span class="pre">[</span></span><span class="pre">M_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">N_co</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">I_co</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#matrices.builtins.IntegerMatrix.materialize" title="Permalink to this definition">#</a></dt>
-<dd><p>Return a materialized copy of the matrix</p>
-<p>Certain methods (particularly those that permute the matrix’s values in
-some fashion) construct a view onto the underlying sequence to preserve
-memory. These views can “stack” onto one another, which can drastically
-increase access time.</p>
-<p>This method addresses said issue by shallowly placing the elements into
-a new sequence - a process that we call “materialization”. The
-resulting matrix instance will have access times identical to that of
-an instance created from an array-and-shape pairing, but note that this
-may consume significant amounts of memory (depending on the size of the
-matrix).</p>
-<p>If the matrix does not store a kind of view, this method returns a
-matrix that is semantically equivalent to the original. We call such
-matrices “materialized”, or “material”, as they store a sequence whose
-elements already exist in the desired order.</p>
-<p>Think of materialization as being akin to compiling regular
-expressions: if the same matrix permutation is required in many
-different places, it’s much more time-efficient to materialize it, and
-use the resulting material matrix as a substituting variable.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1657,11 +1658,11 @@ class.</p>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.__neg__"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.__neg__()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.__pos__"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.__pos__()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.__abs__"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.__abs__()</span></code></a></li>
+<li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.materialize"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.materialize()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.transpose"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.transpose()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.flip"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.flip()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.rotate"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.rotate()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.reverse"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.reverse()</span></code></a></li>
-<li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.materialize"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.materialize()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.slices"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.slices()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.conjugate"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.conjugate()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.ComplexMatrix.transjugate"><code class="docutils literal notranslate"><span class="pre">ComplexMatrix.transjugate()</span></code></a></li>
@@ -1690,11 +1691,11 @@ class.</p>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.__rdivmod__"><code class="docutils literal notranslate"><span class="pre">RealMatrix.__rdivmod__()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.__neg__"><code class="docutils literal notranslate"><span class="pre">RealMatrix.__neg__()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.__pos__"><code class="docutils literal notranslate"><span class="pre">RealMatrix.__pos__()</span></code></a></li>
+<li><a class="reference internal" href="#matrices.builtins.RealMatrix.materialize"><code class="docutils literal notranslate"><span class="pre">RealMatrix.materialize()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.transpose"><code class="docutils literal notranslate"><span class="pre">RealMatrix.transpose()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.flip"><code class="docutils literal notranslate"><span class="pre">RealMatrix.flip()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.rotate"><code class="docutils literal notranslate"><span class="pre">RealMatrix.rotate()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.reverse"><code class="docutils literal notranslate"><span class="pre">RealMatrix.reverse()</span></code></a></li>
-<li><a class="reference internal" href="#matrices.builtins.RealMatrix.materialize"><code class="docutils literal notranslate"><span class="pre">RealMatrix.materialize()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.slices"><code class="docutils literal notranslate"><span class="pre">RealMatrix.slices()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.conjugate"><code class="docutils literal notranslate"><span class="pre">RealMatrix.conjugate()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.RealMatrix.transjugate"><code class="docutils literal notranslate"><span class="pre">RealMatrix.transjugate()</span></code></a></li>
@@ -1734,11 +1735,11 @@ class.</p>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.__pos__"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.__pos__()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.__abs__"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.__abs__()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.__invert__"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.__invert__()</span></code></a></li>
+<li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.materialize"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.materialize()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.transpose"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.transpose()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.flip"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.flip()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.rotate"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.rotate()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.reverse"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.reverse()</span></code></a></li>
-<li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.materialize"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.materialize()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.slices"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.slices()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.conjugate"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.conjugate()</span></code></a></li>
 <li><a class="reference internal" href="#matrices.builtins.IntegerMatrix.transjugate"><code class="docutils literal notranslate"><span class="pre">IntegerMatrix.transjugate()</span></code></a></li>
