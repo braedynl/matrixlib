@@ -1,2 +1,3 @@
-furo==2023.03.27
+sphinx
+furo
 typing_extensions>=4.0.1
