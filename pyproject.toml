@@ -22,6 +22,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 keywords = ["matrices", "matrix", "vectors", "vector", "vectorization"]
+dependencies = [
+  "typing_extensions>=4.0.1",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/braedynl/matrices-py"
