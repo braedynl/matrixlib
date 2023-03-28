@@ -16,7 +16,6 @@ Since we're limited to two dimensions, we decided to alter the nomenclature for 
 >>>
 >>> Rule.COL
 <Rule.COL: 1>
->>>
 
 The value of each rule member maps to an integer that accesses its dimension from a matrix shape (or any two-element sequence). A member can be "inverted" as a means to retrieve the opposite dimension in circumstances where you don't know which dimension you're handling (particularly useful for implementing ``Matrix`` functions):
 
@@ -25,7 +24,6 @@ The value of each rule member maps to an integer that accesses its dimension fro
 >>>
 >>> ~Rule.COL
 <Rule.ROW: 0>
->>>
 
 The ``Matrix`` type is "rule-aware" - that is, the ``Matrix`` type explicitly uses the ``Rule`` class in many parts of its definition, and even expects the user to provide ``Rule`` members as arguments to some functions - usually ones that can be interpreted as being done "row-wise" or "column-wise". The ``flip()`` method is a great example of this - instead of splitting the method into two (e.g., ``flip_rows()``, ``flip_cols()``), it expects a ``Rule`` member to dictate row or column-wise interpretation:
 
@@ -52,7 +50,6 @@ The ``Matrix`` type is "rule-aware" - that is, the ``Matrix`` type explicitly us
 |        3        2        1 |
 |        6        5        4 |
 (2 × 3)
->>>
 
 There was one method of ``Matrix`` construction that we neglected to mention in the previous segment, involving rules: the ``shape`` argument accepts a ``Rule`` member as a means to interpret the ``array`` as a row or column vector:
 
@@ -69,6 +66,5 @@ There was one method of ``Matrix`` construction that we neglected to mention in 
 |        3 |
 |        4 |
 (5 × 1)
->>>
 
 This is actually the preferred method of constructing a vector, as it does not require you to retrieve the iterable's length in some fashion.

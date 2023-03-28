@@ -16,7 +16,7 @@ You'll find that the shape, :math:`1 \times N`, is a common fallback used when t
 The recommended way of creating a row or column vector is to pass its content and a ``Rule`` member to the constructor:
 
 >>> from matrices import Matrix, ROW, COL
->>> 
+>>>
 >>> a = Matrix([1, 2, 3], ROW)
 >>> print(a)
 |        1        2        3 |
@@ -89,6 +89,13 @@ If you believe that the access times are insufficient for your purposes, you can
 
 Design Decisions
 ----------------
+
+Why is there no ``StringMatrix`` type?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The inclusion of some kind of ``StringMatrix`` is being considered for a future version. The ``Matrix`` type is meant to be easily sub-classed, and so it's not too hard to implement a version for yourself (you can take a look at the numeric matrices to see a typical sub-class implementation).
+
+The current debate over its interface revolves around methods with identical names. The ``str`` type implements a ``count()`` method, for example, but ``Matrix`` also implements a ``count()`` method. Should the value type's methods exist in a sub-namespace? Should we alter the value type's method names, such that we can include them at the matrix-class level? Experimentation with the interface is being done with regard to these questions.
 
 Why are matrices immutable?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

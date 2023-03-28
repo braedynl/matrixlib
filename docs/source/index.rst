@@ -47,7 +47,7 @@ Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl
     :hidden:
     :caption: user guide
 
-    guide-basics
+    guide-prelude
     guide-construction
     guide-rules
     guide-access

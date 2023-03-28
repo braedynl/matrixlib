@@ -10,9 +10,7 @@ Throughout the remainder of the user guide, you'll probably see matrices constru
 >>> a = Matrix([
 ...     1, 2, 3,
 ...     4, 5, 6,
-...     7, 8, 9,
-... ], shape=(3, 3))
->>>
+... ], shape=(2, 3))
 
 This uses the ``Matrix`` constructor. It takes an iterable of values (a "flattened" iterable), and the shape to interpret it as - raising ``ValueError`` if the shape's values are negative, or if the shape's product does not equal the iterable's length. Matrices are first and foremost a ``Sequence[T]`` - *not* a ``Sequence[Sequence[T]]`` - and the constructor helps to reinforce that.
 
@@ -35,7 +33,6 @@ Empty matrix (0 × 3)
 >>> c = Matrix([], shape=(3, 0))  # len([]) == 3 * 0 == 0  ✔ OK
 >>> print(c)
 Empty matrix (3 × 0)
->>>
 
 While constructing a ``Matrix`` one-dimensionally is the recommended way of doing things, there does exist a method to construct matrices two-dimensionally, in cases where you don't already have a one-dimensional iterable:
 
@@ -44,6 +41,5 @@ While constructing a ``Matrix`` one-dimensionally is the recommended way of doin
 ...     [4, 5, 6],
 ...     [7, 8, 9],
 ... ])
->>>
 
 The shape is inferred in this circumstance, but bear in mind the drawbacks explained above - again, we only recommend using this method when you don't have immediate access to a one-dimensional version of the iterable.

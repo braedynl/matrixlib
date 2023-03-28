@@ -16,7 +16,7 @@ In short:
 In the current implementation, you are guaranteed a *material* ``Matrix`` in the following circumstances:
 
 * Construction from an iterable-shape pairing, or from ``from_nesting()``
-* All forms of slicing
+* All forms of slicing (though this may change in a future version)
 * Both unary, and binary arithmetic and comparison operations, such as ``Matrix.equal()``, ``ComplexMatrix.__add__()``, ``RealMatrix.__mod__()``, ``IntegerMatrix.__and__()``, etc.
 
 You *may* receive a *non-material* ``Matrix`` in the following circumstances:
@@ -24,7 +24,7 @@ You *may* receive a *non-material* ``Matrix`` in the following circumstances:
 * Construction from another ``Matrix`` instance
 * Use of ``transpose()``, ``flip()``, ``rotate()``, and ``reverse()`` (known as the "permuting methods")
 
-The ``transpose()`` operation, and those like it, are internally creating a *mesh view* onto the operating ``Matrix`` instance's mesh - the operation itself is :math:`O(1)` because of this - in a sense, you pay the cost of transposition in parts when you access or iterate through it. When you combine these methods, the mesh views can *stack*.
+The ``transpose()`` operation, and those like it, are internally creating a *mesh view* onto the operating ``Matrix`` instance's mesh - the operation itself is :math:`O(1)` because of this - in a sense, you pay the cost of transposition in parts when you access it, you *do not* pay the full cost at the moment of creation. When you combine these methods, the mesh views can *stack*.
 
 .. code-block::
 
@@ -69,7 +69,7 @@ The matrix, ``a``, stores a ``Mesh`` that holds its elements as an actual in-mem
 
 In general, a matrix's access time is proportional to the number of permutations that proceeded its creation - the more permutations, the slower its access times will be.
 
-So why do this? Well, Python objects are *expensive* - much more expensive than objects in other languages. Views are a way to avoid allocation of more space, but, obviously comes at the cost of time. We believe that the common case is just to apply *one* permutation, and in such scenarios, you're not sacrificing *that* much access time for huge memory savings.
+So why do this? Well, Python objects are *expensive* - much more expensive than objects in other languages. Views are a way to avoid allocation of more space, but, obviously comes at the cost of time. We believe that the common case is just to apply one permutation, and in such scenarios, you're not sacrificing *that* much access time for huge memory savings.
 
 There are some circumstances where you *do* want to sacrifice memory for the sake of time, however. If you find yourself using a permuted matrix in a lot of different places, you may want to **materialize** it for better speeds. You can accomplish this via the ``materialize()`` method:
 

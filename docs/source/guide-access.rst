@@ -98,7 +98,7 @@ Slicing a matrix can also be accomplished in one dimension - the returned matrix
 |        1        2        3        4        5        6 |
 (1 × 6)
 
-Though the "flattening" aspect of this capability is not too useful, since all matrices can be interpreted as their flattened selves, no matter their shape.
+Though the "flattening" aspect of this capability is not too useful, since all matrices can be interpreted as their flattened selves, no matter the shape.
 
 There are many circumstances in which you'd probably want the rows or columns of the matrix - the ``__getitem__()`` method exposes additional "2D indexing" capabilities in a similar fashion to NumPy arrays:
 
