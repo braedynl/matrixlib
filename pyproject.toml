@@ -4,16 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "matrices-py"
-version = "0.2.3"
+version = "0.3.0"
 authors = [
   { name="Braedyn L" },
 ]
-description = "Dynamic, vectorized sequence types in ≤ 2 dimensions."
+description = "General-purpose matrices for the layman"
 readme = "README.md"
 license = { text="MIT License" }
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
@@ -25,8 +26,10 @@ keywords = ["matrices", "matrix", "vectors", "vector", "vectorization"]
 [project.urls]
 "Homepage" = "https://github.com/braedynl/matrices-py"
 "Source" = "https://github.com/braedynl/matrices-py"
-"Documentation" = "https://github.com/braedynl/matrices-py/wiki"
 "Bug Tracker" = "https://github.com/braedynl/matrices-py/issues"
 
 [tool.setuptools.package-data]
 "*" = ["*.pyi", "py.typed"]
+
+[tool.pyright]
+reportShadowedImports = false

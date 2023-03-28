@@ -1,15 +1,13 @@
-"""Dynamic, vectorized sequence types in ≤ 2 dimensions.
+"""General-purpose matrices for the layman
 
-Contains the `Matrix` definition, along with its related utilities and
-variants.
+Implements a family of general-purpose matrix types, with comprehensive
+type-checking capabilities, and seamless integration with core Python
+services.
 
 Author: Braedyn L
-Version: 0.2.3
-Documentation: https://github.com/braedynl/matrices-py/wiki
+Version: 0.3.0
+Source: https://github.com/braedynl/matrices-py/
 """
 
-from .matrices import *
-from .protocols import *
+from .builtins import *
 from .rule import *
-from .shape import *
-from .utilities import *
