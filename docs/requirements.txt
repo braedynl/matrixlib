@@ -1,1 +1,2 @@
 furo==2023.03.27
+typing_extensions>=4.0.1
