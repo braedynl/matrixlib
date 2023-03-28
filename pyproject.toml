@@ -21,7 +21,14 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-keywords = ["matrices", "matrix", "vectors", "vector", "vectorization"]
+keywords = [
+  "matrices",
+  "matrix",
+  "vectors",
+  "vector",
+  "vectorization",
+  "sequences",
+]
 dependencies = [
   "typing_extensions>=4.0.1",
 ]
