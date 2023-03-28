@@ -1,3 +1,5 @@
+"""The ``Rule`` enum and its member aliases"""
+
 from __future__ import annotations
 
 from enum import Enum

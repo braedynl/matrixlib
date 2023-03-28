@@ -1,3 +1,5 @@
+"""Built-in matrix type definitions"""
+
 from __future__ import annotations
 
 import itertools
@@ -745,6 +747,9 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
             shape=u,
         )
 
+    def materialize(self) -> ComplexMatrix[M_co, N_co, C_co]:
+        return ComplexMatrix(super().materialize())
+
     def transpose(self) -> ComplexMatrix[N_co, M_co, C_co]:
         return ComplexMatrix(super().transpose())
 
@@ -765,9 +770,6 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
 
     def reverse(self) -> ComplexMatrix[M_co, N_co, C_co]:
         return ComplexMatrix(super().reverse())
-
-    def materialize(self) -> ComplexMatrix[M_co, N_co, C_co]:
-        return ComplexMatrix(super().materialize())
 
     @overload
     def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[ComplexMatrix[Literal[1], N_co, C_co]]: ...
@@ -1172,6 +1174,9 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
     def __pos__(self):
         return RealMatrix(super().__pos__())
 
+    def materialize(self) -> RealMatrix[M_co, N_co, R_co]:
+        return RealMatrix(super().materialize())
+
     def transpose(self) -> RealMatrix[N_co, M_co, R_co]:
         return RealMatrix(super().transpose())
 
@@ -1192,9 +1197,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
 
     def reverse(self) -> RealMatrix[M_co, N_co, R_co]:
         return RealMatrix(super().reverse())
-
-    def materialize(self) -> RealMatrix[M_co, N_co, R_co]:
-        return RealMatrix(super().materialize())
 
     @overload
     def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[RealMatrix[Literal[1], N_co, R_co]]: ...
@@ -1793,6 +1795,9 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
             shape=u,
         )
 
+    def materialize(self) -> IntegerMatrix[M_co, N_co, I_co]:
+        return IntegerMatrix(super().materialize())
+
     def transpose(self) -> IntegerMatrix[N_co, M_co, I_co]:
         return IntegerMatrix(super().transpose())
 
@@ -1813,9 +1818,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def reverse(self) -> IntegerMatrix[M_co, N_co, I_co]:
         return IntegerMatrix(super().reverse())
-
-    def materialize(self) -> IntegerMatrix[M_co, N_co, I_co]:
-        return IntegerMatrix(super().materialize())
 
     @overload
     def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[IntegerMatrix[Literal[1], N_co, I_co]]: ...

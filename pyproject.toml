@@ -27,7 +27,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/braedynl/matrices-py"
+"Homepage" = "https://braedynl.github.io/matrices-py/"
+"Documentation" = "https://braedynl.github.io/matrices-py/"
 "Source" = "https://github.com/braedynl/matrices-py"
 "Bug Tracker" = "https://github.com/braedynl/matrices-py/issues"
 
