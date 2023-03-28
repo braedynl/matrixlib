@@ -3,14 +3,41 @@
 Matrices-Py
 ===========
 
-Simplistic, lightweight vectors and matrices for Python 3.
+General-purpose matrices for the layman.
 
-This library aims to be a "natural" extension to the core Python tool set, similar to the `fractions <https://docs.python.org/3/library/fractions.html>`_ module of the standard library. Most everything contained within is, and will always be, written in Python alone.
+Implements a family of general-purpose matrix types, with comprehensive type-checking capabilities, and seamless integration with core Python services.
+
+>>> from math import isclose
+>>> from typing import Literal as L
+>>>
+>>> from matrices import RealMatrix, ROW
+>>> 
+>>> def norm(a: RealMatrix[int, int, float]) -> float:
+...     return sum(a * a) ** 0.5
+... 
+>>> a = RealMatrix[L[3], L[3], float]([
+...     1, 2, 3,
+...     4, 5, 6,
+...     7, 8, 9,
+... ], shape=(3, 3))
+>>> 
+>>> b = RealMatrix[L[3], L[3], float].from_nesting(
+...     row / norm(row)
+...     for row in a.slices(by=ROW)
+... )
+>>>
+>>> print(b)
+| 0.26726… 0.53452… 0.80178… |
+| 0.45584… 0.56980… 0.68376… |
+| 0.50257… 0.57436… 0.64616… |
+(3 × 3)
+>>>
+>>> assert all(isclose(norm(row), 1) for row in b.slices(by=ROW))
 
 Getting Started
 ---------------
 
-This project is available through `pip <https://pip.pypa.io/en/stable/>`_ (requires Python 3.9 or later):
+This project is available through `pip <https://pip.pypa.io/en/stable/>`_ (requires Python 3.9 or later, 3.11 recommended):
 
 .. code-block:: console
 
@@ -19,6 +46,8 @@ This project is available through `pip <https://pip.pypa.io/en/stable/>`_ (requi
 .. warning::
 
     Matrices-Py is currently in its infancy, and may see future changes that are not always backwards compatible.
+
+    The current iteration of this library is in **beta**. Further testing is being conducted at the moment.
 
 Contributing
 ------------

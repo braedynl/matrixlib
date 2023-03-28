@@ -15,6 +15,13 @@ from .meshes import (NIL, Box, Col, EvenNumber, Grid, Mesh, NilCol, NilRow,
                      OddNumber, Row)
 from .rule import Rule
 
+__all__ = [
+    "Matrix",
+    "ComplexMatrix",
+    "RealMatrix",
+    "IntegerMatrix",
+]
+
 T_co = TypeVar("T_co", covariant=True)
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
