@@ -1,3 +1,5 @@
+.. _faq:
+
 FAQ
 ===
 
@@ -10,6 +12,27 @@ The documentation talks about vectors a lot, but where are the vectors?
 This library and its documentation thinks of vectors as simply being a certain kind of matrix. A "row vector" is a matrix of shape :math:`1 \times N`, while a "column vector" is a matrix of shape :math:`M \times 1`.
 
 You'll find that the shape, :math:`1 \times N`, is a common fallback used when the matrix is flattened in some manner.
+
+The recommended way of creating a row or column vector is to pass its content and a ``Rule`` member to the constructor:
+
+>>> from matrices import Matrix, ROW, COL
+>>> 
+>>> a = Matrix([1, 2, 3], ROW)
+>>> print(a)
+|        1        2        3 |
+(1 × 3)
+>>>
+>>> b = Matrix([1, 2, 3], COL)
+>>> print(b)
+|        1 |
+|        2 |
+|        3 |
+(3 × 1)
+
+.. seealso::
+
+    * :ref:`Construction <guide-construction>`
+    * :ref:`Rules <guide-rules>`
 
 How can I create a matrix with more dimensions (e.g., a tensor)?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -49,7 +72,7 @@ Why is it taking so long to index this matrix?
 
 If you find that a matrix has slow access times, it's likely that the matrix was created from a permuting operation that constructed a *sequence view* (what we call "non-material"), rather than a *sequence* (what we call "material").
 
-Sequence views are internally constructed by the following methods:
+Sequence views are (usually) constructed by the following methods:
 
 * ``transpose()``
 * ``flip()``
@@ -59,6 +82,10 @@ Sequence views are internally constructed by the following methods:
 Sequence views, themselves, are a type of sequence - and so a "stacking" of sequence views can occur when these operations are combined. This can preserve large amounts of memory, but comes at the cost of access time.
 
 If you believe that the access times are insufficient for your purposes, you can sacrifice the extra memory by materializing it. There is no need to materialize manually-constructed matrices (they're *always* material), or matrices produced by standard arithmetic operations (such as ``equal()``, ``__add__()``, ``__matmul__()``, etc.). The method should note in its documentation if a sequence view is used.
+
+.. seealso::
+
+    * :ref:`Material State <guide-material-state>`
 
 Design Decisions
 ----------------
@@ -103,25 +130,19 @@ While the latter ordering of type arguments might make more sense, given the ord
 
 .. code-block::
 
-    a = Matrix[int, L[2], L[3]](
-        (
-            1, 2, 3,   # Value types appear first...
-            4, 5, 6,
-        ),
-        shape=(2, 3),  # while the dimensions appear second
-    )
+    a = Matrix[int, L[2], L[3]]([
+        1, 2, 3,      # Value types appear first...
+        4, 5, 6,
+    ], shape=(2, 3))  # while the dimensions appear second
 
 We prioritzed the potential for less writing by arranging the type arguments in a way that will be compatible with `PEP 696 <https://peps.python.org/pep-0696/>`_ (likely to be implemented in Python 3.12), which specifies that type variables can default when omitted from the type argument list. Meaning that, in the future, you'll be able to write matrices like this:
 
 .. code-block::
 
-    a = Matrix[L[2], L[3]](  # T is inferred to be ``int``, due to the presence
-        (                    # of this array - you need only describe the shape
-            1, 2, 3,
-            4, 5, 6,
-        ),
-        shape=(2, 3),
-    )
+    a = Matrix[L[2], L[3]]([  # T is inferred to be ``int`` - you need only describe the shape
+        1, 2, 3,
+        4, 5, 6,
+    ], shape=(2, 3))
 
 The type variable used in the implementation of ``Matrix``, ``T_co``, will likely default to ``object`` when PEP 696 is implemented. This would mean:
 
@@ -136,6 +157,10 @@ The same principle will apply to sub-classes of ``Matrix``:
     ComplexMatrix[L[2], L[3]] == ComplexMatrix[L[2], L[3], complex]
     RealMatrix[L[2], L[3]]    == RealMatrix[L[2], L[3], float]
     IntegerMatrix[L[2], L[3]] == IntegerMatrix[L[2], L[3], int]
+
+.. seealso::
+
+    * :ref:`Typing <guide-typing>`
 
 Why are the numeric matrices constrained to only built-in numeric types?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

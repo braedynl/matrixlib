@@ -1,9 +1,11 @@
+.. _guide-rules:
+
 Rules
 =====
 
 Before we move on to the rest of the API, we have to talk about a different class that comes with the library: the ``Rule`` class.
 
-If you're coming from NumPy, you're probably familiar with the concept of `axes <https://numpy.org/doc/stable/glossary.html#term-axis>`_ - rules can be thought of as a parallel to axes, only that we package the concept as an enum, rather than as integers. If you're unfamiliar with axes, they're essentially just numbers that correspond to an array dimension: for a two-dimensional array, the elements of "axis 0" are the rows, and the elements of "axis 1" are the columns.
+If you're coming from NumPy, you're probably familiar with the concept of `axes <https://numpy.org/doc/stable/glossary.html#term-axis>`_ - rules can be thought of as a parallel to axes, only that we package the concept as an `enum <https://docs.python.org/3/library/enum.html#enum.Enum>`_, rather than as integers. If you're unfamiliar with axes, they're essentially just numbers that correspond to an array dimension: for a two-dimensional array, the elements of "axis 0" are the rows, and the elements of "axis 1" are the columns.
 
 Since we're limited to two dimensions, we decided to alter the nomenclature for our purposes: there only exists "row-rule" and "column-rule" - no more, no less.
 

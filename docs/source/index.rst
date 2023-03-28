@@ -1,3 +1,5 @@
+.. _index:
+
 Matrices-Py
 ===========
 
@@ -38,16 +40,19 @@ Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl
     :hidden:
     :caption: api reference
 
-    api_builtins
-    api_rule
+    api-builtins
+    api-rules
 
 .. toctree::
     :hidden:
     :caption: user guide
 
-    guide_basics
-    guide_construction
-    guide_rules
+    guide-basics
+    guide-construction
+    guide-rules
+    guide-access
+    guide-typing
+    guide-material-state
 
 .. toctree::
     :hidden:

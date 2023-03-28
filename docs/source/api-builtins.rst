@@ -1,3 +1,5 @@
+.. _api-builtins:
+
 Built-ins
 =========
 
