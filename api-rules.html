@@ -134,7 +134,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -203,14 +203,64 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="rules">
-<span id="api-rules"></span><h1>Rules<a class="headerlink" href="#rules" title="Permalink to this heading">#</a></h1>
+          <section id="module-matrices.rule">
+<span id="rules"></span><span id="api-rules"></span><h1>Rules<a class="headerlink" href="#module-matrices.rule" title="Permalink to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="matrices.rule.Rule">
+<em class="property"><span class="pre">final</span><span class="w"> </span><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">matrices.rule.</span></span><span class="sig-name descname"><span class="pre">Rule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#matrices.rule.Rule" title="Permalink to this definition">#</a></dt>
+<dd><p>Enum used to dictate row or column-wise interpretation</p>
+<p>Each member maps to an index that will retrieve its corresponding dimension
+from a matrix shape (or any two-element sequence).</p>
+<p><code class="docutils literal notranslate"><span class="pre">Rule</span></code> should not be sub-classed, as many functions make the assumption
+that the class has just two members with values <code class="docutils literal notranslate"><span class="pre">0</span></code> and <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matrices.rule.Rule.ROW">
+<span class="sig-name descname"><span class="pre">ROW</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#matrices.rule.Rule.ROW" title="Permalink to this definition">#</a></dt>
+<dd><p>Maps to literal <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="matrices.rule.Rule.COL">
+<span class="sig-name descname"><span class="pre">COL</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#matrices.rule.Rule.COL" title="Permalink to this definition">#</a></dt>
+<dd><p>Maps to literal <code class="docutils literal notranslate"><span class="pre">1</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="matrices.rule.Rule.__invert__">
+<span class="sig-name descname"><span class="pre">__invert__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">COL:</span> <span class="pre">1&gt;]</span></span></span><a class="headerlink" href="#matrices.rule.Rule.__invert__" title="Permalink to this definition">#</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__invert__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ROW:</span> <span class="pre">0&gt;]</span></span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__invert__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#matrices.rule.Rule" title="matrices.rule.Rule"><span class="pre">Rule</span></a></span></span></dt>
+<dd><p>Return the rule corresponding to the opposite dimension</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="matrices.rule.Rule.handle">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">handle</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'row'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'column'</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#matrices.rule.Rule.handle" title="Permalink to this definition">#</a></dt>
+<dd><p>The rule’s un-Pythonized name</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="matrices.rule.ROW">
+<span class="sig-prename descclassname"><span class="pre">matrices.rule.</span></span><span class="sig-name descname"><span class="pre">ROW</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">Rule.ROW</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Rule.ROW</span></em><a class="headerlink" href="#matrices.rule.ROW" title="Permalink to this definition">#</a></dt>
+<dd><p>Equivalent to <code class="docutils literal notranslate"><span class="pre">Rule.ROW</span></code></p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="matrices.rule.COL">
+<span class="sig-prename descclassname"><span class="pre">matrices.rule.</span></span><span class="sig-name descname"><span class="pre">COL</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">Rule.COL</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Rule.COL</span></em><a class="headerlink" href="#matrices.rule.COL" title="Permalink to this definition">#</a></dt>
+<dd><p>Equivalent to <code class="docutils literal notranslate"><span class="pre">Rule.COL</span></code></p>
+</dd></dl>
+
 </section>
 
         </article>
@@ -256,8 +306,35 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Rules</a><ul>
+<li><a class="reference internal" href="#matrices.rule.Rule"><code class="docutils literal notranslate"><span class="pre">Rule</span></code></a><ul>
+<li><a class="reference internal" href="#matrices.rule.Rule.ROW"><code class="docutils literal notranslate"><span class="pre">Rule.ROW</span></code></a></li>
+<li><a class="reference internal" href="#matrices.rule.Rule.COL"><code class="docutils literal notranslate"><span class="pre">Rule.COL</span></code></a></li>
+<li><a class="reference internal" href="#matrices.rule.Rule.__invert__"><code class="docutils literal notranslate"><span class="pre">Rule.__invert__()</span></code></a></li>
+<li><a class="reference internal" href="#matrices.rule.Rule.handle"><code class="docutils literal notranslate"><span class="pre">Rule.handle</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#matrices.rule.ROW"><code class="docutils literal notranslate"><span class="pre">ROW</span></code></a></li>
+<li><a class="reference internal" href="#matrices.rule.COL"><code class="docutils literal notranslate"><span class="pre">COL</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
