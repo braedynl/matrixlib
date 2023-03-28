@@ -1,0 +1,453 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Built-ins" href="api-builtins.html" /><link rel="prev" title="Matrices-Py" href="index.html" />
+
+    <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
+        <title>FAQ - Matrices-Py 0.3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">Matrices-Py 0.3.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">Matrices-Py 0.3.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">general</span></p>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">FAQ</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">api reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api-builtins.html">Built-ins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-rules.html">Rules</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">user guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guide-prelude.html">Prelude</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-construction.html">Construction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-rules.html">Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-access.html">Access</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">meta</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="faq">
+<span id="id1"></span><h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this heading">#</a></h1>
+<section id="general">
+<h2>General<a class="headerlink" href="#general" title="Permalink to this heading">#</a></h2>
+<section id="the-documentation-talks-about-vectors-a-lot-but-where-are-the-vectors">
+<h3>The documentation talks about vectors a lot, but where are the vectors?<a class="headerlink" href="#the-documentation-talks-about-vectors-a-lot-but-where-are-the-vectors" title="Permalink to this heading">#</a></h3>
+<p>This library and its documentation thinks of vectors as simply being a certain kind of matrix. A “row vector” is a matrix of shape <span class="math notranslate nohighlight">\(1 \times N\)</span>, while a “column vector” is a matrix of shape <span class="math notranslate nohighlight">\(M \times 1\)</span>.</p>
+<p>You’ll find that the shape, <span class="math notranslate nohighlight">\(1 \times N\)</span>, is a common fallback used when the matrix is flattened in some manner.</p>
+<p>The recommended way of creating a row or column vector is to pass its content and a <code class="docutils literal notranslate"><span class="pre">Rule</span></code> member to the constructor:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrices</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">COL</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">ROW</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+<span class="go">|        1        2        3 |</span>
+<span class="go">(1 × 3)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">COL</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<span class="go">|        1 |</span>
+<span class="go">|        2 |</span>
+<span class="go">|        3 |</span>
+<span class="go">(3 × 1)</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="guide-construction.html#guide-construction"><span class="std std-ref">Construction</span></a></p></li>
+<li><p><a class="reference internal" href="guide-rules.html#guide-rules"><span class="std std-ref">Rules</span></a></p></li>
+</ul>
+</div>
+</section>
+<section id="how-can-i-create-a-matrix-with-more-dimensions-e-g-a-tensor">
+<h3>How can I create a matrix with more dimensions (e.g., a tensor)?<a class="headerlink" href="#how-can-i-create-a-matrix-with-more-dimensions-e-g-a-tensor" title="Permalink to this heading">#</a></h3>
+<p>You could simulate higher ranks by creating a matrix-of-matrices, but doing so is discouraged. If you truly require more dimensions, then <a class="reference external" href="https://numpy.org/">NumPy</a> should be your choice of tooling.</p>
+</section>
+<section id="how-can-i-write-add-remove-entries-of-a-matrix">
+<h3>How can I write/add/remove entries of a matrix?<a class="headerlink" href="#how-can-i-write-add-remove-entries-of-a-matrix" title="Permalink to this heading">#</a></h3>
+<p>You can’t - all of the built-in matrix types are immutable.</p>
+<p>For most cases, you can mutate a <code class="docutils literal notranslate"><span class="pre">list</span></code> as necessary, and cast it to a <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instance after performing your mutations - similar to collecting <code class="docutils literal notranslate"><span class="pre">str</span></code> instances in a <code class="docutils literal notranslate"><span class="pre">list</span></code> and using <code class="docutils literal notranslate"><span class="pre">str.join()</span></code> to concatenate them.</p>
+</section>
+<section id="how-can-i-re-shape-a-matrix">
+<h3>How can I re-shape a matrix?<a class="headerlink" href="#how-can-i-re-shape-a-matrix" title="Permalink to this heading">#</a></h3>
+<p>Pass the matrix and desired shape to any <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> constructor:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">int</span><span class="p">](</span><span class="o">...</span><span class="p">)</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">int</span><span class="p">](</span><span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># Cast and re-shape as a 3 × 2 IntegerMatrix</span>
+</pre></div>
+</div>
+<p>This operation is <span class="math notranslate nohighlight">\(O(1)\)</span> if the matrix is material.</p>
+<p>Re-shapes should generally be avoided, as the new arrangement of values can be hard to infer (this is also why no parallel to NumPy’s <code class="docutils literal notranslate"><span class="pre">ndarray.reshape()</span></code> method exists).</p>
+</section>
+<section id="what-s-the-difference-between-eq-and-equal-ne-and-not-equal-etc">
+<h3>What’s the difference between <code class="docutils literal notranslate"><span class="pre">__eq__()</span></code> and <code class="docutils literal notranslate"><span class="pre">equal()</span></code>, <code class="docutils literal notranslate"><span class="pre">__ne__()</span></code> and <code class="docutils literal notranslate"><span class="pre">not_equal()</span></code>, etc.?<a class="headerlink" href="#what-s-the-difference-between-eq-and-equal-ne-and-not-equal-etc" title="Permalink to this heading">#</a></h3>
+<p>The special comparison methods “summarize” their results by performing a <a class="reference external" href="https://en.wikipedia.org/wiki/Lexicographic_order">lexicogaphical comparison</a> (done by comparing values first, shapes second), while the non-special variants simply perform an element-wise comparison, and yield all of the results as a new matrix.</p>
+<p>The special comparisons can operate with matrices of unequal shape, while the non-special comparisons expect equal shapes. The special comparisons can (and often will) <a class="reference external" href="https://en.wikipedia.org/wiki/Short-circuit_evaluation">short-circuit</a>.</p>
+</section>
+<section id="why-is-it-taking-so-long-to-index-this-matrix">
+<h3>Why is it taking so long to index this matrix?<a class="headerlink" href="#why-is-it-taking-so-long-to-index-this-matrix" title="Permalink to this heading">#</a></h3>
+<p>If you find that a matrix has slow access times, it’s likely that the matrix was created from a permuting operation that constructed a <em>sequence view</em> (what we call “non-material”), rather than a <em>sequence</em> (what we call “material”).</p>
+<p>Sequence views are (usually) constructed by the following methods:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">transpose()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flip()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rotate()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reverse()</span></code></p></li>
+</ul>
+<p>Sequence views, themselves, are a type of sequence - and so a “stacking” of sequence views can occur when these operations are combined. This can preserve large amounts of memory, but comes at the cost of access time.</p>
+<p>If you believe that the access times are insufficient for your purposes, you can sacrifice the extra memory by materializing it. There is no need to materialize manually-constructed matrices (they’re <em>always</em> material), or matrices produced by standard arithmetic operations (such as <code class="docutils literal notranslate"><span class="pre">equal()</span></code>, <code class="docutils literal notranslate"><span class="pre">__add__()</span></code>, <code class="docutils literal notranslate"><span class="pre">__matmul__()</span></code>, etc.). The method should note in its documentation if a sequence view is used.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="guide-material-state.html#guide-material-state"><span class="std std-ref">Material State</span></a></p></li>
+</ul>
+</div>
+</section>
+</section>
+<section id="design-decisions">
+<h2>Design Decisions<a class="headerlink" href="#design-decisions" title="Permalink to this heading">#</a></h2>
+<section id="why-is-there-no-stringmatrix-type">
+<h3>Why is there no <code class="docutils literal notranslate"><span class="pre">StringMatrix</span></code> type?<a class="headerlink" href="#why-is-there-no-stringmatrix-type" title="Permalink to this heading">#</a></h3>
+<p>The inclusion of some kind of <code class="docutils literal notranslate"><span class="pre">StringMatrix</span></code> is being considered for a future version. The <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type is meant to be easily sub-classed, and so it’s not too hard to implement a version for yourself (you can take a look at the numeric matrices to see a typical sub-class implementation).</p>
+<p>The current debate over its interface revolves around methods with identical names. The <code class="docutils literal notranslate"><span class="pre">str</span></code> type implements a <code class="docutils literal notranslate"><span class="pre">count()</span></code> method, for example, but <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> also implements a <code class="docutils literal notranslate"><span class="pre">count()</span></code> method. Should the value type’s methods exist in a sub-namespace? Should we alter the value type’s method names, such that we can include them at the matrix-class level? Experimentation with the interface is being done with regard to these questions.</p>
+</section>
+<section id="why-are-matrices-immutable">
+<h3>Why are matrices immutable?<a class="headerlink" href="#why-are-matrices-immutable" title="Permalink to this heading">#</a></h3>
+<p>There are a number of benefits you get for being immutable:</p>
+<ul class="simple">
+<li><p>Immutable objects are inherently <a class="reference external" href="https://en.wikipedia.org/wiki/Thread_safety">thread-safe</a>.</p></li>
+<li><p>Copying immutable objects is usually an <span class="math notranslate nohighlight">\(O(1)\)</span> operation, since they act as their own copy. This can also preserve memory, as copying immutable objects, in the way it’s typically done in Python, simply gives you a new reference to the object.</p></li>
+<li><p>Immutable objects can be made hashable, allowing for their use as <code class="docutils literal notranslate"><span class="pre">dict</span></code> keys or <code class="docutils literal notranslate"><span class="pre">set</span></code> elements.</p></li>
+</ul>
+<p>Mutable sequences are typically needed during <em>construction time</em>, often when you can’t know the number of incoming values. In such cases, we recommend using a <code class="docutils literal notranslate"><span class="pre">list</span></code> to build-up a sequence that can later be “casted” to a <code class="docutils literal notranslate"><span class="pre">Matrix</span></code>. The <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type provides construction routines from both one and two-dimensional sequences via <code class="docutils literal notranslate"><span class="pre">__init__()</span></code> and <code class="docutils literal notranslate"><span class="pre">from_nesting()</span></code>, respectively.</p>
+</section>
+<section id="why-the-name-transjugate">
+<h3>Why the name “transjugate”?<a class="headerlink" href="#why-the-name-transjugate" title="Permalink to this heading">#</a></h3>
+<p>In a lot of similar APIs, it’s common to name the transpose and conjugate transpose operations as properties <code class="docutils literal notranslate"><span class="pre">T</span></code> and <code class="docutils literal notranslate"><span class="pre">H</span></code>, respectively. We deliberately chose to avoid this, as it goes against common naming conventions in Python.</p>
+<p>Contenders for the operation name included:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">conjugate_transpose()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hermitian_transpose()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">adjoint()</span></code></p></li>
+</ul>
+<p>We argued that the first two are too long, however, and the last could be confused with the <a class="reference external" href="https://en.wikipedia.org/wiki/Adjugate_matrix">adjugate</a>, which sometimes goes by the name “adjoint”, or “classical adjoint”.</p>
+<p>Because of said conflicts, we went with an admittedly obscure name, “transjugate”, since it isn’t terribly long, and better expresses its functionality over “adjoint”.</p>
+</section>
+<section id="why-can-you-not-broadcast-rows-and-columns">
+<h3>Why can you not broadcast rows and columns?<a class="headerlink" href="#why-can-you-not-broadcast-rows-and-columns" title="Permalink to this heading">#</a></h3>
+<p>Broadcasting, <a class="reference external" href="https://numpy.org/doc/stable/user/basics.broadcasting.html">particularly NumPy’s concept of broadcasting</a>, was knowingly left out of the API design, as we do not believe it to be an intuitive operation. We argue that it’s much more readable when written out as a loop, which is made incredibly easy with the <code class="docutils literal notranslate"><span class="pre">slices()</span></code> method.</p>
+<p>NumPy-style broadcasting is, however, supported with scalar values. Sub-class implementors are advised to support scalar broadcasting as well, when applicable (and practical) to an operation.</p>
+</section>
+<section id="why-are-the-type-arguments-arranged-as-matrix-m-n-t-rather-than-matrix-t-m-n">
+<h3>Why are the type arguments arranged as <code class="docutils literal notranslate"><span class="pre">Matrix[M,</span> <span class="pre">N,</span> <span class="pre">T]</span></code>, rather than <code class="docutils literal notranslate"><span class="pre">Matrix[T,</span> <span class="pre">M,</span> <span class="pre">N]</span></code>?<a class="headerlink" href="#why-are-the-type-arguments-arranged-as-matrix-m-n-t-rather-than-matrix-t-m-n" title="Permalink to this heading">#</a></h3>
+<p>While the latter ordering of type arguments might make more sense, given the ordering of constructor arguments:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]]([</span>
+    <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>      <span class="c1"># Value types appear first...</span>
+    <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
+<span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>  <span class="c1"># while the dimensions appear second</span>
+</pre></div>
+</div>
+<p>We prioritzed the potential for less writing by arranging the type arguments in a way that will be compatible with <a class="reference external" href="https://peps.python.org/pep-0696/">PEP 696</a> (likely to be implemented in Python 3.12), which specifies that type variables can default when omitted from the type argument list. Meaning that, in the future, you’ll be able to write matrices like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]]([</span>  <span class="c1"># T is inferred to be ``int`` - you need only describe the shape</span>
+    <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
+<span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The type variable used in the implementation of <code class="docutils literal notranslate"><span class="pre">Matrix</span></code>, <code class="docutils literal notranslate"><span class="pre">T_co</span></code>, will likely default to <code class="docutils literal notranslate"><span class="pre">object</span></code> when PEP 696 is implemented. This would mean:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Matrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span> <span class="o">==</span> <span class="n">Matrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">object</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The same principle will apply to sub-classes of <code class="docutils literal notranslate"><span class="pre">Matrix</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ComplexMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span> <span class="o">==</span> <span class="n">ComplexMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">complex</span><span class="p">]</span>
+<span class="n">RealMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span>    <span class="o">==</span> <span class="n">RealMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span>
+<span class="n">IntegerMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span> <span class="o">==</span> <span class="n">IntegerMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="guide-typing.html#guide-typing"><span class="std std-ref">Typing</span></a></p></li>
+</ul>
+</div>
+</section>
+<section id="why-are-the-numeric-matrices-constrained-to-only-built-in-numeric-types">
+<h3>Why are the numeric matrices constrained to only built-in numeric types?<a class="headerlink" href="#why-are-the-numeric-matrices-constrained-to-only-built-in-numeric-types" title="Permalink to this heading">#</a></h3>
+<p>The acception of any numeric type (upper-bounded to their respective domain, of course) was, and continues to be a desire for the library. Unfortunately, <a class="reference external" href="https://docs.python.org/3/library/numbers.html">the numeric tower</a>, included with the standard library, does not make a lot of typing guarantees that are circulatable for use as upper bounds. Discussion of the subject matter <a class="reference external" href="https://github.com/python/mypy/issues/2636">has long been stale</a>, and remains unresolved for the time being. If there is better support for user-made numeric types in the future, the numeric matrix classes will have their type arguments widened.</p>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="api-builtins.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Built-ins</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Home</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023, Braedyn L
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">FAQ</a><ul>
+<li><a class="reference internal" href="#general">General</a><ul>
+<li><a class="reference internal" href="#the-documentation-talks-about-vectors-a-lot-but-where-are-the-vectors">The documentation talks about vectors a lot, but where are the vectors?</a></li>
+<li><a class="reference internal" href="#how-can-i-create-a-matrix-with-more-dimensions-e-g-a-tensor">How can I create a matrix with more dimensions (e.g., a tensor)?</a></li>
+<li><a class="reference internal" href="#how-can-i-write-add-remove-entries-of-a-matrix">How can I write/add/remove entries of a matrix?</a></li>
+<li><a class="reference internal" href="#how-can-i-re-shape-a-matrix">How can I re-shape a matrix?</a></li>
+<li><a class="reference internal" href="#what-s-the-difference-between-eq-and-equal-ne-and-not-equal-etc">What’s the difference between <code class="docutils literal notranslate"><span class="pre">__eq__()</span></code> and <code class="docutils literal notranslate"><span class="pre">equal()</span></code>, <code class="docutils literal notranslate"><span class="pre">__ne__()</span></code> and <code class="docutils literal notranslate"><span class="pre">not_equal()</span></code>, etc.?</a></li>
+<li><a class="reference internal" href="#why-is-it-taking-so-long-to-index-this-matrix">Why is it taking so long to index this matrix?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#design-decisions">Design Decisions</a><ul>
+<li><a class="reference internal" href="#why-is-there-no-stringmatrix-type">Why is there no <code class="docutils literal notranslate"><span class="pre">StringMatrix</span></code> type?</a></li>
+<li><a class="reference internal" href="#why-are-matrices-immutable">Why are matrices immutable?</a></li>
+<li><a class="reference internal" href="#why-the-name-transjugate">Why the name “transjugate”?</a></li>
+<li><a class="reference internal" href="#why-can-you-not-broadcast-rows-and-columns">Why can you not broadcast rows and columns?</a></li>
+<li><a class="reference internal" href="#why-are-the-type-arguments-arranged-as-matrix-m-n-t-rather-than-matrix-t-m-n">Why are the type arguments arranged as <code class="docutils literal notranslate"><span class="pre">Matrix[M,</span> <span class="pre">N,</span> <span class="pre">T]</span></code>, rather than <code class="docutils literal notranslate"><span class="pre">Matrix[T,</span> <span class="pre">M,</span> <span class="pre">N]</span></code>?</a></li>
+<li><a class="reference internal" href="#why-are-the-numeric-matrices-constrained-to-only-built-in-numeric-types">Why are the numeric matrices constrained to only built-in numeric types?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>
