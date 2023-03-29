@@ -3,7 +3,7 @@
 Built-ins
 =========
 
-.. automodule:: matrices.builtins
+.. automodule:: matrixlib.builtins
 
     .. autoclass:: Matrix
         :special-members: __init__, __repr__, __str__, __eq__, __hash__, __len__, __getitem__, __iter__, __reversed__, __contains__, __deepcopy__, __copy__

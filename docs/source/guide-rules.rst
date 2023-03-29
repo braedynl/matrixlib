@@ -9,13 +9,14 @@ If you're coming from NumPy, you're probably familiar with the concept of `axes 
 
 Since we're limited to two dimensions, we decided to alter the nomenclature for our purposes: there only exists "row-rule" and "column-rule" - no more, no less.
 
->>> from matrixlib import Rule
+>>> from matrixlib import ROW, COL, Matrix, Rule
 >>>
 >>> Rule.ROW
 <Rule.ROW: 0>
 >>>
 >>> Rule.COL
 <Rule.COL: 1>
+>>>
 
 The value of each rule member maps to an integer that accesses its dimension from a matrix shape (or any two-element sequence). A member can be "inverted" as a means to retrieve the opposite dimension in circumstances where you don't know which dimension you're handling (particularly useful for implementing ``Matrix`` functions):
 
@@ -27,19 +28,20 @@ The value of each rule member maps to an integer that accesses its dimension fro
 
 The ``Matrix`` type is "rule-aware" - that is, the ``Matrix`` type explicitly uses the ``Rule`` class in many parts of its definition, and even expects the user to provide ``Rule`` members as arguments to some functions - usually ones that can be interpreted as being done "row-wise" or "column-wise". The ``flip()`` method is a great example of this - instead of splitting the method into two (e.g., ``flip_rows()``, ``flip_cols()``), it expects a ``Rule`` member to dictate row or column-wise interpretation:
 
->>> from matrixlib import Matrix, ROW, COL  # Convenience aliases
->>> 
->>> a = Matrix([
-...     1, 2, 3,
-...     4, 5, 6,
-... ], shape=(2, 3))
->>> 
+>>> a = Matrix(
+...     [
+...         1, 2, 3,
+...         4, 5, 6,
+...     ],
+...     shape=(2, 3),
+... )
+>>>
 >>> print(a)
 |        1        2        3 |
 |        4        5        6 |
 (2 × 3)
 >>>
->>> b = a.flip(by=ROW) 
+>>> b = a.flip(by=ROW)
 >>> print(b)
 |        4        5        6 |
 |        1        2        3 |
@@ -53,12 +55,12 @@ The ``Matrix`` type is "rule-aware" - that is, the ``Matrix`` type explicitly us
 
 There was one method of ``Matrix`` construction that we neglected to mention in the previous segment, involving rules: the ``shape`` argument accepts a ``Rule`` member as a means to interpret the ``array`` as a row or column vector:
 
->>> d = Matrix(range(5), ROW)
+>>> d = Matrix(range(5), shape=ROW)
 >>> print(d)
 |        0        1        2        3        4 |
 (1 × 5)
 >>>
->>> e = Matrix(range(5), COL)
+>>> e = Matrix(range(5), shape=COL)
 >>> print(e)
 |        0 |
 |        1 |

@@ -30,10 +30,13 @@ The ``transpose()`` operation, and those like it, are internally creating a *mes
 
     from matrixlib import IntegerMatrix
 
-    a = IntegerMatrix([
-        1, 2, 3,
-        4, 5, 6,
-    ], shape=(2, 3))
+    a = IntegerMatrix(
+        [
+            1, 2, 3,
+            4, 5, 6,
+        ],
+        shape=(2, 3),
+    )
 
     b = a.transpose()
 
@@ -48,17 +51,17 @@ The above sequence of permuting operations is internally creating a chain of mes
     | IntegerMatrix +------------->|   Mesh    |
     |               |              |           |
     +-------+-------+              +-----------+
-            |                            ^
-            | a.transpose()              |
-            v                            |
+                                         ^
+                                         |
+                                         |
     +-------b-------+              +-----+-----+
     |               |              |           |
     | IntegerMatrix +------------->| Mesh View |
     |               |              |           |
     +-------+-------+              +-----------+
-            |                            ^
-            | b.flip()                   |
-            v                            |
+                                         ^
+                                         |
+                                         |
     +-------c-------+              +-----+-----+
     |               |              |           |
     | IntegerMatrix +------------->| Mesh View |
@@ -77,10 +80,13 @@ There are some circumstances where you *do* want to sacrifice memory for the sak
 
     from matrixlib import IntegerMatrix
 
-    a = IntegerMatrix([
-        1, 2, 3,
-        4, 5, 6,
-    ], shape=(2, 3))
+    a = IntegerMatrix(
+        [
+            1, 2, 3,
+            4, 5, 6,
+        ],
+        shape=(2, 3),
+    )
 
     b = a.transpose()
 
@@ -95,17 +101,17 @@ The above example now produces a chain alike the following:
     | IntegerMatrix +------------->|   Mesh    |
     |               |              |           |
     +-------+-------+              +-----------+
-            |                            ^
-            | a.transpose()              |
-            v                            |
+                                         ^
+                                         |
+                                         |
     +-------b-------+              +-----+-----+
     |               |              |           |
     | IntegerMatrix +------------->| Mesh View |
     |               |              |           |
     +-------+-------+              +-----------+
-            |
-            | b.flip().materialize()
-            v
+
+
+
     +-------c-------+              +-----------+
     |               |              |           |
     | IntegerMatrix +------------->|   Mesh    |

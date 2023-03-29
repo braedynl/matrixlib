@@ -7,10 +7,14 @@ Throughout the remainder of the user guide, you'll probably see matrices constru
 
 >>> from matrixlib import Matrix
 >>>
->>> a = Matrix([
-...     1, 2, 3,
-...     4, 5, 6,
-... ], shape=(2, 3))
+>>> a = Matrix(
+...     [
+...         1, 2, 3,
+...         4, 5, 6,
+...     ],
+...     shape=(2, 3),
+... )
+>>>
 
 This uses the ``Matrix`` constructor. It takes an iterable of values (a "flattened" iterable), and the shape to interpret it as - raising ``ValueError`` if the shape's values are negative, or if the shape's product does not equal the iterable's length. Matrices are first and foremost a ``Sequence[T]`` - *not* a ``Sequence[Sequence[T]]`` - and the constructor helps to reinforce that.
 

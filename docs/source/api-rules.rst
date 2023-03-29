@@ -3,7 +3,7 @@
 Rules
 =====
 
-.. automodule:: matrices.rule
+.. automodule:: matrixlib.rule
 
     .. autoclass:: Rule
         :special-members: __invert__
