@@ -5,7 +5,7 @@ Construction
 
 Throughout the remainder of the user guide, you'll probably see matrices constructed like this:
 
->>> from matrices import Matrix
+>>> from matrixlib import Matrix
 >>>
 >>> a = Matrix([
 ...     1, 2, 3,

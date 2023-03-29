@@ -15,7 +15,7 @@ You'll find that the shape, :math:`1 \times N`, is a common fallback used when t
 
 The recommended way of creating a row or column vector is to pass its content and a ``Rule`` member to the constructor:
 
->>> from matrices import Matrix, ROW, COL
+>>> from matrixlib import Matrix, ROW, COL
 >>>
 >>> a = Matrix([1, 2, 3], ROW)
 >>> print(a)

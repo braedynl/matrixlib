@@ -7,7 +7,7 @@ In being a matrix type, there are a few ways to access its values. This part of 
 
 Again, it's important to emphasize that the ``Matrix`` type behaves like a ``Sequence[T]``. You can access its values similar to how you would for most other ``Sequence[T]`` objects:
 
->>> from matrices import Matrix
+>>> from matrixlib import Matrix
 >>>
 >>> a = Matrix([
 ...     1, 2, 3,
@@ -51,7 +51,7 @@ Prefer these methods over using the ``range(len(a))`` idiom - they are often *mu
 
 This default access order has a name: `"row-major order" <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_. This ordering is how the ``Matrix`` type aligns its values in memory, which is the primary reason for why access routines in this manner are so quick. Other orderings are exposed as an independent method, called ``values()``:
 
->>> from matrices import ROW, COL
+>>> from matrixlib import ROW, COL
 >>>
 >>> for x in a.values(by=ROW):  # Row-major order
 ...     print(x)

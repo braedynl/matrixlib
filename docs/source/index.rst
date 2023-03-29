@@ -1,6 +1,6 @@
 .. _index:
 
-Matrices-Py
+MatrixLib
 ===========
 
 General-purpose matrices for the layman.
@@ -10,7 +10,7 @@ Implements a family of general-purpose matrix types, with comprehensive type-che
 >>> from math import isclose
 >>> from typing import Literal as L
 >>>
->>> from matrices import RealMatrix, ROW
+>>> from matrixlib import RealMatrix, ROW
 >>> 
 >>> def norm(a: RealMatrix[int, int, float]) -> float:
 ...     return sum(a * a) ** 0.5
@@ -41,11 +41,11 @@ This project is available through `pip <https://pip.pypa.io/en/stable/>`_ (requi
 
 .. code-block:: console
 
-    $ pip install matrices-py
+    $ pip install matrixlib
 
 .. warning::
 
-    Matrices-Py is currently in its infancy, and may see future changes that are not always backwards compatible.
+    MatrixLib is currently in its infancy, and may see future changes that are not always backwards compatible.
 
     The current iteration of this library is in **beta**. Further testing is being conducted at the moment.
 
@@ -57,7 +57,7 @@ This project is currently maintained by `Braedyn L <https://github.com/braedynl>
 License
 -------
 
-Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl/matrices-py/blob/main/LICENSE>`_ file for more details.
+Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl/matrixlib/blob/main/LICENSE>`_ file for more details.
 
 .. toctree::
     :hidden:

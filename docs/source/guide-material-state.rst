@@ -28,7 +28,7 @@ The ``transpose()`` operation, and those like it, are internally creating a *mes
 
 .. code-block::
 
-    from matrices import IntegerMatrix
+    from matrixlib import IntegerMatrix
 
     a = IntegerMatrix([
         1, 2, 3,
@@ -75,7 +75,7 @@ There are some circumstances where you *do* want to sacrifice memory for the sak
 
 .. code-block::
 
-    from matrices import IntegerMatrix
+    from matrixlib import IntegerMatrix
 
     a = IntegerMatrix([
         1, 2, 3,

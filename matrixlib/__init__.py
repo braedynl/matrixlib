@@ -6,7 +6,7 @@ services.
 
 Author: Braedyn L
 Version: 0.3.0
-Source: https://github.com/braedynl/matrices-py/
+Source: https://github.com/braedynl/matrixlib/
 """
 
 from .builtins import *
