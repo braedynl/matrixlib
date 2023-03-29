@@ -5,9 +5,10 @@ from collections.abc import Iterator, Sequence
 from typing import (Any, Final, Generic, Literal, Optional, TypeVar, Union,
                     final, overload)
 
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self
 
 from .rule import COL, ROW, Rule
+from .typing import EvenNumber, OddNumber
 
 __all__ = [
     "NIL",
@@ -25,9 +26,6 @@ __all__ = [
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
-
-EvenNumber: TypeAlias = Literal[-4, -2, 0, 2, 4]
-OddNumber: TypeAlias  = Literal[-3, -1, 1, 3]
 
 
 class Mesh(Sequence[T_co], Generic[M_co, N_co, T_co], metaclass=ABCMeta):

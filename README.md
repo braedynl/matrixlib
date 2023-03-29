@@ -5,19 +5,23 @@ General-purpose matrices for the layman.
 Implements a family of general-purpose matrix types, with comprehensive type-checking capabilities, and seamless integration with core Python services.
 
 ```python
->>> from math import isclose
+>>> from math import fsum, sqrt, isclose
+>>> from typing import Any
 >>> from typing import Literal as L
 >>>
->>> from matrixlib import RealMatrix, ROW
+>>> from matrixlib import ROW, RealMatrix, IntegerMatrix
 >>>
->>> def norm(a: RealMatrix[int, int, float]) -> float:
-...     return sum(a * a) ** 0.5
+>>> def norm(a: RealMatrix[Any, Any, float]) -> float:
+...     return sqrt(fsum(a * a))
 ...
->>> a = RealMatrix[L[3], L[3], float]([
-...     1, 2, 3,
-...     4, 5, 6,
-...     7, 8, 9,
-... ], shape=(3, 3))
+>>> a = IntegerMatrix[L[3], L[3], int](
+...     [
+...         1, 2, 3,
+...         4, 5, 6,
+...         7, 8, 9,
+...     ],
+...     shape=(3, 3),
+... )
 >>>
 >>> b = RealMatrix[L[3], L[3], float].from_nesting(
 ...     row / norm(row)
