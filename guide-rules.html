@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Access" href="guide-access.html" /><link rel="prev" title="Construction" href="guide-construction.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
-        <title>Rules - Matrices-Py 0.3.0 documentation</title>
+        <title>Rules - MatrixLib 0.3.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">Matrices-Py 0.3.0 documentation</div></a>
+      <a href="index.html"><div class="brand">MatrixLib 0.3.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">Matrices-Py 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">MatrixLib 0.3.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -154,11 +154,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">general</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">api reference</span></p>
+  <p class="caption" role="heading"><span class="caption-text">api reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api-builtins.html">Built-ins</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-rules.html">Rules</a></li>
@@ -172,8 +168,9 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">meta</span></p>
+<p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 
@@ -214,13 +211,14 @@
 <p>Before we move on to the rest of the API, we have to talk about a different class that comes with the library: the <code class="docutils literal notranslate"><span class="pre">Rule</span></code> class.</p>
 <p>If you’re coming from NumPy, you’re probably familiar with the concept of <a class="reference external" href="https://numpy.org/doc/stable/glossary.html#term-axis">axes</a> - rules can be thought of as a parallel to axes, only that we package the concept as an <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum">enum</a>, rather than as integers. If you’re unfamiliar with axes, they’re essentially just numbers that correspond to an array dimension: for a two-dimensional array, the elements of “axis 0” are the rows, and the elements of “axis 1” are the columns.</p>
 <p>Since we’re limited to two dimensions, we decided to alter the nomenclature for our purposes: there only exists “row-rule” and “column-rule” - no more, no less.</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrices</span> <span class="kn">import</span> <span class="n">Rule</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">COL</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">Rule</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Rule</span><span class="o">.</span><span class="n">ROW</span>
 <span class="go">&lt;Rule.ROW: 0&gt;</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Rule</span><span class="o">.</span><span class="n">COL</span>
 <span class="go">&lt;Rule.COL: 1&gt;</span>
+<span class="go">&gt;&gt;&gt;</span>
 </pre></div>
 </div>
 <p>The value of each rule member maps to an integer that accesses its dimension from a matrix shape (or any two-element sequence). A member can be “inverted” as a means to retrieve the opposite dimension in circumstances where you don’t know which dimension you’re handling (particularly useful for implementing <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> functions):</p>
@@ -232,12 +230,13 @@
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type is “rule-aware” - that is, the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type explicitly uses the <code class="docutils literal notranslate"><span class="pre">Rule</span></code> class in many parts of its definition, and even expects the user to provide <code class="docutils literal notranslate"><span class="pre">Rule</span></code> members as arguments to some functions - usually ones that can be interpreted as being done “row-wise” or “column-wise”. The <code class="docutils literal notranslate"><span class="pre">flip()</span></code> method is a great example of this - instead of splitting the method into two (e.g., <code class="docutils literal notranslate"><span class="pre">flip_rows()</span></code>, <code class="docutils literal notranslate"><span class="pre">flip_cols()</span></code>), it expects a <code class="docutils literal notranslate"><span class="pre">Rule</span></code> member to dictate row or column-wise interpretation:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrices</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">COL</span>  <span class="c1"># Convenience aliases</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([</span>
-<span class="gp">... </span>    <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="p">[</span>
+<span class="gp">... </span>        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="p">],</span>
+<span class="gp">... </span>    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+<span class="gp">... </span><span class="p">)</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
 <span class="go">|        1        2        3 |</span>
@@ -258,12 +257,12 @@
 </pre></div>
 </div>
 <p>There was one method of <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> construction that we neglected to mention in the previous segment, involving rules: the <code class="docutils literal notranslate"><span class="pre">shape</span></code> argument accepts a <code class="docutils literal notranslate"><span class="pre">Rule</span></code> member as a means to interpret the <code class="docutils literal notranslate"><span class="pre">array</span></code> as a row or column vector:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">ROW</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="n">ROW</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
 <span class="go">|        0        1        2        3        4 |</span>
 <span class="go">(1 × 5)</span>
 <span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">e</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">COL</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">e</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="n">COL</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 <span class="go">|        0 |</span>
 <span class="go">|        1 |</span>

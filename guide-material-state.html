@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Changelog" href="changelog.html" /><link rel="prev" title="Typing" href="guide-typing.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="FAQ" href="faq.html" /><link rel="prev" title="Typing" href="guide-typing.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
-        <title>Material State - Matrices-Py 0.3.0 documentation</title>
+        <title>Material State - MatrixLib 0.3.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">Matrices-Py 0.3.0 documentation</div></a>
+      <a href="index.html"><div class="brand">MatrixLib 0.3.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">Matrices-Py 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">MatrixLib 0.3.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -154,11 +154,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">general</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">api reference</span></p>
+  <p class="caption" role="heading"><span class="caption-text">api reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api-builtins.html">Built-ins</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-rules.html">Rules</a></li>
@@ -172,8 +168,9 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Material State</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">meta</span></p>
+<p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 
@@ -230,12 +227,15 @@
 <li><p>Use of <code class="docutils literal notranslate"><span class="pre">transpose()</span></code>, <code class="docutils literal notranslate"><span class="pre">flip()</span></code>, <code class="docutils literal notranslate"><span class="pre">rotate()</span></code>, and <code class="docutils literal notranslate"><span class="pre">reverse()</span></code> (known as the “permuting methods”)</p></li>
 </ul>
 <p>The <code class="docutils literal notranslate"><span class="pre">transpose()</span></code> operation, and those like it, are internally creating a <em>mesh view</em> onto the operating <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instance’s mesh - the operation itself is <span class="math notranslate nohighlight">\(O(1)\)</span> because of this - in a sense, you pay the cost of transposition in parts when you access it, you <em>do not</em> pay the full cost at the moment of creation. When you combine these methods, the mesh views can <em>stack</em>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matrices</span> <span class="kn">import</span> <span class="n">IntegerMatrix</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">IntegerMatrix</span>
 
-<span class="n">a</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">([</span>
-    <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
-<span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">)</span>
 
 <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 
@@ -248,17 +248,17 @@
 <span class="o">|</span> <span class="n">IntegerMatrix</span> <span class="o">+-------------&gt;|</span>   <span class="n">Mesh</span>    <span class="o">|</span>
 <span class="o">|</span>               <span class="o">|</span>              <span class="o">|</span>           <span class="o">|</span>
 <span class="o">+-------+-------+</span>              <span class="o">+-----------+</span>
-        <span class="o">|</span>                            <span class="o">^</span>
-        <span class="o">|</span> <span class="n">a</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>              <span class="o">|</span>
-        <span class="n">v</span>                            <span class="o">|</span>
+                                     <span class="o">^</span>
+                                     <span class="o">|</span>
+                                     <span class="o">|</span>
 <span class="o">+-------</span><span class="n">b</span><span class="o">-------+</span>              <span class="o">+-----+-----+</span>
 <span class="o">|</span>               <span class="o">|</span>              <span class="o">|</span>           <span class="o">|</span>
 <span class="o">|</span> <span class="n">IntegerMatrix</span> <span class="o">+-------------&gt;|</span> <span class="n">Mesh</span> <span class="n">View</span> <span class="o">|</span>
 <span class="o">|</span>               <span class="o">|</span>              <span class="o">|</span>           <span class="o">|</span>
 <span class="o">+-------+-------+</span>              <span class="o">+-----------+</span>
-        <span class="o">|</span>                            <span class="o">^</span>
-        <span class="o">|</span> <span class="n">b</span><span class="o">.</span><span class="n">flip</span><span class="p">()</span>                   <span class="o">|</span>
-        <span class="n">v</span>                            <span class="o">|</span>
+                                     <span class="o">^</span>
+                                     <span class="o">|</span>
+                                     <span class="o">|</span>
 <span class="o">+-------</span><span class="n">c</span><span class="o">-------+</span>              <span class="o">+-----+-----+</span>
 <span class="o">|</span>               <span class="o">|</span>              <span class="o">|</span>           <span class="o">|</span>
 <span class="o">|</span> <span class="n">IntegerMatrix</span> <span class="o">+-------------&gt;|</span> <span class="n">Mesh</span> <span class="n">View</span> <span class="o">|</span>
@@ -270,12 +270,15 @@
 <p>In general, a matrix’s access time is proportional to the number of permutations that proceeded its creation - the more permutations, the slower its access times will be.</p>
 <p>So why do this? Well, Python objects are <em>expensive</em> - much more expensive than objects in other languages. Views are a way to avoid allocation of more space, but, obviously comes at the cost of time. We believe that the common case is just to apply one permutation, and in such scenarios, you’re not sacrificing <em>that</em> much access time for huge memory savings.</p>
 <p>There are some circumstances where you <em>do</em> want to sacrifice memory for the sake of time, however. If you find yourself using a permuted matrix in a lot of different places, you may want to <strong>materialize</strong> it for better speeds. You can accomplish this via the <code class="docutils literal notranslate"><span class="pre">materialize()</span></code> method:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matrices</span> <span class="kn">import</span> <span class="n">IntegerMatrix</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">IntegerMatrix</span>
 
-<span class="n">a</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">([</span>
-    <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
-<span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">)</span>
 
 <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
 
@@ -288,17 +291,17 @@
 <span class="o">|</span> <span class="n">IntegerMatrix</span> <span class="o">+-------------&gt;|</span>   <span class="n">Mesh</span>    <span class="o">|</span>
 <span class="o">|</span>               <span class="o">|</span>              <span class="o">|</span>           <span class="o">|</span>
 <span class="o">+-------+-------+</span>              <span class="o">+-----------+</span>
-        <span class="o">|</span>                            <span class="o">^</span>
-        <span class="o">|</span> <span class="n">a</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>              <span class="o">|</span>
-        <span class="n">v</span>                            <span class="o">|</span>
+                                     <span class="o">^</span>
+                                     <span class="o">|</span>
+                                     <span class="o">|</span>
 <span class="o">+-------</span><span class="n">b</span><span class="o">-------+</span>              <span class="o">+-----+-----+</span>
 <span class="o">|</span>               <span class="o">|</span>              <span class="o">|</span>           <span class="o">|</span>
 <span class="o">|</span> <span class="n">IntegerMatrix</span> <span class="o">+-------------&gt;|</span> <span class="n">Mesh</span> <span class="n">View</span> <span class="o">|</span>
 <span class="o">|</span>               <span class="o">|</span>              <span class="o">|</span>           <span class="o">|</span>
 <span class="o">+-------+-------+</span>              <span class="o">+-----------+</span>
-        <span class="o">|</span>
-        <span class="o">|</span> <span class="n">b</span><span class="o">.</span><span class="n">flip</span><span class="p">()</span><span class="o">.</span><span class="n">materialize</span><span class="p">()</span>
-        <span class="n">v</span>
+
+
+
 <span class="o">+-------</span><span class="n">c</span><span class="o">-------+</span>              <span class="o">+-----------+</span>
 <span class="o">|</span>               <span class="o">|</span>              <span class="o">|</span>           <span class="o">|</span>
 <span class="o">|</span> <span class="n">IntegerMatrix</span> <span class="o">+-------------&gt;|</span>   <span class="n">Mesh</span>    <span class="o">|</span>
@@ -315,12 +318,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="changelog.html">
+          <a class="next-page" href="faq.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Changelog</div>
+                <div class="title">FAQ</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

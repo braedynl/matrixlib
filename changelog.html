@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="Material State" href="guide-material-state.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="FAQ" href="faq.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
-        <title>Changelog - Matrices-Py 0.3.0 documentation</title>
+        <title>Changelog - MatrixLib 0.3.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">Matrices-Py 0.3.0 documentation</div></a>
+      <a href="index.html"><div class="brand">MatrixLib 0.3.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">Matrices-Py 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">MatrixLib 0.3.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -154,11 +154,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">general</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">api reference</span></p>
+  <p class="caption" role="heading"><span class="caption-text">api reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api-builtins.html">Built-ins</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-rules.html">Rules</a></li>
@@ -172,8 +168,9 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">meta</span></p>
+<p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Changelog</a></li>
 </ul>
 
@@ -211,13 +208,37 @@
         <article role="main">
           <section id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this heading">#</a></h1>
+<p>This document lists changes for common users and contributors as “public” and “private”, respectively. Changes made to documentation are not listed. The logs of a specific version describe changes respective to the version before. Any change that could break existing code is marked as “(<em>breaking change</em>)”.</p>
+<section id="version-0-3-1">
+<h2>Version 0.3.1<a class="headerlink" href="#version-0-3-1" title="Permalink to this heading">#</a></h2>
+<section id="public">
+<h3>Public<a class="headerlink" href="#public" title="Permalink to this heading">#</a></h3>
+<p>Additions</p>
+<ul class="simple">
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">builtins.IntegralMatrix</span></code> as a type alias for <code class="docutils literal notranslate"><span class="pre">builtins.IntegerMatrix</span></code>, for those that work (and want consistency) with the <code class="docutils literal notranslate"><span class="pre">numbers.Integral</span></code> ABC. Do note that the class still only accepts sub-types of <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">EvenNumber</span></code> and <code class="docutils literal notranslate"><span class="pre">OddNumber</span></code> types used by <code class="docutils literal notranslate"><span class="pre">Matrix.rotate()</span></code> now covers literal integers from -16 to +16 - this was originally -4 to +4.</p></li>
+</ul>
+<p>Alterations</p>
+<ul class="simple">
+<li><p>The top-level module has been renamed from <code class="docutils literal notranslate"><span class="pre">matrices</span></code> to <code class="docutils literal notranslate"><span class="pre">matrixlib</span></code>. The library’s “branding” has been changed to reflect this across all relevant systems (GitHub, PyPI, etc.) (<em>breaking change</em>).</p></li>
+<li><p>The string returned by <code class="docutils literal notranslate"><span class="pre">Matrix.__repr__()</span></code> no longer invokes the <code class="docutils literal notranslate"><span class="pre">array</span></code> argument by keyword. The <code class="docutils literal notranslate"><span class="pre">array</span></code> argument itself can, and will continue to be invocable by keyword, however.</p></li>
+</ul>
+</section>
+<section id="private">
+<h3>Private<a class="headerlink" href="#private" title="Permalink to this heading">#</a></h3>
+<p>Additions</p>
+<ul class="simple">
+<li><p>Added a <code class="docutils literal notranslate"><span class="pre">typing</span></code> sub-module for miscellaneous typing needs. This module is not exposed at the top level (though that may change in the future).</p></li>
+</ul>
+<p>Alterations</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">EvenNumber</span></code> and <code class="docutils literal notranslate"><span class="pre">OddNumber</span></code> types have been moved to the <code class="docutils literal notranslate"><span class="pre">typing</span></code> sub-module. These are the only two definitions that exist in the module as of right now.</p></li>
+</ul>
+</section>
+</section>
 <section id="version-0-3-0">
 <h2>Version 0.3.0<a class="headerlink" href="#version-0-3-0" title="Permalink to this heading">#</a></h2>
-<p>This version is considered to be the first “real” version of the library, as most of the API underwent many large, fundamental changes in structure. We <em>do not</em> anticipate further changes of this magnitude, as we believe that we’ve settled on a solid foundation.</p>
-</section>
-<section id="earlier-versions">
-<h2>Earlier Versions<a class="headerlink" href="#earlier-versions" title="Permalink to this heading">#</a></h2>
-<p>We <em>highly</em> discourage the use of earlier versions, as version 0.3.0 introduces monumental changes in pretty much everything fundamental to the library. We’ve effectively wiped the signature of these prior versions from documentation to prevent their use.</p>
+<p>The first “official” version of the library.</p>
 </section>
 </section>
 
@@ -227,14 +248,14 @@
         
         <div class="related-pages">
           
-          <a class="prev-page" href="guide-material-state.html">
+          <a class="prev-page" href="faq.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Material State</div>
+                <div class="title">FAQ</div>
                 
               </div>
             </a>
@@ -269,8 +290,12 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
+<li><a class="reference internal" href="#version-0-3-1">Version 0.3.1</a><ul>
+<li><a class="reference internal" href="#public">Public</a></li>
+<li><a class="reference internal" href="#private">Private</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#version-0-3-0">Version 0.3.0</a></li>
-<li><a class="reference internal" href="#earlier-versions">Earlier Versions</a></li>
 </ul>
 </li>
 </ul>

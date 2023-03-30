@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Built-ins" href="api-builtins.html" /><link rel="prev" title="Matrices-Py" href="index.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Changelog" href="changelog.html" /><link rel="prev" title="Material State" href="guide-material-state.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
-        <title>FAQ - Matrices-Py 0.3.0 documentation</title>
+        <title>FAQ - MatrixLib 0.3.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">Matrices-Py 0.3.0 documentation</div></a>
+      <a href="index.html"><div class="brand">MatrixLib 0.3.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">Matrices-Py 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">MatrixLib 0.3.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -154,11 +154,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">general</span></p>
-<ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">FAQ</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">api reference</span></p>
+  <p class="caption" role="heading"><span class="caption-text">api reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api-builtins.html">Built-ins</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-rules.html">Rules</a></li>
@@ -172,8 +168,9 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">meta</span></p>
-<ul>
+<p class="caption" role="heading"><span class="caption-text">other</span></p>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 
@@ -211,6 +208,7 @@
         <article role="main">
           <section id="faq">
 <span id="id1"></span><h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this heading">#</a></h1>
+<p>Frequently asked questions and answers.</p>
 <section id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this heading">#</a></h2>
 <section id="the-documentation-talks-about-vectors-a-lot-but-where-are-the-vectors">
@@ -218,14 +216,14 @@
 <p>This library and its documentation thinks of vectors as simply being a certain kind of matrix. A “row vector” is a matrix of shape <span class="math notranslate nohighlight">\(1 \times N\)</span>, while a “column vector” is a matrix of shape <span class="math notranslate nohighlight">\(M \times 1\)</span>.</p>
 <p>You’ll find that the shape, <span class="math notranslate nohighlight">\(1 \times N\)</span>, is a common fallback used when the matrix is flattened in some manner.</p>
 <p>The recommended way of creating a row or column vector is to pass its content and a <code class="docutils literal notranslate"><span class="pre">Rule</span></code> member to the constructor:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrices</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">COL</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">COL</span>
 <span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">ROW</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="n">ROW</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
 <span class="go">|        1        2        3 |</span>
 <span class="go">(1 × 3)</span>
 <span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">COL</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="n">COL</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
 <span class="go">|        1 |</span>
 <span class="go">|        2 |</span>
@@ -254,7 +252,7 @@
 <h3>How can I re-shape a matrix?<a class="headerlink" href="#how-can-i-re-shape-a-matrix" title="Permalink to this heading">#</a></h3>
 <p>Pass the matrix and desired shape to any <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> constructor:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">int</span><span class="p">](</span><span class="o">...</span><span class="p">)</span>
-<span class="n">b</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">int</span><span class="p">](</span><span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># Cast and re-shape as a 3 × 2 IntegerMatrix</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">int</span><span class="p">](</span><span class="n">a</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># Cast and re-shape as a 3 × 2 IntegerMatrix</span>
 </pre></div>
 </div>
 <p>This operation is <span class="math notranslate nohighlight">\(O(1)\)</span> if the matrix is material.</p>
@@ -322,17 +320,23 @@
 <section id="why-are-the-type-arguments-arranged-as-matrix-m-n-t-rather-than-matrix-t-m-n">
 <h3>Why are the type arguments arranged as <code class="docutils literal notranslate"><span class="pre">Matrix[M,</span> <span class="pre">N,</span> <span class="pre">T]</span></code>, rather than <code class="docutils literal notranslate"><span class="pre">Matrix[T,</span> <span class="pre">M,</span> <span class="pre">N]</span></code>?<a class="headerlink" href="#why-are-the-type-arguments-arranged-as-matrix-m-n-t-rather-than-matrix-t-m-n" title="Permalink to this heading">#</a></h3>
 <p>While the latter ordering of type arguments might make more sense, given the ordering of constructor arguments:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]]([</span>
-    <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>      <span class="c1"># Value types appear first...</span>
-    <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
-<span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>  <span class="c1"># while the dimensions appear second</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]](</span>
+    <span class="p">[</span>
+        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>   <span class="c1"># Value types appear first...</span>
+        <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>  <span class="c1"># while the dimensions appear second</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p>We prioritzed the potential for less writing by arranging the type arguments in a way that will be compatible with <a class="reference external" href="https://peps.python.org/pep-0696/">PEP 696</a> (likely to be implemented in Python 3.12), which specifies that type variables can default when omitted from the type argument list. Meaning that, in the future, you’ll be able to write matrices like this:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]]([</span>  <span class="c1"># T is inferred to be ``int`` - you need only describe the shape</span>
-    <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
-<span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">]](</span>
+    <span class="p">[</span>
+        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>  <span class="c1"># T is inferred to be `int` - you need only describe the shape</span>
+        <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p>The type variable used in the implementation of <code class="docutils literal notranslate"><span class="pre">Matrix</span></code>, <code class="docutils literal notranslate"><span class="pre">T_co</span></code>, will likely default to <code class="docutils literal notranslate"><span class="pre">object</span></code> when PEP 696 is implemented. This would mean:</p>
@@ -364,23 +368,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="api-builtins.html">
+          <a class="next-page" href="changelog.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Built-ins</div>
+                <div class="title">Changelog</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="index.html">
+          <a class="prev-page" href="guide-material-state.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Home</div>
+                <div class="title">Material State</div>
                 
               </div>
             </a>

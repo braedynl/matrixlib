@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Typing" href="guide-typing.html" /><link rel="prev" title="Rules" href="guide-rules.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
-        <title>Access - Matrices-Py 0.3.0 documentation</title>
+        <title>Access - MatrixLib 0.3.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">Matrices-Py 0.3.0 documentation</div></a>
+      <a href="index.html"><div class="brand">MatrixLib 0.3.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">Matrices-Py 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">MatrixLib 0.3.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -154,11 +154,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">general</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">api reference</span></p>
+  <p class="caption" role="heading"><span class="caption-text">api reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api-builtins.html">Built-ins</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-rules.html">Rules</a></li>
@@ -172,8 +168,9 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">meta</span></p>
+<p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 
@@ -213,12 +210,15 @@
 <span id="guide-access"></span><h1>Access<a class="headerlink" href="#access" title="Permalink to this heading">#</a></h1>
 <p>In being a matrix type, there are a few ways to access its values. This part of the API will be familiar to those who have worked with NumPy.</p>
 <p>Again, it’s important to emphasize that the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type behaves like a <code class="docutils literal notranslate"><span class="pre">Sequence[T]</span></code>. You can access its values similar to how you would for most other <code class="docutils literal notranslate"><span class="pre">Sequence[T]</span></code> objects:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrices</span> <span class="kn">import</span> <span class="n">Matrix</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">COL</span><span class="p">,</span> <span class="n">Matrix</span>
 <span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([</span>
-<span class="gp">... </span>    <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="p">[</span>
+<span class="gp">... </span>        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="p">],</span>
+<span class="gp">... </span>    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+<span class="gp">... </span><span class="p">)</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)):</span>
 <span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
@@ -255,9 +255,7 @@
 </div>
 <p>Prefer these methods over using the <code class="docutils literal notranslate"><span class="pre">range(len(a))</span></code> idiom - they are often <em>much</em> faster, and require less writing. If you need to iterate over multiple matrices at once, use built-in <code class="docutils literal notranslate"><span class="pre">zip()</span></code>.</p>
 <p>This default access order has a name: <a class="reference external" href="https://en.wikipedia.org/wiki/Row-_and_column-major_order">“row-major order”</a>. This ordering is how the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type aligns its values in memory, which is the primary reason for why access routines in this manner are so quick. Other orderings are exposed as an independent method, called <code class="docutils literal notranslate"><span class="pre">values()</span></code>:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrices</span> <span class="kn">import</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">COL</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">ROW</span><span class="p">):</span>  <span class="c1"># Row-major order</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">ROW</span><span class="p">):</span>  <span class="c1"># Row-major order</span>
 <span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 <span class="gp">...</span>
 <span class="go">1</span>
