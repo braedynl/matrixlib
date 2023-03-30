@@ -7,12 +7,15 @@ Fundamental to this library is the ``Matrix`` type. It is the root of all other 
 
 The NumPy ``ndarray``, despite its name, is internally represented as a contiguous, one-dimensional memory block, where it "fakes" the effect of being N-dimensional. ``Matrix``, too, uses a contiguous, one-dimensional memory block, but instead commits to the idea of matrices being a one-dimensional sequence by default:
 
->>> from matrices import Matrix
+>>> from matrixlib import Matrix
 >>>
->>> a = Matrix([
-...     1, 2, 3,
-...     4, 5, 6,
-... ], shape=(2, 3))
+>>> a = Matrix(
+...     [
+...         1, 2, 3,
+...         4, 5, 6,
+...     ],
+...     shape=(2, 3),
+... )
 >>>
 >>> for x in a:
 ...     print(x)

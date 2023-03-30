@@ -11,17 +11,18 @@ from numbers import Complex, Integral, Real
 from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
                     overload)
 
-from typing_extensions import Self
+from typing_extensions import Self, TypeAlias
 
-from .meshes import (NIL, Box, Col, EvenNumber, Grid, Mesh, NilCol, NilRow,
-                     OddNumber, Row)
+from .meshes import NIL, Box, Col, Grid, Mesh, NilCol, NilRow, Row
 from .rule import Rule
+from .typing import EvenNumber, OddNumber
 
 __all__ = [
     "Matrix",
     "ComplexMatrix",
     "RealMatrix",
     "IntegerMatrix",
+    "IntegralMatrix",
 ]
 
 T_co = TypeVar("T_co", covariant=True)
@@ -129,7 +130,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """Return a canonical representation of the matrix"""
         array = ", ".join(map(repr, self))
         shape = ", ".join(map(repr, self.shape))
-        return f"{self.__class__.__name__}(array=[{array}], shape=({shape}))"
+        return f"{self.__class__.__name__}([{array}], shape=({shape}))"
 
     def __str__(self) -> str:
         """Return a string representation of the matrix"""
@@ -1836,3 +1837,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
 
     def transjugate(self: IntegerMatrix[M_co, N_co, int]) -> IntegerMatrix[N_co, M_co, int]:
         return IntegerMatrix(super().transjugate())
+
+
+IntegralMatrix: TypeAlias = IntegerMatrix  #: Type alias of ``IntegerMatrix``

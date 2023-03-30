@@ -5,8 +5,8 @@ type-checking capabilities, and seamless integration with core Python
 services.
 
 Author: Braedyn L
-Version: 0.3.0
-Source: https://github.com/braedynl/matrices-py/
+Version: 0.3.1
+Source: https://github.com/braedynl/matrixlib/
 """
 
 from .builtins import *

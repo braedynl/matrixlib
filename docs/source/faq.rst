@@ -3,6 +3,8 @@
 FAQ
 ===
 
+Frequently asked questions and answers.
+
 General
 -------
 
@@ -15,14 +17,14 @@ You'll find that the shape, :math:`1 \times N`, is a common fallback used when t
 
 The recommended way of creating a row or column vector is to pass its content and a ``Rule`` member to the constructor:
 
->>> from matrices import Matrix, ROW, COL
+>>> from matrixlib import Matrix, ROW, COL
 >>>
->>> a = Matrix([1, 2, 3], ROW)
+>>> a = Matrix([1, 2, 3], shape=ROW)
 >>> print(a)
 |        1        2        3 |
 (1 × 3)
 >>>
->>> b = Matrix([1, 2, 3], COL)
+>>> b = Matrix([1, 2, 3], shape=COL)
 >>> print(b)
 |        1 |
 |        2 |
@@ -54,7 +56,7 @@ Pass the matrix and desired shape to any ``Matrix`` constructor:
 .. code-block::
 
     a = Matrix[L[2], L[3], int](...)
-    b = IntegerMatrix[L[3], L[2], int](a, (3, 2))  # Cast and re-shape as a 3 × 2 IntegerMatrix
+    b = IntegerMatrix[L[3], L[2], int](a, shape=(3, 2))  # Cast and re-shape as a 3 × 2 IntegerMatrix
 
 This operation is :math:`O(1)` if the matrix is material.
 
@@ -137,19 +139,25 @@ While the latter ordering of type arguments might make more sense, given the ord
 
 .. code-block::
 
-    a = Matrix[int, L[2], L[3]]([
-        1, 2, 3,      # Value types appear first...
-        4, 5, 6,
-    ], shape=(2, 3))  # while the dimensions appear second
+    a = Matrix[int, L[2], L[3]](
+        [
+            1, 2, 3,   # Value types appear first...
+            4, 5, 6,
+        ],
+        shape=(2, 3),  # while the dimensions appear second
+    )
 
 We prioritzed the potential for less writing by arranging the type arguments in a way that will be compatible with `PEP 696 <https://peps.python.org/pep-0696/>`_ (likely to be implemented in Python 3.12), which specifies that type variables can default when omitted from the type argument list. Meaning that, in the future, you'll be able to write matrices like this:
 
 .. code-block::
 
-    a = Matrix[L[2], L[3]]([  # T is inferred to be ``int`` - you need only describe the shape
-        1, 2, 3,
-        4, 5, 6,
-    ], shape=(2, 3))
+    a = Matrix[L[2], L[3]](
+        [
+            1, 2, 3,  # T is inferred to be `int` - you need only describe the shape
+            4, 5, 6,
+        ],
+        shape=(2, 3),
+    )
 
 The type variable used in the implementation of ``Matrix``, ``T_co``, will likely default to ``object`` when PEP 696 is implemented. This would mean:
 

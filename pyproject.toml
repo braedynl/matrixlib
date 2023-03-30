@@ -3,8 +3,8 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "matrices-py"
-version = "0.3.0"
+name = "matrixlib"
+version = "0.3.1"
 authors = [
   { name="Braedyn L" },
 ]
@@ -34,10 +34,10 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://braedynl.github.io/matrices-py/"
-"Documentation" = "https://braedynl.github.io/matrices-py/"
-"Source" = "https://github.com/braedynl/matrices-py"
-"Bug Tracker" = "https://github.com/braedynl/matrices-py/issues"
+"Homepage" = "https://braedynl.github.io/matrixlib/"
+"Documentation" = "https://braedynl.github.io/matrixlib/"
+"Source" = "https://github.com/braedynl/matrixlib"
+"Bug Tracker" = "https://github.com/braedynl/matrixlib/issues"
 
 [tool.setuptools.package-data]
 "*" = ["*.pyi", "py.typed"]

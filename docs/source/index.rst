@@ -1,26 +1,30 @@
 .. _index:
 
-Matrices-Py
+MatrixLib
 ===========
 
 General-purpose matrices for the layman.
 
 Implements a family of general-purpose matrix types, with comprehensive type-checking capabilities, and seamless integration with core Python services.
 
->>> from math import isclose
+>>> from math import fsum, sqrt, isclose
+>>> from typing import Any
 >>> from typing import Literal as L
 >>>
->>> from matrices import RealMatrix, ROW
->>> 
->>> def norm(a: RealMatrix[int, int, float]) -> float:
-...     return sum(a * a) ** 0.5
-... 
->>> a = RealMatrix[L[3], L[3], float]([
-...     1, 2, 3,
-...     4, 5, 6,
-...     7, 8, 9,
-... ], shape=(3, 3))
->>> 
+>>> from matrixlib import ROW, RealMatrix, IntegerMatrix
+>>>
+>>> def norm(a: RealMatrix[Any, Any, float]) -> float:
+...     return sqrt(fsum(a * a))
+...
+>>> a = IntegerMatrix[L[3], L[3], int](
+...     [
+...         1, 2, 3,
+...         4, 5, 6,
+...         7, 8, 9,
+...     ],
+...     shape=(3, 3),
+... )
+>>>
 >>> b = RealMatrix[L[3], L[3], float].from_nesting(
 ...     row / norm(row)
 ...     for row in a.slices(by=ROW)
@@ -41,11 +45,11 @@ This project is available through `pip <https://pip.pypa.io/en/stable/>`_ (requi
 
 .. code-block:: console
 
-    $ pip install matrices-py
+    $ pip install matrixlib
 
 .. warning::
 
-    Matrices-Py is currently in its infancy, and may see future changes that are not always backwards compatible.
+    MatrixLib is currently in its infancy, and may see future changes that are not always backwards compatible.
 
     The current iteration of this library is in **beta**. Further testing is being conducted at the moment.
 
@@ -57,13 +61,7 @@ This project is currently maintained by `Braedyn L <https://github.com/braedynl>
 License
 -------
 
-Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl/matrices-py/blob/main/LICENSE>`_ file for more details.
-
-.. toctree::
-    :hidden:
-    :caption: general
-
-    faq
+Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl/matrixlib/blob/main/LICENSE>`_ file for more details.
 
 .. toctree::
     :hidden:
@@ -85,6 +83,7 @@ Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl
 
 .. toctree::
     :hidden:
-    :caption: meta
+    :caption: other
 
+    faq
     changelog

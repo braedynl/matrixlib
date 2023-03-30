@@ -17,12 +17,15 @@ We typically instantiate a ``Matrix`` like this, when typing:
 
     from typing import Literal as L
 
-    from matrices import ROW, COL, Matrix
+    from matrixlib import ROW, COL, Matrix
 
-    a = Matrix[L[2], L[3], int]([
-        1, 2, 3,
-        4, 5, 6,
-    ], shape=(2, 3))
+    a = Matrix[L[2], L[3], int](
+        [
+            1, 2, 3,
+            4, 5, 6,
+        ],
+        shape=(2, 3),
+    )
 
     reveal_type(a)  # Revealed type is "matrices.builtins.Matrix[Literal[2], Literal[3], builtins.int]"
 
@@ -62,10 +65,10 @@ In accordance with this possibility, runtime-checking of correct shapes is a deb
     from timeit import repeat
     from typing import Literal as L
 
-    from matrices import RealMatrix
+    from matrixlib import RealMatrix
 
-    a = RealMatrix[L[3], L[3], float]((random() for _ in range(9)), (3, 3))
-    b = RealMatrix[L[3], L[3], float]((random() for _ in range(9)), (3, 3))
+    a = RealMatrix[L[3], L[3], float]((random() for _ in range(9)), shape=(3, 3))
+    b = RealMatrix[L[3], L[3], float]((random() for _ in range(9)), shape=(3, 3))
 
     def f():
         c = a + b
