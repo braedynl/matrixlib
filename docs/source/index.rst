@@ -65,12 +65,6 @@ Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl
 
 .. toctree::
     :hidden:
-    :caption: general
-
-    faq
-
-.. toctree::
-    :hidden:
     :caption: api reference
 
     api-builtins
@@ -89,6 +83,7 @@ Distributed under the MIT license. See the `LICENSE <https://github.com/braedynl
 
 .. toctree::
     :hidden:
-    :caption: meta
+    :caption: other
 
+    faq
     changelog
