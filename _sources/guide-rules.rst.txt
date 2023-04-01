@@ -5,9 +5,9 @@ Rules
 
 Before we move on to the rest of the API, we have to talk about a different class that comes with the library: the ``Rule`` class.
 
-If you're coming from NumPy, you're probably familiar with the concept of `axes <https://numpy.org/doc/stable/glossary.html#term-axis>`_ - rules can be thought of as a parallel to axes, only that we package the concept as an `enum <https://docs.python.org/3/library/enum.html#enum.Enum>`_, rather than as integers. If you're unfamiliar with axes, they're essentially just numbers that correspond to an array dimension: for a two-dimensional array, the elements of "axis 0" are the rows, and the elements of "axis 1" are the columns.
+If you're coming from NumPy, you're probably familiar with the concept of `axes <https://numpy.org/doc/stable/glossary.html#term-axis>`_ - rules can be thought of as a parallel to axes, only we package the concept as an `enum <https://docs.python.org/3/library/enum.html#enum.Enum>`_, rather than as integers. If you're unfamiliar with axes, they're essentially just numbers that correspond to an array dimension: for a two-dimensional array, the elements of "axis 0" are the rows, and the elements of "axis 1" are the columns.
 
-Since we're limited to two dimensions, we decided to alter the nomenclature for our purposes: there only exists "row-rule" and "column-rule" - no more, no less.
+Since we're confined to two dimensions, we decided to alter the nomenclature a bit. There exists "row-rule" and "column-rule" - no more, no less.
 
 >>> from matrixlib import ROW, COL, Matrix, Rule
 >>>
@@ -18,7 +18,7 @@ Since we're limited to two dimensions, we decided to alter the nomenclature for 
 <Rule.COL: 1>
 >>>
 
-The value of each rule member maps to an integer that accesses its dimension from a matrix shape (or any two-element sequence). A member can be "inverted" as a means to retrieve the opposite dimension in circumstances where you don't know which dimension you're handling (particularly useful for implementing ``Matrix`` functions):
+The value of each rule member maps to an integer that accesses its dimension from a matrix shape (or any two-element sequence). A member can be "inverted" as a means to retrieve the opposite dimension in places where you don't know which dimension you're handling (particularly useful for implementing ``Matrix`` functions):
 
 >>> ~Rule.ROW
 <Rule.COL: 1>
@@ -26,7 +26,7 @@ The value of each rule member maps to an integer that accesses its dimension fro
 >>> ~Rule.COL
 <Rule.ROW: 0>
 
-The ``Matrix`` type is "rule-aware" - that is, the ``Matrix`` type explicitly uses the ``Rule`` class in many parts of its definition, and even expects the user to provide ``Rule`` members as arguments to some functions - usually ones that can be interpreted as being done "row-wise" or "column-wise". The ``flip()`` method is a great example of this - instead of splitting the method into two (e.g., ``flip_rows()``, ``flip_cols()``), it expects a ``Rule`` member to dictate row or column-wise interpretation:
+The ``Matrix`` type is "rule-aware" - that is, the ``Matrix`` type explicitly uses the ``Rule`` class in many parts of its definition, and expects the user to provide ``Rule`` members as arguments to some functions - usually ones that can be interpreted as being done "row-wise" or "column-wise". The ``flip()`` method is a great example of this - instead of splitting the method into two (e.g., ``flip_rows()``, ``flip_cols()``), it expects a ``Rule`` member to dictate row or column-wise interpretation:
 
 >>> a = Matrix(
 ...     [

@@ -165,11 +165,13 @@
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Construction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-rules.html">Rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-access.html">Access</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-pattern-matching.html">Pattern Matching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="best-practices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
@@ -208,7 +210,7 @@
         <article role="main">
           <section id="construction">
 <span id="guide-construction"></span><h1>Construction<a class="headerlink" href="#construction" title="Permalink to this heading">#</a></h1>
-<p>Throughout the remainder of the user guide, you’ll probably see matrices constructed like this:</p>
+<p>Oftentimes, you’ll see matrices constructed like this:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">Matrix</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span>
@@ -221,9 +223,9 @@
 <span class="go">&gt;&gt;&gt;</span>
 </pre></div>
 </div>
-<p>This uses the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> constructor. It takes an iterable of values (a “flattened” iterable), and the shape to interpret it as - raising <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the shape’s values are negative, or if the shape’s product does not equal the iterable’s length. Matrices are first and foremost a <code class="docutils literal notranslate"><span class="pre">Sequence[T]</span></code> - <em>not</em> a <code class="docutils literal notranslate"><span class="pre">Sequence[Sequence[T]]</span></code> - and the constructor helps to reinforce that.</p>
+<p>This uses the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> constructor - it takes an iterable of values (a “flattened” iterable), and the shape to interpret it as - raising <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if the shape’s values are negative, or if the shape’s product does not equal the iterable’s length. Matrices are first and foremost a <code class="docutils literal notranslate"><span class="pre">Sequence[T]</span></code> - <em>not</em> a <code class="docutils literal notranslate"><span class="pre">Sequence[Sequence[T]]</span></code> - and the constructor helps to reinforce that.</p>
 <p>There are more benefits to this type of construction style beyond the reinforcement, however. <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> internally stores this data one-dimensionally, and having the user input a one-dimensional iterable means the constructor does not have to bother flattening it first. This style is also (in my opinion, at least) much more readable than having a constructor flatten, and infer the shape from a two-dimensional iterable, whose shape can be ambiguous at first glance.</p>
-<p>There is another, more subtle reason why this construction style is beneficial: it additionally allows for complete, empty matrix representation. When you create a matrix-like <code class="docutils literal notranslate"><span class="pre">list</span></code>, for example…</p>
+<p>There is another, more subtle reason why this construction style is beneficial: it additionally allows for empty matrix representation in all of its forms. Two-dimensional structures, for example…</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">matrix</span> <span class="o">=</span> <span class="p">[</span>
 <span class="gp">... </span>    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
 <span class="gp">... </span>    <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
@@ -231,7 +233,7 @@
 <span class="gp">... </span><span class="p">]</span>
 </pre></div>
 </div>
-<p>you cannot represent a matrix of shape <span class="math notranslate nohighlight">\(0 \times N\)</span>, where <span class="math notranslate nohighlight">\(N &gt; 0\)</span>. By forcing the user to pair a one-dimensional object with a matching shape, this edge case is accounted for:</p>
+<p>are unable to represent matrices of shape <span class="math notranslate nohighlight">\(0 \times N\)</span>, where <span class="math notranslate nohighlight">\(N &gt; 0\)</span>. By forcing the user to pair a one-dimensional object with a matching shape, this edge case is accounted for:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>  <span class="c1"># len([]) == 0 * 3 == 0  ✔ OK</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
 <span class="go">Empty matrix (0 × 3)</span>

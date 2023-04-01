@@ -165,11 +165,13 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-construction.html">Construction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-rules.html">Rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-access.html">Access</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-pattern-matching.html">Pattern Matching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="best-practices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Changelog</a></li>
 </ul>
@@ -208,14 +210,14 @@
         <article role="main">
           <section id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this heading">#</a></h1>
-<p>This document lists changes for common users and contributors as “public” and “private”, respectively. Changes made to documentation are not listed. The logs of a specific version describe changes respective to the version before. Any change that could break existing code is marked as “(<em>breaking change</em>)”.</p>
+<p>This document lists API changes for users and contributors under the labels “public” and “private”, respectively. Changes made to documentation are not listed. The logs of a specific version describe changes respective to the version before. Any change that could break existing code is marked as “(<em>breaking change</em>)”.</p>
 <section id="version-0-3-1">
 <h2>Version 0.3.1<a class="headerlink" href="#version-0-3-1" title="Permalink to this heading">#</a></h2>
 <section id="public">
 <h3>Public<a class="headerlink" href="#public" title="Permalink to this heading">#</a></h3>
 <p>Additions</p>
 <ul class="simple">
-<li><p>Added <code class="docutils literal notranslate"><span class="pre">builtins.IntegralMatrix</span></code> as a type alias for <code class="docutils literal notranslate"><span class="pre">builtins.IntegerMatrix</span></code>, for those that work (and want consistency) with the <code class="docutils literal notranslate"><span class="pre">numbers.Integral</span></code> ABC. Do note that the class still only accepts sub-types of <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">builtins.IntegralMatrix</span></code> as a type alias of <code class="docutils literal notranslate"><span class="pre">builtins.IntegerMatrix</span></code>, for those that work (and want consistency) with the <code class="docutils literal notranslate"><span class="pre">numbers.Integral</span></code> ABC. Do note that the class still only accepts sub-types of <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p></li>
 <li><p>The <code class="docutils literal notranslate"><span class="pre">EvenNumber</span></code> and <code class="docutils literal notranslate"><span class="pre">OddNumber</span></code> types used by <code class="docutils literal notranslate"><span class="pre">Matrix.rotate()</span></code> now covers literal integers from -16 to +16 - this was originally -4 to +4.</p></li>
 </ul>
 <p>Alterations</p>

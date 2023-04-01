@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Changelog" href="changelog.html" /><link rel="prev" title="Material State" href="guide-material-state.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Changelog" href="changelog.html" /><link rel="prev" title="Best Practices" href="best-practices.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
         <title>FAQ - MatrixLib 0.3.1 documentation</title>
@@ -165,11 +165,13 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-construction.html">Construction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-rules.html">Rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-access.html">Access</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-pattern-matching.html">Pattern Matching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="best-practices.html">Best Practices</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
@@ -260,7 +262,7 @@
 </section>
 <section id="what-s-the-difference-between-eq-and-equal-ne-and-not-equal-etc">
 <h3>What’s the difference between <code class="docutils literal notranslate"><span class="pre">__eq__()</span></code> and <code class="docutils literal notranslate"><span class="pre">equal()</span></code>, <code class="docutils literal notranslate"><span class="pre">__ne__()</span></code> and <code class="docutils literal notranslate"><span class="pre">not_equal()</span></code>, etc.?<a class="headerlink" href="#what-s-the-difference-between-eq-and-equal-ne-and-not-equal-etc" title="Permalink to this heading">#</a></h3>
-<p>The special comparison methods “summarize” their results by performing a <a class="reference external" href="https://en.wikipedia.org/wiki/Lexicographic_order">lexicogaphical comparison</a> (done by comparing values first, shapes second), while the non-special variants simply perform an element-wise comparison, and yield all of the results as a new matrix.</p>
+<p>The special comparison methods “summarize” their results by performing a <a class="reference external" href="https://en.wikipedia.org/wiki/Lexicographic_order">lexicographical comparison</a> (done by comparing values first, shapes second), while the non-special variants simply perform an element-wise comparison, and yield all of the results as a new matrix.</p>
 <p>The special comparisons can operate with matrices of unequal shape, while the non-special comparisons expect equal shapes. The special comparisons can (and often will) <a class="reference external" href="https://en.wikipedia.org/wiki/Short-circuit_evaluation">short-circuit</a>.</p>
 </section>
 <section id="why-is-it-taking-so-long-to-index-this-matrix">
@@ -377,14 +379,14 @@
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="guide-material-state.html">
+          <a class="prev-page" href="best-practices.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Material State</div>
+                <div class="title">Best Practices</div>
                 
               </div>
             </a>

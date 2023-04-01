@@ -65,7 +65,7 @@ Re-shapes should generally be avoided, as the new arrangement of values can be h
 What's the difference between ``__eq__()`` and ``equal()``, ``__ne__()`` and ``not_equal()``, etc.?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The special comparison methods "summarize" their results by performing a `lexicogaphical comparison <https://en.wikipedia.org/wiki/Lexicographic_order>`_ (done by comparing values first, shapes second), while the non-special variants simply perform an element-wise comparison, and yield all of the results as a new matrix.
+The special comparison methods "summarize" their results by performing a `lexicographical comparison <https://en.wikipedia.org/wiki/Lexicographic_order>`_ (done by comparing values first, shapes second), while the non-special variants simply perform an element-wise comparison, and yield all of the results as a new matrix.
 
 The special comparisons can operate with matrices of unequal shape, while the non-special comparisons expect equal shapes. The special comparisons can (and often will) `short-circuit <https://en.wikipedia.org/wiki/Short-circuit_evaluation>`_.
 

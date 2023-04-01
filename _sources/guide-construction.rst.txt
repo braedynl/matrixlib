@@ -3,7 +3,7 @@
 Construction
 ============
 
-Throughout the remainder of the user guide, you'll probably see matrices constructed like this:
+Oftentimes, you'll see matrices constructed like this:
 
 >>> from matrixlib import Matrix
 >>>
@@ -16,11 +16,11 @@ Throughout the remainder of the user guide, you'll probably see matrices constru
 ... )
 >>>
 
-This uses the ``Matrix`` constructor. It takes an iterable of values (a "flattened" iterable), and the shape to interpret it as - raising ``ValueError`` if the shape's values are negative, or if the shape's product does not equal the iterable's length. Matrices are first and foremost a ``Sequence[T]`` - *not* a ``Sequence[Sequence[T]]`` - and the constructor helps to reinforce that.
+This uses the ``Matrix`` constructor - it takes an iterable of values (a "flattened" iterable), and the shape to interpret it as - raising ``ValueError`` if the shape's values are negative, or if the shape's product does not equal the iterable's length. Matrices are first and foremost a ``Sequence[T]`` - *not* a ``Sequence[Sequence[T]]`` - and the constructor helps to reinforce that.
 
 There are more benefits to this type of construction style beyond the reinforcement, however. ``Matrix`` internally stores this data one-dimensionally, and having the user input a one-dimensional iterable means the constructor does not have to bother flattening it first. This style is also (in my opinion, at least) much more readable than having a constructor flatten, and infer the shape from a two-dimensional iterable, whose shape can be ambiguous at first glance.
 
-There is another, more subtle reason why this construction style is beneficial: it additionally allows for complete, empty matrix representation. When you create a matrix-like ``list``, for example...
+There is another, more subtle reason why this construction style is beneficial: it additionally allows for empty matrix representation in all of its forms. Two-dimensional structures, for example...
 
 >>> matrix = [
 ...     [1, 2, 3],
@@ -28,7 +28,7 @@ There is another, more subtle reason why this construction style is beneficial: 
 ...     [7, 8, 9],
 ... ]
 
-you cannot represent a matrix of shape :math:`0 \times N`, where :math:`N > 0`. By forcing the user to pair a one-dimensional object with a matching shape, this edge case is accounted for:
+are unable to represent matrices of shape :math:`0 \times N`, where :math:`N > 0`. By forcing the user to pair a one-dimensional object with a matching shape, this edge case is accounted for:
 
 >>> b = Matrix([], shape=(0, 3))  # len([]) == 0 * 3 == 0  ✔ OK
 >>> print(b)

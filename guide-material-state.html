@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="FAQ" href="faq.html" /><link rel="prev" title="Typing" href="guide-typing.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Best Practices" href="best-practices.html" /><link rel="prev" title="Typing" href="guide-typing.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
         <title>Material State - MatrixLib 0.3.1 documentation</title>
@@ -165,11 +165,13 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-construction.html">Construction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-rules.html">Rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-access.html">Access</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-pattern-matching.html">Pattern Matching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Material State</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="best-practices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
@@ -210,7 +212,7 @@
 <span id="guide-material-state"></span><h1>Material State<a class="headerlink" href="#material-state" title="Permalink to this heading">#</a></h1>
 <p>The last subject we’ll cover in this guide is in regard to some behind-the-scenes details of the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type that can have an impact on more complex uses of the API. Before we talk about these potential impacts, we must explain how the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type is implemented.</p>
 <p>In essence, the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type is really just a wrapper of another type, called a <code class="docutils literal notranslate"><span class="pre">Mesh</span></code>. <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> is an <a class="reference external" href="https://docs.python.org/3/library/abc.html">abstract base class</a> that provides a layout for what we deem the “core” operations of the hybrid one and two-rank sequence interface. Matrices <em>do not know</em> what kind of <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> they’re holding - they only know that it’s <em>some</em> object that implements the <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> interface.</p>
-<p>This <a class="reference external" href="https://en.wikipedia.org/wiki/Object_composition">compositional relationship</a> allows us to freely change the memory layout of <code class="docutils literal notranslate"><span class="pre">Matrix</span></code>, which is why you’ve <em>probably</em> not seen much discussion of the class’ memory layout until now - it depends on a <em>lot</em> internal conditions, and it very much needs its own page to fully describe.</p>
+<p>This <a class="reference external" href="https://en.wikipedia.org/wiki/Object_composition">compositional relationship</a> allows us to “change” the memory layout of some <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instances, which is why you’ve probably not seen much discussion of the class’ memory layout until now - it depends on a lot internal conditions, and it very much needs its own page to fully describe.</p>
 <p>In short:</p>
 <blockquote>
 <div><p>We consider a <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instance to be <strong>material</strong> if its mesh stores a non-mesh sequence. We consider a <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instance to be <strong>non-material</strong> if its mesh stores a reference to another mesh.</p>
@@ -226,7 +228,7 @@
 <li><p>Construction from another <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instance</p></li>
 <li><p>Use of <code class="docutils literal notranslate"><span class="pre">transpose()</span></code>, <code class="docutils literal notranslate"><span class="pre">flip()</span></code>, <code class="docutils literal notranslate"><span class="pre">rotate()</span></code>, and <code class="docutils literal notranslate"><span class="pre">reverse()</span></code> (known as the “permuting methods”)</p></li>
 </ul>
-<p>The <code class="docutils literal notranslate"><span class="pre">transpose()</span></code> operation, and those like it, are internally creating a <em>mesh view</em> onto the operating <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instance’s mesh - the operation itself is <span class="math notranslate nohighlight">\(O(1)\)</span> because of this - in a sense, you pay the cost of transposition in parts when you access it, you <em>do not</em> pay the full cost at the moment of creation. When you combine these methods, the mesh views can <em>stack</em>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">transpose()</span></code> operation, and those like it, internally create a <em>mesh view</em> onto the operating <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instance’s mesh - the operation itself is <span class="math notranslate nohighlight">\(O(1)\)</span> because of this - in a sense, you pay the cost of transposition in parts when you access it, you <em>do not</em> pay the full cost at the moment of creation. When you combine these methods, the mesh views can <em>stack</em>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">IntegerMatrix</span>
 
 <span class="n">a</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">(</span>
@@ -268,7 +270,7 @@
 </div>
 <p>The matrix, <code class="docutils literal notranslate"><span class="pre">a</span></code>, stores a <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> that holds its elements as an actual in-memory sequence - it has the fastest possible access times. The matrix, <code class="docutils literal notranslate"><span class="pre">b</span></code>, is a transposition of <code class="docutils literal notranslate"><span class="pre">a</span></code>, and creates a <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> view on <code class="docutils literal notranslate"><span class="pre">a</span></code>’s <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> - it has slower access times than <code class="docutils literal notranslate"><span class="pre">a</span></code>. The matrix, <code class="docutils literal notranslate"><span class="pre">c</span></code>, is a row-flip of <code class="docutils literal notranslate"><span class="pre">b</span></code>, and creates a <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> view on <code class="docutils literal notranslate"><span class="pre">b</span></code>’s <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> view - it has slower access times than <code class="docutils literal notranslate"><span class="pre">b</span></code>.</p>
 <p>In general, a matrix’s access time is proportional to the number of permutations that proceeded its creation - the more permutations, the slower its access times will be.</p>
-<p>So why do this? Well, Python objects are <em>expensive</em> - much more expensive than objects in other languages. Views are a way to avoid allocation of more space, but, obviously comes at the cost of time. We believe that the common case is just to apply one permutation, and in such scenarios, you’re not sacrificing <em>that</em> much access time for huge memory savings.</p>
+<p>So why do this? Well, Python objects are <em>big</em> - much bigger than objects in other languages. Views are a way to avoid allocation of potentially massive <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> objects at the cost of time. We believe that the common case is just to apply one permutation, and in such scenarios, you’re not sacrificing <em>that</em> much time for huge memory savings.</p>
 <p>There are some circumstances where you <em>do</em> want to sacrifice memory for the sake of time, however. If you find yourself using a permuted matrix in a lot of different places, you may want to <strong>materialize</strong> it for better speeds. You can accomplish this via the <code class="docutils literal notranslate"><span class="pre">materialize()</span></code> method:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">IntegerMatrix</span>
 
@@ -318,12 +320,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="faq.html">
+          <a class="next-page" href="best-practices.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">FAQ</div>
+                <div class="title">Best Practices</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

@@ -50,9 +50,9 @@ In many circumstances, of course, you'll probably want the values. The ``__iter_
 2
 1
 
-Prefer these methods over using the ``range(len(a))`` idiom - they are often *much* faster, and require less writing. If you need to iterate over multiple matrices at once, use built-in ``zip()``.
+Prefer these methods over using the ``range(len(a))`` idiom - they are often *much* faster, and require less writing. If you need to iterate over many matrices at once, use built-in ``zip()``.
 
-This default access order has a name: `"row-major order" <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_. This ordering is how the ``Matrix`` type aligns its values in memory, which is the primary reason for why access routines in this manner are so quick. Other orderings are exposed as an independent method, called ``values()``:
+This default access order has a name: `"row-major order" <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_. This ordering is how the ``Matrix`` type aligns its values in memory, which is one of a few reasons for why access routines in this manner are so quick. Other orderings are exposed as an independent method, called ``values()``:
 
 >>> for x in a.values(by=ROW):  # Row-major order
 ...     print(x)
@@ -99,9 +99,9 @@ Slicing a matrix can also be accomplished in one dimension - the returned matrix
 |        1        2        3        4        5        6 |
 (1 × 6)
 
-Though the "flattening" aspect of this capability is not too useful, since all matrices can be interpreted as their flattened selves, no matter the shape.
+Though the flattening aspect of this is not too useful, since all matrices can be interpreted as their flattened selves, no matter the shape.
 
-There are many circumstances in which you'd probably want the rows or columns of the matrix - the ``__getitem__()`` method exposes additional "2D indexing" capabilities in a similar fashion to NumPy arrays:
+There are many circumstances in which you'd probably want the rows or columns of the matrix - the ``__getitem__()`` method exposes additional "2D indexing" capabilities in a similar fashion to `NumPy arrays <https://numpy.org/doc/stable/user/basics.indexing.html>`_:
 
 >>> print(a[0, 1])  # Row 0, column 1
 2
@@ -120,7 +120,7 @@ There are many circumstances in which you'd probably want the rows or columns of
 |        4        5        6 |
 (2 × 3)
 
-Similar to ``values()``, there exists a ``slices()`` method that iterates through the rows or columns of the matrix, optionally in reverse, as well:
+Like with ``values()``, there exists a ``slices()`` method that iterates through the rows or columns of the matrix, optionally in reverse, as well:
 
 >>> for x in a.slices(by=ROW):
 ...     print(x)
@@ -161,4 +161,4 @@ Similar to ``values()``, there exists a ``slices()`` method that iterates throug
 |        4 |
 (2 × 1)
 
-There are no such "fast-pathing" methods for retrieving rows and columns, like there is ``__iter__()`` and ``__reversed__()`` as fast-pathing methods to ``values()``. Using ``__getitem__()`` to manually retrieve rows or columns is roughly time-equivalent to using ``slices()``, but you should prefer ``slices()`` for better readability.
+There are no such "fast-pathing" methods for retrieving rows and columns, like there is ``__iter__()`` and ``__reversed__()`` as fast-pathing methods to ``values()``. Using ``__getitem__()`` to manually retrieve rows or columns is roughly time-equivalent to using ``slices()``, but you should prefer ``slices()`` for better readability (it also gives additional typing information, for those who use the type system).

@@ -3,7 +3,7 @@
 Changelog
 =========
 
-This document lists changes for common users and contributors as "public" and "private", respectively. Changes made to documentation are not listed. The logs of a specific version describe changes respective to the version before. Any change that could break existing code is marked as "(*breaking change*)".
+This document lists API changes for users and contributors under the labels "public" and "private", respectively. Changes made to documentation are not listed. The logs of a specific version describe changes respective to the version before. Any change that could break existing code is marked as "(*breaking change*)".
 
 Version 0.3.1
 -------------
@@ -13,7 +13,7 @@ Public
 
 Additions
 
-* Added ``builtins.IntegralMatrix`` as a type alias for ``builtins.IntegerMatrix``, for those that work (and want consistency) with the ``numbers.Integral`` ABC. Do note that the class still only accepts sub-types of ``int``.
+* Added ``builtins.IntegralMatrix`` as a type alias of ``builtins.IntegerMatrix``, for those that work (and want consistency) with the ``numbers.Integral`` ABC. Do note that the class still only accepts sub-types of ``int``.
 * The ``EvenNumber`` and ``OddNumber`` types used by ``Matrix.rotate()`` now covers literal integers from -16 to +16 - this was originally -4 to +4.
 
 Alterations

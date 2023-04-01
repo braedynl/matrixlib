@@ -165,11 +165,13 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-construction.html">Construction</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-access.html">Access</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-pattern-matching.html">Pattern Matching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="best-practices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
@@ -209,8 +211,8 @@
           <section id="rules">
 <span id="guide-rules"></span><h1>Rules<a class="headerlink" href="#rules" title="Permalink to this heading">#</a></h1>
 <p>Before we move on to the rest of the API, we have to talk about a different class that comes with the library: the <code class="docutils literal notranslate"><span class="pre">Rule</span></code> class.</p>
-<p>If you’re coming from NumPy, you’re probably familiar with the concept of <a class="reference external" href="https://numpy.org/doc/stable/glossary.html#term-axis">axes</a> - rules can be thought of as a parallel to axes, only that we package the concept as an <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum">enum</a>, rather than as integers. If you’re unfamiliar with axes, they’re essentially just numbers that correspond to an array dimension: for a two-dimensional array, the elements of “axis 0” are the rows, and the elements of “axis 1” are the columns.</p>
-<p>Since we’re limited to two dimensions, we decided to alter the nomenclature for our purposes: there only exists “row-rule” and “column-rule” - no more, no less.</p>
+<p>If you’re coming from NumPy, you’re probably familiar with the concept of <a class="reference external" href="https://numpy.org/doc/stable/glossary.html#term-axis">axes</a> - rules can be thought of as a parallel to axes, only we package the concept as an <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum">enum</a>, rather than as integers. If you’re unfamiliar with axes, they’re essentially just numbers that correspond to an array dimension: for a two-dimensional array, the elements of “axis 0” are the rows, and the elements of “axis 1” are the columns.</p>
+<p>Since we’re confined to two dimensions, we decided to alter the nomenclature a bit. There exists “row-rule” and “column-rule” - no more, no less.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">COL</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">Rule</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Rule</span><span class="o">.</span><span class="n">ROW</span>
@@ -221,7 +223,7 @@
 <span class="go">&gt;&gt;&gt;</span>
 </pre></div>
 </div>
-<p>The value of each rule member maps to an integer that accesses its dimension from a matrix shape (or any two-element sequence). A member can be “inverted” as a means to retrieve the opposite dimension in circumstances where you don’t know which dimension you’re handling (particularly useful for implementing <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> functions):</p>
+<p>The value of each rule member maps to an integer that accesses its dimension from a matrix shape (or any two-element sequence). A member can be “inverted” as a means to retrieve the opposite dimension in places where you don’t know which dimension you’re handling (particularly useful for implementing <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> functions):</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="o">~</span><span class="n">Rule</span><span class="o">.</span><span class="n">ROW</span>
 <span class="go">&lt;Rule.COL: 1&gt;</span>
 <span class="go">&gt;&gt;&gt;</span>
@@ -229,7 +231,7 @@
 <span class="go">&lt;Rule.ROW: 0&gt;</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type is “rule-aware” - that is, the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type explicitly uses the <code class="docutils literal notranslate"><span class="pre">Rule</span></code> class in many parts of its definition, and even expects the user to provide <code class="docutils literal notranslate"><span class="pre">Rule</span></code> members as arguments to some functions - usually ones that can be interpreted as being done “row-wise” or “column-wise”. The <code class="docutils literal notranslate"><span class="pre">flip()</span></code> method is a great example of this - instead of splitting the method into two (e.g., <code class="docutils literal notranslate"><span class="pre">flip_rows()</span></code>, <code class="docutils literal notranslate"><span class="pre">flip_cols()</span></code>), it expects a <code class="docutils literal notranslate"><span class="pre">Rule</span></code> member to dictate row or column-wise interpretation:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type is “rule-aware” - that is, the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type explicitly uses the <code class="docutils literal notranslate"><span class="pre">Rule</span></code> class in many parts of its definition, and expects the user to provide <code class="docutils literal notranslate"><span class="pre">Rule</span></code> members as arguments to some functions - usually ones that can be interpreted as being done “row-wise” or “column-wise”. The <code class="docutils literal notranslate"><span class="pre">flip()</span></code> method is a great example of this - instead of splitting the method into two (e.g., <code class="docutils literal notranslate"><span class="pre">flip_rows()</span></code>, <code class="docutils literal notranslate"><span class="pre">flip_cols()</span></code>), it expects a <code class="docutils literal notranslate"><span class="pre">Rule</span></code> member to dictate row or column-wise interpretation:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="p">[</span>
 <span class="gp">... </span>        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>

@@ -165,11 +165,13 @@
 <li class="toctree-l1"><a class="reference internal" href="guide-construction.html">Construction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-rules.html">Rules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-access.html">Access</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide-pattern-matching.html">Pattern Matching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guide-material-state.html">Material State</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">other</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="best-practices.html">Best Practices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
@@ -228,9 +230,13 @@
 <span class="gp">... </span>    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">RealMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span><span class="o">.</span><span class="n">from_nesting</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">row</span> <span class="o">/</span> <span class="n">norm</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-<span class="gp">... </span>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">slices</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">ROW</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">RealMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">float</span><span class="p">](</span>
+<span class="gp">... </span>    <span class="p">(</span>
+<span class="gp">... </span>        <span class="n">val</span>
+<span class="gp">... </span>        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">slices</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">ROW</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">row</span> <span class="o">/</span> <span class="n">norm</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="p">),</span>
+<span class="gp">... </span>    <span class="n">shape</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
