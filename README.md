@@ -23,9 +23,13 @@ Implements a family of general-purpose matrix types, with comprehensive type-che
 ...     shape=(3, 3),
 ... )
 >>>
->>> b = RealMatrix[L[3], L[3], float].from_nesting(
-...     row / norm(row)
-...     for row in a.slices(by=ROW)
+>>> b = RealMatrix[L[3], L[3], float](
+...     (
+...         val
+...         for row in a.slices(by=ROW)
+...         for val in row / norm(row)
+...     ),
+...     shape=a.shape,
 ... )
 >>>
 >>> print(b)

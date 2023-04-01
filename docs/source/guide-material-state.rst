@@ -7,7 +7,7 @@ The last subject we'll cover in this guide is in regard to some behind-the-scene
 
 In essence, the ``Matrix`` type is really just a wrapper of another type, called a ``Mesh``. ``Mesh`` is an `abstract base class <https://docs.python.org/3/library/abc.html>`_ that provides a layout for what we deem the "core" operations of the hybrid one and two-rank sequence interface. Matrices *do not know* what kind of ``Mesh`` they're holding - they only know that it's *some* object that implements the ``Mesh`` interface.
 
-This `compositional relationship <https://en.wikipedia.org/wiki/Object_composition>`_ allows us to freely change the memory layout of ``Matrix``, which is why you've *probably* not seen much discussion of the class' memory layout until now - it depends on a *lot* internal conditions, and it very much needs its own page to fully describe.
+This `compositional relationship <https://en.wikipedia.org/wiki/Object_composition>`_ allows us to "change" the memory layout of some ``Matrix`` instances, which is why you've probably not seen much discussion of the class' memory layout until now - it depends on a lot internal conditions, and it very much needs its own page to fully describe.
 
 In short:
 
@@ -24,7 +24,7 @@ You *may* receive a *non-material* ``Matrix`` in the following circumstances:
 * Construction from another ``Matrix`` instance
 * Use of ``transpose()``, ``flip()``, ``rotate()``, and ``reverse()`` (known as the "permuting methods")
 
-The ``transpose()`` operation, and those like it, are internally creating a *mesh view* onto the operating ``Matrix`` instance's mesh - the operation itself is :math:`O(1)` because of this - in a sense, you pay the cost of transposition in parts when you access it, you *do not* pay the full cost at the moment of creation. When you combine these methods, the mesh views can *stack*.
+The ``transpose()`` operation, and those like it, internally create a *mesh view* onto the operating ``Matrix`` instance's mesh - the operation itself is :math:`O(1)` because of this - in a sense, you pay the cost of transposition in parts when you access it, you *do not* pay the full cost at the moment of creation. When you combine these methods, the mesh views can *stack*.
 
 .. code-block::
 
@@ -72,7 +72,7 @@ The matrix, ``a``, stores a ``Mesh`` that holds its elements as an actual in-mem
 
 In general, a matrix's access time is proportional to the number of permutations that proceeded its creation - the more permutations, the slower its access times will be.
 
-So why do this? Well, Python objects are *expensive* - much more expensive than objects in other languages. Views are a way to avoid allocation of more space, but, obviously comes at the cost of time. We believe that the common case is just to apply one permutation, and in such scenarios, you're not sacrificing *that* much access time for huge memory savings.
+So why do this? Well, Python objects are *big* - much bigger than objects in other languages. Views are a way to avoid allocation of potentially massive ``Matrix`` objects at the cost of time. We believe that the common case is just to apply one permutation, and in such scenarios, you're not sacrificing *that* much time for huge memory savings.
 
 There are some circumstances where you *do* want to sacrifice memory for the sake of time, however. If you find yourself using a permuted matrix in a lot of different places, you may want to **materialize** it for better speeds. You can accomplish this via the ``materialize()`` method:
 
