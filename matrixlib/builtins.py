@@ -152,6 +152,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return hash(self.mesh)
 
     def __len__(self) -> int:
+        """Return the matrix's size"""
         return len(self.mesh)
 
     @overload
