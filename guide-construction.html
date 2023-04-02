@@ -214,10 +214,10 @@
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">Matrix</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">[</span>
+<span class="gp">... </span>    <span class="p">(</span>
 <span class="gp">... </span>        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
 <span class="gp">... </span>        <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="p">],</span>
+<span class="gp">... </span>    <span class="p">),</span>
 <span class="gp">... </span>    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">&gt;&gt;&gt;</span>
@@ -234,11 +234,11 @@
 </pre></div>
 </div>
 <p>are unable to represent matrices of shape <span class="math notranslate nohighlight">\(0 \times N\)</span>, where <span class="math notranslate nohighlight">\(N &gt; 0\)</span>. By forcing the user to pair a one-dimensional object with a matching shape, this edge case is accounted for:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>  <span class="c1"># len([]) == 0 * 3 == 0  ✔ OK</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">((),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>  <span class="c1"># len(()) == 0 * 3 == 0  ✔ OK</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
 <span class="go">Empty matrix (0 × 3)</span>
 <span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">([],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>  <span class="c1"># len([]) == 3 * 0 == 0  ✔ OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">((),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>  <span class="c1"># len(()) == 3 * 0 == 0  ✔ OK</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 <span class="go">Empty matrix (3 × 0)</span>
 </pre></div>

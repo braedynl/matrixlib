@@ -233,10 +233,10 @@
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type is “rule-aware” - that is, the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type explicitly uses the <code class="docutils literal notranslate"><span class="pre">Rule</span></code> class in many parts of its definition, and expects the user to provide <code class="docutils literal notranslate"><span class="pre">Rule</span></code> members as arguments to some functions - usually ones that can be interpreted as being done “row-wise” or “column-wise”. The <code class="docutils literal notranslate"><span class="pre">flip()</span></code> method is a great example of this - instead of splitting the method into two (e.g., <code class="docutils literal notranslate"><span class="pre">flip_rows()</span></code>, <code class="docutils literal notranslate"><span class="pre">flip_cols()</span></code>), it expects a <code class="docutils literal notranslate"><span class="pre">Rule</span></code> member to dictate row or column-wise interpretation:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="p">[</span>
+<span class="gp">... </span>    <span class="p">(</span>
 <span class="gp">... </span>        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
 <span class="gp">... </span>        <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="p">],</span>
+<span class="gp">... </span>    <span class="p">),</span>
 <span class="gp">... </span>    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">&gt;&gt;&gt;</span>

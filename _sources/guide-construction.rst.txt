@@ -8,10 +8,10 @@ Oftentimes, you'll see matrices constructed like this:
 >>> from matrixlib import Matrix
 >>>
 >>> a = Matrix(
-...     [
+...     (
 ...         1, 2, 3,
 ...         4, 5, 6,
-...     ],
+...     ),
 ...     shape=(2, 3),
 ... )
 >>>
@@ -30,11 +30,11 @@ There is another, more subtle reason why this construction style is beneficial: 
 
 are unable to represent matrices of shape :math:`0 \times N`, where :math:`N > 0`. By forcing the user to pair a one-dimensional object with a matching shape, this edge case is accounted for:
 
->>> b = Matrix([], shape=(0, 3))  # len([]) == 0 * 3 == 0  ✔ OK
+>>> b = Matrix((), shape=(0, 3))  # len(()) == 0 * 3 == 0  ✔ OK
 >>> print(b)
 Empty matrix (0 × 3)
 >>>
->>> c = Matrix([], shape=(3, 0))  # len([]) == 3 * 0 == 0  ✔ OK
+>>> c = Matrix((), shape=(3, 0))  # len(()) == 3 * 0 == 0  ✔ OK
 >>> print(c)
 Empty matrix (3 × 0)
 
