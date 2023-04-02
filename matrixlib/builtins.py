@@ -343,7 +343,16 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """Return the dimension corresponding to the given ``Rule``"""
         return self.mesh.n(by)
 
-    def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
+    @overload
+    def values(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[T_co]: ...
+    @overload
+    def values(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[T_co]: ...
+    @overload
+    def values(self, *, by: Rule, reverse: bool = False) -> Iterator[T_co]: ...
+    @overload
+    def values(self, *, reverse: bool = False) -> Iterator[T_co]: ...
+
+    def values(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator over the values of the matrix in row or
         column-major order
         """
