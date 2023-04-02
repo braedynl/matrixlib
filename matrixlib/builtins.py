@@ -115,7 +115,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             if nrows > 1:
                 self.mesh = Col(array)
             elif nrows:
-                self.mesh = Box(array[0])
+                self.mesh = Box(array)
             else:
                 self.mesh = NilRow(ncols)
         else:

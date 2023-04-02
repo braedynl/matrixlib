@@ -715,7 +715,7 @@ class NilRow(Materialization[Literal[0], N_co, T_co], Generic[N_co, T_co]):
         self.ncols: N_co = ncols
 
     def __repr__(self) -> str:
-        return f"NilRow({self.ncols!r})"
+        return f"NilRow(ncols={self.ncols!r})"
 
     def __len__(self) -> Literal[0]:
         return 0
@@ -758,7 +758,7 @@ class NilCol(Materialization[M_co, Literal[0], T_co], Generic[M_co, T_co]):
         self.nrows: M_co = nrows
 
     def __repr__(self) -> str:
-        return f"NilCol({self.nrows!r})"
+        return f"NilCol(nrows={self.nrows!r})"
 
     def __len__(self) -> Literal[0]:
         return 0
@@ -797,11 +797,11 @@ class Box(Materialization[Literal[1], Literal[1], T_co], Generic[T_co]):
 
     __slots__ = ("value")
 
-    def __init__(self, value: T_co) -> None:
-        self.value = value
+    def __init__(self, array: tuple[T_co]) -> None:
+        self.value = array[0]
 
     def __repr__(self) -> str:
-        return f"Box({self.value!r})"
+        return f"Box(array={self.array!r})"
 
     def __len__(self) -> Literal[1]:
         return 1
@@ -842,7 +842,7 @@ class Row(Materialization[Literal[1], N_co, T_co], Generic[N_co, T_co]):
         self.array: tuple[T_co, ...] = array
 
     def __repr__(self) -> str:
-        return f"Row({self.array!r})"
+        return f"Row(array={self.array!r})"
 
     @property
     def shape(self) -> tuple[Literal[1], N_co]:
@@ -880,7 +880,7 @@ class Col(Materialization[M_co, Literal[1], T_co], Generic[M_co, T_co]):
         self.array: tuple[T_co, ...] = array
 
     def __repr__(self) -> str:
-        return f"Col({self.array!r})"
+        return f"Col(array={self.array!r})"
 
     @property
     def shape(self) -> tuple[M_co, Literal[1]]:
