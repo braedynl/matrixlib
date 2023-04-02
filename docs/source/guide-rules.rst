@@ -29,10 +29,10 @@ The value of each rule member maps to an integer that accesses its dimension fro
 The ``Matrix`` type is "rule-aware" - that is, the ``Matrix`` type explicitly uses the ``Rule`` class in many parts of its definition, and expects the user to provide ``Rule`` members as arguments to some functions - usually ones that can be interpreted as being done "row-wise" or "column-wise". The ``flip()`` method is a great example of this - instead of splitting the method into two (e.g., ``flip_rows()``, ``flip_cols()``), it expects a ``Rule`` member to dictate row or column-wise interpretation:
 
 >>> a = Matrix(
-...     [
+...     (
 ...         1, 2, 3,
 ...         4, 5, 6,
-...     ],
+...     ),
 ...     shape=(2, 3),
 ... )
 >>>

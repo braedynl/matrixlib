@@ -15,10 +15,10 @@ For functions that take a matrix as input, we generally recommend making it shap
 >>> from matrixlib import ROW, COL, RealMatrix
 >>>
 >>> a = RealMatrix(
-...     [
+...     (
 ...         1, 2, 3,
 ...         4, 5, 6,
-...     ],
+...     ),
 ...     shape=(2, 3),
 ... )
 >>>

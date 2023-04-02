@@ -31,10 +31,10 @@ The ``transpose()`` operation, and those like it, internally create a *mesh view
     from matrixlib import IntegerMatrix
 
     a = IntegerMatrix(
-        [
+        (
             1, 2, 3,
             4, 5, 6,
-        ],
+        ),
         shape=(2, 3),
     )
 
@@ -81,10 +81,10 @@ There are some circumstances where you *do* want to sacrifice memory for the sak
     from matrixlib import IntegerMatrix
 
     a = IntegerMatrix(
-        [
+        (
             1, 2, 3,
             4, 5, 6,
-        ],
+        ),
         shape=(2, 3),
     )
 

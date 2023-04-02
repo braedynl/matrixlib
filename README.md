@@ -15,11 +15,11 @@ Implements a family of general-purpose matrix types, with comprehensive type-che
 ...     return sqrt(fsum(map(lambda x: x * x, a)))
 ...
 >>> a = IntegerMatrix[L[3], L[3], int](
-...     [
+...     (
 ...         1, 2, 3,
 ...         4, 5, 6,
 ...         7, 8, 9,
-...     ],
+...     ),
 ...     shape=(3, 3),
 ... )
 >>>

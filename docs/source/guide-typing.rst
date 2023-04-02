@@ -20,10 +20,10 @@ We typically instantiate a ``Matrix`` like this, when typing:
     from matrixlib import ROW, COL, Matrix
 
     a = Matrix[L[2], L[3], int](
-        [
+        (
             1, 2, 3,
             4, 5, 6,
-        ],
+        ),
         shape=(2, 3),
     )
 

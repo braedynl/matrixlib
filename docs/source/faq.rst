@@ -19,12 +19,12 @@ The recommended way of creating a row or column vector is to pass its content an
 
 >>> from matrixlib import Matrix, ROW, COL
 >>>
->>> a = Matrix([1, 2, 3], shape=ROW)
+>>> a = Matrix((1, 2, 3), shape=ROW)
 >>> print(a)
 |        1        2        3 |
 (1 × 3)
 >>>
->>> b = Matrix([1, 2, 3], shape=COL)
+>>> b = Matrix((1, 2, 3), shape=COL)
 >>> print(b)
 |        1 |
 |        2 |
@@ -140,10 +140,10 @@ While the latter ordering of type arguments might make more sense, given the ord
 .. code-block::
 
     a = Matrix[int, L[2], L[3]](
-        [
+        (
             1, 2, 3,   # Value types appear first...
             4, 5, 6,
-        ],
+        ),
         shape=(2, 3),  # while the dimensions appear second
     )
 
@@ -152,10 +152,10 @@ We prioritzed the potential for less writing by arranging the type arguments in 
 .. code-block::
 
     a = Matrix[L[2], L[3]](
-        [
+        (
             1, 2, 3,  # T is inferred to be `int` - you need only describe the shape
             4, 5, 6,
-        ],
+        ),
         shape=(2, 3),
     )
 

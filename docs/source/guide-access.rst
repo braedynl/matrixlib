@@ -10,10 +10,10 @@ Again, it's important to emphasize that the ``Matrix`` type behaves like a ``Seq
 >>> from matrixlib import ROW, COL, Matrix
 >>>
 >>> a = Matrix(
-...     [
+...     (
 ...         1, 2, 3,
 ...         4, 5, 6,
-...     ],
+...     ),
 ...     shape=(2, 3),
 ... )
 >>>
