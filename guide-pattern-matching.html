@@ -210,7 +210,7 @@
         <article role="main">
           <section id="pattern-matching">
 <span id="guide-pattern-matching"></span><h1>Pattern Matching<a class="headerlink" href="#pattern-matching" title="Permalink to this heading">#</a></h1>
-<p>A somewhat obscure feature of the API (that may or may not get much use - we’ll see) is the ability to structurally-match a <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instance through Python 3.10’s match statement.</p>
+<p>A somewhat obscure feature that we support is the ability to structurally-match a <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> instance through Python 3.10’s match statement.</p>
 <p>Because <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> is a type of <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>, you can match an instance of one by using a sequence pattern:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">IntegerMatrix</span>
 
@@ -227,8 +227,8 @@
         <span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>  <span class="c1"># Prints &quot;1 2 3&quot;</span>
 </pre></div>
 </div>
-<p>While it may look like we’re matching a <code class="docutils literal notranslate"><span class="pre">list</span></code>, the bracketed notation, in this context, denotes an instance of <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>. Because of that, there is no notion of shape - the pattern we gave, here, would also match <code class="docutils literal notranslate"><span class="pre">Matrix(range(1,</span> <span class="pre">6</span> <span class="pre">+</span> <span class="pre">1),</span> <span class="pre">shape=(1,</span> <span class="pre">6))</span></code>, for example.</p>
-<p>To match both values <em>and</em> shape, you must use a <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> explicitly - we provide a <code class="docutils literal notranslate"><span class="pre">__match_args__</span></code> variable whose fields are the instance’s <code class="docutils literal notranslate"><span class="pre">array</span></code> and <code class="docutils literal notranslate"><span class="pre">shape</span></code> (in that exact order) for such purposes:</p>
+<p>While it may look like we’re matching a <code class="docutils literal notranslate"><span class="pre">list</span></code>, the bracketed notation, in this context, denotes an instance of <code class="docutils literal notranslate"><span class="pre">Sequence</span></code>. Thus, there is no notion of shape here - the pattern we gave would also match <code class="docutils literal notranslate"><span class="pre">Matrix(range(1,</span> <span class="pre">6</span> <span class="pre">+</span> <span class="pre">1),</span> <span class="pre">shape=(1,</span> <span class="pre">6))</span></code>, for example.</p>
+<p>To match both values <em>and</em> shape, you must use a <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> explicitly - we provide a <code class="docutils literal notranslate"><span class="pre">__match_args__</span></code> variable whose fields are the instance’s <code class="docutils literal notranslate"><span class="pre">array</span></code> and <code class="docutils literal notranslate"><span class="pre">shape</span></code> (in that order) for such purposes:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">IntegerMatrix</span>
 
 <span class="n">a</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">(</span>
@@ -251,21 +251,6 @@
 </pre></div>
 </div>
 <p>Again, the syntax can be a bit misleading: when invoking a class under a <code class="docutils literal notranslate"><span class="pre">case</span></code> statement, you’re describing a pattern for the class’ <code class="docutils literal notranslate"><span class="pre">__match_args__</span></code> variable - <em>not</em> its constructor - though we’ve intentionally made its match arguments align with the constructor due to the semantic resemblance.</p>
-<p>One ability that we’ve found particularly helpful is shape categorization, but we’re sure more use cases exist:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">match</span> <span class="n">matrix</span><span class="p">:</span>
-    <span class="k">case</span><span class="w"> </span><span class="n">Matrix</span><span class="p">(</span><span class="k">_</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>  <span class="c1"># Nil</span>
-        <span class="o">...</span>
-    <span class="k">case</span><span class="w"> </span><span class="n">Matrix</span><span class="p">(</span><span class="k">_</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ncols</span><span class="p">)):</span>  <span class="c1"># Nil row</span>
-        <span class="o">...</span>
-    <span class="k">case</span><span class="w"> </span><span class="n">Matrix</span><span class="p">(</span><span class="k">_</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>  <span class="c1"># Nil column</span>
-        <span class="o">...</span>
-    <span class="k">case</span><span class="w"> </span><span class="n">Matrix</span><span class="p">(</span><span class="k">_</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)):</span>  <span class="c1"># Scalar</span>
-        <span class="o">...</span>
-    <span class="k">case</span><span class="w"> </span><span class="n">Matrix</span><span class="p">(</span><span class="k">_</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="p">)):</span>  <span class="c1"># Row vector</span>
-        <span class="o">...</span>
-    <span class="o">...</span>  <span class="c1"># and so on</span>
-</pre></div>
-</div>
 <p><a class="reference external" href="https://peps.python.org/pep-0636/">PEP 636</a> provides more details on pattern matching, if wanting to learn more.</p>
 </section>
 

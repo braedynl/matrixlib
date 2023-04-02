@@ -27,7 +27,7 @@ We typically instantiate a ``Matrix`` like this, when typing:
         shape=(2, 3),
     )
 
-    reveal_type(a)  # Revealed type is "matrices.builtins.Matrix[Literal[2], Literal[3], builtins.int]"
+    reveal_type(a)  # Revealed type is "matrixlib.builtins.Matrix[Literal[2], Literal[3], builtins.int]"
 
 Things to note, here:
 
@@ -50,10 +50,10 @@ All methods that come along with the ``Matrix`` class are typed to be *as specif
 .. code-block::
 
     for row in a.slices(by=ROW):
-        reveal_type(row)  # Revealed type is "matrices.builtins.Matrix[Literal[1], Literal[3], builtins.int]"
+        reveal_type(row)  # Revealed type is "matrixlib.builtins.Matrix[Literal[1], Literal[3], builtins.int]"
 
     for col in a.slices(by=COL):
-        reveal_type(col)  # Revealed type is "matrices.builtins.Matrix[Literal[2], Literal[1], builtins.int]"
+        reveal_type(col)  # Revealed type is "matrixlib.builtins.Matrix[Literal[2], Literal[1], builtins.int]"
 
 Most matrix-producing operations (such as ``Matrix.__getitem__()``, ``Matrix.equal()``, ``ComplexMatrix.__add__()``, ``RealMatrix.__mod__()``, etc.) use the default ``Matrix`` constructor, where the shape can be redundantly checked to have non-negative values and a product equal to the length of its iterable. In accordance with this possibility, runtime-checking of such shapes is a debug-only operation, and can be removed entirely when compiling with `the -O flag <https://docs.python.org/3/using/cmdline.html#cmdoption-O>`_. This is much more noticeable when operating on thousands of matrices, and not too significant otherwise:
 

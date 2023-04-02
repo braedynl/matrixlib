@@ -229,7 +229,7 @@
     <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
 <span class="p">)</span>
 
-<span class="n">reveal_type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>  <span class="c1"># Revealed type is &quot;matrices.builtins.Matrix[Literal[2], Literal[3], builtins.int]&quot;</span>
+<span class="n">reveal_type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>  <span class="c1"># Revealed type is &quot;matrixlib.builtins.Matrix[Literal[2], Literal[3], builtins.int]&quot;</span>
 </pre></div>
 </div>
 <p>Things to note, here:</p>
@@ -248,10 +248,10 @@
 </div>
 <p>All methods that come along with the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> class are typed to be <em>as specific as possible, down to the literal level</em>. You don’t often need to do the typing yourself:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">slices</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">ROW</span><span class="p">):</span>
-    <span class="n">reveal_type</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>  <span class="c1"># Revealed type is &quot;matrices.builtins.Matrix[Literal[1], Literal[3], builtins.int]&quot;</span>
+    <span class="n">reveal_type</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>  <span class="c1"># Revealed type is &quot;matrixlib.builtins.Matrix[Literal[1], Literal[3], builtins.int]&quot;</span>
 
 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">slices</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">COL</span><span class="p">):</span>
-    <span class="n">reveal_type</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>  <span class="c1"># Revealed type is &quot;matrices.builtins.Matrix[Literal[2], Literal[1], builtins.int]&quot;</span>
+    <span class="n">reveal_type</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>  <span class="c1"># Revealed type is &quot;matrixlib.builtins.Matrix[Literal[2], Literal[1], builtins.int]&quot;</span>
 </pre></div>
 </div>
 <p>Most matrix-producing operations (such as <code class="docutils literal notranslate"><span class="pre">Matrix.__getitem__()</span></code>, <code class="docutils literal notranslate"><span class="pre">Matrix.equal()</span></code>, <code class="docutils literal notranslate"><span class="pre">ComplexMatrix.__add__()</span></code>, <code class="docutils literal notranslate"><span class="pre">RealMatrix.__mod__()</span></code>, etc.) use the default <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> constructor, where the shape can be redundantly checked to have non-negative values and a product equal to the length of its iterable. In accordance with this possibility, runtime-checking of such shapes is a debug-only operation, and can be removed entirely when compiling with <a class="reference external" href="https://docs.python.org/3/using/cmdline.html#cmdoption-O">the -O flag</a>. This is much more noticeable when operating on thousands of matrices, and not too significant otherwise:</p>

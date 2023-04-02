@@ -7,14 +7,14 @@ General-purpose matrices for the layman.
 
 Implements a family of general-purpose matrix types, with comprehensive type-checking capabilities, and seamless integration with core Python services.
 
+>>> from collections.abc import Iterable
 >>> from math import fsum, sqrt, isclose
->>> from typing import Any
 >>> from typing import Literal as L
 >>>
 >>> from matrixlib import ROW, RealMatrix, IntegerMatrix
 >>>
->>> def norm(a: RealMatrix[Any, Any, float]) -> float:
-...     return sqrt(fsum(a * a))
+>>> def norm(a: Iterable[float]) -> float:
+...     return sqrt(fsum(map(lambda x: x * x, a)))
 ...
 >>> a = IntegerMatrix[L[3], L[3], int](
 ...     [

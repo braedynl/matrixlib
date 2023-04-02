@@ -210,9 +210,10 @@
         <article role="main">
           <section id="best-practices">
 <span id="id1"></span><h1>Best Practices<a class="headerlink" href="#best-practices" title="Permalink to this heading">#</a></h1>
+<p>Keeping your matrix code clean and maintainable.</p>
 <section id="operations">
 <h2>Operations<a class="headerlink" href="#operations" title="Permalink to this heading">#</a></h2>
-<p>Your choice of matrix may not always have methods to accomplish a specific task - this is fairly common, as the library’s intent is to be general purpose. Element, row, or column-wise operations can be defined as free-standing functions, or methods of a sub-class - it’s entirely up to you.</p>
+<p>Your choice of matrix may not always have methods to accomplish a specific task - this is fairly common, as the library tries its best not to over-extend on capabilities that may eventually require too much maintanence. Element, row, or column-wise operations can be defined as free-standing functions, or methods of a sub-class - it’s entirely up to you, but, we tend to prefer free-standing functions so that other matrix types can be used.</p>
 <p>For functions that take a matrix as input, we generally recommend making it shape-agnostic, such that you may use it on the matrix itself, or its rows and columns. Many standard library functions, such as <code class="docutils literal notranslate"><span class="pre">sum()</span></code> and <code class="docutils literal notranslate"><span class="pre">statistics.mean()</span></code>, are inherently written this way, as they only require their argument to be iterable:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">COL</span><span class="p">,</span> <span class="n">RealMatrix</span>
 <span class="go">&gt;&gt;&gt;</span>
@@ -252,7 +253,7 @@
 <span class="go">&gt;&gt;&gt;</span>
 </pre></div>
 </div>
-<p>Depending on how generically-defined the function is, you can sometimes get away with passing slices to it directly:</p>
+<p>Depending on your choice of <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type, and how generically-defined the function is, you can sometimes get away with passing slices to it directly:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">slices</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">COL</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
 <span class="go">|        6 |</span>
@@ -266,7 +267,7 @@
 </pre></div>
 </div>
 <p>Be sure that the function <em>expressly</em> supports this kind of behavior, however, as it may be an unexpected consequence of the function’s implementation (and thus, may be subject to change).</p>
-<p>For functions that take a matrix as <em>both</em> input <em>and</em> output, you must traverse one more layer of depth to pass items to the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> constructor (<code class="docutils literal notranslate"><span class="pre">from_nesting()</span></code> can avoid this, but the shape is not as clearly notated at the time of construction - prefer using <code class="docutils literal notranslate"><span class="pre">__init__()</span></code> when possible):</p>
+<p>For functions that take a matrix as both input <em>and</em> output, you must traverse one more layer of depth to pass items to the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> constructor (<code class="docutils literal notranslate"><span class="pre">from_nesting()</span></code> can avoid this, but the shape is not as clearly notated at the time of construction):</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">RealMatrix</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="p">(</span>
 <span class="gp">... </span>        <span class="n">val</span>
@@ -290,13 +291,103 @@
 <span class="go">|        3        2        1 |</span>
 <span class="go">|        6        5        4 |</span>
 <span class="go">(2 × 3)</span>
-<span class="go">&gt;&gt;&gt;</span>
 </pre></div>
 </div>
 </section>
 <section id="typing">
 <h2>Typing<a class="headerlink" href="#typing" title="Permalink to this heading">#</a></h2>
-<p>WIP</p>
+<p>Python’s type system is a rapidly-changing area of work - we believe that <code class="docutils literal notranslate"><span class="pre">Matrix</span></code>’s typing API is prepared for future system changes, however, and we encourage users to take advantage of it. In our opinion, it makes matrix-oriented code <em>much</em> clearer to read, because you can describe value types and shapes without ever consulting documentation.</p>
+<p>For functions that operate on matrices of any type or shape, use a <code class="docutils literal notranslate"><span class="pre">TypeVar</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeVar</span>
+
+<span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">ComplexMatrix</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+<span class="n">M</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">N</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Matrix</span><span class="p">[</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="n">ComplexMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">L</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">complex</span><span class="p">](</span>
+    <span class="p">(</span>
+        <span class="mi">1</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">2</span><span class="o">+</span><span class="mi">2</span><span class="n">j</span><span class="p">,</span> <span class="mi">3</span><span class="o">+</span><span class="mi">3</span><span class="n">j</span><span class="p">,</span>
+        <span class="mi">4</span><span class="o">+</span><span class="mi">4</span><span class="n">j</span><span class="p">,</span> <span class="mi">5</span><span class="o">+</span><span class="mi">5</span><span class="n">j</span><span class="p">,</span> <span class="mi">6</span><span class="o">+</span><span class="mi">6</span><span class="n">j</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">shape</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+<span class="n">reveal_type</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># Revealed type is &quot;Tuple[Literal[2], Literal[3]]&quot;</span>
+</pre></div>
+</div>
+<p>We often name our type variables <code class="docutils literal notranslate"><span class="pre">M</span></code>, <code class="docutils literal notranslate"><span class="pre">N</span></code>, and <code class="docutils literal notranslate"><span class="pre">T</span></code> to fill the number of rows, number of columns, and value type arguments. Note that <code class="docutils literal notranslate"><span class="pre">M</span></code> and <code class="docutils literal notranslate"><span class="pre">N</span></code> must be bound to instances of <code class="docutils literal notranslate"><span class="pre">int</span></code> - <code class="docutils literal notranslate"><span class="pre">T</span></code> may also need to be bounded depending on your matrix type:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Matrix</span></code> is un-bounded</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ComplexMatrix</span></code> is bounded to built-in <code class="docutils literal notranslate"><span class="pre">complex</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RealMatrix</span></code> is bounded to built-in <code class="docutils literal notranslate"><span class="pre">float</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IntegerMatrix</span></code> is bounded to built-in <code class="docutils literal notranslate"><span class="pre">int</span></code></p></li>
+</ul>
+<p>We typically name the type variable <code class="docutils literal notranslate"><span class="pre">C</span></code>, <code class="docutils literal notranslate"><span class="pre">R</span></code>, and <code class="docutils literal notranslate"><span class="pre">I</span></code>, respectively, for the latter sub-classes. If you have type variables with those names already, we generally fallback to using <code class="docutils literal notranslate"><span class="pre">ComplexT</span></code>, <code class="docutils literal notranslate"><span class="pre">RealT</span></code>, and <code class="docutils literal notranslate"><span class="pre">IntegerT</span></code>.</p>
+<p>There are some situations where you may only know both dimensions of the matrix at runtime (e.g., streams of data from a network). While it’s tempting to use a raw <code class="docutils literal notranslate"><span class="pre">int</span></code> as <code class="docutils literal notranslate"><span class="pre">M</span></code> or <code class="docutils literal notranslate"><span class="pre">N</span></code>, prefer a <code class="docutils literal notranslate"><span class="pre">NewType</span></code> instead:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span> <span class="k">as</span> <span class="n">L</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NewType</span>
+
+<span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">ROW</span><span class="p">,</span> <span class="n">RealMatrix</span>
+
+<span class="n">UNKNOWN_SIZE</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>  <span class="c1"># An unknown size</span>
+
+<span class="n">UnknownN</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s2">&quot;UnknownN&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>  <span class="c1"># A type hint for the unknown size</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="n">RealMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">UnknownN</span><span class="p">,</span> <span class="nb">float</span><span class="p">](</span>
+    <span class="p">(</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">UNKNOWN_SIZE</span><span class="p">)</span>
+    <span class="p">),</span>
+    <span class="n">shape</span><span class="o">=</span><span class="n">ROW</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">RealMatrix</span><span class="p">[</span><span class="n">L</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">UnknownN</span><span class="p">,</span> <span class="nb">float</span><span class="p">](</span>
+    <span class="p">(</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">UNKNOWN_SIZE</span><span class="p">)</span>
+    <span class="p">),</span>
+    <span class="n">shape</span><span class="o">=</span><span class="n">ROW</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+
+<span class="n">reveal_type</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>  <span class="c1"># Revealed type is &quot;matrixlib.builtins.RealMatrix[Literal[1], main.UnknownN, builtins.float]&quot;</span>
+</pre></div>
+</div>
+<p>This causes <code class="docutils literal notranslate"><span class="pre">a.__add__()</span></code> to ensure that <code class="docutils literal notranslate"><span class="pre">b</span></code> has <code class="docutils literal notranslate"><span class="pre">UnknownN</span></code> as its second dimension, similar to a literal <code class="docutils literal notranslate"><span class="pre">int</span></code>. The same will apply to other binary functions like it.</p>
+<p>In general, avoid using <code class="docutils literal notranslate"><span class="pre">int</span></code> dimensions whenever possible. Having them can let the type checker approve matrices of varying shape as arguments to equally-shaped parameters, as an example of just one problem they can cause:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">matrixlib</span> <span class="kn">import</span> <span class="n">IntegerMatrix</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span>
+    <span class="p">(</span>
+        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">IntegerMatrix</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span>
+    <span class="p">(</span>
+        <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+
+<span class="n">reveal_type</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>  <span class="c1"># Revealed type is &quot;matrixlib.builtins.IntegerMatrix[builtins.int, builtins.int, builtins.int]&quot;</span>
+</pre></div>
+</div>
 </section>
 </section>
 
