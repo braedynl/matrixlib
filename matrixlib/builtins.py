@@ -115,7 +115,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             if nrows > 1:
                 self.mesh = Col(array)
             elif nrows:
-                self.mesh = Box(array[0])
+                self.mesh = Box(array)
             else:
                 self.mesh = NilRow(ncols)
         else:
@@ -152,6 +152,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return hash(self.mesh)
 
     def __len__(self) -> int:
+        """Return the matrix's size"""
         return len(self.mesh)
 
     @overload
@@ -342,7 +343,16 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """Return the dimension corresponding to the given ``Rule``"""
         return self.mesh.n(by)
 
-    def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
+    @overload
+    def values(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[T_co]: ...
+    @overload
+    def values(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[T_co]: ...
+    @overload
+    def values(self, *, by: Rule, reverse: bool = False) -> Iterator[T_co]: ...
+    @overload
+    def values(self, *, reverse: bool = False) -> Iterator[T_co]: ...
+
+    def values(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator over the values of the matrix in row or
         column-major order
         """

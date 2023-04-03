@@ -5,7 +5,7 @@ type-checking capabilities, and seamless integration with core Python
 services.
 
 Author: Braedyn L
-Version: 0.3.1
+Version: 0.3.2
 Source: https://github.com/braedynl/matrixlib/
 """
 
