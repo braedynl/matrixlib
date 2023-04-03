@@ -89,6 +89,16 @@ If you believe that the access times are insufficient for your purposes, you can
 
     * :ref:`Material State <guide-material-state>`
 
+My matrix operation is taking too long. How do I speed it up?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Most matrix operations are done about as fast as you can go in raw Python - the ``Matrix`` type often uses a built-in sequence (``tuple``) to store data when it needs to. Methods like ``__iter__()``, ``__reversed__()``, ``__getitem__()``, etc. are often just wrappers of ``tuple.__iter__()``, ``tuple.__reversed__()``, ``tuple.__getitem__()``, etc.
+
+So, in a sense, you're really just asking how to speed up Python in general. In which case, `the standard ways of speeding up your code apply <https://docs.python.org/3/faq/programming.html#my-program-is-too-slow-how-do-i-speed-it-up>`_. A quick and easy way to speed up the library is to:
+
+* Update your Python version: Python 3.11 introduced `lazy frames <https://docs.python.org/3/whatsnew/3.11.html#cheaper-lazy-python-frames>`_, `inlined function calls <https://docs.python.org/3/whatsnew/3.11.html#inlined-python-function-calls>`_, and `specialized operations <https://docs.python.org/3/whatsnew/3.11.html#pep-659-specializing-adaptive-interpreter>`_, all of which greatly benefit this library.
+* Use PyPy: the `PyPy project <https://www.pypy.org/>`_ is an alternative Python implementation that uses a `JIT compiler <https://en.wikipedia.org/wiki/Just-in-time_compilation>`_. It is much faster than the default Python implementation, even on version 3.11.
+
 Design Decisions
 ----------------
 

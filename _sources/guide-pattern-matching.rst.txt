@@ -20,7 +20,7 @@ Because ``Matrix`` is a type of ``Sequence``, you can match an instance of one b
     )
 
     match a:
-        case (a, b, c, 4, 5, 6):
+        case [a, b, c, 4, 5, 6]:
             print(a, b, c)  # Prints "1 2 3"
 
 While it may look like we're matching a ``list``, the bracketed notation, in this context, denotes an instance of ``Sequence``. Thus, there is no notion of shape here - the pattern we gave would also match ``Matrix(range(1, 6 + 1), shape=(1, 6))``, for example.

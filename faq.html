@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Changelog" href="changelog.html" /><link rel="prev" title="Best Practices" href="best-practices.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2023.03.27 -->
-        <title>FAQ - MatrixLib 0.3.1 documentation</title>
+        <title>FAQ - MatrixLib 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">MatrixLib 0.3.1 documentation</div></a>
+      <a href="index.html"><div class="brand">MatrixLib 0.3.2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">MatrixLib 0.3.1 documentation</span>
+  <span class="sidebar-brand-text">MatrixLib 0.3.2 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -283,6 +283,15 @@
 <li><p><a class="reference internal" href="guide-material-state.html#guide-material-state"><span class="std std-ref">Material State</span></a></p></li>
 </ul>
 </div>
+</section>
+<section id="my-matrix-operation-is-taking-too-long-how-do-i-speed-it-up">
+<h3>My matrix operation is taking too long. How do I speed it up?<a class="headerlink" href="#my-matrix-operation-is-taking-too-long-how-do-i-speed-it-up" title="Permalink to this heading">#</a></h3>
+<p>Most matrix operations are done about as fast as you can go in raw Python - the <code class="docutils literal notranslate"><span class="pre">Matrix</span></code> type often uses a built-in sequence (<code class="docutils literal notranslate"><span class="pre">tuple</span></code>) to store data when it needs to. Methods like <code class="docutils literal notranslate"><span class="pre">__iter__()</span></code>, <code class="docutils literal notranslate"><span class="pre">__reversed__()</span></code>, <code class="docutils literal notranslate"><span class="pre">__getitem__()</span></code>, etc. are often just wrappers of <code class="docutils literal notranslate"><span class="pre">tuple.__iter__()</span></code>, <code class="docutils literal notranslate"><span class="pre">tuple.__reversed__()</span></code>, <code class="docutils literal notranslate"><span class="pre">tuple.__getitem__()</span></code>, etc.</p>
+<p>So, in a sense, you’re really just asking how to speed up Python in general. In which case, <a class="reference external" href="https://docs.python.org/3/faq/programming.html#my-program-is-too-slow-how-do-i-speed-it-up">the standard ways of speeding up your code apply</a>. A quick and easy way to speed up the library is to:</p>
+<ul class="simple">
+<li><p>Update your Python version: Python 3.11 introduced <a class="reference external" href="https://docs.python.org/3/whatsnew/3.11.html#cheaper-lazy-python-frames">lazy frames</a>, <a class="reference external" href="https://docs.python.org/3/whatsnew/3.11.html#inlined-python-function-calls">inlined function calls</a>, and <a class="reference external" href="https://docs.python.org/3/whatsnew/3.11.html#pep-659-specializing-adaptive-interpreter">specialized operations</a>, all of which greatly benefit this library.</p></li>
+<li><p>Use PyPy: the <a class="reference external" href="https://www.pypy.org/">PyPy project</a> is an alternative Python implementation that uses a <a class="reference external" href="https://en.wikipedia.org/wiki/Just-in-time_compilation">JIT compiler</a>. It is much faster than the default Python implementation, even on version 3.11.</p></li>
+</ul>
 </section>
 </section>
 <section id="design-decisions">
@@ -428,6 +437,7 @@
 <li><a class="reference internal" href="#how-can-i-re-shape-a-matrix">How can I re-shape a matrix?</a></li>
 <li><a class="reference internal" href="#what-s-the-difference-between-eq-and-equal-ne-and-not-equal-etc">What’s the difference between <code class="docutils literal notranslate"><span class="pre">__eq__()</span></code> and <code class="docutils literal notranslate"><span class="pre">equal()</span></code>, <code class="docutils literal notranslate"><span class="pre">__ne__()</span></code> and <code class="docutils literal notranslate"><span class="pre">not_equal()</span></code>, etc.?</a></li>
 <li><a class="reference internal" href="#why-is-it-taking-so-long-to-index-this-matrix">Why is it taking so long to index this matrix?</a></li>
+<li><a class="reference internal" href="#my-matrix-operation-is-taking-too-long-how-do-i-speed-it-up">My matrix operation is taking too long. How do I speed it up?</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#design-decisions">Design Decisions</a><ul>
