@@ -7,7 +7,13 @@ The last subject we'll cover in this guide is in regard to some behind-the-scene
 
 In essence, the ``Matrix`` type is really just a wrapper of another type, called a ``Mesh``. ``Mesh`` is an `abstract base class <https://docs.python.org/3/library/abc.html>`_ that provides a layout for what we deem the "core" operations of the hybrid one and two-rank sequence interface. Matrices *do not know* what kind of ``Mesh`` they're holding - they only know that it's *some* object that implements the ``Mesh`` interface.
 
-This `compositional relationship <https://en.wikipedia.org/wiki/Object_composition>`_ allows us to "change" the memory layout of some ``Matrix`` instances, which is why you've probably not seen much discussion of the class' memory layout until now - it depends on a lot internal conditions, and it very much needs its own page to fully describe.
+.. note::
+
+    The remainder of this segment pertains to information about how certain matrices can be slower than others due to the implementation of some concrete ``Mesh`` sub-classes. This reduction in speed is largely caused by general Python slowness.
+
+    In the future, these classes may be re-implemented as a C extension, making the effect near-imperceivable. If this change is implemented, the concepts of material state will likely be scrubbed from documentation, along with the ``materialize()`` method (shown later).
+
+This `compositional relationship <https://en.wikipedia.org/wiki/Object_composition>`_ allows us to swap the memory layouts of some ``Matrix`` instances, which is why you've probably not seen much discussion of the class' memory layout until now - it depends on a lot internal conditions, and it very much needs its own page to fully describe.
 
 In short:
 
