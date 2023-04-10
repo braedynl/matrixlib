@@ -5,6 +5,8 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Iterator
 from typing import Generic, Literal, SupportsIndex, TypeVar
 
+from mypy_extensions import mypyc_attr
+
 __all__ = [
     "Sieve",
     "VectorSieve",
@@ -120,6 +122,7 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         return resolve_slice(key, bound)
 
 
+@mypyc_attr(allow_interpreted_subclasses=True)
 class VectorSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
     """Sub-class of ``Sieve`` that pipes calls from ``matrix_sieve()`` to
     ``vector_sieve()``
@@ -142,6 +145,7 @@ class VectorSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
         return self.vector_sieve(index)
 
 
+@mypyc_attr(allow_interpreted_subclasses=True)
 class MatrixSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
     """Sub-class of ``Sieve`` that pipes calls from ``vector_sieve()`` to
     ``matrix_sieve()``
