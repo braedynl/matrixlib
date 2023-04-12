@@ -36,8 +36,8 @@ class Transposition(MatrixSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
     def ncols(self) -> N_co:
         return self.target.nrows
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
-        return self.target.matrix_sieve(col_index, row_index)
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
+        return self.target.matrix_collect(col_index, row_index)
 
 
 class RowFlip(MatrixSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
@@ -60,9 +60,9 @@ class RowFlip(MatrixSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
     def ncols(self) -> N_co:
         return self.target.ncols
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         row_index = self.nrows - row_index - 1
-        return self.target.matrix_sieve(row_index, col_index)
+        return self.target.matrix_collect(row_index, col_index)
 
 
 class ColFlip(MatrixSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
@@ -85,9 +85,9 @@ class ColFlip(MatrixSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
     def ncols(self) -> N_co:
         return self.target.ncols
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         col_index = self.ncols - col_index - 1
-        return self.target.matrix_sieve(row_index, col_index)
+        return self.target.matrix_collect(row_index, col_index)
 
 
 class Rotation090(MatrixSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
@@ -110,9 +110,9 @@ class Rotation090(MatrixSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
     def ncols(self) -> N_co:
         return self.target.nrows
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         row_index = self.nrows - row_index - 1
-        return self.target.matrix_sieve(col_index, row_index)
+        return self.target.matrix_collect(col_index, row_index)
 
 
 class Rotation180(VectorSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
@@ -135,9 +135,9 @@ class Rotation180(VectorSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
     def ncols(self) -> N_co:
         return self.target.ncols
 
-    def vector_sieve(self, index: int) -> T_co:
+    def vector_collect(self, index: int) -> T_co:
         index = len(self) - index - 1
-        return self.target.vector_sieve(index)
+        return self.target.vector_collect(index)
 
 
 class Rotation270(MatrixSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
@@ -160,6 +160,6 @@ class Rotation270(MatrixSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
     def ncols(self) -> N_co:
         return self.target.nrows
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         col_index = self.ncols - col_index - 1
-        return self.target.matrix_sieve(col_index, row_index)
+        return self.target.matrix_collect(col_index, row_index)

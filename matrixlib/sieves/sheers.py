@@ -31,9 +31,9 @@ class RowSheer(MatrixSieve[Literal[1], N_co, T_co], Generic[N_co, T_co]):
     def ncols(self) -> N_co:
         return self.target.ncols
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         row_index = self.row_index + row_index
-        return self.target.matrix_sieve(row_index, col_index)
+        return self.target.matrix_collect(row_index, col_index)
 
 
 class ColSheer(MatrixSieve[M_co, Literal[1], T_co], Generic[M_co, T_co]):
@@ -55,6 +55,6 @@ class ColSheer(MatrixSieve[M_co, Literal[1], T_co], Generic[M_co, T_co]):
     def nrows(self) -> M_co:
         return self.target.nrows
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         col_index = self.col_index + col_index
-        return self.target.matrix_sieve(row_index, col_index)
+        return self.target.matrix_collect(row_index, col_index)

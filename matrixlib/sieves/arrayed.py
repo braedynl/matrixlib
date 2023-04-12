@@ -44,10 +44,10 @@ class ArrayedSieve(VectorSieve[M_co, N_co, T_co], metaclass=ABCMeta):
     def array(self) -> tuple[T_co, ...]:
         raise NotImplementedError
 
-    def sieve(self) -> tuple[T_co, ...]:
+    def collect(self) -> tuple[T_co, ...]:
         return self.array
 
-    def vector_sieve(self, index: int) -> T_co:
+    def vector_collect(self, index: int) -> T_co:
         return self.array[index]
 
 

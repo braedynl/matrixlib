@@ -33,9 +33,9 @@ class Slice(VectorSieve[Literal[1], int, T_co], Generic[T_co]):
     def ncols(self) -> int:
         return len(self.window)
 
-    def vector_sieve(self, index: int) -> T_co:
+    def vector_collect(self, index: int) -> T_co:
         index = self.window[index]
-        return self.target.vector_sieve(index)
+        return self.target.vector_collect(index)
 
 
 class RowSlice(MatrixSieve[Literal[1], int, T_co], Generic[T_co]):
@@ -59,10 +59,10 @@ class RowSlice(MatrixSieve[Literal[1], int, T_co], Generic[T_co]):
     def ncols(self) -> int:
         return len(self.col_window)
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         row_index = self.row_index + row_index
         col_index = self.col_window[col_index]
-        return self.target.matrix_sieve(row_index, col_index)
+        return self.target.matrix_collect(row_index, col_index)
 
 
 class ColSlice(MatrixSieve[int, Literal[1], T_co], Generic[T_co]):
@@ -86,10 +86,10 @@ class ColSlice(MatrixSieve[int, Literal[1], T_co], Generic[T_co]):
     def nrows(self) -> int:
         return len(self.row_window)
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         row_index = self.row_window[row_index]
         col_index = self.col_index + col_index
-        return self.target.matrix_sieve(row_index, col_index)
+        return self.target.matrix_collect(row_index, col_index)
 
 
 class BinSlice(MatrixSieve[int, int, T_co], Generic[T_co]):
@@ -116,7 +116,7 @@ class BinSlice(MatrixSieve[int, int, T_co], Generic[T_co]):
     def ncols(self) -> int:
         return len(self.col_window)
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         row_index = self.row_window[row_index]
         col_index = self.col_window[col_index]
-        return self.target.matrix_sieve(row_index, col_index)
+        return self.target.matrix_collect(row_index, col_index)

@@ -18,6 +18,7 @@ M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
+@mypyc_attr(allow_interpreted_subclasses=True)
 class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ()
@@ -74,19 +75,19 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         """The number of columns"""
         raise NotImplementedError
 
-    def sieve(self) -> tuple[T_co, ...]:
-        """Collect and return all sieve values as a ``tuple``, aligned in
+    def collect(self) -> tuple[T_co, ...]:
+        """Gather and return all sieve values as a ``tuple``, aligned in
         row-major order
         """
         return tuple(self)
 
     @abstractmethod
-    def vector_sieve(self, index: int) -> T_co:
+    def vector_collect(self, index: int) -> T_co:
         """Return the value at ``index``"""
         raise NotImplementedError
 
     @abstractmethod
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         """Return the value at ``row_index``, ``col_index``"""
         raise NotImplementedError
 
@@ -124,8 +125,8 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
 @mypyc_attr(allow_interpreted_subclasses=True)
 class VectorSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
-    """Sub-class of ``Sieve`` that pipes calls from ``matrix_sieve()`` to
-    ``vector_sieve()``
+    """Sub-class of ``Sieve`` that pipes calls from ``matrix_collect()`` to
+    ``vector_collect()``
     """
 
     __slots__ = ()
@@ -133,22 +134,22 @@ class VectorSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
     def __iter__(self) -> Iterator[T_co]:
         indices = range(len(self))
         for index in indices:
-            yield self.vector_sieve(index)
+            yield self.vector_collect(index)
 
     def __reversed__(self) -> Iterator[T_co]:
         indices = range(len(self) - 1, -1, -1)
         for index in indices:
-            yield self.vector_sieve(index)
+            yield self.vector_collect(index)
 
-    def matrix_sieve(self, row_index: int, col_index: int) -> T_co:
+    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
         index = row_index * self.ncols + col_index
-        return self.vector_sieve(index)
+        return self.vector_collect(index)
 
 
 @mypyc_attr(allow_interpreted_subclasses=True)
 class MatrixSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
-    """Sub-class of ``Sieve`` that pipes calls from ``vector_sieve()`` to
-    ``matrix_sieve()``
+    """Sub-class of ``Sieve`` that pipes calls from ``vector_collect()`` to
+    ``matrix_collect()``
     """
 
     __slots__ = ()
@@ -158,18 +159,18 @@ class MatrixSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
         col_indices = range(self.ncols)
         for row_index in row_indices:
             for col_index in col_indices:
-                yield self.matrix_sieve(row_index, col_index)
+                yield self.matrix_collect(row_index, col_index)
 
     def __reversed__(self) -> Iterator[T_co]:
         row_indices = range(self.nrows - 1, -1, -1)
         col_indices = range(self.ncols - 1, -1, -1)
         for row_index in row_indices:
             for col_index in col_indices:
-                yield self.matrix_sieve(row_index, col_index)
+                yield self.matrix_collect(row_index, col_index)
 
-    def vector_sieve(self, index: int) -> T_co:
+    def vector_collect(self, index: int) -> T_co:
         row_index, col_index = divmod(index, self.ncols)
-        return self.matrix_sieve(row_index, col_index)
+        return self.matrix_collect(row_index, col_index)
 
 
 def resolve_index(key: SupportsIndex, bound: int) -> int:
