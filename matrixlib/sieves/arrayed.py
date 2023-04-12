@@ -1,3 +1,5 @@
+"""Built-in arrayed sieves"""
+
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
@@ -7,13 +9,13 @@ from typing import Any, Generic, Literal, TypeVar
 from .abc import VectorSieve
 
 __all__ = [
-    "Grid",
+    "Bin",
     "Box",
     "Row",
     "Col",
-    "Empty",
-    "EmptyRow",
-    "EmptyCol",
+    "NilBox",
+    "NilRow",
+    "NilCol",
 ]
 
 T_co = TypeVar("T_co", covariant=True)
@@ -56,7 +58,7 @@ class EmptyArrayedSieve(ArrayedSieve[M_co, N_co, T_co], metaclass=ABCMeta):
     array: tuple[T_co, ...] = ()
 
 
-class Grid(ArrayedSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
+class Bin(ArrayedSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
 
     __slots__ = ("array", "shape")
 
@@ -68,7 +70,7 @@ class Grid(ArrayedSieve[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
         self.shape = shape
 
     def __repr__(self) -> str:
-        return f"Grid(array={self.array!r}, shape={self.shape!r})"
+        return f"Bin(array={self.array!r}, shape={self.shape!r})"
 
     @property
     def nrows(self) -> M_co:
@@ -134,7 +136,7 @@ class Col(ArrayedSieve[int, Literal[1], T_co], Generic[T_co]):
         return len(self.array)
 
 
-class Empty(EmptyArrayedSieve[Literal[0], Literal[0], T_co], Generic[T_co]):
+class NilBox(EmptyArrayedSieve[Literal[0], Literal[0], T_co], Generic[T_co]):
 
     __slots__ = ()
 
@@ -142,10 +144,10 @@ class Empty(EmptyArrayedSieve[Literal[0], Literal[0], T_co], Generic[T_co]):
     ncols: Literal[0] = 0
 
     def __repr__(self) -> str:
-        return "Empty()"
+        return "NilBox()"
 
 
-class EmptyRow(EmptyArrayedSieve[Literal[0], N_co, T_co], Generic[N_co, T_co]):
+class NilRow(EmptyArrayedSieve[Literal[0], N_co, T_co], Generic[N_co, T_co]):
 
     __slots__ = ("ncols")
 
@@ -156,10 +158,10 @@ class EmptyRow(EmptyArrayedSieve[Literal[0], N_co, T_co], Generic[N_co, T_co]):
         self.ncols = shape[1]
 
     def __repr__(self) -> str:
-        return f"EmptyRow(shape={self.shape!r})"
+        return f"NilRow(shape={self.shape!r})"
 
 
-class EmptyCol(EmptyArrayedSieve[M_co, Literal[0], T_co], Generic[M_co, T_co]):
+class NilCol(EmptyArrayedSieve[M_co, Literal[0], T_co], Generic[M_co, T_co]):
 
     __slots__ = ("nrows")
 
@@ -170,4 +172,4 @@ class EmptyCol(EmptyArrayedSieve[M_co, Literal[0], T_co], Generic[M_co, T_co]):
         self.nrows = shape[0]
 
     def __repr__(self) -> str:
-        return f"EmptyCol(shape={self.shape!r})"
+        return f"NilCol(shape={self.shape!r})"
