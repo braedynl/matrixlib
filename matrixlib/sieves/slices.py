@@ -6,7 +6,7 @@ __all__ = [
     "Slice",
     "RowSlice",
     "ColSlice",
-    "RowColSlice",
+    "BinSlice",
 ]
 
 T_co = TypeVar("T_co", covariant=True)
@@ -92,7 +92,7 @@ class ColSlice(MatrixSieve[int, Literal[1], T_co], Generic[T_co]):
         return self.target.matrix_sieve(row_index, col_index)
 
 
-class RowColSlice(MatrixSieve[int, int, T_co], Generic[T_co]):
+class BinSlice(MatrixSieve[int, int, T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_window", "col_window")
 
@@ -106,7 +106,7 @@ class RowColSlice(MatrixSieve[int, int, T_co], Generic[T_co]):
         self.col_window = col_window
 
     def __repr__(self) -> str:
-        return f"RowColSlice(target={self.target!r}, row_window={self.row_window!r}, col_window={self.col_window!r})"
+        return f"BinSlice(target={self.target!r}, row_window={self.row_window!r}, col_window={self.col_window!r})"
 
     @property
     def nrows(self) -> int:
