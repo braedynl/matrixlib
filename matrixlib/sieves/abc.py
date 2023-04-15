@@ -28,11 +28,13 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         if self is other:
             return True
         if isinstance(other, Sieve):
-            return (
-                self.shape == other.shape
-                and
-                all(map(operator.eq, self, other))
-            )
+            if self.shape != other.shape:
+                return False
+            for x, y in zip(self, other):
+                if x is y or x == y:
+                    continue
+                return False
+            return True
         return NotImplemented
 
     def __len__(self) -> int:
@@ -54,7 +56,7 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
     def __contains__(self, value: object) -> bool:
         """Return true if the sieve contains ``value``, otherwise false"""
         for val in self:
-            if val == value:
+            if val is value or val == value:
                 return True
         return False
 
@@ -106,7 +108,7 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         bound = len(self)
         return resolve_slice(key, bound)
 
-    def resolve_matrix_index(self, key: SupportsIndex, *, axis: Literal[0, 1]) -> int:
+    def resolve_matrix_index(self, key: SupportsIndex, axis: Literal[0, 1]) -> int:
         """Return ``key`` resolved with respect to the ``axis`` dimension"""
         bound = self.shape[axis]
         try:
@@ -117,7 +119,7 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         else:
             return index
 
-    def resolve_matrix_slice(self, key: slice, *, axis: Literal[0, 1]) -> range:
+    def resolve_matrix_slice(self, key: slice, axis: Literal[0, 1]) -> range:
         """Return ``key`` resolved with respect to the ``axis`` dimension"""
         bound = self.shape[axis]
         return resolve_slice(key, bound)
