@@ -3,7 +3,10 @@ from typing import TypeVar
 
 from .abc import MatrixSieve, Sieve
 
-__all__ = ["RowStack", "ColStack"]
+__all__ = [
+    "RowStack",
+    "ColStack",
+]
 
 T_co = TypeVar("T_co", covariant=True)
 M_co = TypeVar("M_co", covariant=True, bound=int)
