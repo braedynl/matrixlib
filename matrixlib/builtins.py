@@ -8,14 +8,16 @@ import operator
 import sys
 from collections.abc import Iterable, Iterator, Sequence
 from numbers import Complex, Integral, Real
-from typing import (Any, Generic, Literal, Optional, TypeVar, Union, final,
-                    overload)
+from typing import (Any, Final, Generic, Literal, SupportsIndex, TypeVar,
+                    Union, final, overload)
 
 from typing_extensions import Self, TypeAlias
 
-from .meshes import NIL, Box, Col, Grid, Mesh, NilCol, NilRow, Row
 from .rule import Rule
-from .typing import EvenNumber, OddNumber
+from .sieves import (Bin, BinSlice, Box, Col, ColFlip, ColSheer, ColSlice,
+                     ColStack, NilBox, NilCol, NilRow, Rotation090,
+                     Rotation180, Rotation270, Row, RowFlip, RowSheer,
+                     RowSlice, RowStack, Sieve, Slice, Transposition)
 
 __all__ = [
     "Matrix",
@@ -24,6 +26,11 @@ __all__ = [
     "IntegerMatrix",
     "IntegralMatrix",
 ]
+
+NIL_BOX: Final[NilBox] = NilBox()
+
+EvenNumber: TypeAlias = Literal[-16, -14, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16]
+OddNumber: TypeAlias = Literal[-15, -13, -11, -9, -7, -5, -3, -1, 1, 3, 5, 7, 9, 11, 13, 15]
 
 T_co = TypeVar("T_co", covariant=True)
 
@@ -44,13 +51,13 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     vectorized operations that are usable on objects of any type.
     """
 
-    __slots__ = ("__weakref__", "mesh")
+    __slots__ = ("__weakref__", "sieve")
+    __match_args__ = ("array", "shape")
 
-    if sys.version_info >= (3, 10):
-        __match_args__ = ("array", "shape")
+    sieve: Sieve[M_co, N_co, T_co]
 
     @overload
-    def __init__(self, array: Mesh[M_co, N_co, T_co]) -> None: ...
+    def __init__(self, array: Sieve[M_co, N_co, T_co]) -> None: ...
     @overload
     def __init__(self, array: Matrix[M_co, N_co, T_co]) -> None: ...
     @overload
@@ -78,24 +85,22 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         constant-time operation as well, but can vary depending on its material
         state (this is also how matrices can be "re-shaped").
         """
-        self.mesh: Mesh[M_co, N_co, T_co]  # type: ignore
         if shape is None:
-            if isinstance(array, Mesh):
-                self.mesh = array
+            if isinstance(array, Sieve):
+                self.sieve = array
             else:
-                self.mesh = array.mesh
+                self.sieve = array.sieve
             return
         if isinstance(array, Matrix):
-            array = tuple(array.array)
+            array = array.sieve.collect()
         else:
             array = tuple(array)
         if isinstance(shape, Rule):
             if shape is Rule.ROW:
-                self.mesh = Row(array)
+                self.sieve = Row(array)
             else:
-                self.mesh = Col(array)
+                self.sieve = Col(array)
             return
-        shape = tuple(shape)
         nrows, ncols = shape
         if __debug__:
             test_size = nrows * ncols
@@ -106,25 +111,25 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 raise ValueError(f"cannot interpret size {true_size} iterable as shape {nrows} × {ncols}")
         if ncols > 1:
             if nrows > 1:
-                self.mesh = Grid(array, shape)
+                self.sieve = Bin(array, shape)
             elif nrows:
-                self.mesh = Row(array)
+                self.sieve = Row(array)
             else:
-                self.mesh = NilRow(ncols)
+                self.sieve = NilRow(shape)
         elif ncols:
             if nrows > 1:
-                self.mesh = Col(array)
+                self.sieve = Col(array)
             elif nrows:
-                self.mesh = Box(array)
+                self.sieve = Box(array)
             else:
-                self.mesh = NilRow(ncols)
+                self.sieve = NilRow(shape)
         else:
             if nrows > 1:
-                self.mesh = NilCol(nrows)
+                self.sieve = NilCol(shape)
             elif nrows:
-                self.mesh = NilCol(nrows)
+                self.sieve = NilCol(shape)
             else:
-                self.mesh = NIL
+                self.sieve = NIL_BOX
 
     def __repr__(self) -> str:
         """Return a canonical representation of the matrix"""
@@ -141,7 +146,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         if self is other:
             return True
         if isinstance(other, Matrix):
-            return self.mesh == other.mesh
+            return self.sieve == other.sieve
         return NotImplemented
 
     def __hash__(self) -> int:
@@ -149,11 +154,11 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
         Matrices are hashable if its values are also hashable.
         """
-        return hash(self.mesh)
+        return hash(self.sieve)
 
     def __len__(self) -> int:
         """Return the matrix's size"""
-        return len(self.mesh)
+        return len(self.sieve)
 
     @overload
     def __getitem__(self, key: int) -> T_co: ...
@@ -170,24 +175,51 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def __getitem__(self, key):
         """Return the value or sub-matrix corresponding to ``key``"""
-        result = self.mesh[key]
-        if isinstance(result, Mesh):
-            return Matrix(result)
-        return result
+        sieve = self.sieve
+
+        if isinstance(key, tuple):
+            row_key, col_key = key
+
+            if isinstance(row_key, slice):
+                row_window = sieve.resolve_matrix_slice(row_key, 0)
+
+                if isinstance(col_key, slice):
+                    col_window = sieve.resolve_matrix_slice(col_key, 1)
+                    return Matrix(BinSlice(sieve, row_window=row_window, col_window=col_window))
+
+                col_index = sieve.resolve_matrix_index(col_key, 1)
+                return Matrix(ColSlice(sieve, row_window=row_window, col_index=col_index))
+
+            else:
+                row_index = sieve.resolve_matrix_index(row_key, 0)
+
+                if isinstance(col_key, slice):
+                    col_window = sieve.resolve_matrix_slice(col_key, 1)
+                    return Matrix(RowSlice(sieve, row_index=row_index, col_window=col_window))
+
+                col_index = sieve.resolve_matrix_index(col_key, 1)
+                return sieve.matrix_collect(row_index, col_index)
+
+        elif isinstance(key, slice):
+            window = sieve.resolve_vector_slice(key)
+            return Matrix(Slice(sieve, window=window))
+
+        index = sieve.resolve_vector_index(key)
+        return sieve.vector_collect(index)
 
     def __iter__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in row-major order"""
-        return iter(self.mesh)
+        return iter(self.sieve)
 
     def __reversed__(self) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix in reverse
         row-major order
         """
-        return reversed(self.mesh)
+        return reversed(self.sieve)
 
     def __contains__(self, value: object) -> bool:
         """Return true if the matrix contains ``value``, otherwise false"""
-        return value in self.mesh
+        return value in self.sieve
 
     @final
     def __deepcopy__(self, memo=None) -> Self:
@@ -200,29 +232,23 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return self
 
     @property
-    def array(self) -> Sequence[T_co]:
-        """The underlying sequence of matrix values, aligned in row-major order
-
-        This object will, at minimum, have an implementation of the
-        ``Sequence`` interface. We make no guarantee of any concrete types, as
-        it depends on a variety of internal conditions.
-        """
-        return self.mesh.array
+    def array(self) -> Self:
+        return self
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
         """The number of rows and columns as a ``tuple``"""
-        return self.mesh.shape
+        return self.sieve.shape
 
     @property
     def nrows(self) -> M_co:
         """The number of rows"""
-        return self.mesh.nrows
+        return self.sieve.nrows
 
     @property
     def ncols(self) -> N_co:
         """The number of columns"""
-        return self.mesh.ncols
+        return self.sieve.ncols
 
     @classmethod
     def from_nesting(cls, nesting: Iterable[Iterable[T_co]]) -> Self:
@@ -263,58 +289,34 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
         return cls(array, (nrows, ncols))
 
-    def index(self, value: Any, start: int = 0, stop: Optional[int] = None) -> int:
+    def index(self, value: Any, start: int = 0, stop: int = sys.maxsize) -> int:
         """Return the first index where ``value`` appears in the matrix
 
         Raises ``ValueError`` if ``value`` is not present.
         """
-        return self.mesh.index(value, start, stop)  # type: ignore[arg-type]
+        return super().index(value, start, stop)
 
     def count(self, value: Any) -> int:
         """Return the number of times ``value`` appears in the matrix"""
-        return self.mesh.count(value)
-
-    def materialize(self) -> Matrix[M_co, N_co, T_co]:
-        """Return a materialized copy of the matrix
-
-        Certain methods (particularly those that permute the matrix's values in
-        some fashion) construct a view onto the underlying sequence to preserve
-        memory. These views can "stack" onto one another, which can drastically
-        increase access time.
-
-        This method addresses said issue by shallowly placing the elements into
-        a new sequence - a process that we call "materialization". The
-        resulting matrix instance will have access times identical to that of
-        an instance created from an array-and-shape pairing, but note that this
-        may consume significant amounts of memory (depending on the size of the
-        matrix).
-
-        If the matrix does not store a kind of view, this method returns a
-        matrix that is semantically equivalent to the original. We call such
-        matrices "materialized", or "material", as they store a sequence whose
-        elements already exist in the desired order.
-
-        Think of materialization as being akin to compiling regular
-        expressions: if the same matrix permutation is required in many
-        different places, it's much more time-efficient to materialize it, and
-        use the resulting material matrix as a substituting variable.
-        """
-        return Matrix(self.mesh.materialize())
+        return super().count(value)
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix"""
-        return Matrix(self.mesh.transpose())
+        return Matrix(Transposition(self.sieve))
 
     def flip(self, *, by: Rule = Rule.ROW) -> Matrix[M_co, N_co, T_co]:
         """Return a flipped view of the matrix"""
-        return Matrix(self.mesh.flip(by=by))
+        if by is Rule.ROW:
+            return Matrix(RowFlip(self.sieve))
+        else:
+            return Matrix(ColFlip(self.sieve))
 
     @overload
     def rotate(self, n: EvenNumber) -> Matrix[M_co, N_co, T_co]: ...
     @overload
     def rotate(self, n: OddNumber) -> Matrix[N_co, M_co, T_co]: ...
     @overload
-    def rotate(self, n: int) -> Matrix[Any, Any, T_co]: ...
+    def rotate(self, n: SupportsIndex) -> Matrix[Any, Any, T_co]: ...
     @overload
     def rotate(self) -> Matrix[N_co, M_co, T_co]: ...
 
@@ -326,11 +328,19 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         ``n`` is negative. All integers are accepted, but many (particularly
         those outside of a small range near zero) will lose typing precision.
         """
-        return Matrix(self.mesh.rotate(n))
+        n = operator.index(n) % 4
+        if not n:
+            return self
+        elif n == 1:
+            return Matrix(Rotation090(self.sieve))
+        elif n == 2:
+            return Matrix(Rotation180(self.sieve))
+        else:
+            return Matrix(Rotation270(self.sieve))
 
     def reverse(self) -> Matrix[M_co, N_co, T_co]:
         """Return a reversed view of the matrix"""
-        return Matrix(self.mesh.reverse())
+        return self.rotate(2)
 
     @overload
     def n(self, by: Literal[Rule.ROW]) -> M_co: ...
@@ -341,7 +351,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def n(self, by):
         """Return the dimension corresponding to the given ``Rule``"""
-        return self.mesh.n(by)
+        return self.shape[by.value]
 
     @overload
     def values(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[T_co]: ...
@@ -356,7 +366,10 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """Return an iterator over the values of the matrix in row or
         column-major order
         """
-        return self.mesh.values(by=by, reverse=reverse)
+        sieve = self.sieve if by is Rule.ROW else Transposition(self.sieve)
+        if reverse:
+            return reversed(sieve)
+        return iter(sieve)
 
     @overload
     def slices(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[Matrix[Literal[1], N_co, T_co]]: ...
@@ -369,7 +382,41 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def slices(self, *, by=Rule.ROW, reverse=False):
         """Return an iterator over the rows or columns of the matrix"""
-        return map(Matrix, self.mesh.slices(by=by, reverse=reverse))
+        sieve = self.sieve
+        if reverse:
+            indices = range(self.n(by) - 1, -1, -1)
+        else:
+            indices = range(self.n(by))
+        if by is Rule.ROW:
+            for row_index in indices:
+                yield Matrix(RowSheer(sieve, row_index=row_index))
+        else:
+            for col_index in indices:
+                yield Matrix(ColSheer(sieve, col_index=col_index))
+
+    @overload
+    def stack(self, others: tuple[Matrix[Any, N_co, T_co], ...], *, by: Literal[Rule.ROW]) -> Matrix[Any, N_co, T_co]: ...
+    @overload
+    def stack(self, others: tuple[Matrix[M_co, Any, T_co], ...], *, by: Literal[Rule.COL]) -> Matrix[M_co, Any, T_co]: ...
+    @overload
+    def stack(self, others: tuple[Matrix[Any, Any, T_co], ...], *, by: Rule) -> Matrix[Any, Any, T_co]: ...
+    @overload
+    def stack(self, others: tuple[Matrix[Any, N_co, T_co], ...]) -> Matrix[Any, N_co, T_co]: ...
+
+    def stack(self, others, *, by=Rule.ROW):
+        if not others:
+            return self
+        if __debug__:
+            dy = ~by
+            for other in others:
+                if self.n(dy) != other.n(dy):
+                    raise ValueError(f"cannot {by.handle}-stack matrices with differing number of {dy.handle}s")
+        sieve = self.sieve
+        other_sieves = tuple(map(lambda other: other.sieve, others))
+        if by is Rule.ROW:
+            return Matrix(RowStack(sieve, other_sieves))
+        else:
+            return Matrix(ColStack(sieve, other_sieves))
 
     def format(self, *, field_width: int = 8) -> str:
         """Return a formatted string representation of the matrix
@@ -758,9 +805,6 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
             shape=u,
         )
 
-    def materialize(self) -> ComplexMatrix[M_co, N_co, C_co]:
-        return ComplexMatrix(super().materialize())
-
     def transpose(self) -> ComplexMatrix[N_co, M_co, C_co]:
         return ComplexMatrix(super().transpose())
 
@@ -772,7 +816,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
     @overload
     def rotate(self, n: OddNumber) -> ComplexMatrix[N_co, M_co, C_co]: ...
     @overload
-    def rotate(self, n: int) -> ComplexMatrix[Any, Any, C_co]: ...
+    def rotate(self, n: SupportsIndex) -> ComplexMatrix[Any, Any, C_co]: ...
     @overload
     def rotate(self) -> ComplexMatrix[N_co, M_co, C_co]: ...
 
@@ -818,11 +862,7 @@ class ComplexMatrix(Matrix[M_co, N_co, C_co]):
     def transjugate(self: ComplexMatrix[M_co, N_co, complex]) -> ComplexMatrix[N_co, M_co, complex]: ...
 
     def transjugate(self):
-        """Return the conjugate transpose
-
-        The returned matrix may or may not be a view depending on the active
-        class.
-        """
+        """Return the conjugate transpose"""
         return self.transpose().conjugate()
 
 
@@ -1061,7 +1101,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
             enumerate(itertools.tee(map(divmod, a, b)))
         )
 
-    @overload
+    @overload  # type: ignore[override]
     def __radd__(self: ComplexMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
     @overload
     def __radd__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
@@ -1074,7 +1114,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
             return RealMatrix(result)
         return result
 
-    @overload
+    @overload  # type: ignore[override]
     def __rsub__(self: ComplexMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
     @overload
     def __rsub__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
@@ -1087,7 +1127,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
             return RealMatrix(result)
         return result
 
-    @overload
+    @overload  # type: ignore[override]
     def __rmul__(self: ComplexMatrix[M_co, N_co, int], other: int) -> RealMatrix[M_co, N_co, int]: ...
     @overload
     def __rmul__(self: ComplexMatrix[M_co, N_co, float], other: float) -> RealMatrix[M_co, N_co, float]: ...
@@ -1185,9 +1225,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
     def __pos__(self):
         return RealMatrix(super().__pos__())
 
-    def materialize(self) -> RealMatrix[M_co, N_co, R_co]:
-        return RealMatrix(super().materialize())
-
     def transpose(self) -> RealMatrix[N_co, M_co, R_co]:
         return RealMatrix(super().transpose())
 
@@ -1199,7 +1236,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, R_co]):
     @overload
     def rotate(self, n: OddNumber) -> RealMatrix[N_co, M_co, R_co]: ...
     @overload
-    def rotate(self, n: int) -> RealMatrix[Any, Any, R_co]: ...
+    def rotate(self, n: SupportsIndex) -> RealMatrix[Any, Any, R_co]: ...
     @overload
     def rotate(self) -> RealMatrix[N_co, M_co, R_co]: ...
 
@@ -1806,9 +1843,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
             shape=u,
         )
 
-    def materialize(self) -> IntegerMatrix[M_co, N_co, I_co]:
-        return IntegerMatrix(super().materialize())
-
     def transpose(self) -> IntegerMatrix[N_co, M_co, I_co]:
         return IntegerMatrix(super().transpose())
 
@@ -1820,7 +1854,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, I_co]):
     @overload
     def rotate(self, n: OddNumber) -> IntegerMatrix[N_co, M_co, I_co]: ...
     @overload
-    def rotate(self, n: int) -> IntegerMatrix[Any, Any, I_co]: ...
+    def rotate(self, n: SupportsIndex) -> IntegerMatrix[Any, Any, I_co]: ...
     @overload
     def rotate(self) -> IntegerMatrix[N_co, M_co, I_co]: ...
 
