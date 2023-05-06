@@ -1,5 +1,7 @@
 from typing import Generic, TypeVar
 
+from typing_extensions import TypeAlias
+
 from .abc import BaseAccessor, BaseMatrixAccessor, BaseVectorAccessor
 
 __all__ = [
@@ -9,6 +11,7 @@ __all__ = [
     "Rotate090Accessor",
     "Rotate180Accessor",
     "Rotate270Accessor",
+    "ReverseAccessor",
 ]
 
 T_co = TypeVar("T_co", covariant=True)
@@ -181,3 +184,6 @@ class Rotate270Accessor(BaseMatrixAccessor[M_co, N_co, T_co], Generic[M_co, N_co
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
         col_index = self.ncols - col_index - 1
         return self.target.matrix_access(col_index, row_index)
+
+
+ReverseAccessor: TypeAlias = Rotate180Accessor
