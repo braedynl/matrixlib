@@ -84,12 +84,12 @@ class BaseAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         return tuple(self)
 
     @abstractmethod
-    def vector_collect(self, index: int) -> T_co:
+    def vector_access(self, index: int) -> T_co:
         """Return the value at ``index``"""
         raise NotImplementedError
 
     @abstractmethod
-    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
+    def matrix_access(self, row_index: int, col_index: int) -> T_co:
         """Return the value at ``row_index``, ``col_index``"""
         raise NotImplementedError
 
@@ -127,8 +127,8 @@ class BaseAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
 @mypyc_attr(allow_interpreted_subclasses=True)
 class BaseVectorAccessor(BaseAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
-    """Sub-class of ``BaseAccessor`` that pipes calls from ``matrix_collect()`` to
-    ``vector_collect()``
+    """Sub-class of ``BaseAccessor`` that pipes calls from ``matrix_access()``
+    to ``vector_access()``
     """
 
     __slots__ = ()
@@ -136,22 +136,22 @@ class BaseVectorAccessor(BaseAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
     def __iter__(self) -> Iterator[T_co]:
         indices = range(len(self))
         for index in indices:
-            yield self.vector_collect(index)
+            yield self.vector_access(index)
 
     def __reversed__(self) -> Iterator[T_co]:
         indices = range(len(self) - 1, -1, -1)
         for index in indices:
-            yield self.vector_collect(index)
+            yield self.vector_access(index)
 
-    def matrix_collect(self, row_index: int, col_index: int) -> T_co:
+    def matrix_access(self, row_index: int, col_index: int) -> T_co:
         index = row_index * self.ncols + col_index
-        return self.vector_collect(index)
+        return self.vector_access(index)
 
 
 @mypyc_attr(allow_interpreted_subclasses=True)
 class BaseMatrixAccessor(BaseAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
-    """Sub-class of ``BaseAccessor`` that pipes calls from ``vector_collect()`` to
-    ``matrix_collect()``
+    """Sub-class of ``BaseAccessor`` that pipes calls from ``vector_access()``
+    to ``matrix_access()``
     """
 
     __slots__ = ()
@@ -161,18 +161,18 @@ class BaseMatrixAccessor(BaseAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
         col_indices = range(self.ncols)
         for row_index in row_indices:
             for col_index in col_indices:
-                yield self.matrix_collect(row_index, col_index)
+                yield self.matrix_access(row_index, col_index)
 
     def __reversed__(self) -> Iterator[T_co]:
         row_indices = range(self.nrows - 1, -1, -1)
         col_indices = range(self.ncols - 1, -1, -1)
         for row_index in row_indices:
             for col_index in col_indices:
-                yield self.matrix_collect(row_index, col_index)
+                yield self.matrix_access(row_index, col_index)
 
-    def vector_collect(self, index: int) -> T_co:
+    def vector_access(self, index: int) -> T_co:
         row_index, col_index = divmod(index, self.ncols)
-        return self.matrix_collect(row_index, col_index)
+        return self.matrix_access(row_index, col_index)
 
 
 def resolve_index(key: SupportsIndex, bound: int) -> int:
