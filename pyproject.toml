@@ -44,3 +44,4 @@ dependencies = [
 
 [tool.pyright]
 reportShadowedImports = false
+reportUnboundVariable = false
