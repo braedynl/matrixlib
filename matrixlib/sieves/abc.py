@@ -8,9 +8,9 @@ from typing import Generic, Literal, SupportsIndex, TypeVar
 from mypy_extensions import mypyc_attr
 
 __all__ = [
-    "Sieve",
-    "VectorSieve",
-    "MatrixSieve",
+    "BaseAccessor",
+    "BaseVectorAccessor",
+    "BaseMatrixAccessor",
 ]
 
 T_co = TypeVar("T_co", covariant=True)
@@ -19,15 +19,15 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
 @mypyc_attr(allow_interpreted_subclasses=True)
-class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
+class BaseAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
     def __eq__(self, other: object) -> bool:
-        """Return true if two sieves are equivalent, otherwise false"""
+        """Return true if the two accessors are equivalent, otherwise false"""
         if self is other:
             return True
-        if isinstance(other, Sieve):
+        if isinstance(other, BaseAccessor):
             if self.shape != other.shape:
                 return False
             for x, y in zip(self, other):
@@ -43,18 +43,18 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
     @abstractmethod
     def __iter__(self) -> Iterator[T_co]:
-        """Return an iterator over the sieve's values in row-major order"""
+        """Return an iterator over the accessor's values in row-major order"""
         raise NotImplementedError
 
     @abstractmethod
     def __reversed__(self) -> Iterator[T_co]:
-        """Return an iterator over the sieve's values in reverse row-major
+        """Return an iterator over the accessor's values in reverse row-major
         order
         """
         raise NotImplementedError
 
     def __contains__(self, value: object) -> bool:
-        """Return true if the sieve contains ``value``, otherwise false"""
+        """Return true if the accessor contains ``value``, otherwise false"""
         for val in self:
             if val is value or val == value:
                 return True
@@ -78,7 +78,7 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         raise NotImplementedError
 
     def collect(self) -> tuple[T_co, ...]:
-        """Gather and return all sieve values as a ``tuple``, aligned in
+        """Gather and return all accessor values as a ``tuple``, aligned in
         row-major order
         """
         return tuple(self)
@@ -94,7 +94,7 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         raise NotImplementedError
 
     def resolve_vector_index(self, key: SupportsIndex) -> int:
-        """Return ``key`` resolved with respect to the sieve's size"""
+        """Return ``key`` resolved with respect to the accessor's size"""
         bound = len(self)
         try:
             index = resolve_index(key, bound)
@@ -104,7 +104,7 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
             return index
 
     def resolve_vector_slice(self, key: slice) -> range:
-        """Return ``key`` resolved with respect to the sieve's size"""
+        """Return ``key`` resolved with respect to the accessor's size"""
         bound = len(self)
         return resolve_slice(key, bound)
 
@@ -126,8 +126,8 @@ class Sieve(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
 
 @mypyc_attr(allow_interpreted_subclasses=True)
-class VectorSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
-    """Sub-class of ``Sieve`` that pipes calls from ``matrix_collect()`` to
+class BaseVectorAccessor(BaseAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
+    """Sub-class of ``BaseAccessor`` that pipes calls from ``matrix_collect()`` to
     ``vector_collect()``
     """
 
@@ -149,8 +149,8 @@ class VectorSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
 
 
 @mypyc_attr(allow_interpreted_subclasses=True)
-class MatrixSieve(Sieve[M_co, N_co, T_co], metaclass=ABCMeta):
-    """Sub-class of ``Sieve`` that pipes calls from ``vector_collect()`` to
+class BaseMatrixAccessor(BaseAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
+    """Sub-class of ``BaseAccessor`` that pipes calls from ``vector_collect()`` to
     ``matrix_collect()``
     """
 
@@ -190,5 +190,4 @@ def resolve_index(key: SupportsIndex, bound: int) -> int:
 
 def resolve_slice(key: slice, bound: int) -> range:
     """Return ``key`` as a range of indices with respect to ``bound``"""
-    start, stop, step = key.indices(bound)
-    return range(start, stop, step)
+    return range(*key.indices(bound))
