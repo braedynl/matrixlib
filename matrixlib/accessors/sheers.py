@@ -9,7 +9,7 @@ from typing import Generic, Literal, TypeVar
 
 from typing_extensions import override
 
-from .abc import BaseAccessor, BaseMatrixAccessor
+from .bases import BaseAccessor, BaseMatrixAccessor
 
 T_co = TypeVar("T_co", covariant=True)
 

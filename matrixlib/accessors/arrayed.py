@@ -13,7 +13,7 @@ from typing import Generic, Literal, TypeVar
 
 from typing_extensions import override
 
-from .abc import BaseVectorAccessor
+from .bases import BaseVectorAccessor
 
 T_co = TypeVar("T_co", covariant=True)
 

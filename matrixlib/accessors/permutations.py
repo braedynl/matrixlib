@@ -14,7 +14,7 @@ from typing import Generic, TypeVar
 
 from typing_extensions import TypeAlias, override
 
-from .abc import BaseAccessor, BaseMatrixAccessor, BaseVectorAccessor
+from .bases import BaseAccessor, BaseMatrixAccessor, BaseVectorAccessor
 
 T_co = TypeVar("T_co", covariant=True)
 
