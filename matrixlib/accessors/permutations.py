@@ -14,17 +14,18 @@ from typing import Generic, TypeVar
 
 from typing_extensions import TypeAlias, override
 
-from .bases import BaseAccessor, BaseMatrixAccessor, BaseVectorAccessor
+from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
+                    AbstractVectorAccessor)
 
 T_co = TypeVar("T_co", covariant=True)
 
 
-class TransposeAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class TransposeAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
 
-    def __init__(self, target: BaseAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[T_co]) -> None:
         self.target = target
 
     def __repr__(self) -> str:
@@ -48,12 +49,12 @@ class TransposeAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
         return self.target.matrix_access(col_index, row_index)
 
 
-class RowFlipAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class RowFlipAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
 
-    def __init__(self, target: BaseAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[T_co]) -> None:
         self.target = target
 
     def __repr__(self) -> str:
@@ -80,12 +81,12 @@ class RowFlipAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
         )
 
 
-class ColFlipAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class ColFlipAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
 
-    def __init__(self, target: BaseAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[T_co]) -> None:
         self.target = target
 
     def __repr__(self) -> str:
@@ -112,12 +113,12 @@ class ColFlipAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
         )
 
 
-class Rotate090Accessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class Rotate090Accessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
 
-    def __init__(self, target: BaseAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[T_co]) -> None:
         self.target = target
 
     def __repr__(self) -> str:
@@ -144,12 +145,12 @@ class Rotate090Accessor(BaseMatrixAccessor[T_co], Generic[T_co]):
         )
 
 
-class Rotate180Accessor(BaseVectorAccessor[T_co], Generic[T_co]):
+class Rotate180Accessor(AbstractVectorAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
 
-    def __init__(self, target: BaseAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[T_co]) -> None:
         self.target = target
 
     def __repr__(self) -> str:
@@ -173,12 +174,12 @@ class Rotate180Accessor(BaseVectorAccessor[T_co], Generic[T_co]):
         return self.target.vector_access(len(self) - index - 1)
 
 
-class Rotate270Accessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class Rotate270Accessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
 
-    def __init__(self, target: BaseAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[T_co]) -> None:
         self.target = target
 
     def __repr__(self) -> str:

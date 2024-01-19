@@ -9,18 +9,18 @@ from typing import Generic, Literal, TypeVar
 
 from typing_extensions import override
 
-from .bases import BaseAccessor, BaseMatrixAccessor
+from .abstracts import AbstractAccessor, AbstractMatrixAccessor
 
 T_co = TypeVar("T_co", covariant=True)
 
 
-class RowSheerAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class RowSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_index")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
     row_index: int
 
-    def __init__(self, target: BaseAccessor[T_co], *, row_index: int) -> None:
+    def __init__(self, target: AbstractAccessor[T_co], *, row_index: int) -> None:
         self.target = target
         self.row_index = row_index
 
@@ -48,13 +48,13 @@ class RowSheerAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
         )
 
 
-class ColSheerAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class ColSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "col_index")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
     col_index: int
 
-    def __init__(self, target: BaseAccessor[T_co], *, col_index: int) -> None:
+    def __init__(self, target: AbstractAccessor[T_co], *, col_index: int) -> None:
         self.target = target
         self.col_index = col_index
 

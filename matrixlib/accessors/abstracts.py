@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 __all__ = [
-    "BaseAccessor",
-    "BaseVectorAccessor",
-    "BaseMatrixAccessor",
+    "AbstractAccessor",
+    "AbstractVectorAccessor",
+    "AbstractMatrixAccessor",
 ]
 
 import operator
@@ -18,7 +18,7 @@ from .rule import Rule
 T_co = TypeVar("T_co", covariant=True)
 
 
-class BaseAccessor(Generic[T_co], metaclass=ABCMeta):
+class AbstractAccessor(Generic[T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
@@ -27,7 +27,7 @@ class BaseAccessor(Generic[T_co], metaclass=ABCMeta):
         """Return true if the two accessors are equivalent, otherwise false"""
         if self is other:
             return True
-        if isinstance(other, BaseAccessor):
+        if isinstance(other, AbstractAccessor):
             if self.shape != other.shape:
                 return False
             for x, y in zip(self, other):
@@ -124,10 +124,8 @@ class BaseAccessor(Generic[T_co], metaclass=ABCMeta):
         return resolve_slice(key, bound)
 
 
-class BaseVectorAccessor(BaseAccessor[T_co], metaclass=ABCMeta):
-    """Sub-class of ``BaseAccessor`` that pipes calls from ``matrix_access()``
-    to ``vector_access()``
-    """
+class AbstractVectorAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
+    """Sub-class of ``AbstractAccessor`` with preference for vector access"""
 
     __slots__ = ()
 
@@ -149,10 +147,8 @@ class BaseVectorAccessor(BaseAccessor[T_co], metaclass=ABCMeta):
         return self.vector_access(index)
 
 
-class BaseMatrixAccessor(BaseAccessor[T_co], metaclass=ABCMeta):
-    """Sub-class of ``BaseAccessor`` that pipes calls from ``vector_access()``
-    to ``matrix_access()``
-    """
+class AbstractMatrixAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
+    """Sub-class of ``AbstractAccessor`` with preference for matrix access"""
 
     __slots__ = ()
 

@@ -13,12 +13,12 @@ from typing import Generic, Literal, TypeVar
 
 from typing_extensions import override
 
-from .bases import BaseVectorAccessor
+from .abstracts import AbstractVectorAccessor
 
 T_co = TypeVar("T_co", covariant=True)
 
 
-class ArrayedAccessor(BaseVectorAccessor[T_co], metaclass=ABCMeta):
+class ArrayedAccessor(AbstractVectorAccessor[T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 

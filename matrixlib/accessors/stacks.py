@@ -9,18 +9,18 @@ from typing import TypeVar
 
 from typing_extensions import override
 
-from .bases import BaseAccessor, BaseMatrixAccessor
+from .abstracts import AbstractAccessor, AbstractMatrixAccessor
 
 T_co = TypeVar("T_co", covariant=True)
 
 
-class RowStackAccessor(BaseMatrixAccessor[T_co]):
+class RowStackAccessor(AbstractMatrixAccessor[T_co]):
 
     __slots__ = ("target_head", "target_tail")
-    target_head: BaseAccessor[T_co]
-    target_tail: BaseAccessor[T_co]
+    target_head: AbstractAccessor[T_co]
+    target_tail: AbstractAccessor[T_co]
 
-    def __init__(self, target_head: BaseAccessor[T_co], target_tail: BaseAccessor[T_co]) -> None:
+    def __init__(self, target_head: AbstractAccessor[T_co], target_tail: AbstractAccessor[T_co]) -> None:
         self.target_head = target_head
         self.target_tail = target_tail
 
@@ -56,13 +56,13 @@ class RowStackAccessor(BaseMatrixAccessor[T_co]):
         return value
 
 
-class ColStackAccessor(BaseMatrixAccessor[T_co]):
+class ColStackAccessor(AbstractMatrixAccessor[T_co]):
 
     __slots__ = ("target_head", "target_tail")
-    target_head: BaseAccessor[T_co]
-    target_tail: BaseAccessor[T_co]
+    target_head: AbstractAccessor[T_co]
+    target_tail: AbstractAccessor[T_co]
 
-    def __init__(self, target_head: BaseAccessor[T_co], target_tail: BaseAccessor[T_co]) -> None:
+    def __init__(self, target_head: AbstractAccessor[T_co], target_tail: AbstractAccessor[T_co]) -> None:
         self.target_head = target_head
         self.target_tail = target_tail
 

@@ -11,18 +11,19 @@ from typing import Generic, Literal, TypeVar
 
 from typing_extensions import override
 
-from .bases import BaseAccessor, BaseMatrixAccessor, BaseVectorAccessor
+from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
+                    AbstractVectorAccessor)
 
 T_co = TypeVar("T_co", covariant=True)
 
 
-class SliceAccessor(BaseVectorAccessor[T_co], Generic[T_co]):
+class SliceAccessor(AbstractVectorAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "window")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
     window: range
 
-    def __init__(self, target: BaseAccessor[T_co], *, window: range) -> None:
+    def __init__(self, target: AbstractAccessor[T_co], *, window: range) -> None:
         self.target = target
         self.window = window
 
@@ -47,14 +48,14 @@ class SliceAccessor(BaseVectorAccessor[T_co], Generic[T_co]):
         return self.target.vector_access(self.window[index])
 
 
-class RowSliceAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class RowSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_index", "col_window")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
     row_index: int
     col_window: range
 
-    def __init__(self, target: BaseAccessor[T_co], *, row_index: int, col_window: range) -> None:
+    def __init__(self, target: AbstractAccessor[T_co], *, row_index: int, col_window: range) -> None:
         self.target = target
         self.row_index = row_index
         self.col_window = col_window
@@ -83,14 +84,14 @@ class RowSliceAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
         )
 
 
-class ColSliceAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class ColSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_window", "col_index")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
     row_window: range
     col_index: int
 
-    def __init__(self, target: BaseAccessor[T_co], *, row_window: range, col_index: int) -> None:
+    def __init__(self, target: AbstractAccessor[T_co], *, row_window: range, col_index: int) -> None:
         self.target = target
         self.row_window = row_window
         self.col_index = col_index
@@ -119,14 +120,14 @@ class ColSliceAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
         )
 
 
-class MatrixSliceAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
+class MatrixSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_window", "col_window")
-    target: BaseAccessor[T_co]
+    target: AbstractAccessor[T_co]
     row_window: range
     col_window: range
 
-    def __init__(self, target: BaseAccessor[T_co], *, row_window: range, col_window: range) -> None:
+    def __init__(self, target: AbstractAccessor[T_co], *, row_window: range, col_window: range) -> None:
         self.target = target
         self.row_window = row_window
         self.col_window = col_window
