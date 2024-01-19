@@ -12,7 +12,7 @@ from typing import Generic, Literal, TypeVar
 from typing_extensions import override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
-                    AbstractVectorAccessor)
+                        AbstractVectorAccessor)
 
 T_co = TypeVar("T_co", covariant=True)
 
