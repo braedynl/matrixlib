@@ -1,5 +1,5 @@
 from .abstracts import *
-from .arrayed import *
+from .bases import *
 from .permutations import *
 from .rule import *
 from .sheers import *

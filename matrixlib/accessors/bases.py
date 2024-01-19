@@ -1,24 +1,25 @@
 from __future__ import annotations
 
 __all__ = [
-    "MatrixAccessor",
-    "ValueAccessor",
-    "RowVectorAccessor",
-    "ColVectorAccessor",
+    "BaseMatrixAccessor",
+    "BaseRowVectorAccessor",
+    "BaseColVectorAccessor",
+    "BaseValueAccessor",
+    "BaseEmptyAccessor",
 ]
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterator
-from typing import Generic, Literal, TypeVar
+from typing import Generic, Literal, TypeVar, final
 
 from typing_extensions import override
 
-from .abstracts import AbstractVectorAccessor
+from .abstracts import AbstractAccessor, AbstractVectorAccessor
 
 T_co = TypeVar("T_co", covariant=True)
 
 
-class ArrayedAccessor(AbstractVectorAccessor[T_co], metaclass=ABCMeta):
+class BaseArrayedAccessor(AbstractVectorAccessor[T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
@@ -55,7 +56,8 @@ class ArrayedAccessor(AbstractVectorAccessor[T_co], metaclass=ABCMeta):
         return self.array[index]
 
 
-class MatrixAccessor(ArrayedAccessor[T_co], Generic[T_co]):
+@final
+class BaseMatrixAccessor(BaseArrayedAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("array", "shape")
     array: tuple[T_co, ...]
@@ -66,7 +68,7 @@ class MatrixAccessor(ArrayedAccessor[T_co], Generic[T_co]):
         self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
-        return f"MatrixAccessor(array={self.array!r}, shape={self.shape!r})"
+        return f"BaseMatrixAccessor(array={self.array!r}, shape={self.shape!r})"
 
     @property
     @override
@@ -79,7 +81,8 @@ class MatrixAccessor(ArrayedAccessor[T_co], Generic[T_co]):
         return self.shape[1]
 
 
-class RowVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
+@final
+class BaseRowVectorAccessor(BaseArrayedAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("array")
     array: tuple[T_co, ...]
@@ -88,7 +91,12 @@ class RowVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
         self.array = array  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
-        return f"RowVectorAccessor(array={self.array!r})"
+        return f"BaseRowVectorAccessor(array={self.array!r})"
+
+    @property
+    @override
+    def shape(self) -> tuple[Literal[1], int]:
+        return (1, len(self.array))
 
     @property
     @override
@@ -101,7 +109,8 @@ class RowVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
         return len(self.array)
 
 
-class ColVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
+@final
+class BaseColVectorAccessor(BaseArrayedAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("array")
     array: tuple[T_co, ...]
@@ -110,7 +119,12 @@ class ColVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
         self.array = array  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
-        return f"ColVectorAccessor(array={self.array!r})"
+        return f"BaseColVectorAccessor(array={self.array!r})"
+
+    @property
+    @override
+    def shape(self) -> tuple[int, Literal[1]]:
+        return (len(self.array), 1)
 
     @property
     @override
@@ -123,16 +137,20 @@ class ColVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
         return 1
 
 
-class ValueAccessor(ArrayedAccessor[T_co], Generic[T_co]):
+@final
+class BaseValueAccessor(AbstractAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("value")
     value: T_co
 
-    def __init__(self, array: tuple[T_co]) -> None:
-        self.value = array[0]
+    def __init__(self, value: T_co) -> None:
+        self.value = value
 
     def __repr__(self) -> str:
-        return f"ValueAccessor(array={self.array!r})"
+        return f"BaseValueAccessor(value={self.value!r})"
+
+    def __hash__(self) -> int:
+        return hash(self.value)
 
     @override
     def __len__(self) -> Literal[1]:
@@ -152,8 +170,8 @@ class ValueAccessor(ArrayedAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def array(self) -> tuple[T_co]:
-        return (self.value,)
+    def shape(self) -> tuple[Literal[1], Literal[1]]:
+        return (1, 1)
 
     @property
     @override
@@ -164,3 +182,75 @@ class ValueAccessor(ArrayedAccessor[T_co], Generic[T_co]):
     @override
     def col_count(self) -> Literal[1]:
         return 1
+
+    @override
+    def collect(self) -> tuple[T_co, ...]:
+        return (self.value,)
+
+    @override
+    def vector_access(self, index: int) -> T_co:
+        assert index == 0
+        return self.value
+
+    @override
+    def matrix_access(self, row_index: int, col_index: int) -> T_co:
+        assert row_index == 0
+        assert col_index == 0
+        return self.value
+
+
+@final
+class BaseEmptyAccessor(AbstractAccessor[T_co], Generic[T_co]):
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:
+        return "BaseEmptyAccessor()"
+
+    def __hash__(self) -> Literal[0]:
+        return 0
+
+    @override
+    def __len__(self) -> Literal[0]:
+        return 0
+
+    @override
+    def __iter__(self) -> Iterator[T_co]:
+        return
+        yield
+
+    @override
+    def __reversed__(self) -> Iterator[T_co]:
+        return
+        yield
+
+    @override
+    def __contains__(self, value: object) -> Literal[False]:
+        return False
+
+    @property
+    @override
+    def shape(self) -> tuple[Literal[0], Literal[0]]:
+        return (0, 0)
+
+    @property
+    @override
+    def row_count(self) -> Literal[0]:
+        return 0
+
+    @property
+    @override
+    def col_count(self) -> Literal[0]:
+        return 0
+
+    @override
+    def collect(self) -> tuple[()]:
+        return ()
+
+    @override
+    def vector_access(self, index: int) -> T_co:
+        raise IndexError("empty accessor")
+
+    @override
+    def matrix_access(self, row_index: int, col_index: int) -> T_co:
+        raise IndexError("empty accessor")
