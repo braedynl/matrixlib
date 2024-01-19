@@ -21,6 +21,7 @@ class RowStackAccessor(AbstractMatrixAccessor[T_co]):
     target_tail: AbstractAccessor[T_co]
 
     def __init__(self, target_head: AbstractAccessor[T_co], target_tail: AbstractAccessor[T_co]) -> None:
+        assert target_head.col_count == target_tail.col_count
         self.target_head = target_head
         self.target_tail = target_tail
 
@@ -63,6 +64,7 @@ class ColStackAccessor(AbstractMatrixAccessor[T_co]):
     target_tail: AbstractAccessor[T_co]
 
     def __init__(self, target_head: AbstractAccessor[T_co], target_tail: AbstractAccessor[T_co]) -> None:
+        assert target_head.row_count == target_tail.row_count
         self.target_head = target_head
         self.target_tail = target_tail
 
