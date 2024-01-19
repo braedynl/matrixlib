@@ -1,28 +1,28 @@
 from __future__ import annotations
 
-import operator
-from abc import ABCMeta, abstractmethod
-from collections.abc import Iterator
-from typing import Generic, Literal, SupportsIndex, TypeVar
-
-from mypy_extensions import mypyc_attr
-
 __all__ = [
     "BaseAccessor",
     "BaseVectorAccessor",
     "BaseMatrixAccessor",
 ]
 
+import operator
+from abc import ABCMeta, abstractmethod
+from collections.abc import Iterator
+from typing import Generic, SupportsIndex, TypeVar
+
+from typing_extensions import override
+
+from .rule import Rule
+
 T_co = TypeVar("T_co", covariant=True)
-M_co = TypeVar("M_co", covariant=True, bound=int)
-N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-@mypyc_attr(allow_interpreted_subclasses=True)
-class BaseAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
+class BaseAccessor(Generic[T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Return true if the two accessors are equivalent, otherwise false"""
         if self is other:
@@ -39,7 +39,7 @@ class BaseAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
     def __len__(self) -> int:
         """Return the shape's product"""
-        return self.nrows * self.ncols
+        return self.row_count * self.col_count
 
     @abstractmethod
     def __iter__(self) -> Iterator[T_co]:
@@ -55,25 +55,25 @@ class BaseAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
 
     def __contains__(self, value: object) -> bool:
         """Return true if the accessor contains ``value``, otherwise false"""
-        for val in self:
-            if val is value or val == value:
+        for x in self:
+            if x is value or x == value:
                 return True
         return False
 
     @property
-    def shape(self) -> tuple[M_co, N_co]:
+    def shape(self) -> tuple[int, int]:
         """The number of rows and columns as a ``tuple``"""
-        return (self.nrows, self.ncols)
+        return (self.row_count, self.col_count)
 
     @property
     @abstractmethod
-    def nrows(self) -> M_co:
+    def row_count(self) -> int:
         """The number of rows"""
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def ncols(self) -> N_co:
+    def col_count(self) -> int:
         """The number of columns"""
         raise NotImplementedError
 
@@ -108,70 +108,73 @@ class BaseAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         bound = len(self)
         return resolve_slice(key, bound)
 
-    def resolve_matrix_index(self, key: SupportsIndex, axis: Literal[0, 1]) -> int:
-        """Return ``key`` resolved with respect to the ``axis`` dimension"""
-        bound = self.shape[axis]
+    def resolve_matrix_index(self, key: SupportsIndex, *, by: Rule) -> int:
+        """Return ``key`` resolved with respect to the given rule"""
+        bound = self.shape[by]
         try:
             index = resolve_index(key, bound)
         except IndexError:
-            handle = ("row", "column")[axis]
-            raise IndexError(f"there are {bound} {handle}s, but index is {key}") from None
+            raise IndexError(f"there are {bound} {by.handle}s, but index is {key}") from None
         else:
             return index
 
-    def resolve_matrix_slice(self, key: slice, axis: Literal[0, 1]) -> range:
-        """Return ``key`` resolved with respect to the ``axis`` dimension"""
-        bound = self.shape[axis]
+    def resolve_matrix_slice(self, key: slice, *, by: Rule) -> range:
+        """Return ``key`` resolved with respect to the given rule"""
+        bound = self.shape[by]
         return resolve_slice(key, bound)
 
 
-@mypyc_attr(allow_interpreted_subclasses=True)
-class BaseVectorAccessor(BaseAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
+class BaseVectorAccessor(BaseAccessor[T_co], metaclass=ABCMeta):
     """Sub-class of ``BaseAccessor`` that pipes calls from ``matrix_access()``
     to ``vector_access()``
     """
 
     __slots__ = ()
 
+    @override
     def __iter__(self) -> Iterator[T_co]:
         indices = range(len(self))
         for index in indices:
             yield self.vector_access(index)
 
+    @override
     def __reversed__(self) -> Iterator[T_co]:
         indices = range(len(self) - 1, -1, -1)
         for index in indices:
             yield self.vector_access(index)
 
+    @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
-        index = row_index * self.ncols + col_index
+        index = row_index * self.col_count + col_index
         return self.vector_access(index)
 
 
-@mypyc_attr(allow_interpreted_subclasses=True)
-class BaseMatrixAccessor(BaseAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
+class BaseMatrixAccessor(BaseAccessor[T_co], metaclass=ABCMeta):
     """Sub-class of ``BaseAccessor`` that pipes calls from ``vector_access()``
     to ``matrix_access()``
     """
 
     __slots__ = ()
 
+    @override
     def __iter__(self) -> Iterator[T_co]:
-        row_indices = range(self.nrows)
-        col_indices = range(self.ncols)
+        row_indices = range(self.row_count)
+        col_indices = range(self.col_count)
         for row_index in row_indices:
             for col_index in col_indices:
                 yield self.matrix_access(row_index, col_index)
 
+    @override
     def __reversed__(self) -> Iterator[T_co]:
-        row_indices = range(self.nrows - 1, -1, -1)
-        col_indices = range(self.ncols - 1, -1, -1)
+        row_indices = range(self.row_count - 1, -1, -1)
+        col_indices = range(self.col_count - 1, -1, -1)
         for row_index in row_indices:
             for col_index in col_indices:
                 yield self.matrix_access(row_index, col_index)
 
+    @override
     def vector_access(self, index: int) -> T_co:
-        row_index, col_index = divmod(index, self.ncols)
+        row_index, col_index = divmod(index, self.col_count)
         return self.matrix_access(row_index, col_index)
 
 
@@ -183,7 +186,10 @@ def resolve_index(key: SupportsIndex, bound: int) -> int:
     index = operator.index(key)
     if index < 0:
         index += bound
-    if index < 0 or index >= bound:
+        if index < 0:
+            raise IndexError
+        return index
+    if index >= bound:
         raise IndexError
     return index
 

@@ -1,6 +1,4 @@
-from typing import Any, Generic, Literal, TypeVar
-
-from .abc import BaseAccessor, BaseMatrixAccessor, BaseVectorAccessor
+from __future__ import annotations
 
 __all__ = [
     "SliceAccessor",
@@ -9,20 +7,22 @@ __all__ = [
     "MatrixSliceAccessor",
 ]
 
+from typing import Generic, Literal, TypeVar
+
+from typing_extensions import override
+
+from .abc import BaseAccessor, BaseMatrixAccessor, BaseVectorAccessor
+
 T_co = TypeVar("T_co", covariant=True)
-M_co = TypeVar("M_co", covariant=True, bound=int)
-N_co = TypeVar("N_co", covariant=True, bound=int)
 
 
-class SliceAccessor(BaseVectorAccessor[Literal[1], int, T_co], Generic[T_co]):
+class SliceAccessor(BaseVectorAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "window")
-
-    target: BaseAccessor[Any, Any, T_co]
+    target: BaseAccessor[T_co]
     window: range
-    nrows: Literal[1] = 1
 
-    def __init__(self, target: BaseAccessor[Any, Any, T_co], *, window: range) -> None:
+    def __init__(self, target: BaseAccessor[T_co], *, window: range) -> None:
         self.target = target
         self.window = window
 
@@ -33,24 +33,28 @@ class SliceAccessor(BaseVectorAccessor[Literal[1], int, T_co], Generic[T_co]):
         return hash((self.target, self.window))
 
     @property
-    def ncols(self) -> int:
+    @override
+    def row_count(self) -> Literal[1]:
+        return 1
+
+    @property
+    @override
+    def col_count(self) -> int:
         return len(self.window)
 
+    @override
     def vector_access(self, index: int) -> T_co:
-        index = self.window[index]
-        return self.target.vector_access(index)
+        return self.target.vector_access(self.window[index])
 
 
-class RowSliceAccessor(BaseMatrixAccessor[Literal[1], int, T_co], Generic[T_co]):
+class RowSliceAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_index", "col_window")
-
-    target: BaseAccessor[Any, Any, T_co]
+    target: BaseAccessor[T_co]
     row_index: int
     col_window: range
-    nrows: Literal[1] = 1
 
-    def __init__(self, target: BaseAccessor[Any, Any, T_co], *, row_index: int, col_window: range) -> None:
+    def __init__(self, target: BaseAccessor[T_co], *, row_index: int, col_window: range) -> None:
         self.target = target
         self.row_index = row_index
         self.col_window = col_window
@@ -62,25 +66,31 @@ class RowSliceAccessor(BaseMatrixAccessor[Literal[1], int, T_co], Generic[T_co])
         return hash((self.target, self.row_index, self.col_window))
 
     @property
-    def ncols(self) -> int:
+    @override
+    def row_count(self) -> Literal[1]:
+        return 1
+
+    @property
+    @override
+    def col_count(self) -> int:
         return len(self.col_window)
 
+    @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
-        row_index = self.row_index + row_index
-        col_index = self.col_window[col_index]
-        return self.target.matrix_access(row_index, col_index)
+        return self.target.matrix_access(
+            self.row_index + row_index,
+            self.col_window[col_index],
+        )
 
 
-class ColSliceAccessor(BaseMatrixAccessor[int, Literal[1], T_co], Generic[T_co]):
+class ColSliceAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_window", "col_index")
-
-    target: BaseAccessor[Any, Any, T_co]
+    target: BaseAccessor[T_co]
     row_window: range
     col_index: int
-    ncols: Literal[1] = 1
 
-    def __init__(self, target: BaseAccessor[Any, Any, T_co], *, row_window: range, col_index: int) -> None:
+    def __init__(self, target: BaseAccessor[T_co], *, row_window: range, col_index: int) -> None:
         self.target = target
         self.row_window = row_window
         self.col_index = col_index
@@ -92,24 +102,31 @@ class ColSliceAccessor(BaseMatrixAccessor[int, Literal[1], T_co], Generic[T_co])
         return hash((self.target, self.row_window, self.col_index))
 
     @property
-    def nrows(self) -> int:
+    @override
+    def row_count(self) -> int:
         return len(self.row_window)
 
+    @property
+    @override
+    def col_count(self) -> Literal[1]:
+        return 1
+
+    @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
-        row_index = self.row_window[row_index]
-        col_index = self.col_index + col_index
-        return self.target.matrix_access(row_index, col_index)
+        return self.target.matrix_access(
+            self.row_window[row_index],
+            self.col_index + col_index,
+        )
 
 
-class MatrixSliceAccessor(BaseMatrixAccessor[int, int, T_co], Generic[T_co]):
+class MatrixSliceAccessor(BaseMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_window", "col_window")
-
-    target: BaseAccessor[Any, Any, T_co]
+    target: BaseAccessor[T_co]
     row_window: range
     col_window: range
 
-    def __init__(self, target: BaseAccessor[Any, Any, T_co], *, row_window: range, col_window: range) -> None:
+    def __init__(self, target: BaseAccessor[T_co], *, row_window: range, col_window: range) -> None:
         self.target = target
         self.row_window = row_window
         self.col_window = col_window
@@ -121,14 +138,18 @@ class MatrixSliceAccessor(BaseMatrixAccessor[int, int, T_co], Generic[T_co]):
         return hash((self.target, self.row_window, self.col_window))
 
     @property
-    def nrows(self) -> int:
+    @override
+    def row_count(self) -> int:
         return len(self.row_window)
 
     @property
-    def ncols(self) -> int:
+    @override
+    def col_count(self) -> int:
         return len(self.col_window)
 
+    @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
-        row_index = self.row_window[row_index]
-        col_index = self.col_window[col_index]
-        return self.target.matrix_access(row_index, col_index)
+        return self.target.matrix_access(
+            self.row_window[row_index],
+            self.col_window[col_index],
+        )
