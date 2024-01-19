@@ -43,5 +43,5 @@ dependencies = [
 "*" = ["*.pyi", "py.typed"]
 
 [tool.pyright]
-reportShadowedImports = false
-reportUnboundVariable = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
