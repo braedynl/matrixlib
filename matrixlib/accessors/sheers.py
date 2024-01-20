@@ -5,7 +5,7 @@ __all__ = [
     "ColSheerAccessor",
 ]
 
-from typing import Generic, Literal, TypeVar
+from typing import Generic, Literal, TypeVar, final
 
 from typing_extensions import override
 
@@ -14,6 +14,7 @@ from .abstracts import AbstractAccessor, AbstractMatrixAccessor
 T_co = TypeVar("T_co", covariant=True)
 
 
+@final
 class RowSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_index")
@@ -48,6 +49,7 @@ class RowSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
         )
 
 
+@final
 class ColSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "col_index")

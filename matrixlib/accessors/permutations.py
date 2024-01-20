@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 from abc import ABCMeta, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, final
 
 from typing_extensions import TypeAlias, override
 
@@ -35,6 +35,7 @@ class PermutationAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
         raise NotImplementedError
 
 
+@final
 class TransposeAccessor(
     AbstractMatrixAccessor[T_co],
     PermutationAccessor[T_co],
@@ -65,6 +66,7 @@ class TransposeAccessor(
         return self.target.matrix_access(col_index, row_index)
 
 
+@final
 class RowFlipAccessor(
     AbstractMatrixAccessor[T_co],
     PermutationAccessor[T_co],
@@ -98,6 +100,7 @@ class RowFlipAccessor(
         )
 
 
+@final
 class ColFlipAccessor(
     AbstractMatrixAccessor[T_co],
     PermutationAccessor[T_co],
@@ -131,6 +134,7 @@ class ColFlipAccessor(
         )
 
 
+@final
 class Rotate090Accessor(
     AbstractMatrixAccessor[T_co],
     PermutationAccessor[T_co],
@@ -164,6 +168,7 @@ class Rotate090Accessor(
         )
 
 
+@final
 class Rotate180Accessor(
     AbstractVectorAccessor[T_co],
     PermutationAccessor[T_co],
@@ -194,6 +199,7 @@ class Rotate180Accessor(
         return self.target.vector_access(len(self) - index - 1)
 
 
+@final
 class Rotate270Accessor(
     AbstractMatrixAccessor[T_co],
     PermutationAccessor[T_co],

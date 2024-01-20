@@ -5,7 +5,7 @@ __all__ = [
     "ColStackAccessor",
 ]
 
-from typing import TypeVar
+from typing import TypeVar, final
 
 from typing_extensions import override
 
@@ -14,6 +14,7 @@ from .abstracts import AbstractAccessor, AbstractMatrixAccessor
 T_co = TypeVar("T_co", covariant=True)
 
 
+@final
 class RowStackAccessor(AbstractMatrixAccessor[T_co]):
 
     __slots__ = ("target_head", "target_tail")
@@ -57,6 +58,7 @@ class RowStackAccessor(AbstractMatrixAccessor[T_co]):
         return value
 
 
+@final
 class ColStackAccessor(AbstractMatrixAccessor[T_co]):
 
     __slots__ = ("target_head", "target_tail")

@@ -7,7 +7,7 @@ __all__ = [
     "MatrixSliceAccessor",
 ]
 
-from typing import Generic, Literal, TypeVar
+from typing import Generic, Literal, TypeVar, final
 
 from typing_extensions import override
 
@@ -17,6 +17,7 @@ from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
 T_co = TypeVar("T_co", covariant=True)
 
 
+@final
 class SliceAccessor(AbstractVectorAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "window")
@@ -48,6 +49,7 @@ class SliceAccessor(AbstractVectorAccessor[T_co], Generic[T_co]):
         return self.target.vector_access(self.window[index])
 
 
+@final
 class RowSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_index", "col_window")
@@ -84,6 +86,7 @@ class RowSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
         )
 
 
+@final
 class ColSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_window", "col_index")
@@ -120,6 +123,7 @@ class ColSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
         )
 
 
+@final
 class MatrixSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("target", "row_window", "col_window")
