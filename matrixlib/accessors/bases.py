@@ -51,7 +51,7 @@ class ArrayedAccessor(AbstractVectorAccessor[T_co], metaclass=ABCMeta):
         raise NotImplementedError
 
     @override
-    def collect(self) -> tuple[T_co, ...]:
+    def materialize(self) -> tuple[T_co, ...]:
         return self.array
 
     @override
@@ -85,7 +85,7 @@ class NullaryAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
         return False
 
     @override
-    def collect(self) -> tuple[()]:
+    def materialize(self) -> tuple[()]:
         return ()
 
     @override
@@ -225,7 +225,7 @@ class ValueAccessor(AbstractAccessor[T_co], Generic[T_co]):
         return 1
 
     @override
-    def collect(self) -> tuple[T_co, ...]:
+    def materialize(self) -> tuple[T_co]:
         return (self.value,)
 
     @override

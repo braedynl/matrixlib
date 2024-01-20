@@ -22,7 +22,6 @@ class AbstractAccessor(Generic[T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
-    @override
     def __eq__(self, other: object) -> bool:
         """Return true if the two accessors are equivalent, otherwise false"""
         if self is other:
@@ -77,8 +76,8 @@ class AbstractAccessor(Generic[T_co], metaclass=ABCMeta):
         """The number of columns"""
         raise NotImplementedError
 
-    def collect(self) -> tuple[T_co, ...]:
-        """Gather and return all accessor values as a ``tuple``, aligned in
+    def materialize(self) -> tuple[T_co, ...]:
+        """Collect and return all accessor values as a ``tuple``, aligned in
         row-major order
         """
         return tuple(self)
