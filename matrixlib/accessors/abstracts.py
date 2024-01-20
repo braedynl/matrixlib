@@ -177,16 +177,18 @@ class AbstractMatrixAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
 def resolve_index(key: SupportsIndex, bound: int) -> int:
     """Return ``key`` as an index with respect to ``bound``
 
-    Raises an empty ``IndexError`` if ``key`` is out of range.
+    Raises an empty ``IndexError`` if ``key`` is out of range (debug-only).
     """
     index = operator.index(key)
     if index < 0:
         index += bound
-        if index < 0:
-            raise IndexError
+        if __debug__:
+            if index < 0:
+                raise IndexError
         return index
-    if index >= bound:
-        raise IndexError
+    if __debug__:
+        if index >= bound:
+            raise IndexError
     return index
 
 
