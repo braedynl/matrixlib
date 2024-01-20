@@ -5,10 +5,12 @@ __all__ = [
     "RowVectorAccessor",
     "ColVectorAccessor",
     "ValueAccessor",
-    "EmptyRowVectorAccessor",
-    "EmptyColVectorAccessor",
-    "EmptyAccessor",
-    "EMPTY_ACCESSOR",
+    "ColCountAccessor",
+    "RowCountAccessor",
+    "NullAccessor",
+    "NULLARY_ACCESSOR_1x0",
+    "NULLARY_ACCESSOR_0x1",
+    "NULLARY_ACCESSOR_0x0",
 ]
 
 from abc import ABCMeta, abstractmethod
@@ -241,7 +243,7 @@ class ValueAccessor(AbstractAccessor[T_co], Generic[T_co]):
 
 
 @final
-class EmptyRowVectorAccessor(NullaryAccessor[T_co], Generic[T_co]):
+class ColCountAccessor(NullaryAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("col_count")
     col_count: int
@@ -250,7 +252,7 @@ class EmptyRowVectorAccessor(NullaryAccessor[T_co], Generic[T_co]):
         self.col_count = col_count  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
-        return f"EmptyRowVectorAccessor(col_count={self.col_count!r})"
+        return f"ColCountAccessor(col_count={self.col_count!r})"
 
     @property
     @override
@@ -264,7 +266,7 @@ class EmptyRowVectorAccessor(NullaryAccessor[T_co], Generic[T_co]):
 
 
 @final
-class EmptyColVectorAccessor(NullaryAccessor[T_co], Generic[T_co]):
+class RowCountAccessor(NullaryAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("row_count")
     row_count: int
@@ -273,7 +275,7 @@ class EmptyColVectorAccessor(NullaryAccessor[T_co], Generic[T_co]):
         self.row_count = row_count  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
-        return f"EmptyColVectorAccessor(row_count={self.row_count!r})"
+        return f"RowCountAccessor(row_count={self.row_count!r})"
 
     @property
     @override
@@ -287,12 +289,12 @@ class EmptyColVectorAccessor(NullaryAccessor[T_co], Generic[T_co]):
 
 
 @final
-class EmptyAccessor(NullaryAccessor[T_co], Generic[T_co]):
+class NullAccessor(NullaryAccessor[T_co], Generic[T_co]):
 
     __slots__ = ()
 
     def __repr__(self) -> str:
-        return "EmptyAccessor()"
+        return "NullAccessor()"
 
     @override
     def __hash__(self) -> Literal[0]:
@@ -314,4 +316,6 @@ class EmptyAccessor(NullaryAccessor[T_co], Generic[T_co]):
         return 0
 
 
-EMPTY_ACCESSOR: Final[EmptyAccessor[Any]] = EmptyAccessor()
+NULLARY_ACCESSOR_1x0: Final[RowCountAccessor[Any]] = RowCountAccessor(1)
+NULLARY_ACCESSOR_0x1: Final[ColCountAccessor[Any]] = ColCountAccessor(1)
+NULLARY_ACCESSOR_0x0: Final[NullAccessor[Any]] = NullAccessor()
