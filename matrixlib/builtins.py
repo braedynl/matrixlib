@@ -27,17 +27,31 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     _accessor: accessors.AbstractAccessor[T_co]
 
     @overload
+    def __init__(self: Matrix[Literal[1], Literal[0], T_co]) -> None: ...
+    @overload
     def __init__(self, array: accessors.AbstractAccessor[T_co]) -> None: ...
     @overload
     def __init__(self, array: Matrix[M_co, N_co, T_co]) -> None: ...
     @overload
-    def __init__(self: Matrix[Literal[1], Any, T_co], array: Iterable[T_co]) -> None: ...
+    def __init__(self: Matrix[Literal[1], Literal[0], T_co], array: tuple[()]) -> None: ...
     @overload
-    def __init__(self: Matrix[Literal[1], Any, T_co], array: Iterable[T_co], shape: Literal[Rule.ROW]) -> None: ...
+    def __init__(self: Matrix[Literal[1], Literal[1], T_co], array: tuple[T_co]) -> None: ...
     @overload
-    def __init__(self: Matrix[Any, Literal[1], T_co], array: Iterable[T_co], shape: Literal[Rule.COL]) -> None: ...
+    def __init__(self: Matrix[Literal[1], N_co, T_co], array: Iterable[T_co]) -> None: ...
     @overload
-    def __init__(self: Matrix[Any, Any, T_co], array: Iterable[T_co], shape: Rule) -> None: ...
+    def __init__(self: Matrix[Literal[1], Literal[0], T_co], *, shape: Literal[Rule.ROW]) -> None: ...
+    @overload
+    def __init__(self: Matrix[Literal[0], Literal[1], T_co], *, shape: Literal[Rule.COL]) -> None: ...
+    @overload
+    def __init__(self, *, shape: Rule) -> None: ...
+    @overload
+    def __init__(self: Matrix[M_co, N_co, T_co], *, shape: tuple[M_co, N_co]) -> None: ...
+    @overload
+    def __init__(self: Matrix[Literal[1], N_co, T_co], array: Iterable[T_co], shape: Literal[Rule.ROW]) -> None: ...
+    @overload
+    def __init__(self: Matrix[M_co, Literal[1], T_co], array: Iterable[T_co], shape: Literal[Rule.COL]) -> None: ...
+    @overload
+    def __init__(self, array: Iterable[T_co], shape: Rule) -> None: ...
     @overload
     def __init__(self, array: Iterable[T_co], shape: tuple[M_co, N_co]) -> None: ...
 
@@ -52,21 +66,39 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             elif isinstance(array, Matrix):
                 self._accessor = array._accessor
             else:
-                self._accessor = accessors.RowVectorAccessor(tuple(array))
+                array = tuple(array)
+                count = len(array)
+                if count > 1:
+                    self._accessor = accessors.RowVectorAccessor(array)
+                elif count:
+                    self._accessor = accessors.ValueAccessor(array[0])
+                else:
+                    self._accessor = accessors.NULLARY_ACCESSOR_1x0
             return
 
         if isinstance(array, accessors.AbstractAccessor):
-            array = array.collect()
+            array = array.materialize()
         elif isinstance(array, Matrix):
-            array = array._accessor.collect()
+            array = array._accessor.materialize()
         else:
             array = tuple(array)
 
         if isinstance(shape, Rule):
+            count = len(array)
             if shape is ROW:
-                self._accessor = accessors.RowVectorAccessor(array)
+                if count > 1:
+                    self._accessor = accessors.RowVectorAccessor(array)
+                elif count:
+                    self._accessor = accessors.ValueAccessor(array[0])
+                else:
+                    self._accessor = accessors.NULLARY_ACCESSOR_1x0
             else:
-                self._accessor = accessors.ColVectorAccessor(array)
+                if count > 1:
+                    self._accessor = accessors.ColVectorAccessor(array)
+                elif count:
+                    self._accessor = accessors.ValueAccessor(array[0])
+                else:
+                    self._accessor = accessors.NULLARY_ACCESSOR_0x1
             return
 
         row_count = shape[0]
@@ -78,7 +110,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             if row_count < 0 or col_count < 0:
                 raise ValueError("dimensions must be non-negative")
             if test_size != true_size:
-                raise ValueError(f"cannot interpret size {true_size} iterable as shape {row_count} × {col_count}")
+                raise ValueError(f"cannot interpret size {true_size} iterable as shape ({row_count}, {col_count})")
 
         if col_count > 1:
             if row_count > 1:
@@ -86,21 +118,21 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             elif row_count:
                 self._accessor = accessors.RowVectorAccessor(array)
             else:
-                self._accessor = accessors.EmptyRowVectorAccessor(col_count)
+                self._accessor = accessors.ColCountAccessor(col_count)
         elif col_count:
             if row_count > 1:
                 self._accessor = accessors.ColVectorAccessor(array)
             elif row_count:
                 self._accessor = accessors.ValueAccessor(array[0])
             else:
-                self._accessor = accessors.EmptyRowVectorAccessor(col_count)
+                self._accessor = accessors.NULLARY_ACCESSOR_0x1
         else:
             if row_count > 1:
-                self._accessor = accessors.EmptyColVectorAccessor(row_count)
+                self._accessor = accessors.RowCountAccessor(row_count)
             elif row_count:
-                self._accessor = accessors.EmptyColVectorAccessor(row_count)
+                self._accessor = accessors.NULLARY_ACCESSOR_1x0
             else:
-                self._accessor = accessors.EMPTY_ACCESSOR
+                self._accessor = accessors.NULLARY_ACCESSOR_0x0
 
     def __repr__(self) -> str:
         return f"Matrix([{', '.join(map(repr, self))}], shape={self.shape!r})"
@@ -235,6 +267,9 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def col_count(self) -> N_co:
         return self._accessor.col_count  # type: ignore
 
+    def materialize(self) -> Matrix[M_co, N_co, T_co]:
+        return Matrix(self._accessor.materialize(), self.shape)
+
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         return Matrix(accessors.TransposeAccessor(self._accessor))
 
@@ -288,11 +323,11 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def slices(self, *, by: Rule = Rule.ROW) -> Iterator[Matrix[Any, Any, T_co]]:
         target = self._accessor
         if by is ROW:
-            for index in range(self.row_count):
-                yield Matrix(accessors.RowSheerAccessor(target, row_index=index))
+            for row_index in range(self.row_count):
+                yield Matrix(accessors.RowSheerAccessor(target, row_index=row_index))
         else:
-            for index in range(self.col_count):
-                yield Matrix(accessors.ColSheerAccessor(target, col_index=index))
+            for col_index in range(self.col_count):
+                yield Matrix(accessors.ColSheerAccessor(target, col_index=col_index))
 
     @overload
     def stack(self, other: Matrix[Any, N_co, S_co], *, by: Literal[Rule.ROW]) -> Matrix[Any, N_co, Union[T_co, S_co]]: ...
