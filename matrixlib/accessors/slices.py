@@ -23,6 +23,7 @@ class SliceAccessor(AbstractVectorAccessor[T_co], Generic[T_co]):
     __slots__ = ("target", "window")
     target: AbstractAccessor[T_co]
     window: range
+    row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, target: AbstractAccessor[T_co], *, window: range) -> None:
         self.target = target
@@ -33,11 +34,6 @@ class SliceAccessor(AbstractVectorAccessor[T_co], Generic[T_co]):
 
     def __hash__(self) -> int:
         return hash((self.target, self.window))
-
-    @property
-    @override
-    def row_count(self) -> Literal[1]:
-        return 1
 
     @property
     @override
@@ -56,6 +52,7 @@ class RowSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
     target: AbstractAccessor[T_co]
     row_index: int
     col_window: range
+    row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, target: AbstractAccessor[T_co], *, row_index: int, col_window: range) -> None:
         self.target = target
@@ -67,11 +64,6 @@ class RowSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_index, self.col_window))
-
-    @property
-    @override
-    def row_count(self) -> Literal[1]:
-        return 1
 
     @property
     @override
@@ -93,6 +85,7 @@ class ColSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
     target: AbstractAccessor[T_co]
     row_window: range
     col_index: int
+    col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, target: AbstractAccessor[T_co], *, row_window: range, col_index: int) -> None:
         self.target = target
@@ -109,11 +102,6 @@ class ColSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
     @override
     def row_count(self) -> int:
         return len(self.row_window)
-
-    @property
-    @override
-    def col_count(self) -> Literal[1]:
-        return 1
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:

@@ -20,6 +20,7 @@ class RowSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
     __slots__ = ("target", "row_index")
     target: AbstractAccessor[T_co]
     row_index: int
+    row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, target: AbstractAccessor[T_co], *, row_index: int) -> None:
         self.target = target
@@ -30,11 +31,6 @@ class RowSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_index))
-
-    @property
-    @override
-    def row_count(self) -> Literal[1]:
-        return 1
 
     @property
     @override
@@ -55,6 +51,7 @@ class ColSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
     __slots__ = ("target", "col_index")
     target: AbstractAccessor[T_co]
     col_index: int
+    col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, target: AbstractAccessor[T_co], *, col_index: int) -> None:
         self.target = target
@@ -70,11 +67,6 @@ class ColSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
     @override
     def row_count(self) -> int:
         return self.target.row_count
-
-    @property
-    @override
-    def col_count(self) -> Literal[1]:
-        return 1
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
