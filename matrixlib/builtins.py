@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import operator
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import (Any, Generic, Literal, Optional, SupportsIndex, TypeVar,
                     Union, overload)
 
@@ -16,6 +16,11 @@ OddNumber: TypeAlias = Literal[-15, -13, -11, -9, -7, -5, -3, -1, 1, 3, 5, 7, 9,
 
 T_co = TypeVar("T_co", covariant=True)
 S_co = TypeVar("S_co", covariant=True)
+R_co = TypeVar("R_co", covariant=True)
+
+T_contra = TypeVar("T_contra", contravariant=True)
+S_contra = TypeVar("S_contra", contravariant=True)
+R_contra = TypeVar("R_contra", contravariant=True)
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
@@ -350,28 +355,58 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         else:
             return Matrix(accessors.ColStackAccessor(target_head, target_tail))
 
-    def equal(self, other: Union[Matrix[M_co, N_co, object], object]) -> Matrix[M_co, N_co, bool]:
-        if isinstance(other, Matrix):
-            if __debug__:
-                if self.shape != other.shape:  # pyright: ignore[reportUnknownMemberType]
-                    raise ValueError
-            other = iter(other)
-        else:
-            other = itertools.repeat(other)
+    def _unary_map(
+        self,
+        mapper: Callable[[T_co], R_co],
+    ) -> Matrix[M_co, N_co, R_co]:
         return Matrix(
-            array=map(operator.__eq__, self, other),
+            array=map(mapper, self),
             shape=self.shape,
         )
 
-    def not_equal(self, other: Union[Matrix[M_co, N_co, object], object]) -> Matrix[M_co, N_co, bool]:
-        if isinstance(other, Matrix):
-            if __debug__:
-                if self.shape != other.shape:  # pyright: ignore[reportUnknownMemberType]
-                    raise ValueError
-            other = iter(other)
-        else:
-            other = itertools.repeat(other)
+    def _binary_matrix_map(
+        self,
+        mapper: Callable[[T_co, S_co], R_co],
+        other: Matrix[M_co, N_co, S_co],
+    ) -> Matrix[M_co, N_co, R_co]:
+        if __debug__:
+            if self.shape != other.shape:
+                raise ValueError
         return Matrix(
-            array=map(operator.__ne__, self, other),
+            array=map(mapper, self, other),
             shape=self.shape,
         )
+
+    def _binary_scalar_map(
+        self,
+        mapper: Callable[[T_co, S_contra], R_co],
+        other: S_contra,
+    ) -> Matrix[M_co, N_co, R_co]:
+        return Matrix(
+            array=map(mapper, self, itertools.repeat(other)),
+            shape=self.shape,
+        )
+
+    def equal(self, other: Union[Matrix[M_co, N_co, object], object]) -> Matrix[M_co, N_co, bool]:
+        if isinstance(other, Matrix):
+            return self._binary_matrix_map(
+                operator.__eq__,
+                other,  # type: ignore[arg-type]
+            )
+        else:
+            return self._binary_scalar_map(
+                operator.__eq__,
+                other,
+            )
+
+    def not_equal(self, other: Union[Matrix[M_co, N_co, object], object]) -> Matrix[M_co, N_co, bool]:
+        if isinstance(other, Matrix):
+            return self._binary_matrix_map(
+                operator.__ne__,
+                other,  # type: ignore[arg-type]
+            )
+        else:
+            return self._binary_scalar_map(
+                operator.__ne__,
+                other,
+            )
