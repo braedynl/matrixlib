@@ -115,7 +115,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             if row_count < 0 or col_count < 0:
                 raise ValueError("dimensions must be non-negative")
             if test_size != true_size:
-                raise ValueError(f"cannot interpret size {true_size} iterable as shape ({row_count}, {col_count})")
+                raise ValueError(f"cannot interpret size {true_size} iterable as shape {shape}")
 
         if col_count > 1:
             if row_count > 1:
@@ -370,8 +370,9 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         other: Matrix[M_co, N_co, S_co],
     ) -> Matrix[M_co, N_co, R_co]:
         if __debug__:
-            if self.shape != other.shape:
-                raise ValueError
+            s1, s2 = self.shape, other.shape
+            if s1 != s2:
+                raise ValueError(f"cannot map matrices with unequal shapes {s1} and {s2}")
         return Matrix(
             array=map(mapper, self, other),
             shape=self.shape,
