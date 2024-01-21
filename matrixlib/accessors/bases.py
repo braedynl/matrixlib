@@ -129,6 +129,7 @@ class RowVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("array")
     array: tuple[T_co, ...]
+    row_count: Final[Literal[1]] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, array: tuple[T_co, ...]) -> None:
         self.array = array  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -143,11 +144,6 @@ class RowVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def row_count(self) -> Literal[1]:
-        return 1
-
-    @property
-    @override
     def col_count(self) -> int:
         return len(self.array)
 
@@ -157,6 +153,7 @@ class ColVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("array")
     array: tuple[T_co, ...]
+    col_count: Final[Literal[1]] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, array: tuple[T_co, ...]) -> None:
         self.array = array  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -174,17 +171,15 @@ class ColVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
     def row_count(self) -> int:
         return len(self.array)
 
-    @property
-    @override
-    def col_count(self) -> Literal[1]:
-        return 1
-
 
 @final
 class ValueAccessor(AbstractAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("value")
     value: T_co
+    shape: Final[tuple[Literal[1], Literal[1]]] = (1, 1)  # pyright: ignore[reportIncompatibleMethodOverride]
+    row_count: Final[Literal[1]] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
+    col_count: Final[Literal[1]] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, value: T_co) -> None:
         self.value = value
@@ -211,21 +206,6 @@ class ValueAccessor(AbstractAccessor[T_co], Generic[T_co]):
     def __contains__(self, value: object) -> bool:
         return value is self.value or value == self.value
 
-    @property
-    @override
-    def shape(self) -> tuple[Literal[1], Literal[1]]:
-        return (1, 1)
-
-    @property
-    @override
-    def row_count(self) -> Literal[1]:
-        return 1
-
-    @property
-    @override
-    def col_count(self) -> Literal[1]:
-        return 1
-
     @override
     def materialize(self) -> tuple[T_co]:
         return (self.value,)
@@ -247,6 +227,7 @@ class ColCountAccessor(NullaryAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("col_count")
     col_count: int
+    row_count: Final[Literal[0]] = 0  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, col_count: int) -> None:
         self.col_count = col_count  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -259,17 +240,13 @@ class ColCountAccessor(NullaryAccessor[T_co], Generic[T_co]):
     def shape(self) -> tuple[Literal[0], int]:
         return (0, self.col_count)
 
-    @property
-    @override
-    def row_count(self) -> Literal[0]:
-        return 0
-
 
 @final
 class RowCountAccessor(NullaryAccessor[T_co], Generic[T_co]):
 
     __slots__ = ("row_count")
     row_count: int
+    col_count: Final[Literal[0]] = 0  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __init__(self, row_count: int) -> None:
         self.row_count = row_count  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -282,37 +259,20 @@ class RowCountAccessor(NullaryAccessor[T_co], Generic[T_co]):
     def shape(self) -> tuple[int, Literal[0]]:
         return (self.row_count, 0)
 
-    @property
-    @override
-    def col_count(self) -> Literal[0]:
-        return 0
-
 
 @final
 class NullAccessor(NullaryAccessor[T_co], Generic[T_co]):
 
     __slots__ = ()
+    shape: Final[tuple[Literal[0], Literal[0]]] = (0, 0)  # pyright: ignore[reportIncompatibleMethodOverride]
+    row_count: Final[Literal[0]] = 0  # pyright: ignore[reportIncompatibleMethodOverride]
+    col_count: Final[Literal[0]] = 0  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
         return "NullAccessor()"
 
     @override
     def __hash__(self) -> Literal[0]:
-        return 0
-
-    @property
-    @override
-    def shape(self) -> tuple[Literal[0], Literal[0]]:
-        return (0, 0)
-
-    @property
-    @override
-    def row_count(self) -> Literal[0]:
-        return 0
-
-    @property
-    @override
-    def col_count(self) -> Literal[0]:
         return 0
 
 
