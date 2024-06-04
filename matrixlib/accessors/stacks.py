@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-__all__ = [
-    "RowStackAccessor",
-    "ColStackAccessor",
-]
+__all__ = ["RowStackAccessor", "ColStackAccessor"]
 
 from typing import TypeVar, final
 
@@ -11,17 +8,20 @@ from typing_extensions import override
 
 from .abstracts import AbstractAccessor, AbstractMatrixAccessor
 
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
+
 T_co = TypeVar("T_co", covariant=True)
 
 
 @final
-class RowStackAccessor(AbstractMatrixAccessor[T_co]):
+class RowStackAccessor(AbstractMatrixAccessor[M_co, N_co, T_co]):
 
     __slots__ = ("target_head", "target_tail")
-    target_head: AbstractAccessor[T_co]
-    target_tail: AbstractAccessor[T_co]
+    target_head: AbstractAccessor[int, N_co, T_co]
+    target_tail: AbstractAccessor[int, N_co, T_co]
 
-    def __init__(self, target_head: AbstractAccessor[T_co], target_tail: AbstractAccessor[T_co]) -> None:
+    def __init__(self, target_head: AbstractAccessor[int, N_co, T_co], target_tail: AbstractAccessor[int, N_co, T_co]) -> None:
         assert target_head.col_count == target_tail.col_count
         self.target_head = target_head
         self.target_tail = target_tail
@@ -34,12 +34,12 @@ class RowStackAccessor(AbstractMatrixAccessor[T_co]):
 
     @property
     @override
-    def row_count(self) -> int:
-        return self.target_head.row_count + self.target_tail.row_count
+    def row_count(self) -> M_co:
+        return self.target_head.row_count + self.target_tail.row_count  # pyright: ignore[reportReturnType]
 
     @property
     @override
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         return self.target_head.col_count
 
     @override
@@ -59,13 +59,13 @@ class RowStackAccessor(AbstractMatrixAccessor[T_co]):
 
 
 @final
-class ColStackAccessor(AbstractMatrixAccessor[T_co]):
+class ColStackAccessor(AbstractMatrixAccessor[M_co, N_co, T_co]):
 
     __slots__ = ("target_head", "target_tail")
-    target_head: AbstractAccessor[T_co]
-    target_tail: AbstractAccessor[T_co]
+    target_head: AbstractAccessor[M_co, int, T_co]
+    target_tail: AbstractAccessor[M_co, int, T_co]
 
-    def __init__(self, target_head: AbstractAccessor[T_co], target_tail: AbstractAccessor[T_co]) -> None:
+    def __init__(self, target_head: AbstractAccessor[M_co, int, T_co], target_tail: AbstractAccessor[M_co, int, T_co]) -> None:
         assert target_head.row_count == target_tail.row_count
         self.target_head = target_head
         self.target_tail = target_tail
@@ -78,13 +78,13 @@ class ColStackAccessor(AbstractMatrixAccessor[T_co]):
 
     @property
     @override
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         return self.target_head.row_count
 
     @property
     @override
-    def col_count(self) -> int:
-        return self.target_head.col_count + self.target_tail.col_count
+    def col_count(self) -> N_co:
+        return self.target_head.col_count + self.target_tail.col_count  # pyright: ignore[reportReturnType]
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:

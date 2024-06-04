@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-__all__ = [
-    "RowSheerAccessor",
-    "ColSheerAccessor",
-]
+__all__ = ["RowSheerAccessor", "ColSheerAccessor"]
 
 from typing import Generic, Literal, TypeVar, final
 
@@ -11,18 +8,21 @@ from typing_extensions import override
 
 from .abstracts import AbstractAccessor, AbstractMatrixAccessor
 
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
+
 T_co = TypeVar("T_co", covariant=True)
 
 
 @final
-class RowSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
+class RowSheerAccessor(AbstractMatrixAccessor[Literal[1], N_co, T_co], Generic[N_co, T_co]):
 
     __slots__ = ("target", "row_index")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[int, N_co, T_co]
     row_index: int
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[T_co], *, row_index: int) -> None:
+    def __init__(self, target: AbstractAccessor[int, N_co, T_co], *, row_index: int) -> None:
         self.target = target
         self.row_index = row_index
 
@@ -34,7 +34,7 @@ class RowSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         return self.target.col_count
 
     @override
@@ -46,14 +46,14 @@ class RowSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
 
 @final
-class ColSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
+class ColSheerAccessor(AbstractMatrixAccessor[M_co, Literal[1], T_co], Generic[M_co, T_co]):
 
     __slots__ = ("target", "col_index")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[M_co, int, T_co]
     col_index: int
     col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[T_co], *, col_index: int) -> None:
+    def __init__(self, target: AbstractAccessor[M_co, int, T_co], *, col_index: int) -> None:
         self.target = target
         self.col_index = col_index
 
@@ -65,7 +65,7 @@ class ColSheerAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         return self.target.row_count
 
     @override

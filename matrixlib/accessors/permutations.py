@@ -18,10 +18,13 @@ from typing_extensions import TypeAlias, override
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
 
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
+
 T_co = TypeVar("T_co", covariant=True)
 
 
-class PermutationAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
+class AbstractPermutationAccessor(AbstractAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
 
     __slots__ = ()
 
@@ -30,22 +33,22 @@ class PermutationAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def target(self) -> AbstractAccessor[T_co]:
+    def target(self) -> AbstractAccessor[M_co, N_co, T_co]:
         """The permuted accessor"""
         raise NotImplementedError
 
 
 @final
 class TransposeAccessor(
-    AbstractMatrixAccessor[T_co],
-    PermutationAccessor[T_co],
-    Generic[T_co],
+    AbstractMatrixAccessor[M_co, N_co, T_co],
+    AbstractPermutationAccessor[M_co, N_co, T_co],
+    Generic[M_co, N_co, T_co],
 ):
 
     __slots__ = ("target")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[N_co, M_co, T_co]  # NOTE: Reversed dimensions!
 
-    def __init__(self, target: AbstractAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[N_co, M_co, T_co]) -> None:
         self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
@@ -53,12 +56,12 @@ class TransposeAccessor(
 
     @property
     @override
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         return self.target.col_count
 
     @property
     @override
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         return self.target.row_count
 
     @override
@@ -68,15 +71,15 @@ class TransposeAccessor(
 
 @final
 class RowFlipAccessor(
-    AbstractMatrixAccessor[T_co],
-    PermutationAccessor[T_co],
-    Generic[T_co],
+    AbstractMatrixAccessor[M_co, N_co, T_co],
+    AbstractPermutationAccessor[M_co, N_co, T_co],
+    Generic[M_co, N_co, T_co],
 ):
 
     __slots__ = ("target")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[M_co, N_co, T_co]
 
-    def __init__(self, target: AbstractAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[M_co, N_co, T_co]) -> None:
         self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
@@ -84,12 +87,12 @@ class RowFlipAccessor(
 
     @property
     @override
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         return self.target.row_count
 
     @property
     @override
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         return self.target.col_count
 
     @override
@@ -102,15 +105,15 @@ class RowFlipAccessor(
 
 @final
 class ColFlipAccessor(
-    AbstractMatrixAccessor[T_co],
-    PermutationAccessor[T_co],
-    Generic[T_co],
+    AbstractMatrixAccessor[M_co, N_co, T_co],
+    AbstractPermutationAccessor[M_co, N_co, T_co],
+    Generic[M_co, N_co, T_co],
 ):
 
     __slots__ = ("target")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[M_co, N_co, T_co]
 
-    def __init__(self, target: AbstractAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[M_co, N_co, T_co]) -> None:
         self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
@@ -118,12 +121,12 @@ class ColFlipAccessor(
 
     @property
     @override
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         return self.target.row_count
 
     @property
     @override
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         return self.target.col_count
 
     @override
@@ -136,15 +139,15 @@ class ColFlipAccessor(
 
 @final
 class Rotate090Accessor(
-    AbstractMatrixAccessor[T_co],
-    PermutationAccessor[T_co],
-    Generic[T_co],
+    AbstractMatrixAccessor[M_co, N_co, T_co],
+    AbstractPermutationAccessor[M_co, N_co, T_co],
+    Generic[M_co, N_co, T_co],
 ):
 
     __slots__ = ("target")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[N_co, M_co, T_co]  # NOTE: Reversed dimensions!
 
-    def __init__(self, target: AbstractAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[N_co, M_co, T_co]) -> None:
         self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
@@ -152,12 +155,12 @@ class Rotate090Accessor(
 
     @property
     @override
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         return self.target.col_count
 
     @property
     @override
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         return self.target.row_count
 
     @override
@@ -170,15 +173,15 @@ class Rotate090Accessor(
 
 @final
 class Rotate180Accessor(
-    AbstractVectorAccessor[T_co],
-    PermutationAccessor[T_co],
-    Generic[T_co],
+    AbstractVectorAccessor[M_co, N_co, T_co],
+    AbstractPermutationAccessor[M_co, N_co, T_co],
+    Generic[M_co, N_co, T_co],
 ):
 
     __slots__ = ("target")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[M_co, N_co, T_co]
 
-    def __init__(self, target: AbstractAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[M_co, N_co, T_co]) -> None:
         self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
@@ -186,12 +189,12 @@ class Rotate180Accessor(
 
     @property
     @override
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         return self.target.row_count
 
     @property
     @override
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         return self.target.col_count
 
     @override
@@ -201,15 +204,15 @@ class Rotate180Accessor(
 
 @final
 class Rotate270Accessor(
-    AbstractMatrixAccessor[T_co],
-    PermutationAccessor[T_co],
-    Generic[T_co],
+    AbstractMatrixAccessor[M_co, N_co, T_co],
+    AbstractPermutationAccessor[M_co, N_co, T_co],
+    Generic[M_co, N_co, T_co],
 ):
 
     __slots__ = ("target")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[N_co, M_co, T_co]  # NOTE: Reversed dimensions!
 
-    def __init__(self, target: AbstractAccessor[T_co]) -> None:
+    def __init__(self, target: AbstractAccessor[N_co, M_co, T_co]) -> None:
         self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
@@ -217,12 +220,12 @@ class Rotate270Accessor(
 
     @property
     @override
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         return self.target.col_count
 
     @property
     @override
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         return self.target.row_count
 
     @override
@@ -233,4 +236,4 @@ class Rotate270Accessor(
         )
 
 
-ReverseAccessor: TypeAlias = Rotate180Accessor[T_co]
+ReverseAccessor: TypeAlias = Rotate180Accessor[M_co, N_co, T_co]

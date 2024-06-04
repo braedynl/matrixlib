@@ -5,9 +5,9 @@ __all__ = [
     "RowVectorAccessor",
     "ColVectorAccessor",
     "ValueAccessor",
-    "ColCountAccessor",
-    "RowCountAccessor",
-    "NullAccessor",
+    "ZeroRowAccessor",
+    "ZeroColAccessor",
+    "ZeroAccessor",
     "NULLARY_ACCESSOR_1x0",
     "NULLARY_ACCESSOR_0x1",
     "NULLARY_ACCESSOR_0x0",
@@ -17,14 +17,20 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Iterator
 from typing import Any, Final, Generic, Literal, TypeVar, final
 
-from typing_extensions import override
+from typing_extensions import Never, override
 
 from .abstracts import AbstractAccessor, AbstractVectorAccessor
+
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
 
 T_co = TypeVar("T_co", covariant=True)
 
 
-class ArrayedAccessor(AbstractVectorAccessor[T_co], metaclass=ABCMeta):
+class AbstractArrayedAccessor(AbstractVectorAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
+    """Abstract for accessors that hold their values in memory as a built-in
+    ``tuple``.
+    """
 
     __slots__ = ()
 
@@ -61,7 +67,11 @@ class ArrayedAccessor(AbstractVectorAccessor[T_co], metaclass=ABCMeta):
         return self.array[index]
 
 
-class NullaryAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
+class AbstractNullaryAccessor(AbstractAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
+    """Abstract for accessors that have a size of 0.
+
+    Sub-classes of ``AbstractNullaryAccessor`` must have at least one 0 dimension.
+    """
 
     __slots__ = ()
 
@@ -69,6 +79,7 @@ class NullaryAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
         return hash(self.shape)
 
     @override
+    @final
     def __len__(self) -> Literal[0]:
         return 0
 
@@ -91,22 +102,26 @@ class NullaryAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
         return ()
 
     @override
-    def vector_access(self, index: int) -> T_co:
+    def vector_access(self, index: int) -> Never:
         raise IndexError
 
     @override
-    def matrix_access(self, row_index: int, col_index: int) -> T_co:
+    def matrix_access(self, row_index: int, col_index: int) -> Never:
         raise IndexError
 
 
 @final
-class MatrixAccessor(ArrayedAccessor[T_co], Generic[T_co]):
+class MatrixAccessor(AbstractArrayedAccessor[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
+    """Concrete base accessor for matrices of shape M by N, where both M and N
+    are greater than 1.
+    """
 
     __slots__ = ("array", "shape")
     array: tuple[T_co, ...]
-    shape: tuple[int, int]
+    shape: tuple[M_co, N_co]
 
-    def __init__(self, array: tuple[T_co, ...], shape: tuple[int, int]) -> None:
+    def __init__(self, array: tuple[T_co, ...], shape: tuple[M_co, N_co]) -> None:
+        assert len(array) == shape[0] * shape[1]
         self.array = array  # pyright: ignore[reportIncompatibleMethodOverride]
         self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -115,17 +130,18 @@ class MatrixAccessor(ArrayedAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         return self.shape[0]
 
     @property
     @override
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         return self.shape[1]
 
 
 @final
-class RowVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
+class RowVectorAccessor(AbstractArrayedAccessor[Literal[1], N_co, T_co], Generic[N_co, T_co]):
+    """Concrete base accessor for matrices of shape 1 by N."""
 
     __slots__ = ("array")
     array: tuple[T_co, ...]
@@ -139,17 +155,18 @@ class RowVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def shape(self) -> tuple[Literal[1], int]:
-        return (1, len(self.array))
+    def shape(self) -> tuple[Literal[1], N_co]:
+        return (1, len(self.array))  # pyright: ignore[reportReturnType]
 
     @property
     @override
-    def col_count(self) -> int:
-        return len(self.array)
+    def col_count(self) -> N_co:
+        return len(self.array)  # pyright: ignore[reportReturnType]
 
 
 @final
-class ColVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
+class ColVectorAccessor(AbstractArrayedAccessor[M_co, Literal[1], T_co], Generic[M_co, T_co]):
+    """Concrete base accessor for matrices of shape M by 1."""
 
     __slots__ = ("array")
     array: tuple[T_co, ...]
@@ -163,17 +180,18 @@ class ColVectorAccessor(ArrayedAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def shape(self) -> tuple[int, Literal[1]]:
-        return (len(self.array), 1)
+    def shape(self) -> tuple[M_co, Literal[1]]:
+        return (len(self.array), 1)  # pyright: ignore[reportReturnType]
 
     @property
     @override
-    def row_count(self) -> int:
-        return len(self.array)
+    def row_count(self) -> M_co:
+        return len(self.array)  # pyright: ignore[reportReturnType]
 
 
 @final
-class ValueAccessor(AbstractAccessor[T_co], Generic[T_co]):
+class ValueAccessor(AbstractAccessor[Literal[1], Literal[1], T_co], Generic[T_co]):
+    """Concrete base accessor for matrices of shape 1 by 1."""
 
     __slots__ = ("value")
     value: T_co
@@ -223,45 +241,48 @@ class ValueAccessor(AbstractAccessor[T_co], Generic[T_co]):
 
 
 @final
-class ColCountAccessor(NullaryAccessor[T_co], Generic[T_co]):
+class ZeroRowAccessor(AbstractNullaryAccessor[Literal[0], N_co, T_co], Generic[N_co, T_co]):
+    """Concrete base accessor for matrices of shape 0 by N."""
 
     __slots__ = ("col_count")
-    col_count: int
+    col_count: N_co
     row_count: Literal[0] = 0  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, col_count: int) -> None:
+    def __init__(self, col_count: N_co) -> None:
         self.col_count = col_count  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
-        return f"ColCountAccessor(col_count={self.col_count!r})"
+        return f"ZeroRowAccessor(col_count={self.col_count!r})"
 
     @property
     @override
-    def shape(self) -> tuple[Literal[0], int]:
+    def shape(self) -> tuple[Literal[0], N_co]:
         return (0, self.col_count)
 
 
 @final
-class RowCountAccessor(NullaryAccessor[T_co], Generic[T_co]):
+class ZeroColAccessor(AbstractNullaryAccessor[M_co, Literal[0], T_co], Generic[M_co, T_co]):
+    """Concrete base accessor for matrices of shape M by 0."""
 
     __slots__ = ("row_count")
-    row_count: int
+    row_count: M_co
     col_count: Literal[0] = 0  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, row_count: int) -> None:
+    def __init__(self, row_count: M_co) -> None:
         self.row_count = row_count  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
-        return f"RowCountAccessor(row_count={self.row_count!r})"
+        return f"ZeroColAccessor(row_count={self.row_count!r})"
 
     @property
     @override
-    def shape(self) -> tuple[int, Literal[0]]:
+    def shape(self) -> tuple[M_co, Literal[0]]:
         return (self.row_count, 0)
 
 
 @final
-class NullAccessor(NullaryAccessor[T_co], Generic[T_co]):
+class ZeroAccessor(AbstractNullaryAccessor[Literal[0], Literal[0], T_co], Generic[T_co]):
+    """Concrete base accessor for matrices of shape 0 by 0."""
 
     __slots__ = ()
     shape: tuple[Literal[0], Literal[0]] = (0, 0)  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -269,13 +290,13 @@ class NullAccessor(NullaryAccessor[T_co], Generic[T_co]):
     col_count: Literal[0] = 0  # pyright: ignore[reportIncompatibleMethodOverride]
 
     def __repr__(self) -> str:
-        return "NullAccessor()"
+        return "ZeroAccessor()"
 
     @override
     def __hash__(self) -> Literal[0]:
         return 0
 
 
-NULLARY_ACCESSOR_1x0: Final[RowCountAccessor[Any]] = RowCountAccessor(1)
-NULLARY_ACCESSOR_0x1: Final[ColCountAccessor[Any]] = ColCountAccessor(1)
-NULLARY_ACCESSOR_0x0: Final[NullAccessor[Any]] = NullAccessor()
+NULLARY_ACCESSOR_1x0: Final[ZeroColAccessor[Literal[1], Any]] = ZeroColAccessor(1)
+NULLARY_ACCESSOR_0x1: Final[ZeroRowAccessor[Literal[1], Any]] = ZeroRowAccessor(1)
+NULLARY_ACCESSOR_0x0: Final[ZeroAccessor[Any]] = ZeroAccessor()

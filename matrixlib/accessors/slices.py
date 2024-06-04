@@ -14,18 +14,21 @@ from typing_extensions import override
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
 
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
+
 T_co = TypeVar("T_co", covariant=True)
 
 
 @final
-class SliceAccessor(AbstractVectorAccessor[T_co], Generic[T_co]):
+class SliceAccessor(AbstractVectorAccessor[Literal[1], N_co, T_co], Generic[N_co, T_co]):
 
     __slots__ = ("target", "window")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[int, N_co, T_co]
     window: range
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[T_co], *, window: range) -> None:
+    def __init__(self, target: AbstractAccessor[int, N_co, T_co], *, window: range) -> None:
         self.target = target
         self.window = window
 
@@ -37,8 +40,8 @@ class SliceAccessor(AbstractVectorAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def col_count(self) -> int:
-        return len(self.window)
+    def col_count(self) -> N_co:
+        return len(self.window)  # pyright: ignore[reportReturnType]
 
     @override
     def vector_access(self, index: int) -> T_co:
@@ -46,15 +49,15 @@ class SliceAccessor(AbstractVectorAccessor[T_co], Generic[T_co]):
 
 
 @final
-class RowSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
+class RowSliceAccessor(AbstractMatrixAccessor[Literal[1], N_co, T_co], Generic[N_co, T_co]):
 
     __slots__ = ("target", "row_index", "col_window")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[int, N_co, T_co]
     row_index: int
     col_window: range
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[T_co], *, row_index: int, col_window: range) -> None:
+    def __init__(self, target: AbstractAccessor[int, N_co, T_co], *, row_index: int, col_window: range) -> None:
         self.target = target
         self.row_index = row_index
         self.col_window = col_window
@@ -67,8 +70,8 @@ class RowSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def col_count(self) -> int:
-        return len(self.col_window)
+    def col_count(self) -> N_co:
+        return len(self.col_window)  # pyright: ignore[reportReturnType]
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
@@ -79,15 +82,15 @@ class RowSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
 
 @final
-class ColSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
+class ColSliceAccessor(AbstractMatrixAccessor[M_co, Literal[1], T_co], Generic[M_co, T_co]):
 
     __slots__ = ("target", "row_window", "col_index")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[M_co, int, T_co]
     row_window: range
     col_index: int
     col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[T_co], *, row_window: range, col_index: int) -> None:
+    def __init__(self, target: AbstractAccessor[M_co, int, T_co], *, row_window: range, col_index: int) -> None:
         self.target = target
         self.row_window = row_window
         self.col_index = col_index
@@ -100,8 +103,8 @@ class ColSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def row_count(self) -> int:
-        return len(self.row_window)
+    def row_count(self) -> M_co:
+        return len(self.row_window)  # pyright: ignore[reportReturnType]
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
@@ -112,14 +115,14 @@ class ColSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
 
 @final
-class MatrixSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
+class MatrixSliceAccessor(AbstractMatrixAccessor[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
 
     __slots__ = ("target", "row_window", "col_window")
-    target: AbstractAccessor[T_co]
+    target: AbstractAccessor[int, int, T_co]
     row_window: range
     col_window: range
 
-    def __init__(self, target: AbstractAccessor[T_co], *, row_window: range, col_window: range) -> None:
+    def __init__(self, target: AbstractAccessor[int, int, T_co], *, row_window: range, col_window: range) -> None:
         self.target = target
         self.row_window = row_window
         self.col_window = col_window
@@ -132,13 +135,13 @@ class MatrixSliceAccessor(AbstractMatrixAccessor[T_co], Generic[T_co]):
 
     @property
     @override
-    def row_count(self) -> int:
-        return len(self.row_window)
+    def row_count(self) -> M_co:
+        return len(self.row_window)  # pyright: ignore[reportReturnType]
 
     @property
     @override
-    def col_count(self) -> int:
-        return len(self.col_window)
+    def col_count(self) -> N_co:
+        return len(self.col_window)  # pyright: ignore[reportReturnType]
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:

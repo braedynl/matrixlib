@@ -13,12 +13,21 @@ from typing import Generic, SupportsIndex, TypeVar
 
 from typing_extensions import override
 
-from .rule import Rule
+from ..rule import Rule
+
+M_co = TypeVar("M_co", covariant=True, bound=int)
+N_co = TypeVar("N_co", covariant=True, bound=int)
 
 T_co = TypeVar("T_co", covariant=True)
 
 
-class AbstractAccessor(Generic[T_co], metaclass=ABCMeta):
+class AbstractAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
+    """Base class of the accessor hierarchy.
+
+    Accessors are an internal interface used by the ``Matrix`` type to
+    manipulate the method by which its values are retrieved, without changing
+    the ``Matrix`` implementation.
+    """
 
     __slots__ = ()
 
@@ -27,7 +36,7 @@ class AbstractAccessor(Generic[T_co], metaclass=ABCMeta):
         if self is other:
             return True
         if isinstance(other, AbstractAccessor):
-            if self.shape != other.shape:
+            if self.shape != other.shape:  # pyright: ignore[reportUnknownMemberType]
                 return False
             for x, y in zip(self, other):
                 if x is y or x == y:
@@ -60,19 +69,19 @@ class AbstractAccessor(Generic[T_co], metaclass=ABCMeta):
         return False
 
     @property
-    def shape(self) -> tuple[int, int]:
+    def shape(self) -> tuple[M_co, N_co]:
         """The number of rows and columns as a ``tuple``"""
         return (self.row_count, self.col_count)
 
     @property
     @abstractmethod
-    def row_count(self) -> int:
+    def row_count(self) -> M_co:
         """The number of rows"""
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def col_count(self) -> int:
+    def col_count(self) -> N_co:
         """The number of columns"""
         raise NotImplementedError
 
@@ -123,7 +132,7 @@ class AbstractAccessor(Generic[T_co], metaclass=ABCMeta):
         return resolve_slice(key, bound)
 
 
-class AbstractVectorAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
+class AbstractVectorAccessor(AbstractAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
     """Sub-class of ``AbstractAccessor`` with preference for vector access"""
 
     __slots__ = ()
@@ -146,7 +155,7 @@ class AbstractVectorAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
         return self.vector_access(index)
 
 
-class AbstractMatrixAccessor(AbstractAccessor[T_co], metaclass=ABCMeta):
+class AbstractMatrixAccessor(AbstractAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
     """Sub-class of ``AbstractAccessor`` with preference for matrix access"""
 
     __slots__ = ()
