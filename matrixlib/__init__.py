@@ -11,3 +11,4 @@ Source: https://github.com/braedynl/matrixlib/
 
 from .accessors import *
 from .builtins import *
+from .rule import *

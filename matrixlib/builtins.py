@@ -2,15 +2,17 @@ from __future__ import annotations
 
 __all__ = ["Matrix"]
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeVar,
                     overload)
 
 from typing_extensions import override
 
-from .accessors import (AbstractAccessor, ColSliceAccessor,
-                        MatrixSliceAccessor, RowSliceAccessor, SliceAccessor)
-from .rule import COL, ROW
+from .accessors import (AbstractAccessor, ColSliceAccessor, ColVectorAccessor,
+                        MatrixSliceAccessor, NULLARY_ACCESSOR_0x1,
+                        NULLARY_ACCESSOR_1x0, RowSliceAccessor,
+                        RowVectorAccessor, SliceAccessor, ValueAccessor)
+from .rule import COL, ROW, Rule
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
@@ -22,6 +24,42 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     __slots__ = ("_accessor",)
     _accessor: AbstractAccessor[M_co, N_co, T_co]
+
+    @overload
+    def __init__(self: Matrix[Literal[1], Literal[0], Any]) -> None: ...
+    @overload
+    def __init__(self: Matrix[Literal[1], Any, Any], array: Iterable[T_co]) -> None: ...
+    @overload
+    def __init__(self, array: Iterable[T_co], shape: tuple[M_co, N_co]) -> None: ...
+    @overload
+    def __init__(self: Matrix[Literal[1], Any, Any], array: Iterable[T_co], shape: Literal[Rule.ROW]) -> None: ...
+    @overload
+    def __init__(self: Matrix[Any, Literal[1], Any], array: Iterable[T_co], shape: Literal[Rule.COL]) -> None: ...
+    @overload
+    def __init__(self: Matrix[Any, Any, Any], array: Iterable[T_co], shape: Rule) -> None: ...
+
+    def __init__(
+        self,
+        array: Iterable[T_co] = (),
+        shape: Rule | tuple[M_co, N_co] = Rule.ROW,
+    ) -> None:
+        array = tuple(array)
+        if isinstance(shape, Rule):
+            size = len(array)
+            if size == 1:
+                self._accessor = ValueAccessor(array[0])  # pyright: ignore[reportAttributeAccessIssue]
+                return
+            if shape is ROW:
+                if size > 1:
+                    self._accessor = RowVectorAccessor(array)  # pyright: ignore[reportAttributeAccessIssue]
+                else:
+                    self._accessor = NULLARY_ACCESSOR_1x0  # pyright: ignore[reportAttributeAccessIssue]
+            else:
+                if size > 1:
+                    self._accessor = ColVectorAccessor(array)  # pyright: ignore[reportAttributeAccessIssue]
+                else:
+                    self._accessor = NULLARY_ACCESSOR_0x1  # pyright: ignore[reportAttributeAccessIssue]
+            return
 
     def __eq__(self, other: object) -> bool:
         if self is other:
