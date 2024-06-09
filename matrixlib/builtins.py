@@ -40,6 +40,14 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     @overload
     def __init__(self: Matrix[Literal[1], Any, T], array: Iterable[T]) -> None: ...
     @overload
+    def __init__(self: Matrix[M, N, Any], *, shape: tuple[M, N]) -> None: ...
+    @overload
+    def __init__(self: Matrix[Literal[1], Any, Any], *, shape: Literal[Rule.ROW]) -> None: ...
+    @overload
+    def __init__(self: Matrix[Any, Literal[1], Any], *, shape: Literal[Rule.COL]) -> None: ...
+    @overload
+    def __init__(self: Matrix[Any, Any, Any], *, shape: Rule) -> None: ...
+    @overload
     def __init__(self, array: Iterable[T_co], shape: tuple[M_co, N_co]) -> None: ...
     @overload
     def __init__(self: Matrix[Literal[1], Any, T], array: Iterable[T], shape: Literal[Rule.ROW]) -> None: ...
@@ -204,3 +212,15 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     @classmethod
     def from_matrix(cls, matrix: Matrix[M_co, N_co, T_co]) -> Self:
         return cls.from_accessor(matrix._accessor)
+
+    @property
+    def shape(self) -> tuple[M_co, N_co]:
+        return self._accessor.shape
+
+    @property
+    def row_count(self) -> M_co:
+        return self._accessor.row_count
+
+    @property
+    def col_count(self) -> N_co:
+        return self._accessor.col_count
