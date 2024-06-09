@@ -9,15 +9,25 @@ from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeVar,
 from typing_extensions import override
 
 from .accessors import (AbstractAccessor, ColSliceAccessor, ColVectorAccessor,
-                        MatrixSliceAccessor, NULLARY_ACCESSOR_0x1,
+                        MatrixAccessor, MatrixSliceAccessor,
+                        NULLARY_ACCESSOR_0x0, NULLARY_ACCESSOR_0x1,
                         NULLARY_ACCESSOR_1x0, RowSliceAccessor,
-                        RowVectorAccessor, SliceAccessor, ValueAccessor)
+                        RowVectorAccessor, SliceAccessor, ValueAccessor,
+                        ZeroColAccessor, ZeroRowAccessor)
 from .rule import COL, ROW, Rule
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
 T_co = TypeVar("T_co", covariant=True)
+
+M = TypeVar("M", bound=int)
+N = TypeVar("N", bound=int)
+P = TypeVar("P", bound=int)
+Q = TypeVar("Q", bound=int)
+
+T = TypeVar("T")
+S = TypeVar("S")
 
 
 class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
@@ -28,15 +38,15 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     @overload
     def __init__(self: Matrix[Literal[1], Literal[0], Any]) -> None: ...
     @overload
-    def __init__(self: Matrix[Literal[1], Any, Any], array: Iterable[T_co]) -> None: ...
+    def __init__(self: Matrix[Literal[1], Any, T], array: Iterable[T]) -> None: ...
     @overload
     def __init__(self, array: Iterable[T_co], shape: tuple[M_co, N_co]) -> None: ...
     @overload
-    def __init__(self: Matrix[Literal[1], Any, Any], array: Iterable[T_co], shape: Literal[Rule.ROW]) -> None: ...
+    def __init__(self: Matrix[Literal[1], Any, T], array: Iterable[T], shape: Literal[Rule.ROW]) -> None: ...
     @overload
-    def __init__(self: Matrix[Any, Literal[1], Any], array: Iterable[T_co], shape: Literal[Rule.COL]) -> None: ...
+    def __init__(self: Matrix[Any, Literal[1], T], array: Iterable[T], shape: Literal[Rule.COL]) -> None: ...
     @overload
-    def __init__(self: Matrix[Any, Any, Any], array: Iterable[T_co], shape: Rule) -> None: ...
+    def __init__(self: Matrix[Any, Any, T], array: Iterable[T], shape: Rule) -> None: ...
 
     def __init__(
         self,
@@ -44,22 +54,53 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         shape: Rule | tuple[M_co, N_co] = Rule.ROW,
     ) -> None:
         array = tuple(array)
-        if isinstance(shape, Rule):
+        if isinstance(shape, tuple):
+            row_count = shape[0]
+            col_count = shape[1]
+            if __debug__:
+                if row_count < 0 or col_count < 0:
+                    raise ValueError
+                true_size = len(array)
+                test_size = row_count * col_count
+                if true_size != test_size:
+                    raise ValueError
+            if row_count > 1:
+                if col_count > 1:
+                    self._accessor = MatrixAccessor(array, shape)
+                elif col_count:
+                    self._accessor = ColVectorAccessor(array)  # pyright: ignore
+                else:
+                    self._accessor = ZeroColAccessor(row_count)  # pyright: ignore
+            elif row_count:
+                if col_count > 1:
+                    self._accessor = RowVectorAccessor(array)  # pyright: ignore
+                elif col_count:
+                    self._accessor = ValueAccessor(array[0])  # pyright: ignore
+                else:
+                    self._accessor = NULLARY_ACCESSOR_1x0  # pyright: ignore
+            else:
+                if col_count > 1:
+                    self._accessor = ZeroRowAccessor(col_count)  # pyright: ignore
+                elif col_count:
+                    self._accessor = NULLARY_ACCESSOR_0x1  # pyright: ignore
+                else:
+                    self._accessor = NULLARY_ACCESSOR_0x0  # pyright: ignore
+        else:
             size = len(array)
-            if size == 1:
-                self._accessor = ValueAccessor(array[0])  # pyright: ignore[reportAttributeAccessIssue]
-                return
             if shape is ROW:
                 if size > 1:
-                    self._accessor = RowVectorAccessor(array)  # pyright: ignore[reportAttributeAccessIssue]
+                    self._accessor = RowVectorAccessor(array)  # pyright: ignore
+                elif size:
+                    self._accessor = ValueAccessor(array[0])  # pyright: ignore
                 else:
-                    self._accessor = NULLARY_ACCESSOR_1x0  # pyright: ignore[reportAttributeAccessIssue]
+                    self._accessor = NULLARY_ACCESSOR_1x0  # pyright: ignore
             else:
                 if size > 1:
-                    self._accessor = ColVectorAccessor(array)  # pyright: ignore[reportAttributeAccessIssue]
+                    self._accessor = ColVectorAccessor(array)  # pyright: ignore
+                elif size:
+                    self._accessor = ValueAccessor(array[0])  # pyright: ignore
                 else:
-                    self._accessor = NULLARY_ACCESSOR_0x1  # pyright: ignore[reportAttributeAccessIssue]
-            return
+                    self._accessor = NULLARY_ACCESSOR_0x1  # pyright: ignore
 
     def __eq__(self, other: object) -> bool:
         if self is other:
@@ -104,7 +145,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                     col_window = accessor.resolve_matrix_slice(col_index, by=COL)
 
                     return Matrix[Any, Any, T_co].from_accessor(
-                        MatrixSliceAccessor(
+                        accessor=MatrixSliceAccessor(
                             accessor,
                             row_window=row_window,
                             col_window=col_window,
@@ -114,7 +155,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                     col_index = accessor.resolve_matrix_index(col_index, by=COL)
 
                     return Matrix[Any, Literal[1], T_co].from_accessor(
-                        ColSliceAccessor(
+                        accessor=ColSliceAccessor(
                             accessor,
                             row_window=row_window,
                             col_index=col_index,
@@ -128,7 +169,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                     col_window = accessor.resolve_matrix_slice(col_index, by=COL)
 
                     return Matrix[Literal[1], Any, T_co].from_accessor(
-                        RowSliceAccessor(
+                        accessor=RowSliceAccessor(
                             accessor,
                             row_index=row_index,
                             col_window=col_window,
@@ -143,7 +184,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             window = accessor.resolve_vector_slice(index)
 
             return Matrix[Literal[1], Any, T_co].from_accessor(
-                SliceAccessor(
+                accessor=SliceAccessor(
                     accessor,
                     window=window,
                 ),
