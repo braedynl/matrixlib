@@ -32,9 +32,6 @@ class SliceAccessor(AbstractVectorAccessor[Literal[1], N_co, T_co], Generic[N_co
         self.target = target
         self.window = window
 
-    def __repr__(self) -> str:
-        return f"SliceAccessor(target={self.target!r}, window={self.window!r})"
-
     def __hash__(self) -> int:
         return hash((self.target, self.window))
 
@@ -61,9 +58,6 @@ class RowSliceAccessor(AbstractMatrixAccessor[Literal[1], N_co, T_co], Generic[N
         self.target = target
         self.row_index = row_index
         self.col_window = col_window
-
-    def __repr__(self) -> str:
-        return f"RowSliceAccessor(target={self.target!r}, row_index={self.row_index!r}, col_window={self.col_window!r})"
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_index, self.col_window))
@@ -95,9 +89,6 @@ class ColSliceAccessor(AbstractMatrixAccessor[M_co, Literal[1], T_co], Generic[M
         self.row_window = row_window
         self.col_index = col_index
 
-    def __repr__(self) -> str:
-        return f"ColSliceAccessor(target={self.target!r}, row_window={self.row_window!r}, col_index={self.col_index!r})"
-
     def __hash__(self) -> int:
         return hash((self.target, self.row_window, self.col_index))
 
@@ -126,9 +117,6 @@ class MatrixSliceAccessor(AbstractMatrixAccessor[M_co, N_co, T_co], Generic[M_co
         self.target = target
         self.row_window = row_window
         self.col_window = col_window
-
-    def __repr__(self) -> str:
-        return f"MatrixSliceAccessor(target={self.target!r}, row_window={self.row_window!r}, col_window={self.col_window!r})"
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_window, self.col_window))

@@ -26,9 +26,6 @@ class RowSheerAccessor(AbstractMatrixAccessor[Literal[1], N_co, T_co], Generic[N
         self.target = target
         self.row_index = row_index
 
-    def __repr__(self) -> str:
-        return f"RowSheerAccessor(target={self.target!r}, row_index={self.row_index!r})"
-
     def __hash__(self) -> int:
         return hash((self.target, self.row_index))
 
@@ -56,9 +53,6 @@ class ColSheerAccessor(AbstractMatrixAccessor[M_co, Literal[1], T_co], Generic[M
     def __init__(self, target: AbstractAccessor[M_co, int, T_co], *, col_index: int) -> None:
         self.target = target
         self.col_index = col_index
-
-    def __repr__(self) -> str:
-        return f"ColSheerAccessor(target={self.target!r}, col_index={self.col_index!r})"
 
     def __hash__(self) -> int:
         return hash((self.target, self.col_index))

@@ -26,9 +26,6 @@ class RowStackAccessor(AbstractMatrixAccessor[M_co, N_co, T_co]):
         self.target_head = target_head
         self.target_tail = target_tail
 
-    def __repr__(self) -> str:
-        return f"RowStackAccessor(target_head={self.target_head!r}, target_tail={self.target_tail!r})"
-
     def __hash__(self) -> int:
         return hash((self.target_head, self.target_tail))
 
@@ -69,9 +66,6 @@ class ColStackAccessor(AbstractMatrixAccessor[M_co, N_co, T_co]):
         assert target_head.row_count == target_tail.row_count
         self.target_head = target_head
         self.target_tail = target_tail
-
-    def __repr__(self) -> str:
-        return f"ColStackAccessor(target_head={self.target_head!r}, target_tail={self.target_tail!r})"
 
     def __hash__(self) -> int:
         return hash((self.target_head, self.target_tail))
