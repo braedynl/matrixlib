@@ -15,7 +15,7 @@ __all__ = [
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterator
-from typing import Any, Final, Generic, Literal, TypeVar, final
+from typing import Any, Final, Generic, Literal, TypeVar, cast, final
 
 from typing_extensions import Never, override
 
@@ -156,7 +156,7 @@ class RowVectorAccessor(AbstractArrayedAccessor[Literal[1], N_co, T_co], Generic
     @property
     @override
     def col_count(self) -> N_co:
-        return len(self.array)  # pyright: ignore[reportReturnType]
+        return cast(N_co, len(self.array))
 
 
 @final
@@ -176,7 +176,7 @@ class ColVectorAccessor(AbstractArrayedAccessor[M_co, Literal[1], T_co], Generic
     @property
     @override
     def row_count(self) -> M_co:
-        return len(self.array)  # pyright: ignore[reportReturnType]
+        return cast(M_co, len(self.array))
 
 
 @final

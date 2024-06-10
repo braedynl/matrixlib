@@ -7,7 +7,7 @@ __all__ = [
     "MatrixSliceAccessor",
 ]
 
-from typing import Generic, Literal, TypeVar, final
+from typing import Generic, Literal, TypeVar, cast, final
 
 from typing_extensions import override
 
@@ -38,7 +38,7 @@ class SliceAccessor(AbstractVectorAccessor[Literal[1], N_co, T_co], Generic[N_co
     @property
     @override
     def col_count(self) -> N_co:
-        return len(self.window)  # pyright: ignore[reportReturnType]
+        return cast(N_co, len(self.window))
 
     @override
     def vector_access(self, index: int) -> T_co:
@@ -65,7 +65,7 @@ class RowSliceAccessor(AbstractMatrixAccessor[Literal[1], N_co, T_co], Generic[N
     @property
     @override
     def col_count(self) -> N_co:
-        return len(self.col_window)  # pyright: ignore[reportReturnType]
+        return cast(N_co, len(self.col_window))
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
@@ -95,7 +95,7 @@ class ColSliceAccessor(AbstractMatrixAccessor[M_co, Literal[1], T_co], Generic[M
     @property
     @override
     def row_count(self) -> M_co:
-        return len(self.row_window)  # pyright: ignore[reportReturnType]
+        return cast(M_co, len(self.row_window))
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
@@ -124,12 +124,12 @@ class MatrixSliceAccessor(AbstractMatrixAccessor[M_co, N_co, T_co], Generic[M_co
     @property
     @override
     def row_count(self) -> M_co:
-        return len(self.row_window)  # pyright: ignore[reportReturnType]
+        return cast(M_co, len(self.row_window))
 
     @property
     @override
     def col_count(self) -> N_co:
-        return len(self.col_window)  # pyright: ignore[reportReturnType]
+        return cast(N_co, len(self.col_window))
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:

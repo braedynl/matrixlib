@@ -2,7 +2,7 @@ from __future__ import annotations
 
 __all__ = ["RowStackAccessor", "ColStackAccessor"]
 
-from typing import TypeVar, final
+from typing import TypeVar, cast, final
 
 from typing_extensions import override
 
@@ -32,7 +32,7 @@ class RowStackAccessor(AbstractMatrixAccessor[M_co, N_co, T_co]):
     @property
     @override
     def row_count(self) -> M_co:
-        return self.target_head.row_count + self.target_tail.row_count  # pyright: ignore[reportReturnType]
+        return cast(M_co, self.target_head.row_count + self.target_tail.row_count)
 
     @property
     @override
@@ -78,7 +78,7 @@ class ColStackAccessor(AbstractMatrixAccessor[M_co, N_co, T_co]):
     @property
     @override
     def col_count(self) -> N_co:
-        return self.target_head.col_count + self.target_tail.col_count  # pyright: ignore[reportReturnType]
+        return cast(N_co, self.target_head.col_count + self.target_tail.col_count)
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T_co:
