@@ -122,7 +122,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                     self._accessor = NULLARY_ACCESSOR_0x1  # pyright: ignore
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(array={self.array!r}, shape={self.shape!r})"
+        return f"<{self.__class__.__name__} shape={self.shape!r}>"
 
     def __eq__(self, other: object) -> bool:
         if self is other:

@@ -155,11 +155,6 @@ class RowVectorAccessor(AbstractArrayedAccessor[Literal[1], N_co, T_co], Generic
 
     @property
     @override
-    def shape(self) -> tuple[Literal[1], N_co]:
-        return (1, len(self.array))  # pyright: ignore[reportReturnType]
-
-    @property
-    @override
     def col_count(self) -> N_co:
         return len(self.array)  # pyright: ignore[reportReturnType]
 
@@ -177,11 +172,6 @@ class ColVectorAccessor(AbstractArrayedAccessor[M_co, Literal[1], T_co], Generic
 
     def __repr__(self) -> str:
         return f"ColVectorAccessor(array={self.array!r})"
-
-    @property
-    @override
-    def shape(self) -> tuple[M_co, Literal[1]]:
-        return (len(self.array), 1)  # pyright: ignore[reportReturnType]
 
     @property
     @override
@@ -254,11 +244,6 @@ class ZeroRowAccessor(AbstractNullaryAccessor[Literal[0], N_co, T_co], Generic[N
     def __repr__(self) -> str:
         return f"ZeroRowAccessor(col_count={self.col_count!r})"
 
-    @property
-    @override
-    def shape(self) -> tuple[Literal[0], N_co]:
-        return (0, self.col_count)
-
 
 @final
 class ZeroColAccessor(AbstractNullaryAccessor[M_co, Literal[0], T_co], Generic[M_co, T_co]):
@@ -273,11 +258,6 @@ class ZeroColAccessor(AbstractNullaryAccessor[M_co, Literal[0], T_co], Generic[M
 
     def __repr__(self) -> str:
         return f"ZeroColAccessor(row_count={self.row_count!r})"
-
-    @property
-    @override
-    def shape(self) -> tuple[M_co, Literal[0]]:
-        return (self.row_count, 0)
 
 
 @final
