@@ -25,6 +25,8 @@ OddNumber: TypeAlias = Literal[-15, -13, -11, -9, -7, -5, -3, -1, 1, 3, 5, 7, 9,
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
+P_co = TypeVar("P_co", covariant=True, bound=int)
+Q_co = TypeVar("Q_co", covariant=True, bound=int)
 
 T_co = TypeVar("T_co", covariant=True)
 S_co = TypeVar("S_co", covariant=True)
@@ -41,6 +43,7 @@ S = TypeVar("S")
 class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     __slots__ = ("_accessor",)
+    __match_args__ = ("array", "shape")
     _accessor: AbstractAccessor[M_co, N_co, T_co]
 
     @overload
@@ -67,7 +70,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __init__(
         self,
         array: Iterable[T_co] = (),
-        shape: Rule | tuple[M_co, N_co] = Rule.ROW,
+        shape: tuple[M_co, N_co] | Rule = Rule.ROW,
     ) -> None:
         array = tuple(array)
         if isinstance(shape, tuple):
