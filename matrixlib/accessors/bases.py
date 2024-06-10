@@ -206,9 +206,7 @@ class ValueAccessor(AbstractAccessor[Literal[1], Literal[1], T_co], Generic[T_co
     def __iter__(self) -> Iterator[T_co]:
         yield self.value
 
-    @override
-    def __reversed__(self) -> Iterator[T_co]:
-        yield self.value
+    __reversed__ = override(__iter__)
 
     @override
     def __contains__(self, value: object) -> bool:
