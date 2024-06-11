@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ["Matrix"]
+__all__ = ["Matrix", "RealMatrix"]
 
 import itertools
 import operator
@@ -159,6 +159,11 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __getitem__(self, index: tuple[slice, SupportsIndex]) -> Matrix[Any, Literal[1], T_co]: ...
     @overload
     def __getitem__(self, index: tuple[slice, slice]) -> Matrix[Any, Any, T_co]: ...
+    @overload
+    def __getitem__(
+        self,
+        index: SupportsIndex | slice | tuple[SupportsIndex | slice, SupportsIndex | slice],
+    ) -> T_co | Matrix[Any, Any, T_co]: ...
     @override
     def __getitem__(
         self,
@@ -450,10 +455,23 @@ class RealMatrix(Matrix[M_co, N_co, RealT_co]):
     @overload
     @override
     def __getitem__(self, index: tuple[slice, slice]) -> RealMatrix[Any, Any, RealT_co]: ...
+    @overload
+    @override
+    def __getitem__(
+        self,
+        index: SupportsIndex | slice | tuple[SupportsIndex | slice, SupportsIndex | slice],
+    ) -> RealT_co | RealMatrix[Any, Any, RealT_co]: ...
 
     @override
-    def __getitem__(self, index: SupportsIndex | slice | tuple[SupportsIndex | slice, SupportsIndex | slice]) -> RealT_co | RealMatrix[Any, Any, RealT_co]:
-        ...
+    def __getitem__(
+        self,
+        index: SupportsIndex | slice | tuple[SupportsIndex | slice, SupportsIndex | slice],
+    ) -> RealT_co | RealMatrix[Any, Any, RealT_co]:
+        result = super().__getitem__(index)
+        if isinstance(result, Matrix):
+            return RealMatrix[Any, Any, RealT_co].from_matrix(result)
+        else:
+            return result
 
     @override
     def materialize(self) -> Matrix[M_co, N_co, RealT_co]:
