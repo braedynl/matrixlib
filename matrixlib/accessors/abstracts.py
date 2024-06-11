@@ -85,7 +85,7 @@ class AbstractAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):
         """The number of columns"""
         raise NotImplementedError
 
-    def materialize(self) -> tuple[T_co, ...]:
+    def to_tuple(self) -> tuple[T_co, ...]:
         """Collect and return all accessor values as a ``tuple``, aligned in
         row-major order
         """

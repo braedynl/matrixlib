@@ -246,7 +246,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     @property
     def array(self) -> tuple[T_co, ...]:
-        return self._accessor.materialize()
+        return self._accessor.to_tuple()
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
