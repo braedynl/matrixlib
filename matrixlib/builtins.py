@@ -8,7 +8,7 @@ from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeAlias,
                     TypeVar, cast, overload)
 
-from typing_extensions import override
+from typing_extensions import override, TypeVar
 
 from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
                         ColSliceAccessor, ColStackAccessor, ColVectorAccessor,
@@ -29,7 +29,7 @@ N_co = TypeVar("N_co", covariant=True, bound=int)
 P_co = TypeVar("P_co", covariant=True, bound=int)
 Q_co = TypeVar("Q_co", covariant=True, bound=int)
 
-T_co = TypeVar("T_co", covariant=True)
+T_co = TypeVar("T_co", covariant=True, default=object)
 S_co = TypeVar("S_co", covariant=True)
 
 M = TypeVar("M", bound=int)

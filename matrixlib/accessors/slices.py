@@ -7,9 +7,9 @@ __all__ = [
     "MatrixSliceAccessor",
 ]
 
-from typing import Generic, Literal, TypeVar, cast, final
+from typing import Generic, Literal, cast, final
 
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
@@ -17,7 +17,7 @@ from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
-T_co = TypeVar("T_co", covariant=True)
+T_co = TypeVar("T_co", covariant=True, default=object)
 
 
 @final

@@ -2,16 +2,16 @@ from __future__ import annotations
 
 __all__ = ["RowStackAccessor", "ColStackAccessor"]
 
-from typing import TypeVar, cast, final
+from typing import cast, final
 
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 from .abstracts import AbstractAccessor, AbstractMatrixAccessor
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
-T_co = TypeVar("T_co", covariant=True)
+T_co = TypeVar("T_co", covariant=True, default=object)
 
 
 @final

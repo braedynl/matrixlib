@@ -15,16 +15,16 @@ __all__ = [
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterator
-from typing import Any, Final, Generic, Literal, TypeVar, cast, final
+from typing import Any, Final, Generic, Literal, cast, final
 
-from typing_extensions import Never, override
+from typing_extensions import Never, TypeVar, override
 
 from .abstracts import AbstractAccessor, AbstractVectorAccessor
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
-T_co = TypeVar("T_co", covariant=True)
+T_co = TypeVar("T_co", covariant=True, default=object)
 
 
 class AbstractArrayedAccessor(AbstractVectorAccessor[M_co, N_co, T_co], metaclass=ABCMeta):

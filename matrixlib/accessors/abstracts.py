@@ -9,16 +9,16 @@ __all__ = [
 import operator
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterator
-from typing import Generic, SupportsIndex, TypeVar
+from typing import Generic, SupportsIndex
 
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 from ..rule import Rule
 
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
-T_co = TypeVar("T_co", covariant=True)
+T_co = TypeVar("T_co", covariant=True, default=object)
 
 
 class AbstractAccessor(Generic[M_co, N_co, T_co], metaclass=ABCMeta):

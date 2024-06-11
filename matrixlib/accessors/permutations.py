@@ -11,9 +11,9 @@ __all__ = [
 ]
 
 from abc import ABCMeta, abstractmethod
-from typing import Generic, TypeVar, final
+from typing import Generic, final
 
-from typing_extensions import TypeAlias, override
+from typing_extensions import TypeAlias, TypeVar, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
@@ -21,7 +21,7 @@ from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
 M_co = TypeVar("M_co", covariant=True, bound=int)
 N_co = TypeVar("N_co", covariant=True, bound=int)
 
-T_co = TypeVar("T_co", covariant=True)
+T_co = TypeVar("T_co", covariant=True, default=object)
 
 
 class AbstractPermutationAccessor(AbstractAccessor[M_co, N_co, T_co], metaclass=ABCMeta):
