@@ -137,8 +137,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
         return self
 
-    def __copy__(self) -> Self:
-        return self
+    __copy__ = __deepcopy__
 
     @override
     def __len__(self) -> int:

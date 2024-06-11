@@ -88,10 +88,7 @@ class AbstractNullaryAccessor(AbstractAccessor[M_co, N_co, T_co], metaclass=ABCM
         return
         yield
 
-    @override
-    def __reversed__(self) -> Iterator[T_co]:
-        return
-        yield
+    __reversed__ = override(__iter__)
 
     @override
     def __contains__(self, value: object) -> Literal[False]:
