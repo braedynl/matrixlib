@@ -2,10 +2,11 @@ from __future__ import annotations
 
 __all__ = ["Matrix"]
 
+import itertools
 import operator
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeAlias,
-                    TypeVar, overload)
+                    TypeVar, cast, overload)
 
 from typing_extensions import override
 
@@ -38,6 +39,7 @@ Q = TypeVar("Q", bound=int)
 
 T = TypeVar("T")
 S = TypeVar("S")
+R = TypeVar("R")
 
 
 class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
@@ -87,39 +89,39 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 if col_count > 1:
                     self._accessor = MatrixAccessor(array, shape)
                 elif col_count:
-                    self._accessor = ColVectorAccessor(array)  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], ColVectorAccessor(array))
                 else:
-                    self._accessor = ZeroColAccessor(row_count)  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], ZeroColAccessor(row_count))
             elif row_count:
                 if col_count > 1:
-                    self._accessor = RowVectorAccessor(array)  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], RowVectorAccessor(array))
                 elif col_count:
-                    self._accessor = ValueAccessor(array[0])  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], ValueAccessor(array[0]))
                 else:
-                    self._accessor = NULLARY_ACCESSOR_1x0  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], NULLARY_ACCESSOR_1x0)
             else:
                 if col_count > 1:
-                    self._accessor = ZeroRowAccessor(col_count)  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], ZeroRowAccessor(col_count))
                 elif col_count:
-                    self._accessor = NULLARY_ACCESSOR_0x1  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], NULLARY_ACCESSOR_0x1)
                 else:
-                    self._accessor = NULLARY_ACCESSOR_0x0  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], NULLARY_ACCESSOR_0x0)
         else:
             size = len(array)
             if shape is ROW:
                 if size > 1:
-                    self._accessor = RowVectorAccessor(array)  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], RowVectorAccessor(array))
                 elif size:
-                    self._accessor = ValueAccessor(array[0])  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], ValueAccessor(array[0]))
                 else:
-                    self._accessor = NULLARY_ACCESSOR_1x0  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], NULLARY_ACCESSOR_1x0)
             else:
                 if size > 1:
-                    self._accessor = ColVectorAccessor(array)  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], ColVectorAccessor(array))
                 elif size:
-                    self._accessor = ValueAccessor(array[0])  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], ValueAccessor(array[0]))
                 else:
-                    self._accessor = NULLARY_ACCESSOR_0x1  # pyright: ignore
+                    self._accessor = cast(AbstractAccessor[M_co, N_co, T_co], NULLARY_ACCESSOR_0x1)
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} shape={self.shape!r}>"
@@ -350,3 +352,60 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         else:
             accessor = ColStackAccessor(target_head, target_tail)
         return Matrix[Any, Any, T_co | S_co].from_accessor(accessor)
+
+    def _binary_matrix_map(
+        self,
+        mapper: Callable[[T_co, S], R],
+        other: Matrix[M_co, N_co, S],
+    ) -> Matrix[M_co, N_co, R]:
+        if __debug__:
+            s1, s2 = self.shape, other.shape
+            if s1 != s2:
+                raise ValueError(f"cannot map matrices with unequal shapes, {s1} and {s2}")
+        return Matrix(
+            array=map(mapper, self, other),
+            shape=self.shape,
+        )
+
+    def _binary_scalar_map(
+        self,
+        mapper: Callable[[T_co, S], R],
+        other: S,
+    ) -> Matrix[M_co, N_co, R]:
+        return Matrix(
+            array=map(mapper, self, itertools.repeat(other)),
+            shape=self.shape,
+        )
+
+    def _unary_map(
+        self,
+        mapper: Callable[[T_co], R],
+    ) -> Matrix[M_co, N_co, R]:
+        return Matrix(
+            array=map(mapper, self),
+            shape=self.shape,
+        )
+
+    def equal(self, other: Matrix[M_co, N_co, object] | object) -> Matrix[M_co, N_co, bool]:
+        if isinstance(other, Matrix):
+            return self._binary_matrix_map(
+                operator.__eq__,
+                other,
+            )
+        else:
+            return self._binary_scalar_map(
+                operator.__eq__,
+                other,
+            )
+
+    def not_equal(self, other: Matrix[M_co, N_co, object] | object) -> Matrix[M_co, N_co, bool]:
+        if isinstance(other, Matrix):
+            return self._binary_matrix_map(
+                operator.__ne__,
+                other,
+            )
+        else:
+            return self._binary_scalar_map(
+                operator.__ne__,
+                other,
+            )
