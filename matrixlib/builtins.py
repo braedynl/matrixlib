@@ -6,9 +6,9 @@ import itertools
 import operator
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeAlias,
-                    TypeVar, cast, overload)
+                    cast, overload)
 
-from typing_extensions import override, TypeVar
+from typing_extensions import TypeVar, override
 
 from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
                         ColSliceAccessor, ColStackAccessor, ColVectorAccessor,
@@ -31,6 +31,8 @@ Q_co = TypeVar("Q_co", covariant=True, bound=int)
 
 T_co = TypeVar("T_co", covariant=True, default=object)
 S_co = TypeVar("S_co", covariant=True)
+
+RealT_co = TypeVar("RealT_co", covariant=True, bound=float, default=float)
 
 M = TypeVar("M", bound=int)
 N = TypeVar("N", bound=int)
@@ -248,6 +250,20 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     @property
     def array(self) -> tuple[T_co, ...]:
+        """The matrix's values as a one-dimensional ``tuple``, aligned in
+        row-major order.
+
+        This is a lazily-evaluated ``property`` whose time complexity depends
+        on how the matrix was created. Some methods of ``Matrix`` produce a
+        "view" onto the acting ``Matrix`` instance, meaning that they do not
+        construct a new array unless explicitly told to do so by the
+        ``materialize()`` method.
+
+        Thus, accessing ``array`` is O(1) if the matrix has been materialized,
+        and O(N * M) otherwise. If ``array`` needs to be accessed multiple
+        times, ``materialize()``'ing your instance may improve performance
+        (with some cost to memory).
+        """
         return self._accessor.to_tuple()
 
     @property
@@ -303,10 +319,11 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return self.rotate(2)
 
     def values(self, *, by: Rule = Rule.ROW) -> Iterator[T_co]:
+        target = self._accessor
         if by is ROW:
-            iterable = self
+            iterable = target
         else:
-            iterable = TransposeAccessor(self._accessor)
+            iterable = TransposeAccessor(target)
         return iter(iterable)
 
     @overload
@@ -409,3 +426,35 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 operator.__ne__,
                 other,
             )
+
+
+class RealMatrix(Matrix[M_co, N_co, RealT_co]):
+
+    __slots__ = ()
+
+    @overload
+    @override
+    def __getitem__(self, index: SupportsIndex) -> RealT_co: ...
+    @overload
+    @override
+    def __getitem__(self, index: slice) -> RealMatrix[Literal[1], Any, RealT_co]: ...
+    @overload
+    @override
+    def __getitem__(self, index: tuple[SupportsIndex, SupportsIndex]) -> RealT_co: ...
+    @overload
+    @override
+    def __getitem__(self, index: tuple[SupportsIndex, slice]) -> RealMatrix[Literal[1], Any, RealT_co]: ...
+    @overload
+    @override
+    def __getitem__(self, index: tuple[slice, SupportsIndex]) -> RealMatrix[Any, Literal[1], RealT_co]: ...
+    @overload
+    @override
+    def __getitem__(self, index: tuple[slice, slice]) -> RealMatrix[Any, Any, RealT_co]: ...
+
+    @override
+    def __getitem__(self, index: SupportsIndex | slice | tuple[SupportsIndex | slice, SupportsIndex | slice]) -> RealT_co | RealMatrix[Any, Any, RealT_co]:
+        ...
+
+    @override
+    def materialize(self) -> Matrix[M_co, N_co, RealT_co]:
+        return RealMatrix[M_co, N_co, RealT_co].from_matrix(super().materialize())
