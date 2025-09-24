@@ -7,28 +7,21 @@ __all__ = [
     "MatrixSliceAccessor",
 ]
 
-from typing import Generic, Literal, cast, final
-
-from typing_extensions import TypeVar, override
+from typing import Literal, cast, final, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
 
-M_co = TypeVar("M_co", covariant=True, bound=int)
-N_co = TypeVar("N_co", covariant=True, bound=int)
-
-T_co = TypeVar("T_co", covariant=True, default=object)
-
 
 @final
-class SliceAccessor(AbstractVectorAccessor[Literal[1], N_co, T_co], Generic[N_co, T_co]):
+class SliceAccessor[N: int = int, T: object = object](AbstractVectorAccessor[Literal[1], N, T]):
 
     __slots__ = ("target", "window")
-    target: AbstractAccessor[int, N_co, T_co]
+    target: AbstractAccessor[int, N, T]
     window: range
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[int, N_co, T_co], *, window: range) -> None:
+    def __init__(self, target: AbstractAccessor[int, N, T], *, window: range) -> None:
         self.target = target
         self.window = window
 
@@ -37,24 +30,24 @@ class SliceAccessor(AbstractVectorAccessor[Literal[1], N_co, T_co], Generic[N_co
 
     @property
     @override
-    def col_count(self) -> N_co:
-        return cast(N_co, len(self.window))
+    def col_count(self) -> N:
+        return cast(N, len(self.window))
 
     @override
-    def vector_access(self, index: int) -> T_co:
+    def vector_access(self, index: int) -> T:
         return self.target.vector_access(self.window[index])
 
 
 @final
-class RowSliceAccessor(AbstractMatrixAccessor[Literal[1], N_co, T_co], Generic[N_co, T_co]):
+class RowSliceAccessor[N: int = int, T: object = object](AbstractMatrixAccessor[Literal[1], N, T]):
 
     __slots__ = ("target", "row_index", "col_window")
-    target: AbstractAccessor[int, N_co, T_co]
+    target: AbstractAccessor[int, N, T]
     row_index: int
     col_window: range
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[int, N_co, T_co], *, row_index: int, col_window: range) -> None:
+    def __init__(self, target: AbstractAccessor[int, N, T], *, row_index: int, col_window: range) -> None:
         self.target = target
         self.row_index = row_index
         self.col_window = col_window
@@ -64,11 +57,11 @@ class RowSliceAccessor(AbstractMatrixAccessor[Literal[1], N_co, T_co], Generic[N
 
     @property
     @override
-    def col_count(self) -> N_co:
-        return cast(N_co, len(self.col_window))
+    def col_count(self) -> N:
+        return cast(N, len(self.col_window))
 
     @override
-    def matrix_access(self, row_index: int, col_index: int) -> T_co:
+    def matrix_access(self, row_index: int, col_index: int) -> T:
         return self.target.matrix_access(
             self.row_index + row_index,
             self.col_window[col_index],
@@ -76,15 +69,15 @@ class RowSliceAccessor(AbstractMatrixAccessor[Literal[1], N_co, T_co], Generic[N
 
 
 @final
-class ColSliceAccessor(AbstractMatrixAccessor[M_co, Literal[1], T_co], Generic[M_co, T_co]):
+class ColSliceAccessor[M: int = int, T: object = object](AbstractMatrixAccessor[M, Literal[1], T]):
 
     __slots__ = ("target", "row_window", "col_index")
-    target: AbstractAccessor[M_co, int, T_co]
+    target: AbstractAccessor[M, int, T]
     row_window: range
     col_index: int
     col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[M_co, int, T_co], *, row_window: range, col_index: int) -> None:
+    def __init__(self, target: AbstractAccessor[M, int, T], *, row_window: range, col_index: int) -> None:
         self.target = target
         self.row_window = row_window
         self.col_index = col_index
@@ -94,11 +87,11 @@ class ColSliceAccessor(AbstractMatrixAccessor[M_co, Literal[1], T_co], Generic[M
 
     @property
     @override
-    def row_count(self) -> M_co:
-        return cast(M_co, len(self.row_window))
+    def row_count(self) -> M:
+        return cast(M, len(self.row_window))
 
     @override
-    def matrix_access(self, row_index: int, col_index: int) -> T_co:
+    def matrix_access(self, row_index: int, col_index: int) -> T:
         return self.target.matrix_access(
             self.row_window[row_index],
             self.col_index + col_index,
@@ -106,14 +99,24 @@ class ColSliceAccessor(AbstractMatrixAccessor[M_co, Literal[1], T_co], Generic[M
 
 
 @final
-class MatrixSliceAccessor(AbstractMatrixAccessor[M_co, N_co, T_co], Generic[M_co, N_co, T_co]):
+class MatrixSliceAccessor[
+    M: int = int,
+    N: int = int,
+    T: object = object,
+](AbstractMatrixAccessor[M, N, T]):
 
     __slots__ = ("target", "row_window", "col_window")
-    target: AbstractAccessor[int, int, T_co]
+    target: AbstractAccessor[int, int, T]
     row_window: range
     col_window: range
 
-    def __init__(self, target: AbstractAccessor[int, int, T_co], *, row_window: range, col_window: range) -> None:
+    def __init__(
+        self,
+        target: AbstractAccessor[int, int, T],
+        *,
+        row_window: range,
+        col_window: range,
+    ) -> None:
         self.target = target
         self.row_window = row_window
         self.col_window = col_window
@@ -123,16 +126,16 @@ class MatrixSliceAccessor(AbstractMatrixAccessor[M_co, N_co, T_co], Generic[M_co
 
     @property
     @override
-    def row_count(self) -> M_co:
-        return cast(M_co, len(self.row_window))
+    def row_count(self) -> M:
+        return cast(M, len(self.row_window))
 
     @property
     @override
-    def col_count(self) -> N_co:
-        return cast(N_co, len(self.col_window))
+    def col_count(self) -> N:
+        return cast(N, len(self.col_window))
 
     @override
-    def matrix_access(self, row_index: int, col_index: int) -> T_co:
+    def matrix_access(self, row_index: int, col_index: int) -> T:
         return self.target.matrix_access(
             self.row_window[row_index],
             self.col_window[col_index],

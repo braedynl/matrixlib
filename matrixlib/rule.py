@@ -21,9 +21,9 @@ class Rule(Enum):
     COL = 1  #: Maps to literal ``1``
 
     @overload
-    def __invert__(self: Literal[Rule.ROW]) -> Literal[Rule.COL]: ...  # type: ignore
+    def __invert__(self: Literal[Rule.ROW]) -> Literal[Rule.COL]: ...
     @overload
-    def __invert__(self: Literal[Rule.COL]) -> Literal[Rule.ROW]: ...  # type: ignore
+    def __invert__(self: Literal[Rule.COL]) -> Literal[Rule.ROW]: ...
     @overload
     def __invert__(self) -> Rule: ...
 
@@ -33,15 +33,12 @@ class Rule(Enum):
 
     def __index__(self) -> Literal[0, 1]:
         """Return the rule's value"""
-        return self.value  # type: ignore
+        return self.value
 
     @property
     def handle(self) -> Literal["row", "column"]:
         """The rule's un-Pythonized name"""
-        if self is Rule.ROW:
-            return "row"
-        else:
-            return "column"
+        return "row" if self is Rule.ROW else "column"
 
 
 ROW: Final[Literal[Rule.ROW]] = Rule.ROW  #: Equivalent to ``Rule.ROW``
