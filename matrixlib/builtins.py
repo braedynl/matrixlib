@@ -15,14 +15,12 @@ from collections.abc import Callable, Iterable, Iterator, Sequence, Sized
 from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeVar, cast,
                     overload, override)
 
-from .accessors import (AbstractAccessor, ColFlipAccessor,
-                            ColSheerAccessor, ColSliceAccessor,
-                            ColVectorAccessor, MatrixAccessor,
-                            MatrixSliceAccessor, Rotate090Accessor,
-                            Rotate180Accessor, Rotate270Accessor,
-                            RowFlipAccessor, RowSheerAccessor,
-                            RowSliceAccessor, RowVectorAccessor, SliceAccessor,
-                            TransposeAccessor, ValueAccessor)
+from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
+                        ColSliceAccessor, ColVectorAccessor, MatrixAccessor,
+                        MatrixSliceAccessor, Rotate090Accessor,
+                        Rotate180Accessor, Rotate270Accessor, RowFlipAccessor,
+                        RowSheerAccessor, RowSliceAccessor, RowVectorAccessor,
+                        SliceAccessor, TransposeAccessor, ValueAccessor)
 from .exceptions import (MismatchedDimensionError, NegativeDimensionError,
                          ReshapeError)
 from .rule import COL, ROW, Rule
