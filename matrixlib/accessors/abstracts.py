@@ -37,9 +37,8 @@ class AbstractAccessor[
             if self.shape != other.shape:
                 return False
             for x, y in zip(self, other):
-                if x is y or x == y:
-                    continue
-                return False
+                if not (x is y or x == y):
+                    return False
             return True
         return NotImplemented
 
