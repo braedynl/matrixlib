@@ -425,32 +425,53 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """The matrix's values as a one-dimensional ``tuple``, aligned in
         row-major order.
 
-        This is a lazily-evaluated ``property`` whose time complexity depends
-        on how the matrix was created. Some methods of ``Matrix`` produce a
-        "view" onto the acting ``Matrix`` instance, meaning that they do not
-        construct a new array unless explicitly told to do so by the
-        ``materialize()`` method.
+        To preserve memory, some methods produce a ``Matrix`` instance that
+        simply references the origin matrix upon indexing. These are called
+        "views". Accessing this property can vary from being O(M * N) to O(1)
+        depending on whether the ``Matrix`` does ("non-material") or does not
+        ("material") use a view, respectively.
 
-        Thus, accessing ``array`` is O(1) if the matrix has been materialized,
-        and O(N * M) otherwise. If ``array`` needs to be accessed multiple
-        times, ``materialize()``'ing your instance may improve performance
-        (with some cost to memory).
+        A material ``Matrix`` will already have its values stored as a
+        ``tuple``, and so the property simply returns a reference to it,
+        whereas a non-material ``Matrix`` will have to iterate through all
+        entries and collect them into a new ``tuple`` to reflect the view's
+        ordering.
         """
         return self._accessor.to_tuple()
 
     @property
     def shape(self) -> tuple[M_co, N_co]:
+        """The matrix shape."""
         return self._accessor.shape
 
     @property
     def row_count(self) -> M_co:
+        """The number of rows."""
         return self._accessor.row_count
 
     @property
     def col_count(self) -> N_co:
+        """The number of columns."""
         return self._accessor.col_count
 
     def materialize(self) -> Matrix[M_co, N_co, T_co]:
+        """Return a materialized copy of the matrix.
+
+        To preserve memory, some methods produce a ``Matrix`` instance that
+        simply references the origin matrix upon indexing. These are called
+        "views" - these views are allowed to refer to other views, meaning
+        that you can construct long "view chains" under certain circumstances.
+        A sufficiently long view chain can have an impact on indexing
+        performance.
+
+        Materialization is the process of "flattening" these view chains into
+        a new container. Materializing an already-materialized matrix
+        effectively does nothing.
+
+        As complex an operation as this sounds, this method is actually just
+        the same as doing ``Matrix(self.array, self.shape)``. The ``array``
+        property does most of this work.
+        """
         return Matrix(self.array, self.shape)
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
@@ -562,11 +583,18 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         mapper: Callable[[T_co, S], R],
         other: Matrix[P, Q, S],
     ) -> Matrix[P, Q, R]:
+        """Return a new matrix that is a mapping of this matrix and another
+        of equal shape.
+
+        Raises ``MismatchedDimensionError`` if the ``other`` matrix does not
+        have an equal shape (debug-only).
+        """
         if __debug__:
             s1, s2 = self.shape, other.shape
             if s1 != s2:
                 raise MismatchedDimensionError(
-                    f"cannot map matrices with unequal shapes, {s1} and {s2}"
+                    f"cannot parallelly operate on matrices of unequal shape,"
+                    f" {s1} and {s2}"
                 )
         return Matrix(
             array=map(mapper, self, other),
@@ -574,6 +602,9 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         )
 
     def _binary_scalar_map[S, R](self, mapper: Callable[[T_co, S], R], other: S) -> Matrix[M_co, N_co, R]:
+        """Return a new matrix that is a mapping of this matrix and a repeated
+        scalar.
+        """
         return Matrix(
             array=map(
                 mapper,
@@ -584,6 +615,9 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         )
 
     def _binary_scalar_map_r[S, R](self, mapper: Callable[[S, T_co], R], other: S) -> Matrix[M_co, N_co, R]:
+        """Return a new matrix that is a mapping of this matrix and a repeated
+        scalar, in reverse operand order.
+        """
         return Matrix(
             array=map(
                 mapper,
@@ -594,6 +628,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         )
 
     def _unary_map[R](self, mapper: Callable[[T_co], R]) -> Matrix[M_co, N_co, R]:
+        """Return a new matrix that is a mapping of this matrix."""
         return Matrix(
             array=map(mapper, self),
             shape=self.shape,
