@@ -54,9 +54,15 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def __init__(self, array: Iterable[T_co] = (), shape: tuple[M_co, N_co] = (0, 0)) -> None:
         array = tuple(array)
+        if __debug__:
+            assert_positive_shape(shape)
+            test_size = shape[0] * shape[1]
+            true_size = len(array)
+            if true_size != test_size:
+                raise ReshapeError(f"array contains {true_size} values but shape implies {test_size}")
         self._accessor = MatrixAccessor(
             array=array,
-            shape=resolve_shape(shape, array=array),
+            shape=shape,
         )
 
     def __repr__(self) -> str:
@@ -198,7 +204,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
         negative (debug-only).
         """
-        resolve_shape(shape)
+        if __debug__:
+            assert_positive_shape(shape)
         return cls.from_accessor(
             accessor=MatrixAccessor(
                 array=tuple(
@@ -221,7 +228,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
         negative (debug-only).
         """
-        resolve_shape(shape)
+        if __debug__:
+            assert_positive_shape(shape)
         return cls.from_accessor(
             accessor=MatrixAccessor(
                 array=tuple(
@@ -295,11 +303,16 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         Internally, this method holds the return value of ``getter()`` and
         simply gives out references to that value whenever a location of the
         matrix is requested.
+
+        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
+        negative (debug-only).
         """
+        if __debug__:
+            assert_positive_shape(shape)
         return cls.from_accessor(
             accessor=ValueAccessor(
                 value=getter(),
-                shape=resolve_shape(shape),
+                shape=shape,
             ),
         )
 
@@ -1716,6 +1729,15 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         )
 
 
+def assert_positive_shape(shape: tuple[int, int]) -> None:
+    """Raise ``NegativeDimensionError`` if the given shape contains a negative
+    dimension, otherwise do nothing.
+    """
+    row_count, col_count = shape
+    if row_count < 0 or col_count < 0:
+        raise NegativeDimensionError("shape dimensions must be non-negative")
+
+
 def iter_or[T](iterable: SupportsIterAndReversed[T], *, reverse: bool = False) -> Iterator[T]:
     """Return the iterator of an object, optionally its reverse iterator."""
     return reversed(iterable) if reverse else iter(iterable)
@@ -1753,24 +1775,3 @@ def interleave[T](iterables: tuple[Iterable[T], ...], leave_counts: tuple[int, .
 
         if not exhausted:
             index_queue.append(index)
-
-
-def resolve_shape[ShapeT: tuple[int, int]](shape: ShapeT, *, array: Sized | None = None) -> ShapeT:
-    """Raise various exceptions for bad shapes when in debug mode, and return
-    the shape.
-
-    Raises ``NegativeDimensionError`` if a dimension of ``shape`` is negative.
-
-    Raises ``ReshapeError`` if the product of ``shape``'s dimensions does not
-    equal ``len(array)``, if ``array`` is specified.
-    """
-    if __debug__:
-        row_count, col_count = shape
-        if row_count < 0 or col_count < 0:
-            raise NegativeDimensionError("shape dimensions must be non-negative")
-        if array is not None:
-            true_size = len(array)
-            test_size = row_count * col_count
-            if true_size != test_size:
-                raise ReshapeError(f"array contains {true_size} values but shape implies {test_size}")
-    return shape
