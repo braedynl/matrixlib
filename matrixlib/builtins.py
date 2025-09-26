@@ -1243,10 +1243,8 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return map(RealMatrix[Any, Any, RealT_co].from_matrix, super().vectors(by=by, reverse=reverse))
 
     @override
-    def conjugate(self) -> RealMatrix[M_co, N_co]:
-        return RealMatrix[M_co, N_co].from_matrix(
-            matrix=cast(ComplexMatrix[M_co, N_co, Real], super().conjugate()),
-        )
+    def conjugate(self) -> Self:
+        return self
 
     @override
     def transjugate(self) -> RealMatrix[N_co, M_co]:
@@ -1715,12 +1713,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[IntegerMatrix[Any, Any, IntegerT_co]]:
         return map(IntegerMatrix[Any, Any, IntegerT_co].from_matrix, super().vectors(by=by, reverse=reverse))
-
-    @override
-    def conjugate(self) -> IntegerMatrix[M_co, N_co]:
-        return IntegerMatrix[M_co, N_co].from_matrix(
-            matrix=cast(RealMatrix[M_co, N_co, Integer], super().conjugate()),
-        )
 
     @override
     def transjugate(self) -> IntegerMatrix[N_co, M_co]:
