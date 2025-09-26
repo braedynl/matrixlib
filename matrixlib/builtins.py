@@ -11,16 +11,17 @@ import itertools
 import math
 import operator
 from collections import deque
-from collections.abc import Callable, Iterable, Iterator, Sequence, Sized
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeVar, cast,
                     overload, override)
 
 from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
                         ColSliceAccessor, ColVectorAccessor, MatrixAccessor,
-                        MatrixSliceAccessor, Rotate090Accessor,
-                        Rotate180Accessor, Rotate270Accessor, RowFlipAccessor,
-                        RowSheerAccessor, RowSliceAccessor, RowVectorAccessor,
-                        SliceAccessor, TransposeAccessor, ValueAccessor)
+                        MatrixSliceAccessor, ReverseAccessor,
+                        Rotate090Accessor, Rotate180Accessor,
+                        Rotate270Accessor, RowFlipAccessor, RowSheerAccessor,
+                        RowSliceAccessor, RowVectorAccessor, SliceAccessor,
+                        TransposeAccessor, ValueAccessor)
 from .exceptions import (MismatchedDimensionError, NegativeDimensionError,
                          ReshapeError)
 from .rule import COL, ROW, Rule
@@ -521,7 +522,9 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return Matrix[Any, Any, T_co].from_accessor(accessor)
 
     def reverse(self) -> Matrix[M_co, N_co, T_co]:
-        return self.rotate(2)
+        return Matrix[M_co, N_co, T_co].from_accessor(
+            accessor=ReverseAccessor(self._accessor),
+        )
 
     def values(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[T_co]:
         """Return an iterator over the values of the matrix.

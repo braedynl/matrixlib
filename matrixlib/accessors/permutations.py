@@ -42,7 +42,7 @@ class TransposeAccessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target")
+    __slots__ = ("target",)
     target: AbstractAccessor[N, M, T]  # NOTE: Reversed dimensions!
 
     def __init__(self, target: AbstractAccessor[N, M, T]) -> None:
@@ -70,7 +70,7 @@ class RowFlipAccessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target")
+    __slots__ = ("target",)
     target: AbstractAccessor[M, N, T]
 
     def __init__(self, target: AbstractAccessor[M, N, T]) -> None:
@@ -101,7 +101,7 @@ class ColFlipAccessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target")
+    __slots__ = ("target",)
     target: AbstractAccessor[M, N, T]
 
     def __init__(self, target: AbstractAccessor[M, N, T]) -> None:
@@ -132,7 +132,7 @@ class Rotate090Accessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target")
+    __slots__ = ("target",)
     target: AbstractAccessor[N, M, T]  # NOTE: Reversed dimensions!
 
     def __init__(self, target: AbstractAccessor[N, M, T]) -> None:
@@ -163,7 +163,7 @@ class Rotate180Accessor[
     T: object = object,
 ](AbstractVectorAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target")
+    __slots__ = ("target",)
     target: AbstractAccessor[M, N, T]
 
     def __init__(self, target: AbstractAccessor[M, N, T]) -> None:
@@ -191,7 +191,7 @@ class Rotate270Accessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target")
+    __slots__ = ("target",)
     target: AbstractAccessor[N, M, T]  # NOTE: Reversed dimensions!
 
     def __init__(self, target: AbstractAccessor[N, M, T]) -> None:
@@ -215,4 +215,4 @@ class Rotate270Accessor[
         )
 
 
-type ReverseAccessor[M: int = int, N: int = int, T: object = object] = Rotate180Accessor[M, N, T]
+ReverseAccessor = Rotate180Accessor  #: Alias of ``Rotate180Accessor``.
