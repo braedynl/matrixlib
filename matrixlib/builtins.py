@@ -721,10 +721,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             return ComplexMatrix[Any, Any, ComplexT_co].from_matrix(result)
         return result
 
-    def __add__[P: int, Q: int](
-        self: ComplexMatrix[P, Q, ComplexT_co],
-        other: ComplexMatrix[P, Q] | Complex,
-    ) -> ComplexMatrix[P, Q]:
+    def __add__[P: int, Q: int](self: ComplexMatrix[P, Q, ComplexT_co], other: ComplexMatrix[P, Q] | Complex) -> ComplexMatrix[P, Q]:
         if isinstance(other, ComplexMatrix):
             return ComplexMatrix[P, Q].from_matrix(
                 matrix=self._binary_matrix_map(
@@ -751,10 +748,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             )
         return NotImplemented
 
-    def __sub__[P: int, Q: int](
-        self: ComplexMatrix[P, Q, ComplexT_co],
-        other: ComplexMatrix[P, Q] | Complex,
-    ) -> ComplexMatrix[P, Q]:
+    def __sub__[P: int, Q: int](self: ComplexMatrix[P, Q, ComplexT_co], other: ComplexMatrix[P, Q] | Complex) -> ComplexMatrix[P, Q]:
         if isinstance(other, ComplexMatrix):
             return ComplexMatrix[P, Q].from_matrix(
                 matrix=self._binary_matrix_map(
@@ -781,10 +775,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             )
         return NotImplemented
 
-    def __mul__[P: int, Q: int](
-        self: ComplexMatrix[P, Q, ComplexT_co],
-        other: ComplexMatrix[P, Q] | Complex,
-    ) -> ComplexMatrix[P, Q]:
+    def __mul__[P: int, Q: int](self: ComplexMatrix[P, Q, ComplexT_co], other: ComplexMatrix[P, Q] | Complex) -> ComplexMatrix[P, Q]:
         if isinstance(other, ComplexMatrix):
             return ComplexMatrix[P, Q].from_matrix(
                 matrix=self._binary_matrix_map(
@@ -811,10 +802,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             )
         return NotImplemented
 
-    def __truediv__[P: int, Q: int](
-        self: ComplexMatrix[P, Q, ComplexT_co],
-        other: ComplexMatrix[P, Q] | Complex,
-    ) -> ComplexMatrix[P, Q]:
+    def __truediv__[P: int, Q: int](self: ComplexMatrix[P, Q, ComplexT_co], other: ComplexMatrix[P, Q] | Complex) -> ComplexMatrix[P, Q]:
         if isinstance(other, ComplexMatrix):
             return ComplexMatrix[P, Q].from_matrix(
                 matrix=self._binary_matrix_map(
