@@ -60,7 +60,10 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             test_size = shape[0] * shape[1]
             true_size = len(array)
             if true_size != test_size:
-                raise ReshapeError(f"array contains {true_size} values but shape implies {test_size}")
+                raise ReshapeError(
+                    f"array contains {true_size} values but shape implies"
+                    f" {test_size}"
+                )
         self._accessor = MatrixAccessor(
             array=array,
             shape=shape,
@@ -487,11 +490,13 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return Matrix(self.array, self.shape)
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
+        """Return a transposed view of the matrix."""
         return Matrix[N_co, M_co, T_co].from_accessor(
             accessor=TransposeAccessor(self._accessor),
         )
 
     def flip(self, *, by: Rule = Rule.ROW) -> Matrix[M_co, N_co, T_co]:
+        """Return a flipped view of the matrix."""
         target = self._accessor
         if by is ROW:
             accessor = RowFlipAccessor(target)
@@ -509,6 +514,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def rotate(self) -> Matrix[N_co, M_co, T_co]: ...
 
     def rotate(self, n: SupportsIndex = 1) -> Matrix[Any, Any, T_co]:
+        """Return a rotated view of the matrix."""
         target = self._accessor
         n = operator.index(n) % 4
         if n == 0:
@@ -522,6 +528,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return Matrix[Any, Any, T_co].from_accessor(accessor)
 
     def reverse(self) -> Matrix[M_co, N_co, T_co]:
+        """Return a reversed view of the matrix."""
         return Matrix[M_co, N_co, T_co].from_accessor(
             accessor=ReverseAccessor(self._accessor),
         )
@@ -649,6 +656,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         )
 
     def equal(self, other: object) -> Matrix[M_co, N_co, bool]:
+        """Return element-wise ``a == b``."""
         if isinstance(other, Matrix):
             return self._binary_matrix_map(
                 operator.__eq__,
@@ -660,6 +668,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         )
 
     def not_equal(self, other: object) -> Matrix[M_co, N_co, bool]:
+        """Return element-wise ``a != b``."""
         if isinstance(other, Matrix):
             return self._binary_matrix_map(
                 operator.__ne__,
@@ -1262,21 +1271,25 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return (compare(self, other) or compare(self.shape, other.shape))
 
     def lesser[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> Matrix[P, Q, bool]:
+        """Return element-wise ``a < b``."""
         if isinstance(other, RealMatrix):
             return self._binary_matrix_map(operator.__lt__, other)
         return self._binary_scalar_map(operator.__lt__, other)
 
     def lesser_equal[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> Matrix[P, Q, bool]:
+        """Return element-wise ``a <= b``."""
         if isinstance(other, RealMatrix):
             return self._binary_matrix_map(operator.__le__, other)
         return self._binary_scalar_map(operator.__le__, other)
 
     def greater[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> Matrix[P, Q, bool]:
+        """Return element-wise ``a > b``."""
         if isinstance(other, RealMatrix):
             return self._binary_matrix_map(operator.__gt__, other)
         return self._binary_scalar_map(operator.__gt__, other)
 
     def greater_equal[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> Matrix[P, Q, bool]:
+        """Return element-wise ``a >= b``."""
         if isinstance(other, RealMatrix):
             return self._binary_matrix_map(operator.__ge__, other)
         return self._binary_scalar_map(operator.__ge__, other)
