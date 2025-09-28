@@ -6,6 +6,7 @@ __all__ = [
     "ColVectorAccessor",
     "ValueAccessor",
     "IdentityAccessor",
+    "DiagonalAccessor",
     "SparseAccessor",
 ]
 
@@ -190,15 +191,14 @@ class IdentityAccessor[
     M: int = int,
     N: int = int,
     T: object = object,
-    S: object = object,
-](AbstractMatrixAccessor[M, N, T | S]):
+](AbstractMatrixAccessor[M, N, T]):
 
     __slots__ = ("non_zero_value", "zero_value", "shape")
     non_zero_value: T
-    zero_value: S
+    zero_value: T
     shape: tuple[M, N]
 
-    def __init__(self, non_zero_value: T, shape: tuple[M, N], *, zero_value: S = 0) -> None:
+    def __init__(self, non_zero_value: T, shape: tuple[M, N], *, zero_value: T = 0) -> None:
         self.non_zero_value = non_zero_value
         self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
         self.zero_value = zero_value
@@ -214,7 +214,7 @@ class IdentityAccessor[
         return self.shape[1]
 
     @override
-    def matrix_access(self, row_index: int, col_index: int) -> T | S:
+    def matrix_access(self, row_index: int, col_index: int) -> T:
         if row_index == col_index:
             return self.non_zero_value
         return self.zero_value
@@ -258,8 +258,7 @@ class SparseAccessor[
     M: int = int,
     N: int = int,
     T: object = object,
-    S: object = object,
-](AbstractMatrixAccessor[M, N, T | S]):
+](AbstractMatrixAccessor[M, N, T]):
 
     __slots__ = (
         "non_zero_values",
@@ -269,7 +268,7 @@ class SparseAccessor[
         "non_zero_col_indices",
     )
     non_zero_values: tuple[T, ...]
-    zero_value: S
+    zero_value: T
     shape: tuple[M, N]
     non_zero_row_offsets: Array[int]
     non_zero_col_indices: Array[int]
@@ -279,7 +278,7 @@ class SparseAccessor[
         non_zero_value_map: Mapping[tuple[int, int], T],
         shape: tuple[M, N],
         *,
-        zero_value: S = 0,
+        zero_value: T = 0,
     ) -> None:
         non_zero_pairs   = sorted(non_zero_value_map.items(), key=lambda item: item[0])
         non_zero_indices = tuple(map(lambda pair: pair[0], non_zero_pairs))
@@ -300,7 +299,7 @@ class SparseAccessor[
         self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
 
     @override
-    def __iter__(self) -> Iterator[T | S]:
+    def __iter__(self) -> Iterator[T]:
         non_zero_values = self.non_zero_values
         zero_value = self.zero_value
         non_zero_row_offsets = self.non_zero_row_offsets
@@ -320,7 +319,7 @@ class SparseAccessor[
                     yield zero_value
 
     @override
-    def __reversed__(self) -> Iterator[T | S]:
+    def __reversed__(self) -> Iterator[T]:
         non_zero_values = self.non_zero_values
         zero_value = self.zero_value
         non_zero_row_offsets = self.non_zero_row_offsets
@@ -350,7 +349,7 @@ class SparseAccessor[
         return self.shape[1]
 
     @override
-    def matrix_access(self, row_index: int, col_index: int) -> T | S:
+    def matrix_access(self, row_index: int, col_index: int) -> T:
         non_zero_row_offsets = self.non_zero_row_offsets
         non_zero_col_indices = self.non_zero_col_indices
         for offset in range(

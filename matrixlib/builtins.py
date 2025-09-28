@@ -11,17 +11,17 @@ import itertools
 import math
 import operator
 from collections import deque
-from collections.abc import Callable, Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeVar, cast,
                     overload, override)
 
 from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
-                        ColSliceAccessor, ColVectorAccessor, MatrixAccessor,
-                        MatrixSliceAccessor, ReverseAccessor,
-                        Rotate090Accessor, Rotate180Accessor,
+                        ColSliceAccessor, ColVectorAccessor, DiagonalAccessor,
+                        IdentityAccessor, MatrixAccessor, MatrixSliceAccessor,
+                        ReverseAccessor, Rotate090Accessor, Rotate180Accessor,
                         Rotate270Accessor, RowFlipAccessor, RowSheerAccessor,
                         RowSliceAccessor, RowVectorAccessor, SliceAccessor,
-                        TransposeAccessor, ValueAccessor)
+                        SparseAccessor, TransposeAccessor, ValueAccessor)
 from .exceptions import (MismatchedDimensionError, NegativeDimensionError,
                          ReshapeError)
 from .rule import COL, ROW, Rule
@@ -296,17 +296,9 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return self
 
     @classmethod
-    def fill(cls, getter: Callable[[], T_co], shape: tuple[M_co, N_co]) -> Self:
+    def fill(cls, value: Callable[[], T_co], shape: tuple[M_co, N_co]) -> Self:
         """Construct a matrix comprised entirely of a single value,
         efficiently.
-
-        The first argument must be a callable that can be invoked without
-        parameters. This is done to maintain covariance in ``Matrix``'s value
-        type.
-
-        Internally, this method holds the return value of ``getter()`` and
-        simply gives out references to that value whenever a location of the
-        matrix is requested.
 
         Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
         negative (debug-only).
@@ -315,8 +307,31 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             assert_positive_shape(shape)
         return cls.from_accessor(
             accessor=ValueAccessor(
-                value=getter(),
+                value=value(),
                 shape=shape,
+            ),
+        )
+
+    @classmethod
+    def from_sparse_mapping(
+        cls,
+        non_zero_value_map: Mapping[tuple[int, int], T_co],
+        shape: tuple[M_co, N_co],
+        *,
+        zero_value: Callable[[], T_co] = lambda: 0,
+    ) -> Self:
+        """Construct a matrix from a set of sparse index-to-value pairings.
+
+        Uses the Compressed Sparse Row (CSR) format to store data. Note that
+        this format only saves memory for sufficiently sparse matrices
+        (roughly 50% or more must be zero for large matrices, up to almost 70%
+        or more for smaller ones).
+        """
+        return cls.from_accessor(
+            accessor=SparseAccessor(
+                non_zero_value_map,
+                shape,
+                zero_value=zero_value(),
             ),
         )
 
@@ -683,6 +698,21 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
 
     __slots__ = ()
+
+    @classmethod
+    def identity(cls, shape: tuple[M_co, N_co]) -> Self:
+        """Construct an identity matrix, efficiently.
+
+        **Note**: This method does not infer its value type. However it will
+        always be ``Literal[0, 1]``.
+        """
+        return cls.from_accessor(
+            accessor=IdentityAccessor(
+                cast(ComplexT_co, 1),
+                shape,
+                zero_value=cast(ComplexT_co, 0),
+            ),
+        )
 
     @classmethod
     def zeroes(cls, shape: tuple[M_co, N_co]) -> Self:
