@@ -16,9 +16,9 @@ from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeVar, cast,
                     overload, override)
 
 from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
-                        ColSliceAccessor, ColVectorAccessor, DiagonalAccessor,
-                        IdentityAccessor, MatrixAccessor, MatrixSliceAccessor,
-                        ReverseAccessor, Rotate090Accessor, Rotate180Accessor,
+                        ColSliceAccessor, ColVectorAccessor, IdentityAccessor,
+                        MatrixAccessor, MatrixSliceAccessor, ReverseAccessor,
+                        Rotate090Accessor, Rotate180Accessor,
                         Rotate270Accessor, RowFlipAccessor, RowSheerAccessor,
                         RowSliceAccessor, RowVectorAccessor, SliceAccessor,
                         SparseAccessor, TransposeAccessor, ValueAccessor)
