@@ -221,6 +221,39 @@ class IdentityAccessor[
 
 
 @final
+class DiagonalAccessor[
+    M: int = int,
+    N: int = int,
+    T: object = object,
+    S: object = object,
+](AbstractMatrixAccessor[M, N, T | S]):
+
+    __slots__ = ("diagonal_values", "off_diagonal_value")
+    diagonal_values: tuple[T, ...]
+    off_diagonal_value: S
+
+    def __init__(self, diagonal_values: tuple[T, ...], *, off_diagonal_value: S = 0) -> None:
+        self.diagonal_values = diagonal_values
+        self.off_diagonal_value = off_diagonal_value
+
+    @property
+    @override
+    def row_count(self) -> M:
+        return cast(M, len(self.diagonal_values))
+
+    @property
+    @override
+    def col_count(self) -> N:
+        return cast(N, len(self.diagonal_values))
+
+    @override
+    def matrix_access(self, row_index: int, col_index: int) -> T | S:
+        if row_index == col_index:
+            return self.diagonal_values[row_index]
+        return self.off_diagonal_value
+
+
+@final
 class SparseAccessor[
     M: int = int,
     N: int = int,
