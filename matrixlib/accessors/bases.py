@@ -5,7 +5,7 @@ __all__ = [
     "RowVectorAccessor",
     "ColVectorAccessor",
     "ValueAccessor",
-    "DiagonalAccessor",
+    "IdentityAccessor",
     "SparseAccessor",
 ]
 
@@ -186,7 +186,7 @@ class ValueAccessor[
 
 
 @final
-class DiagonalAccessor[
+class IdentityAccessor[
     M: int = int,
     N: int = int,
     T: object = object,
