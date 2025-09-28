@@ -5,6 +5,8 @@ __all__ = [
     "RowVectorAccessor",
     "ColVectorAccessor",
     "ValueAccessor",
+    "DiagonalAccessor",
+    "SparseAccessor",
 ]
 
 import itertools
@@ -181,6 +183,41 @@ class ValueAccessor[
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T:
         return self.value
+
+
+@final
+class DiagonalAccessor[
+    M: int = int,
+    N: int = int,
+    T: object = object,
+    S: object = object,
+](AbstractMatrixAccessor[M, N, T | S]):
+
+    __slots__ = ("non_zero_value", "zero_value", "shape")
+    non_zero_value: T
+    zero_value: S
+    shape: tuple[M, N]
+
+    def __init__(self, non_zero_value: T, shape: tuple[M, N], *, zero_value: S = 0) -> None:
+        self.non_zero_value = non_zero_value
+        self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
+        self.zero_value = zero_value
+
+    @property
+    @override
+    def row_count(self) -> M:
+        return self.shape[0]
+
+    @property
+    @override
+    def col_count(self) -> N:
+        return self.shape[1]
+
+    @override
+    def matrix_access(self, row_index: int, col_index: int) -> T | S:
+        if row_index == col_index:
+            return self.non_zero_value
+        return self.zero_value
 
 
 @final
