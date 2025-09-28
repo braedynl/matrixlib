@@ -198,7 +198,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return cls.from_accessor(matrix._accessor)
 
     @classmethod
-    def from_matrix_mapping(cls, mapper: Callable[[int, int], T_co], shape: tuple[M_co, N_co]) -> Self:
+    def from_matrix_mapper(cls, mapper: Callable[[int, int], T_co], shape: tuple[M_co, N_co]) -> Self:
         """Construct a matrix from a mapping function and shape.
 
         The mapping function should accept a row and column index pairing, and
@@ -222,7 +222,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         )
 
     @classmethod
-    def from_vector_mapping(cls, mapper: Callable[[int], T_co], shape: tuple[M_co, N_co]) -> Self:
+    def from_vector_mapper(cls, mapper: Callable[[int], T_co], shape: tuple[M_co, N_co]) -> Self:
         """Construct a matrix from a mapping function and shape.
 
         The mapping function should accept a "vector index", and return a value
@@ -326,7 +326,12 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         this format only saves memory for sufficiently sparse matrices
         (roughly 50% or more must be zero for large matrices, up to almost 70%
         or more for smaller ones).
+
+        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
+        negative (debug-only).
         """
+        if __debug__:
+            assert_positive_shape(shape)
         return cls.from_accessor(
             accessor=SparseAccessor(
                 non_zero_value_map,
@@ -703,9 +708,19 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
     def identity(cls, shape: tuple[M_co, N_co]) -> Self:
         """Construct an identity matrix, efficiently.
 
+        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
+        negative (debug-only).
+
+        Raises ``MismatchedDimensionError`` if ``shape`` is not square
+        (debug-only).
+
         **Note**: This method does not infer its value type. However it will
         always be ``Literal[0, 1]``.
         """
+        if __debug__:
+            assert_positive_shape(shape)
+            if shape[0] != shape[1]:
+                raise MismatchedDimensionError("identity matrix must be square")
         return cls.from_accessor(
             accessor=IdentityAccessor(
                 cast(ComplexT_co, 1),
