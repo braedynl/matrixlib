@@ -9,10 +9,11 @@ __all__ = [
 
 import itertools
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterator
+from array import array as Array
+from collections.abc import Iterator, Mapping
 from typing import Literal, cast, final, override
 
-from .abstracts import AbstractAccessor, AbstractVectorAccessor
+from .abstracts import AbstractAccessor, AbstractVectorAccessor, AbstractMatrixAccessor
 
 
 class AbstractArrayAccessor[
@@ -176,3 +177,98 @@ class ValueAccessor[
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T:
         return self.value
+
+
+@final
+class SparseAccessor[
+    M: int = int,
+    N: int = int,
+    T: object = object,
+    S: object = object,
+](AbstractMatrixAccessor[M, N, T | S]):
+
+    __slots__ = (
+        "non_zeroes",
+        "zero",
+        "shape",
+        "_nz_row_offsets",
+        "_nz_col_indices",
+    )
+    non_zeroes: tuple[T, ...]
+    zero: S
+    shape: tuple[M, N]
+    _nz_row_offsets: Array[int]
+    _nz_col_indices: Array[int]
+
+    def __init__(
+        self,
+        non_zeroes: Mapping[tuple[int, int], T],
+        zero: S,
+        shape: tuple[M, N],
+    ) -> None:
+        sorted_non_zeroes = sorted(non_zeroes.items(), key=lambda item: item[0])
+
+        nz_row_offsets = Array("q", (0,))
+        begin = 0
+        end = len(sorted_non_zeroes)
+        for row_index in range(shape[0]):
+            row_offset = nz_row_offsets[-1]
+            for i in range(begin, end):
+                matrix_index = sorted_non_zeroes[i][0]
+                if matrix_index[0] == row_index:
+                    row_offset += 1
+                else:
+                    begin = i
+                    break
+            nz_row_offsets.append(row_offset)
+
+        assert len(nz_row_offsets) == shape[0] + 1
+
+        self._nz_row_offsets = nz_row_offsets
+        self._nz_col_indices = Array(
+            "q",
+            (pair[0][1] for pair in sorted_non_zeroes),
+        )
+
+        self.non_zeroes = tuple(pair[1] for pair in sorted_non_zeroes)
+        self.zero = zero
+        self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    @override
+    def __iter__(self) -> Iterator[T | S]:
+        non_zeroes = self.non_zeroes
+        zero = self.zero
+        nz_row_offsets = self._nz_row_offsets
+        nz_col_indices = self._nz_col_indices
+
+        row_indices = range(self.row_count)
+        col_indices = range(self.col_count)
+
+        for row_index in row_indices:
+            offset = nz_row_offsets[row_index]
+            offset_end = nz_row_offsets[row_index + 1]
+
+            for col_index in col_indices:
+                if offset < offset_end and nz_col_indices[offset] == col_index:
+                    yield non_zeroes[offset]
+                    offset += 1
+                else:
+                    yield zero
+
+    @override
+    def __reversed__(self) -> Iterator[T | S]:
+        raise NotImplementedError
+
+    @property
+    @override
+    def row_count(self) -> M:
+        return self.shape[0]
+
+    @property
+    @override
+    def col_count(self) -> N:
+        return self.shape[1]
+
+    @override
+    def matrix_access(self, row_index: int, col_index: int) -> T | S:
+        raise NotImplementedError
