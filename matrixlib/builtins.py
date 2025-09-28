@@ -186,7 +186,10 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
         **Note**: This method bypasses the default constructor, as it is
         assumed that the accessor is fully validated. This method is used for
-        internal optimisations but may be employed with proper care.
+        internal optimisations but may be employed with proper care. This
+        method will never raise an exception on its own, but may cause others
+        to do so (often, very mysterious ones) if the accessor does not adhere
+        to accessor implementation rules.
         """
         self = cls.__new__(cls)
         self._accessor = accessor
