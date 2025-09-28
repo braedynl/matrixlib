@@ -10,6 +10,7 @@ __all__ = [
 import itertools
 import math
 import operator
+import random
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeVar, cast,
@@ -201,12 +202,12 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return cls.from_accessor(matrix._accessor)
 
     @classmethod
-    def from_matrix_mapper(cls, mapper: Callable[[int, int], T_co], shape: tuple[M_co, N_co]) -> Self:
+    def from_mapper(cls, mapper: Callable[[], T_co], shape: tuple[M_co, N_co]) -> Self:
         """Construct a matrix from a mapping function and shape.
 
-        The mapping function should accept a row and column index pairing, and
-        return a value of type ``T_co``. The corresponding "vector index" can
-        be calculated by ``row_index * col_count + col_index``.
+        The mapping function should accept no arguments, and return a value of
+        type ``T_co``. This is primarily intended for non-deterministic
+        functions such as ``random.random()``.
 
         Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
         negative (debug-only).
@@ -215,11 +216,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             assert_positive_shape(shape)
         return cls.from_accessor(
             accessor=MatrixAccessor(
-                array=tuple(
-                    mapper(i, j)
-                    for i in range(shape[0])
-                    for j in range(shape[1])
-                ),
+                array=tuple(mapper() for _ in range(shape[0] * shape[1])),
                 shape=shape,
             ),
         )
@@ -242,6 +239,30 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 array=tuple(
                     mapper(i)
                     for i in range(shape[0] * shape[1])
+                ),
+                shape=shape,
+            ),
+        )
+
+    @classmethod
+    def from_matrix_mapper(cls, mapper: Callable[[int, int], T_co], shape: tuple[M_co, N_co]) -> Self:
+        """Construct a matrix from a mapping function and shape.
+
+        The mapping function should accept a row and column index pairing, and
+        return a value of type ``T_co``. The corresponding "vector index" can
+        be calculated by ``row_index * col_count + col_index``.
+
+        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
+        negative (debug-only).
+        """
+        if __debug__:
+            assert_positive_shape(shape)
+        return cls.from_accessor(
+            accessor=MatrixAccessor(
+                array=tuple(
+                    mapper(i, j)
+                    for i in range(shape[0])
+                    for j in range(shape[1])
                 ),
                 shape=shape,
             ),
@@ -973,6 +994,29 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
 class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
 
     __slots__ = ()
+
+    @classmethod
+    def random(cls, shape: tuple[M_co, N_co]) -> RealMatrix[M_co, N_co, float]:
+        """Construct a matrix of random numbers from 0 up to (but not
+        including) 1.
+
+        Internally uses built-in ``random.random()``, and will therefore be
+        using the global random number generator's state.
+
+        **Note**: Always returns a ``RealMatrix`` unless overriden by a child
+        class.
+        """
+        if __debug__:
+            assert_positive_shape(shape)
+        return RealMatrix[M_co, N_co, float].from_accessor(
+            accessor=MatrixAccessor(
+                array=tuple(
+                    random.random()
+                    for _ in range(shape[0] * shape[1])
+                ),
+                shape=shape,
+            ),
+        )
 
     def __lt__(self, other: RealMatrix) -> bool:
         """Return true if lexicographic ``a < b``, otherwise false"""
