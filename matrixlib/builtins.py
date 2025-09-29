@@ -513,6 +513,29 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """The number of columns."""
         return self._accessor.col_count
 
+    def to_nesting(self) -> list[list[T_co]]:
+        """Return a singly-nested ``list`` representation of the matrix."""
+        result = list[list[T_co]]()
+        row_indices = range(self.row_count)
+        col_indices = range(self.col_count)
+        for row_index in row_indices:
+            result.append([])
+            for col_index in col_indices:
+                matrix_index = (row_index, col_index)
+                result[row_index].append(self[matrix_index])
+        return result
+
+    def to_mapping(self) -> dict[tuple[int, int], T_co]:
+        """Return a ``dict`` representation of the matrix."""
+        result = dict[tuple[int, int], T_co]()
+        row_indices = range(self.row_count)
+        col_indices = range(self.col_count)
+        for row_index in row_indices:
+            for col_index in col_indices:
+                matrix_index = (row_index, col_index)
+                result[matrix_index] = self[matrix_index]
+        return result
+
     def materialize(self) -> Matrix[M_co, N_co, T_co]:
         """Return a materialized copy of the matrix.
 
