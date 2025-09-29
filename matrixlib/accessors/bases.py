@@ -11,7 +11,7 @@ __all__ = [
 
 import itertools
 from abc import ABCMeta, abstractmethod
-from array import array as Array
+from array import array
 from collections import Counter
 from collections.abc import Iterator, Mapping
 from typing import Final, Literal, cast, final, override
@@ -236,8 +236,8 @@ class SparseAccessor[
     non_zero_values: tuple[T, ...]
     zero_value: T
     shape: tuple[M, N]
-    non_zero_row_offsets: Array[int]
-    non_zero_col_indices: Array[int]
+    non_zero_row_offsets: array[int]
+    non_zero_col_indices: array[int]
 
     def __init__(
         self,
@@ -250,8 +250,8 @@ class SparseAccessor[
         non_zero_indices = tuple(map(lambda pair: pair[0], non_zero_pairs))
         non_zero_values  = tuple(map(lambda pair: pair[1], non_zero_pairs))
 
-        self.non_zero_row_offsets = Array(SLL_TYPE_CODE, (0,))
-        self.non_zero_col_indices = Array(SLL_TYPE_CODE, map(lambda index: index[1], non_zero_indices))
+        self.non_zero_row_offsets = array(SLL_TYPE_CODE, (0,))
+        self.non_zero_col_indices = array(SLL_TYPE_CODE, map(lambda index: index[1], non_zero_indices))
 
         row_counts = Counter(map(lambda index: index[0], non_zero_indices))
         for row_index in range(shape[0]):
