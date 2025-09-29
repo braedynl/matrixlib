@@ -318,10 +318,14 @@ class SparseAccessor[
     def matrix_access(self, row_index: int, col_index: int) -> T:
         non_zero_row_offsets = self.non_zero_row_offsets
         non_zero_col_indices = self.non_zero_col_indices
-        for offset in range(
-            non_zero_row_offsets[row_index],
-            non_zero_row_offsets[row_index + 1],
-        ):
-            if non_zero_col_indices[offset] == col_index:
-                return self.non_zero_values[offset]
+        offset = non_zero_row_offsets[row_index]
+        offset_end = non_zero_row_offsets[row_index + 1] - 1
+        while offset <= offset_end:
+            offset_mid = (offset + offset_end) // 2
+            if non_zero_col_indices[offset_mid] == col_index:
+                return self.non_zero_values[offset_mid]
+            if non_zero_col_indices[offset_mid] < col_index:
+                offset = offset_mid + 1
+            else:
+                offset_end = offset_mid - 1
         return self.zero_value
