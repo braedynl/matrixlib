@@ -264,6 +264,17 @@ class SparseAccessor[
         self.zero_value = zero_value
         self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
 
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.non_zero_values,
+                self.zero_value,
+                self.shape,
+                tuple(self.non_zero_row_offsets),
+                tuple(self.non_zero_col_indices),
+            ),
+        )
+
     @override
     def __iter__(self) -> Iterator[T]:
         non_zero_values = self.non_zero_values
