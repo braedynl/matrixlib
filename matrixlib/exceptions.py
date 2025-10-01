@@ -9,7 +9,13 @@ __all__ = [
 
 
 class ShapeError(ValueError):
-    """Raised when shapes go wrong."""
+    """Raised when an operation is provided an unexpected shape.
+
+    **Note**: ``ShapeError`` exceptions should **not** be caught in a
+    try-except. Most, if not all ``Matrix`` operations raise ``ShapeError``
+    solely in debug mode - checks that would raise ``ShapeError`` under normal
+    circumstances are removed entirely when debug mode is active.
+    """
 
     __slots__ = ()
 
