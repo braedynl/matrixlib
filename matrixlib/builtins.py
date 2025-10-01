@@ -678,12 +678,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         have an equal shape (debug-only).
         """
         if __debug__:
-            s1, s2 = self.shape, other.shape
-            if s1 != s2:
-                raise MismatchedDimensionError(
-                    f"cannot parallelly operate on matrices of unequal shape,"
-                    f" {s1} and {s2}"
-                )
+            assert_equal_shapes(self.shape, other.shape)
         return Matrix(
             array=map(mapper, self, other),
             shape=self.shape,
@@ -1853,6 +1848,14 @@ def assert_square_shape(shape: tuple[int, int]) -> None:
     """
     if shape[0] != shape[1]:
         raise MismatchedDimensionError("shape is not square")
+
+
+def assert_equal_shapes(shape1: tuple[int, int], shape2: tuple[int, int]) -> None:
+    """Raise ``MismatchedDimensionError`` if the two given shapes are not
+    equal, otherwise do nothing.
+    """
+    if shape1 != shape2:
+        raise MismatchedDimensionError(f"unequal shapes, {shape1} and {shape2}")
 
 
 def iter_or[T](iterable: SupportsIterAndReversed[T], *, reverse: bool = False) -> Iterator[T]:
