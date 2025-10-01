@@ -25,6 +25,25 @@ class AbstractAccessor[
     Accessors are an internal interface used by the ``Matrix`` type to
     manipulate the method by which its values are retrieved, without changing
     the ``Matrix`` implementation.
+
+    There are two primary methods of obtaining a value from an accessor:
+    ``vector_access()``, and ``matrix_access()``. You can think of these as
+    being two kinds of ``__getitem__()`` methods:
+    - ``vector_access()`` takes a "vector index" and should return a value of
+      type ``T``. This index corresponds to the location
+      ``row_index * col_count + col_index`` when put in terms of a row and
+      column-index pairing.
+      - Imagine iterating through the accessor in row-major order, placing all
+        values into a ``list``. Indexing this ``list`` and the accessor
+        (through ``vector_access()``) should be equivalent.
+    - ``matrix_access()`` takes a "matrix index" and should return a value of
+      type ``T``. This index corresponds to the location
+      ``divmod(index, col_count)`` when put in terms of a vector/flat index.
+
+    These methods will **always** be given "resolved" indices (that is, within
+    the accessor's bounds, and positive). You do **not** need to boundary check
+    or raise exceptions in your implementation of these methods, as doing so
+    would be redundant - all of this is taken care of by the ``Matrix``.
     """
 
     __slots__ = ()
