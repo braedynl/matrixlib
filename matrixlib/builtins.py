@@ -13,8 +13,8 @@ import operator
 import random
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from typing import (Any, Generic, Literal, Self, SupportsIndex, TypeVar, cast,
-                    overload, override)
+from typing import (Any, Final, Generic, Literal, Self, SupportsIndex, TypeVar,
+                    cast, overload, override)
 
 from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
                         ColSliceAccessor, ColVectorAccessor, IdentityAccessor,
@@ -35,9 +35,9 @@ type EvenNumber = Literal[-16, -14, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10,
 type OddNumber = Literal[-15, -13, -11, -9, -7, -5, -3, -1, 1, 3, 5, 7, 9, 11, 13, 15]
 type Slice = slice[int | None, int | None, int | None]
 
-INTEGER_TYPES = (int,)
-REAL_TYPES = (float,) + INTEGER_TYPES
-COMPLEX_TYPES = (complex,) + REAL_TYPES
+INTEGER_TYPES: Final[tuple[type[int]]] = (int,)
+REAL_TYPES: Final[tuple[type[float], type[int]]] = (float,) + INTEGER_TYPES
+COMPLEX_TYPES: Final[tuple[type[complex], type[float], type[int]]] = (complex,) + REAL_TYPES
 
 M_co = TypeVar("M_co", covariant=True, bound=int, default=int)
 N_co = TypeVar("N_co", covariant=True, bound=int, default=int)
