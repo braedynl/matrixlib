@@ -766,8 +766,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         """
         if __debug__:
             assert_positive_shape(shape)
-            if shape[0] != shape[1]:
-                raise MismatchedDimensionError("identity matrix must be square")
+            assert_square_shape(shape)
         return cls.from_accessor(
             accessor=IdentityAccessor(
                 cast(ComplexT_co, 1),
@@ -1844,9 +1843,16 @@ def assert_positive_shape(shape: tuple[int, int]) -> None:
     """Raise ``NegativeDimensionError`` if the given shape contains a negative
     dimension, otherwise do nothing.
     """
-    row_count, col_count = shape
-    if row_count < 0 or col_count < 0:
+    if shape[0] < 0 or shape[1] < 0:
         raise NegativeDimensionError("shape dimensions must be non-negative")
+
+
+def assert_square_shape(shape: tuple[int, int]) -> None:
+    """Raise ``MismatchedDimensionError`` if the given shape is not square,
+    otherwise do nothing.
+    """
+    if shape[0] != shape[1]:
+        raise MismatchedDimensionError("shape is not square")
 
 
 def iter_or[T](iterable: SupportsIterAndReversed[T], *, reverse: bool = False) -> Iterator[T]:
