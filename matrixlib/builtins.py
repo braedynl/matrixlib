@@ -202,55 +202,11 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return cls.from_accessor(matrix._accessor)
 
     @classmethod
-    def from_mapper(cls, mapper: Callable[[], T_co], shape: tuple[M_co, N_co]) -> Self:
-        """Construct a matrix from a mapping function and shape.
-
-        The mapping function should accept no arguments, and return a value of
-        type ``T_co``. This is primarily intended for non-deterministic
-        functions such as ``random.random()``.
-
-        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
-        negative (debug-only).
-        """
-        if __debug__:
-            assert_positive_shape(shape)
-        return cls.from_accessor(
-            accessor=MatrixAccessor(
-                array=tuple(mapper() for _ in range(shape[0] * shape[1])),
-                shape=shape,
-            ),
-        )
-
-    @classmethod
-    def from_vector_mapper(cls, mapper: Callable[[int], T_co], shape: tuple[M_co, N_co]) -> Self:
-        """Construct a matrix from a mapping function and shape.
-
-        The mapping function should accept a "vector index", and return a value
-        of type ``T_co``. The corresponding row and column index can be
-        calculated by ``divmod(index, col_count)``.
-
-        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
-        negative (debug-only).
-        """
-        if __debug__:
-            assert_positive_shape(shape)
-        return cls.from_accessor(
-            accessor=MatrixAccessor(
-                array=tuple(
-                    mapper(i)
-                    for i in range(shape[0] * shape[1])
-                ),
-                shape=shape,
-            ),
-        )
-
-    @classmethod
-    def from_matrix_mapper(cls, mapper: Callable[[int, int], T_co], shape: tuple[M_co, N_co]) -> Self:
-        """Construct a matrix from a mapping function and shape.
+    def from_function(cls, function: Callable[[int, int], T_co], shape: tuple[M_co, N_co]) -> Self:
+        """Construct a matrix from an index-to-value function and shape.
 
         The mapping function should accept a row and column index pairing, and
-        return a value of type ``T_co``. The corresponding "vector index" can
-        be calculated by ``row_index * col_count + col_index``.
+        return a value of type ``T_co``.
 
         Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
         negative (debug-only).
@@ -260,7 +216,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return cls.from_accessor(
             accessor=MatrixAccessor(
                 array=tuple(
-                    mapper(i, j)
+                    function(i, j)
                     for i in range(shape[0])
                     for j in range(shape[1])
                 ),
