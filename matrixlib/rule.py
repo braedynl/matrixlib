@@ -8,7 +8,7 @@ from typing import Final, Literal, final, overload
 
 @final
 class Rule(Enum):
-    """Enum used to dictate row or column-wise interpretation
+    """Enum used to dictate row or column-wise interpretation.
 
     Each member maps to an index that will retrieve its corresponding dimension
     from a matrix shape (or any two-element sequence).
@@ -28,16 +28,16 @@ class Rule(Enum):
     def __invert__(self) -> Rule: ...
 
     def __invert__(self) -> Rule:
-        """Return the rule corresponding to the opposite dimension"""
+        """Return the rule corresponding to the opposite dimension."""
         return Rule(not self.value)
 
     def __index__(self) -> Literal[0, 1]:
-        """Return the rule's value"""
+        """Return the rule's value."""
         return self.value
 
     @property
     def handle(self) -> Literal["row", "column"]:
-        """The rule's un-Pythonized name"""
+        """The rule's un-Pythonized name."""
         return "row" if self is Rule.ROW else "column"
 
 
