@@ -30,7 +30,7 @@ class AbstractAccessor[
     __slots__ = ()
 
     def __eq__(self, other: object) -> bool:
-        """Return true if the two accessors are equivalent, otherwise false"""
+        """Return true if the two accessors are equivalent, otherwise false."""
         if self is other:
             return True
         if isinstance(other, AbstractAccessor):
@@ -43,23 +43,23 @@ class AbstractAccessor[
         return NotImplemented
 
     def __len__(self) -> int:
-        """Return the shape's product"""
+        """Return the shape's product."""
         return self.row_count * self.col_count
 
     @abstractmethod
     def __iter__(self) -> Iterator[T]:
-        """Return an iterator over the accessor's values in row-major order"""
+        """Return an iterator over the accessor's values in row-major order."""
         raise NotImplementedError
 
     @abstractmethod
     def __reversed__(self) -> Iterator[T]:
         """Return an iterator over the accessor's values in reverse row-major
-        order
+        order.
         """
         raise NotImplementedError
 
     def __contains__(self, value: object) -> bool:
-        """Return true if the accessor contains ``value``, otherwise false"""
+        """Return true if the accessor contains ``value``, otherwise false."""
         for x in self:
             if x is value or x == value:
                 return True
@@ -67,39 +67,39 @@ class AbstractAccessor[
 
     @property
     def shape(self) -> tuple[M, N]:
-        """The number of rows and columns as a ``tuple``"""
+        """The number of rows and columns as a ``tuple``."""
         return (self.row_count, self.col_count)
 
     @property
     @abstractmethod
     def row_count(self) -> M:
-        """The number of rows"""
+        """The number of rows."""
         raise NotImplementedError
 
     @property
     @abstractmethod
     def col_count(self) -> N:
-        """The number of columns"""
+        """The number of columns."""
         raise NotImplementedError
 
     def to_tuple(self) -> tuple[T, ...]:
         """Collect and return all accessor values as a ``tuple``, aligned in
-        row-major order
+        row-major order.
         """
         return tuple(self)
 
     @abstractmethod
     def vector_access(self, index: int) -> T:
-        """Return the value at ``index``"""
+        """Return the value at ``index``."""
         raise NotImplementedError
 
     @abstractmethod
     def matrix_access(self, row_index: int, col_index: int) -> T:
-        """Return the value at ``row_index``, ``col_index``"""
+        """Return the value at ``row_index``, ``col_index``."""
         raise NotImplementedError
 
     def resolve_vector_index(self, key: SupportsIndex) -> int:
-        """Return ``key`` resolved with respect to the accessor's size"""
+        """Return ``key`` resolved with respect to the accessor's size."""
         bound = len(self)
         try:
             index = resolve_index(key, bound)
@@ -109,12 +109,12 @@ class AbstractAccessor[
             return index
 
     def resolve_vector_slice(self, key: slice) -> range:
-        """Return ``key`` resolved with respect to the accessor's size"""
+        """Return ``key`` resolved with respect to the accessor's size."""
         bound = len(self)
         return resolve_slice(key, bound)
 
     def resolve_matrix_index(self, key: SupportsIndex, *, by: Rule) -> int:
-        """Return ``key`` resolved with respect to the given rule"""
+        """Return ``key`` resolved with respect to the given rule."""
         bound = self.shape[by]
         try:
             index = resolve_index(key, bound)
@@ -124,7 +124,7 @@ class AbstractAccessor[
             return index
 
     def resolve_matrix_slice(self, key: slice, *, by: Rule) -> range:
-        """Return ``key`` resolved with respect to the given rule"""
+        """Return ``key`` resolved with respect to the given rule."""
         bound = self.shape[by]
         return resolve_slice(key, bound)
 
@@ -197,12 +197,18 @@ class AbstractMatrixAccessor[
 class HasTarget(Protocol):
 
     @property
+    @abstractmethod
     def target(self) -> AbstractAccessor:
-        ...
+        """The accessor target.
+
+        Used by accessor types that refer to other accessors as a means of data
+        storage (a "view").
+        """
+        raise NotImplementedError
 
 
 def resolve_index(key: SupportsIndex, bound: int) -> int:
-    """Return ``key`` as an index with respect to ``bound``
+    """Return ``key`` as an index with respect to ``bound``.
 
     Raises an empty ``IndexError`` if ``key`` is out of range (debug-only).
     """
@@ -220,5 +226,5 @@ def resolve_index(key: SupportsIndex, bound: int) -> int:
 
 
 def resolve_slice(key: slice, bound: int) -> range:
-    """Return ``key`` as a range of indices with respect to ``bound``"""
+    """Return ``key`` as a range of indices with respect to ``bound``."""
     return range(*key.indices(bound))
