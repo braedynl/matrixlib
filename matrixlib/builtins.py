@@ -307,6 +307,13 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         (roughly 50% or more must be zero for large matrices, up to almost 70%
         or more for smaller ones).
 
+        Keep in mind that operations like ``equal()``, ``not_equal()``, etc.
+        will accept sparse matrices but they will **not** create new ones on
+        their own, as they have no way of knowing whether the result is "sparse
+        enough" to warrant use of CSR storage. Such a process would require
+        iterating through the resultant matrix, which would slow the operation
+        down.
+
         Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
         negative (debug-only).
         """
@@ -482,7 +489,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return result
 
     def to_mapping(self) -> dict[tuple[int, int], T_co]:
-        """Return a ``dict`` representation of the matrix."""
+        """Return an index-to-value ``dict`` representation of the matrix."""
         result = dict[tuple[int, int], T_co]()
         row_indices = range(self.row_count)
         col_indices = range(self.col_count)
@@ -498,17 +505,20 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         To preserve memory, some methods produce a ``Matrix`` instance that
         simply references the origin matrix upon indexing. These are called
         "views" - these views are allowed to refer to other views, meaning
-        that you can construct long "view chains" under certain circumstances.
-        A sufficiently long view chain can have an impact on indexing
+        that long "view chains" can be made under certain circumstances. A
+        sufficiently long view chain can have an impact on indexing
         performance.
 
         Materialization is the process of "flattening" these view chains into
         a new container. Materializing an already-materialized matrix
         effectively does nothing.
 
-        As complex an operation as this sounds, this method is actually just
-        the same as doing ``Matrix(self.array, self.shape)``. The ``array``
-        property does most of this work.
+        Materializing your matrix should only ever be necessary in rare
+        circumstances. A matrix constructed from the use of multiple
+        permutations (e.g., ``transpose()``, ``flip()``, ``rotate()``) may be
+        a case where materialization is warranted, though note that this may
+        vastly increase your program's memory usage if the origin matrix is
+        still in use.
         """
         return Matrix(self.array, self.shape)
 
@@ -970,14 +980,13 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
 
     @classmethod
     def random(cls, shape: tuple[M_co, N_co]) -> RealMatrix[M_co, N_co, float]:
-        """Construct a matrix of random numbers from 0 up to (but not
-        including) 1.
+        """Construct a matrix of random numbers within the range [0, 1).
 
         Internally uses built-in ``random.random()``, and will therefore be
-        using the global random number generator's state.
+        using the global random number generator.
 
-        **Note**: Always returns a ``RealMatrix`` unless overriden by a child
-        class.
+        **Note**: This method always returns a ``RealMatrix`` unless overriden
+        by a child class.
         """
         if __debug__:
             assert_positive_shape(shape)
