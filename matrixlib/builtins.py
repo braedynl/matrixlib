@@ -683,6 +683,18 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             shape=self.shape,
         )
 
+    def replace(self, old: Callable[[], T_co], new: Callable[[], T_co]) -> Matrix[M_co, N_co, T_co]:
+        """Return a new matrix with values equal to ``old`` replaced with
+        ``new``.
+        """
+
+        def mapper(value: T_co, old: T_co = old(), new: T_co = new()) -> T_co:
+            if value is old or value == old:
+                return new
+            return value
+
+        return self._unary_map(mapper)
+
     def equal(self, other: object) -> Matrix[M_co, N_co, bool]:
         """Return element-wise ``a == b``."""
         if isinstance(other, Matrix):
@@ -964,6 +976,10 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[ComplexMatrix[Any, Any, ComplexT_co]]:
         return map(ComplexMatrix[Any, Any, ComplexT_co].from_matrix, super().vectors(by=by, reverse=reverse))
+
+    @override
+    def replace(self, old: Callable[[], ComplexT_co], new: Callable[[], ComplexT_co]) -> ComplexMatrix[M_co, N_co, ComplexT_co]:
+        return ComplexMatrix[M_co, N_co, ComplexT_co].from_matrix(super().replace(old, new))
 
     def conjugate(self) -> ComplexMatrix[M_co, N_co]:
         return ComplexMatrix[M_co, N_co].from_matrix(
@@ -1315,6 +1331,10 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[RealMatrix[Any, Any, RealT_co]]:
         return map(RealMatrix[Any, Any, RealT_co].from_matrix, super().vectors(by=by, reverse=reverse))
+
+    @override
+    def replace(self, old: Callable[[], RealT_co], new: Callable[[], RealT_co]) -> RealMatrix[M_co, N_co, RealT_co]:
+        return RealMatrix[M_co, N_co, RealT_co].from_matrix(super().replace(old, new))
 
     @override
     def conjugate(self) -> Self:
@@ -1791,6 +1811,10 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[IntegerMatrix[Any, Any, IntegerT_co]]:
         return map(IntegerMatrix[Any, Any, IntegerT_co].from_matrix, super().vectors(by=by, reverse=reverse))
+
+    @override
+    def replace(self, old: Callable[[], IntegerT_co], new: Callable[[], IntegerT_co]) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
+        return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().replace(old, new))
 
     @override
     def transjugate(self) -> IntegerMatrix[N_co, M_co]:
