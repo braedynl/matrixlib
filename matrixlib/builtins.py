@@ -947,18 +947,18 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     __slots__ = ()
 
     @classmethod
-    def random(cls, shape: tuple[M_co, N_co]) -> RealMatrix[M_co, N_co, float]:
+    def random(cls, shape: tuple[M_co, N_co]) -> RealMatrix[M_co, N_co]:
         """Construct a matrix of random numbers within the range [0, 1).
 
-        Internally uses built-in ``random.random()``, and will therefore be
-        using the global random number generator.
+        Internally uses built-in ``random.random()``, thus inheriting the
+        state of the global random number generator.
 
-        **Note**: This method always returns a ``RealMatrix`` unless overriden
-        by a child class.
+        **Note**: Unlike other class methods, this one always returns a
+        ``RealMatrix`` unless overriden by a child class.
         """
         if __debug__:
             assert_positive_shape(shape)
-        return RealMatrix[M_co, N_co, float].from_accessor(
+        return RealMatrix[M_co, N_co].from_accessor(
             accessor=MatrixAccessor(
                 array=tuple(
                     random.random()
@@ -1346,11 +1346,17 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     __slots__ = ()
 
     @classmethod
-    def identity[M: int](cls, count: M) -> IntegerMatrix[M, M, Literal[0, 1]]:
+    def identity[M: int](
+        cls: type[IntegerMatrix[M, M, IntegerT_co]],
+        count: M,
+    ) -> IntegerMatrix[M, M, Literal[0, 1]]:
         """Construct an identity matrix, efficiently.
 
         Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
         negative (debug-only).
+
+        **Note**: Unlike other class methods, this one always returns an
+        ``IntegerMatrix`` unless overriden by a child class.
         """
         if __debug__:
             if count < 0:
@@ -1361,12 +1367,20 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
     @classmethod
     def zeroes(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, Literal[0]]:
-        """Construct a matrix comprised entirely of zeroes, efficiently."""
+        """Construct a matrix comprised entirely of zeroes, efficiently.
+
+        **Note**: Unlike other class methods, this one always returns an
+        ``IntegerMatrix`` unless overriden by a child class.
+        """
         return IntegerMatrix[M_co, N_co, Literal[0]].fill(lambda: 0, shape)
 
     @classmethod
     def ones(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, Literal[1]]:
-        """Construct a matrix comprised entirely of ones, efficiently."""
+        """Construct a matrix comprised entirely of ones, efficiently.
+
+        **Note**: Unlike other class methods, this one always returns an
+        ``IntegerMatrix`` unless overriden by a child class.
+        """
         return IntegerMatrix[M_co, N_co, Literal[1]].fill(lambda: 1, shape)
 
     @overload
