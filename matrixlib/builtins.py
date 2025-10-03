@@ -724,54 +724,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
 
     __slots__ = ()
 
-    @classmethod
-    def identity(cls, shape: tuple[M_co, N_co]) -> Self:
-        """Construct an identity matrix, efficiently.
-
-        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
-        negative (debug-only).
-
-        Raises ``MismatchedDimensionError`` if ``shape`` is not square
-        (debug-only).
-
-        **Note**: This method does not infer its value type. However it will
-        always be ``Literal[0, 1]``.
-        """
-        if __debug__:
-            assert_positive_shape(shape)
-            assert_square_shape(shape)
-        return cls.from_accessor(
-            accessor=IdentityAccessor(
-                cast(ComplexT_co, 1),
-                shape,
-                zero_value=cast(ComplexT_co, 0),
-            ),
-        )
-
-    @classmethod
-    def zeroes(cls, shape: tuple[M_co, N_co]) -> Self:
-        """Construct a matrix comprised entirely of zeroes, efficiently.
-
-        Same as ``cls.fill(lambda: 0, shape)``. See ``fill()`` for more
-        details.
-
-        **Note**: This method does not infer its value type. However, it will
-        always be ``Literal[0]``.
-        """
-        return cls.fill(lambda: cast(ComplexT_co, 0), shape)
-
-    @classmethod
-    def ones(cls, shape: tuple[M_co, N_co]) -> Self:
-        """Construct a matrix comprised entirely of ones, efficiently.
-
-        Same as ``cls.fill(lambda: 1, shape)``. See ``fill()`` for more
-        details.
-
-        **Note**: This method does not infer its value type. However, it will
-        always be ``Literal[1]``.
-        """
-        return cls.fill(lambda: cast(ComplexT_co, 1), shape)
-
     @overload
     def __getitem__(self, index: SupportsIndex) -> ComplexT_co: ...
     @overload
@@ -1393,6 +1345,30 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
     __slots__ = ()
 
+    @classmethod
+    def identity[M: int](cls, count: M) -> IntegerMatrix[M, M, Literal[0, 1]]:
+        """Construct an identity matrix, efficiently.
+
+        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
+        negative (debug-only).
+        """
+        if __debug__:
+            if count < 0:
+                raise NegativeDimensionError("shape dimensions must be positive")
+        return IntegerMatrix[M, M, Literal[0, 1]].from_accessor(
+            accessor=IdentityAccessor(1, (count, count)),
+        )
+
+    @classmethod
+    def zeroes(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, Literal[0]]:
+        """Construct a matrix comprised entirely of zeroes, efficiently."""
+        return IntegerMatrix[M_co, N_co, Literal[0]].fill(lambda: 0, shape)
+
+    @classmethod
+    def ones(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, Literal[1]]:
+        """Construct a matrix comprised entirely of ones, efficiently."""
+        return IntegerMatrix[M_co, N_co, Literal[1]].fill(lambda: 1, shape)
+
     @overload
     def __getitem__(self, index: SupportsIndex) -> IntegerT_co: ...
     @overload
@@ -1828,15 +1804,7 @@ def assert_positive_shape(shape: tuple[int, int]) -> None:
     dimension, otherwise do nothing.
     """
     if shape[0] < 0 or shape[1] < 0:
-        raise NegativeDimensionError("shape dimensions must be non-negative")
-
-
-def assert_square_shape(shape: tuple[int, int]) -> None:
-    """Raise ``MismatchedDimensionError`` if the given shape is not square,
-    otherwise do nothing.
-    """
-    if shape[0] != shape[1]:
-        raise MismatchedDimensionError("shape is not square")
+        raise NegativeDimensionError("shape dimensions must be positive")
 
 
 def assert_equal_shapes(shape1: tuple[int, int], shape2: tuple[int, int]) -> None:
