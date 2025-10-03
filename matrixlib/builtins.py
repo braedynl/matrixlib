@@ -953,7 +953,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         Internally uses built-in ``random.random()``, thus inheriting the
         state of the global random number generator.
 
-        **Note**: Unlike other class methods, this one always returns a
+        **Note**: Unlike most other class methods, this one always returns a
         ``RealMatrix`` unless overriden by a child class.
         """
         if __debug__:
@@ -1352,10 +1352,10 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     ) -> IntegerMatrix[M, M, Literal[0, 1]]:
         """Construct an identity matrix, efficiently.
 
-        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
-        negative (debug-only).
+        Raises ``NegativeDimensionError`` if ``count`` is negative
+        (debug-only).
 
-        **Note**: Unlike other class methods, this one always returns an
+        **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
         """
         if __debug__:
@@ -1369,7 +1369,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     def zeroes(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, Literal[0]]:
         """Construct a matrix comprised entirely of zeroes, efficiently.
 
-        **Note**: Unlike other class methods, this one always returns an
+        **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
         """
         return IntegerMatrix[M_co, N_co, Literal[0]].fill(lambda: 0, shape)
@@ -1378,7 +1378,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     def ones(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, Literal[1]]:
         """Construct a matrix comprised entirely of ones, efficiently.
 
-        **Note**: Unlike other class methods, this one always returns an
+        **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
         """
         return IntegerMatrix[M_co, N_co, Literal[1]].fill(lambda: 1, shape)
