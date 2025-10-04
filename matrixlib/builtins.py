@@ -118,7 +118,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 row_window = accessor.resolve_matrix_slice(row_index, by=ROW)
 
                 if isinstance(col_index, slice):
-                    col_window = accessor.resolve_matrix_slice(row_index, by=COL)
+                    col_window = accessor.resolve_matrix_slice(col_index, by=COL)
 
                     return Matrix[Any, Any, T_co].from_accessor(
                         accessor=MatrixSliceAccessor(
@@ -1813,7 +1813,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         )
 
 
-def assert_positive_shape(shape: tuple[int, int]) -> None:
+def assert_positive_shape(shape: tuple[int, int], /) -> None:
     """Raise ``NegativeDimensionError`` if the given shape contains a negative
     dimension, otherwise do nothing.
     """
@@ -1821,7 +1821,7 @@ def assert_positive_shape(shape: tuple[int, int]) -> None:
         raise NegativeDimensionError("shape dimensions must be positive")
 
 
-def assert_equal_shapes(shape1: tuple[int, int], shape2: tuple[int, int]) -> None:
+def assert_equal_shapes(shape1: tuple[int, int], shape2: tuple[int, int], /) -> None:
     """Raise ``MismatchedDimensionError`` if the two given shapes are not
     equal, otherwise do nothing.
     """
