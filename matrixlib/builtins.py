@@ -7,6 +7,8 @@ __all__ = [
     "IntegerMatrix",
 ]
 
+import cmath
+import functools
 import itertools
 import math
 import operator
@@ -14,8 +16,8 @@ import random
 from collections import deque
 from collections.abc import (Callable, Iterable, Iterator, Mapping, Reversible,
                              Sequence)
-from typing import (Any, Final, Generic, Literal, Self, SupportsIndex, TypeVar,
-                    cast, overload, override)
+from typing import (Any, Final, Generic, Literal, Self, SupportsFloat,
+                    SupportsIndex, TypeVar, cast, overload, override)
 
 from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
                         ColSliceAccessor, ColVectorAccessor, IdentityAccessor,
@@ -942,6 +944,31 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
 
     def transjugate(self) -> ComplexMatrix[N_co, M_co]:
         return self.transpose().conjugate()
+
+    def is_close(
+        self,
+        other: ComplexMatrix[M_co, N_co] | Complex,
+        *,
+        rel_tol: SupportsFloat = 1e-09,
+        abs_tol: SupportsFloat = 0.0,
+    ) -> Matrix[M_co, N_co, bool]:
+        """Return an element-wise "close" comparison with another matrix or
+        scalar.
+
+        Arguments ``rel_tol`` and ``abs_tol`` passed to ``cmath.isclose()``.
+        See its documentation for more details.
+
+        Raises ``MismatchedDimensionError`` if ``other`` is a ``ComplexMatrix``
+        of unequal shape (debug-only).
+        """
+        is_close = functools.partial(
+            cmath.isclose,
+            rel_tol=rel_tol,
+            abs_tol=abs_tol,
+        )
+        if isinstance(other, ComplexMatrix):
+            return self._binary_matrix_map(is_close, other)
+        return self._binary_scalar_map(is_close, other)
 
 
 class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
