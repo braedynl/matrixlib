@@ -12,7 +12,8 @@ import math
 import operator
 import random
 from collections import deque
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from collections.abc import (Callable, Iterable, Iterator, Mapping, Reversible,
+                             Sequence)
 from typing import (Any, Final, Generic, Literal, Self, SupportsIndex, TypeVar,
                     cast, overload, override)
 
@@ -26,7 +27,6 @@ from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
 from .exceptions import (MismatchedDimensionError, NegativeDimensionError,
                          ReshapeError)
 from .rule import COL, ROW, Rule
-from .typeshed import SupportsIterAndReversed
 
 type Integer = int
 type Real = float | Integer
@@ -1831,9 +1831,9 @@ def assert_equal_shapes(shape1: tuple[int, int], shape2: tuple[int, int], /) -> 
         raise MismatchedDimensionError(f"unequal shapes, {shape1} and {shape2}")
 
 
-def iter_or[T](iterable: SupportsIterAndReversed[T], *, reverse: bool = False) -> Iterator[T]:
+def iter_or[T](reversible: Reversible[T], *, reverse: bool = False) -> Iterator[T]:
     """Return the iterator of an object, optionally its reverse iterator."""
-    return reversed(iterable) if reverse else iter(iterable)
+    return reversed(reversible) if reverse else iter(reversible)
 
 
 def interleave[T](iterables: tuple[Iterable[T], ...], leave_counts: tuple[int, ...]) -> Iterator[T]:
