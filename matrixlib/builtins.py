@@ -1230,13 +1230,13 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
 
     @property
     @override
-    def real(self) -> Self:
+    def real(self) -> RealMatrix[M_co, N_co]:
         return self
 
     @property
     @override
-    def imag(self) -> IntegerMatrix[M_co, N_co, Literal[0]]:
-        return IntegerMatrix[M_co, N_co, Literal[0]].zeroes(self.shape)
+    def imag(self) -> IntegerMatrix[M_co, N_co]:
+        return IntegerMatrix[M_co, N_co].zeroes(self.shape)
 
     @override
     def materialize(self) -> RealMatrix[M_co, N_co, RealT_co]:
@@ -1291,7 +1291,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return RealMatrix[M_co, N_co, RealT_co].from_matrix(super().replace(old, new))
 
     @override
-    def conjugate(self) -> Self:
+    def conjugate(self) -> RealMatrix[M_co, N_co]:
         return self
 
     @override
@@ -1766,6 +1766,11 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
             matrix=self._unary_map(operator.__invert__),
         )
 
+    @property
+    @override
+    def real(self) -> IntegerMatrix[M_co, N_co]:
+        return self
+
     @override
     def materialize(self) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
         return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().materialize())
@@ -1817,6 +1822,10 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def replace(self, old: Callable[[], IntegerT_co], new: Callable[[], IntegerT_co]) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
         return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().replace(old, new))
+
+    @override
+    def conjugate(self) -> IntegerMatrix[M_co, N_co]:
+        return self
 
     @override
     def transjugate(self) -> IntegerMatrix[N_co, M_co]:
