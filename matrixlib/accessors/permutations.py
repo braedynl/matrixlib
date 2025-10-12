@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 from abc import ABCMeta, abstractmethod
-from typing import final, override
+from typing import Self, final, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
@@ -42,11 +42,15 @@ class TransposeAccessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target",)
+    __slots__ = (
+        "target",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     target: AbstractAccessor[N, M, T]  # NOTE: Reversed dimensions!
 
-    def __init__(self, target: AbstractAccessor[N, M, T]) -> None:
-        self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __new__(cls, target: AbstractAccessor[N, M, T]) -> Self:
+        self = super(TransposeAccessor, cls).__new__(cls)
+        self.target = target
+        return self
 
     @property
     @override
@@ -70,11 +74,15 @@ class RowFlipAccessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target",)
+    __slots__ = (
+        "target",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     target: AbstractAccessor[M, N, T]
 
-    def __init__(self, target: AbstractAccessor[M, N, T]) -> None:
-        self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __new__(cls, target: AbstractAccessor[M, N, T]) -> Self:
+        self = super(RowFlipAccessor, cls).__new__(cls)
+        self.target = target
+        return self
 
     @property
     @override
@@ -101,11 +109,15 @@ class ColFlipAccessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target",)
+    __slots__ = (
+        "target",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     target: AbstractAccessor[M, N, T]
 
-    def __init__(self, target: AbstractAccessor[M, N, T]) -> None:
-        self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __new__(cls, target: AbstractAccessor[M, N, T]) -> Self:
+        self = super(ColFlipAccessor, cls).__new__(cls)
+        self.target = target
+        return self
 
     @property
     @override
@@ -132,11 +144,15 @@ class Rotate090Accessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target",)
+    __slots__ = (
+        "target",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     target: AbstractAccessor[N, M, T]  # NOTE: Reversed dimensions!
 
-    def __init__(self, target: AbstractAccessor[N, M, T]) -> None:
-        self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __new__(cls, target: AbstractAccessor[N, M, T]) -> Self:
+        self = super(Rotate090Accessor, cls).__new__(cls)
+        self.target = target
+        return self
 
     @property
     @override
@@ -163,11 +179,15 @@ class Rotate180Accessor[
     T: object = object,
 ](AbstractVectorAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target",)
+    __slots__ = (
+        "target",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     target: AbstractAccessor[M, N, T]
 
-    def __init__(self, target: AbstractAccessor[M, N, T]) -> None:
-        self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __new__(cls, target: AbstractAccessor[M, N, T]) -> Self:
+        self = super(Rotate180Accessor, cls).__new__(cls)
+        self.target = target
+        return self
 
     @property
     @override
@@ -191,11 +211,15 @@ class Rotate270Accessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
 
-    __slots__ = ("target",)
+    __slots__ = (
+        "target",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     target: AbstractAccessor[N, M, T]  # NOTE: Reversed dimensions!
 
-    def __init__(self, target: AbstractAccessor[N, M, T]) -> None:
-        self.target = target  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __new__(cls, target: AbstractAccessor[N, M, T]) -> Self:
+        self = super(Rotate270Accessor, cls).__new__(cls)
+        self.target = target
+        return self
 
     @property
     @override

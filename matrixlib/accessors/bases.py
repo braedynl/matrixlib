@@ -14,7 +14,7 @@ from abc import ABCMeta, abstractmethod
 from array import array
 from collections import Counter
 from collections.abc import Iterator, Mapping
-from typing import Final, Literal, cast, final, override
+from typing import Final, Literal, Self, cast, final, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
@@ -27,9 +27,6 @@ class AbstractArrayAccessor[
     N: int = int,
     T: object = object,
 ](AbstractVectorAccessor[M, N, T], metaclass=ABCMeta):
-    """Abstract for accessors that hold their values in memory as a built-in
-    ``tuple``.
-    """
 
     __slots__ = ()
 
@@ -68,18 +65,20 @@ class AbstractArrayAccessor[
 
 @final
 class MatrixAccessor[M: int = int, N: int = int, T: object = object](AbstractArrayAccessor[M, N, T]):
-    """Concrete base accessor for matrices of shape M by N, where both M and N
-    are greater than 1.
-    """
 
-    __slots__ = ("array", "shape")
+    __slots__ = (
+        "array",  # pyright: ignore[reportIncompatibleMethodOverride]
+        "shape",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     array: tuple[T, ...]
     shape: tuple[M, N]
 
-    def __init__(self, array: tuple[T, ...], shape: tuple[M, N]) -> None:
+    def __new__(cls, array: tuple[T, ...], shape: tuple[M, N]) -> Self:
         assert len(array) == shape[0] * shape[1]
-        self.array = array  # pyright: ignore[reportIncompatibleMethodOverride]
-        self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
+        self = super(MatrixAccessor, cls).__new__(cls)
+        self.array = array
+        self.shape = shape
+        return self
 
     def __repr__(self) -> str:
         return f"MatrixAccessor(array={self.array!r}, shape={self.shape!r})"
@@ -97,14 +96,17 @@ class MatrixAccessor[M: int = int, N: int = int, T: object = object](AbstractArr
 
 @final
 class RowVectorAccessor[N: int = int, T: object = object](AbstractArrayAccessor[Literal[1], N, T]):
-    """Concrete base accessor for matrices of shape 1 by N."""
 
-    __slots__ = ("array",)
+    __slots__ = (
+        "array",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     array: tuple[T, ...]
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, array: tuple[T, ...]) -> None:
-        self.array = array  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __new__(cls, array: tuple[T, ...]) -> Self:
+        self = super(RowVectorAccessor, cls).__new__(cls)
+        self.array = array
+        return self
 
     def __repr__(self) -> str:
         return f"RowVectorAccessor(array={self.array!r})"
@@ -117,14 +119,17 @@ class RowVectorAccessor[N: int = int, T: object = object](AbstractArrayAccessor[
 
 @final
 class ColVectorAccessor[M: int = int, T: object = object](AbstractArrayAccessor[M, Literal[1], T]):
-    """Concrete base accessor for matrices of shape M by 1."""
 
-    __slots__ = ("array",)
+    __slots__ = (
+        "array",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     array: tuple[T, ...]
     col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, array: tuple[T, ...]) -> None:
-        self.array = array  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __new__(cls, array: tuple[T, ...]) -> Self:
+        self = super(ColVectorAccessor, cls).__new__(cls)
+        self.array = array
+        return self
 
     def __repr__(self) -> str:
         return f"ColVectorAccessor(array={self.array!r})"
@@ -142,13 +147,18 @@ class ValueAccessor[
     T: object = object,
 ](AbstractAccessor[M, N, T]):
 
-    __slots__ = ("value", "shape")
+    __slots__ = (
+        "value",
+        "shape",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     value: T
     shape: tuple[M, N]
 
-    def __init__(self, value: T, shape: tuple[M, N]) -> None:
+    def __new__(cls, value: T, shape: tuple[M, N]) -> Self:
+        self = super(ValueAccessor, cls).__new__(cls)
         self.value = value
-        self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
+        self.shape = shape
+        return self
 
     def __repr__(self) -> str:
         return f"ValueAccessor(value={self.value!r}, shape={self.shape!r})"
@@ -192,15 +202,21 @@ class IdentityAccessor[
     T: object = object,
 ](AbstractMatrixAccessor[M, N, T]):
 
-    __slots__ = ("non_zero_value", "zero_value", "shape")
+    __slots__ = (
+        "non_zero_value",
+        "zero_value",
+        "shape",  # pyright: ignore[reportIncompatibleMethodOverride]
+    )
     non_zero_value: T
     zero_value: T
     shape: tuple[M, N]
 
-    def __init__(self, non_zero_value: T, shape: tuple[M, N], *, zero_value: T = 0) -> None:
+    def __new__(cls, non_zero_value: T, shape: tuple[M, N], *, zero_value: T = 0) -> Self:
+        self = super(IdentityAccessor, cls).__new__(cls)
         self.non_zero_value = non_zero_value
-        self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
+        self.shape = shape
         self.zero_value = zero_value
+        return self
 
     @property
     @override
@@ -214,9 +230,7 @@ class IdentityAccessor[
 
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T:
-        if row_index == col_index:
-            return self.non_zero_value
-        return self.zero_value
+        return self.non_zero_value if row_index == col_index else self.zero_value
 
 
 @final
@@ -229,7 +243,7 @@ class SparseAccessor[
     __slots__ = (
         "non_zero_values",
         "zero_value",
-        "shape",
+        "shape",  # pyright: ignore[reportIncompatibleMethodOverride]
         "non_zero_row_offsets",
         "non_zero_col_indices",
     )
@@ -239,13 +253,15 @@ class SparseAccessor[
     non_zero_row_offsets: array[int]
     non_zero_col_indices: array[int]
 
-    def __init__(
-        self,
+    def __new__(
+        cls,
         non_zero_value_map: Mapping[tuple[int, int], T],
         shape: tuple[M, N],
         *,
         zero_value: T = 0,
-    ) -> None:
+    ) -> Self:
+        self = super(SparseAccessor, cls).__new__(cls)
+
         non_zero_pairs   = sorted(non_zero_value_map.items(), key=lambda item: item[0])
         non_zero_indices = tuple(map(lambda pair: pair[0], non_zero_pairs))
         non_zero_values  = tuple(map(lambda pair: pair[1], non_zero_pairs))
@@ -262,7 +278,9 @@ class SparseAccessor[
 
         self.non_zero_values = non_zero_values
         self.zero_value = zero_value
-        self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
+        self.shape = shape
+
+        return self
 
     def __hash__(self) -> int:
         return hash(

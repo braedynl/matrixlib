@@ -54,7 +54,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     __match_args__ = ("array", "shape")
     _accessor: AbstractAccessor[M_co, N_co, T_co]
 
-    def __init__(self, array: Iterable[T_co] = (), shape: tuple[M_co, N_co] = (0, 0)) -> None:
+    def __new__(cls, array: Iterable[T_co] = (), shape: tuple[M_co, N_co] = (0, 0)) -> Self:
+        self = super(Matrix, cls).__new__(cls)
         array = tuple(array)
         if __debug__:
             assert_positive_shape(shape)
@@ -69,6 +70,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             array=array,
             shape=shape,
         )
+        return self
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} shape={self.shape!r}>"
@@ -192,7 +194,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         to do so (often, very mysterious ones) if the accessor does not adhere
         to accessor implementation rules.
         """
-        self = cls.__new__(cls)
+        self = super(Matrix, cls).__new__(cls)
         self._accessor = accessor
         return self
 

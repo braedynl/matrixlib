@@ -7,7 +7,7 @@ __all__ = [
     "MatrixSliceAccessor",
 ]
 
-from typing import Literal, cast, final, override
+from typing import Literal, Self, cast, final, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
@@ -21,9 +21,11 @@ class SliceAccessor[N: int = int, T: object = object](AbstractVectorAccessor[Lit
     window: range
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[int, N, T], *, window: range) -> None:
+    def __new__(cls, target: AbstractAccessor[int, N, T], *, window: range) -> Self:
+        self = super(SliceAccessor, cls).__new__(cls)
         self.target = target
         self.window = window
+        return self
 
     def __hash__(self) -> int:
         return hash((self.target, self.window))
@@ -47,10 +49,12 @@ class RowSliceAccessor[N: int = int, T: object = object](AbstractMatrixAccessor[
     col_window: range
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[int, N, T], *, row_index: int, col_window: range) -> None:
+    def __new__(cls, target: AbstractAccessor[int, N, T], *, row_index: int, col_window: range) -> Self:
+        self = super(RowSliceAccessor, cls).__new__(cls)
         self.target = target
         self.row_index = row_index
         self.col_window = col_window
+        return self
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_index, self.col_window))
@@ -77,10 +81,12 @@ class ColSliceAccessor[M: int = int, T: object = object](AbstractMatrixAccessor[
     col_index: int
     col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[M, int, T], *, row_window: range, col_index: int) -> None:
+    def __new__(cls, target: AbstractAccessor[M, int, T], *, row_window: range, col_index: int) -> Self:
+        self = super(ColSliceAccessor, cls).__new__(cls)
         self.target = target
         self.row_window = row_window
         self.col_index = col_index
+        return self
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_window, self.col_index))
@@ -110,16 +116,18 @@ class MatrixSliceAccessor[
     row_window: range
     col_window: range
 
-    def __init__(
-        self,
+    def __new__(
+        cls,
         target: AbstractAccessor[int, int, T],
         *,
         row_window: range,
         col_window: range,
-    ) -> None:
+    ) -> Self:
+        self = super(MatrixSliceAccessor, cls).__new__(cls)
         self.target = target
         self.row_window = row_window
         self.col_window = col_window
+        return self
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_window, self.col_window))

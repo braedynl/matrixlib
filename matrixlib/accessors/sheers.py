@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-__all__ = ["RowSheerAccessor", "ColSheerAccessor"]
+__all__ = [
+    "RowSheerAccessor",
+    "ColSheerAccessor",
+]
 
-from typing import Literal, final, override
+from typing import Literal, Self, final, override
 
 from .abstracts import AbstractAccessor, AbstractMatrixAccessor
 
@@ -15,9 +18,11 @@ class RowSheerAccessor[N: int = int, T: object = object](AbstractMatrixAccessor[
     row_index: int
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[int, N, T], *, row_index: int) -> None:
+    def __new__(cls, target: AbstractAccessor[int, N, T], *, row_index: int) -> Self:
+        self = super(RowSheerAccessor, cls).__new__(cls)
         self.target = target
         self.row_index = row_index
+        return self
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_index))
@@ -43,9 +48,11 @@ class ColSheerAccessor[M: int = int, T: object = object](AbstractMatrixAccessor[
     col_index: int
     col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __init__(self, target: AbstractAccessor[M, int, T], *, col_index: int) -> None:
+    def __new__(cls, target: AbstractAccessor[M, int, T], *, col_index: int) -> Self:
+        self = super(ColSheerAccessor, cls).__new__(cls)
         self.target = target
         self.col_index = col_index
+        return self
 
     def __hash__(self) -> int:
         return hash((self.target, self.col_index))
