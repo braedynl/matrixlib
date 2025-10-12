@@ -955,8 +955,8 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         """Return an element-wise "close" comparison with another matrix or
         scalar.
 
-        Arguments ``rel_tol`` and ``abs_tol`` passed to ``cmath.isclose()``.
-        See its documentation for more details.
+        Internally delegates to ``cmath.isclose()``. See its documentation for
+        more details.
 
         Raises ``MismatchedDimensionError`` if ``other`` is a ``ComplexMatrix``
         of unequal shape (debug-only).
@@ -1368,6 +1368,46 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         if isinstance(other, RealMatrix):
             return self._binary_matrix_map(operator.__ge__, other)
         return self._binary_scalar_map(operator.__ge__, other)
+
+    @overload
+    def round(self, ndigits: None = None) -> IntegerMatrix[M_co, N_co]: ...
+    @overload
+    def round(self, ndigits: SupportsIndex) -> RealMatrix[M_co, N_co]: ...
+
+    def round(self, ndigits: SupportsIndex | None = None) -> RealMatrix[M_co, N_co]:
+        """Return the matrix with its values rounded to ``ndigits`` precision
+        after the decimal point.
+
+        Internally delegates to built-in ``round()``. See its documentation for
+        more details.
+        """
+        if ndigits is None:
+            return IntegerMatrix[M_co, N_co].from_matrix(
+                matrix=self._unary_map(round),
+            )
+        return RealMatrix[M_co, N_co].from_matrix(
+            matrix=self._unary_map(
+                functools.partial(round, ndigits=ndigits),
+            ),
+        )
+
+    def floor(self) -> IntegerMatrix[M_co, N_co]:
+        """Return the matrix with its values floored."""
+        return IntegerMatrix[M_co, N_co].from_matrix(
+            matrix=self._unary_map(math.floor),
+        )
+
+    def ceil(self) -> IntegerMatrix[M_co, N_co]:
+        """Return the matrix with its values ceiled."""
+        return IntegerMatrix[M_co, N_co].from_matrix(
+            matrix=self._unary_map(math.ceil),
+        )
+
+    def trunc(self) -> IntegerMatrix[M_co, N_co]:
+        """Return the matrix with its values truncated."""
+        return IntegerMatrix[M_co, N_co].from_matrix(
+            matrix=self._unary_map(math.trunc),
+        )
 
 
 class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
