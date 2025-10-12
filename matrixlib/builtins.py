@@ -1351,7 +1351,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     def identity[M: int](
         cls: type[IntegerMatrix[M, M, IntegerT_co]],
         count: M,
-    ) -> IntegerMatrix[M, M, Literal[0, 1]]:
+    ) -> IntegerMatrix[M, M, IntegerT_co]:
         """Construct an identity matrix, efficiently.
 
         Raises ``NegativeDimensionError`` if ``count`` is negative
@@ -1363,27 +1363,37 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         if __debug__:
             if count < 0:
                 raise NegativeDimensionError("shape dimensions must be positive")
-        return IntegerMatrix[M, M, Literal[0, 1]].from_accessor(
-            accessor=IdentityAccessor(1, (count, count)),
+        return IntegerMatrix[M, M, IntegerT_co].from_accessor(
+            accessor=IdentityAccessor(
+                non_zero_value=cast(IntegerT_co, 1),
+                shape=(count, count),
+                zero_value=cast(IntegerT_co, 0),
+            ),
         )
 
     @classmethod
-    def zeroes(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, Literal[0]]:
+    def zeroes(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
         """Construct a matrix comprised entirely of zeroes, efficiently.
 
         **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
         """
-        return IntegerMatrix[M_co, N_co, Literal[0]].fill(lambda: 0, shape)
+        return IntegerMatrix[M_co, N_co, IntegerT_co].fill(
+            lambda: cast(IntegerT_co, 0),
+            shape,
+        )
 
     @classmethod
-    def ones(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, Literal[1]]:
+    def ones(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
         """Construct a matrix comprised entirely of ones, efficiently.
 
         **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
         """
-        return IntegerMatrix[M_co, N_co, Literal[1]].fill(lambda: 1, shape)
+        return IntegerMatrix[M_co, N_co, IntegerT_co].fill(
+            lambda: cast(IntegerT_co, 1),
+            shape,
+        )
 
     @overload
     def __getitem__(self, index: SupportsIndex) -> IntegerT_co: ...
