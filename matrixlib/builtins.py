@@ -5,6 +5,8 @@ __all__ = [
     "ComplexMatrix",
     "RealMatrix",
     "IntegerMatrix",
+    "vec2",
+    "vec3",
 ]
 
 import cmath
@@ -1954,3 +1956,20 @@ def interleave[T](iterables: tuple[Iterable[T], ...], leave_counts: tuple[int, .
 
         if not exhausted:
             index_queue.append(index)
+
+
+def vec2[T: Real = Real](x: T, y: T) -> RealMatrix[Literal[2], Literal[1], T]:
+    """Return a ``RealMatrix`` of shape ``(2, 1)``, comprised of values ``x``
+    and ``y``.
+
+    Matrix type commonly used to represent direction in 2D space.
+    """
+    return RealMatrix[Literal[2], Literal[1], T].col((x, y))
+
+def vec3[T: Real = Real](x: T, y: T, z: T) -> RealMatrix[Literal[3], Literal[1], T]:
+    """Return a ``RealMatrix`` of shape ``(3, 1)``, comprised of values ``x``,
+    ``y``, and ``z``.
+
+    Matrix type commonly used to represent direction in 3D space.
+    """
+    return RealMatrix[Literal[3], Literal[1], T].col((x, y, z))
