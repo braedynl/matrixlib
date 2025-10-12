@@ -1958,18 +1958,18 @@ def interleave[T](iterables: tuple[Iterable[T], ...], leave_counts: tuple[int, .
             index_queue.append(index)
 
 
-def vec2[T: Real = Real](x: T, y: T) -> RealMatrix[Literal[2], Literal[1], T]:
+def vec2[RealT: Real = Real](x: RealT, y: RealT) -> RealMatrix[Literal[2], Literal[1], RealT]:
     """Return a ``RealMatrix`` of shape ``(2, 1)``, comprised of values ``x``
     and ``y``.
 
     Matrix type commonly used to represent direction in 2D space.
     """
-    return RealMatrix[Literal[2], Literal[1], T].col((x, y))
+    return RealMatrix[Literal[2], Literal[1], RealT].col((x, y))
 
-def vec3[T: Real = Real](x: T, y: T, z: T) -> RealMatrix[Literal[3], Literal[1], T]:
+def vec3[RealT: Real = Real](x: RealT, y: RealT, z: RealT) -> RealMatrix[Literal[3], Literal[1], RealT]:
     """Return a ``RealMatrix`` of shape ``(3, 1)``, comprised of values ``x``,
     ``y``, and ``z``.
 
     Matrix type commonly used to represent direction in 3D space.
     """
-    return RealMatrix[Literal[3], Literal[1], T].col((x, y, z))
+    return RealMatrix[Literal[3], Literal[1], RealT].col((x, y, z))
