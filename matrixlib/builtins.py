@@ -27,8 +27,8 @@ from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
                         Rotate270Accessor, RowFlipAccessor, RowSheerAccessor,
                         RowSliceAccessor, RowVectorAccessor, SliceAccessor,
                         TransposeAccessor, ValueAccessor)
-from .exceptions import (MismatchedDimensionError, NegativeDimensionError,
-                         ReshapeError)
+from .exceptions import (DemotionError, MismatchedDimensionError,
+                         NegativeDimensionError, ReshapeError)
 from .rule import COL, ROW, Rule
 
 type Integer = int
@@ -468,6 +468,22 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 matrix_index = (row_index, col_index)
                 result[matrix_index] = self[matrix_index]
         return result
+
+    def demote(self) -> T_co:
+        """Return the only contained value of a ``(1, 1)`` matrix.
+
+        Raises ``DemotionError`` if the matrix does not contain exactly one
+        value.
+        """
+        if __debug__:
+            size = len(self)
+            if size > 1:
+                raise DemotionError(
+                    "cannot demote matrix of two or more values",
+                )
+            if size < 1:
+                raise DemotionError("cannot demote empty matrix")
+        return self[0]
 
     def materialize(self) -> Matrix[M_co, N_co, T_co]:
         """Return a materialized copy of the matrix.

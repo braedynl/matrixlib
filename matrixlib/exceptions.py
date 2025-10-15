@@ -5,6 +5,7 @@ __all__ = [
     "NegativeDimensionError",
     "MismatchedDimensionError",
     "ReshapeError",
+    "DemotionError",
 ]
 
 
@@ -37,6 +38,14 @@ class MismatchedDimensionError(ShapeError):
 class ReshapeError(ShapeError):
     """Raised when attempting to cast a sized object (matrices included) into
     a shape whose dimensions cannot losslessly fit the object's size.
+    """
+
+    __slots__ = ()
+
+
+class DemotionError(ShapeError):
+    """Raised when attempting to demote a shaped object that does not contain
+    exactly one value.
     """
 
     __slots__ = ()
