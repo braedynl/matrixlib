@@ -6,20 +6,15 @@ __all__ = [
     "ColVectorAccessor",
     "ValueAccessor",
     "IdentityAccessor",
-    "SparseAccessor",
 ]
 
 import itertools
 from abc import ABCMeta, abstractmethod
-from array import array
-from collections import Counter
-from collections.abc import Iterator, Mapping
-from typing import Final, Literal, Self, cast, final, override
+from collections.abc import Iterator
+from typing import Literal, Self, cast, final, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
-
-SLL_TYPE_CODE: Final[Literal["q"]] = "q"
 
 
 class AbstractArrayAccessor[
@@ -231,130 +226,3 @@ class IdentityAccessor[
     @override
     def matrix_access(self, row_index: int, col_index: int) -> T:
         return self.non_zero_value if row_index == col_index else self.zero_value
-
-
-@final
-class SparseAccessor[
-    M: int = int,
-    N: int = int,
-    T: object = object,
-](AbstractMatrixAccessor[M, N, T]):
-
-    __slots__ = (
-        "non_zero_values",
-        "zero_value",
-        "shape",  # pyright: ignore[reportIncompatibleMethodOverride]
-        "non_zero_row_offsets",
-        "non_zero_col_indices",
-    )
-    non_zero_values: tuple[T, ...]
-    zero_value: T
-    shape: tuple[M, N]
-    non_zero_row_offsets: array[int]
-    non_zero_col_indices: array[int]
-
-    def __new__(
-        cls,
-        non_zero_value_map: Mapping[tuple[int, int], T],
-        shape: tuple[M, N],
-        *,
-        zero_value: T = 0,
-    ) -> Self:
-        self = super(SparseAccessor, cls).__new__(cls)
-
-        non_zero_pairs   = sorted(non_zero_value_map.items(), key=lambda item: item[0])
-        non_zero_indices = tuple(map(lambda pair: pair[0], non_zero_pairs))
-        non_zero_values  = tuple(map(lambda pair: pair[1], non_zero_pairs))
-
-        self.non_zero_row_offsets = array(SLL_TYPE_CODE, (0,))
-        self.non_zero_col_indices = array(SLL_TYPE_CODE, map(lambda index: index[1], non_zero_indices))
-
-        row_counts = Counter(map(lambda index: index[0], non_zero_indices))
-        for row_index in range(shape[0]):
-            self.non_zero_row_offsets.append(
-                row_counts[row_index]
-                + self.non_zero_row_offsets[-1]
-            )
-
-        self.non_zero_values = non_zero_values
-        self.zero_value = zero_value
-        self.shape = shape
-
-        return self
-
-    def __hash__(self) -> int:
-        return hash(
-            (
-                self.non_zero_values,
-                self.zero_value,
-                self.shape,
-                tuple(self.non_zero_row_offsets),
-                tuple(self.non_zero_col_indices),
-            ),
-        )
-
-    @override
-    def __iter__(self) -> Iterator[T]:
-        non_zero_values = self.non_zero_values
-        zero_value = self.zero_value
-        non_zero_row_offsets = self.non_zero_row_offsets
-        non_zero_col_indices = self.non_zero_col_indices
-
-        row_indices = range(self.row_count)
-        col_indices = range(self.col_count)
-
-        for row_index in row_indices:
-            offset = non_zero_row_offsets[row_index]
-            offset_end = non_zero_row_offsets[row_index + 1]
-            for col_index in col_indices:
-                if offset < offset_end and non_zero_col_indices[offset] == col_index:
-                    yield non_zero_values[offset]
-                    offset += 1
-                else:
-                    yield zero_value
-
-    @override
-    def __reversed__(self) -> Iterator[T]:
-        non_zero_values = self.non_zero_values
-        zero_value = self.zero_value
-        non_zero_row_offsets = self.non_zero_row_offsets
-        non_zero_col_indices = self.non_zero_col_indices
-
-        row_indices = range(self.row_count - 1, -1, -1)
-        col_indices = range(self.col_count - 1, -1, -1)
-
-        for row_index in row_indices:
-            offset = non_zero_row_offsets[row_index + 1] - 1
-            offset_end = non_zero_row_offsets[row_index] - 1
-            for col_index in col_indices:
-                if offset > offset_end and non_zero_col_indices[offset] == col_index:
-                    yield non_zero_values[offset]
-                    offset -= 1
-                else:
-                    yield zero_value
-
-    @property
-    @override
-    def row_count(self) -> M:
-        return self.shape[0]
-
-    @property
-    @override
-    def col_count(self) -> N:
-        return self.shape[1]
-
-    @override
-    def matrix_access(self, row_index: int, col_index: int) -> T:
-        non_zero_row_offsets = self.non_zero_row_offsets
-        non_zero_col_indices = self.non_zero_col_indices
-        offset = non_zero_row_offsets[row_index]
-        offset_end = non_zero_row_offsets[row_index + 1] - 1
-        while offset <= offset_end:
-            offset_mid = (offset + offset_end) // 2
-            if non_zero_col_indices[offset_mid] == col_index:
-                return self.non_zero_values[offset_mid]
-            if non_zero_col_indices[offset_mid] < col_index:
-                offset = offset_mid + 1
-            else:
-                offset_end = offset_mid - 1
-        return self.zero_value

@@ -16,8 +16,7 @@ import math
 import operator
 import random
 from collections import deque
-from collections.abc import (Callable, Iterable, Iterator, Mapping, Reversible,
-                             Sequence)
+from collections.abc import Callable, Iterable, Iterator, Reversible, Sequence
 from typing import (Any, Final, Generic, Literal, Self, SupportsFloat,
                     SupportsIndex, TypeVar, cast, overload, override)
 
@@ -27,7 +26,7 @@ from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
                         Rotate090Accessor, Rotate180Accessor,
                         Rotate270Accessor, RowFlipAccessor, RowSheerAccessor,
                         RowSliceAccessor, RowVectorAccessor, SliceAccessor,
-                        SparseAccessor, TransposeAccessor, ValueAccessor)
+                        TransposeAccessor, ValueAccessor)
 from .exceptions import (MismatchedDimensionError, NegativeDimensionError,
                          ReshapeError)
 from .rule import COL, ROW, Rule
@@ -295,41 +294,6 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             accessor=ValueAccessor(
                 value=value(),
                 shape=shape,
-            ),
-        )
-
-    @classmethod
-    def from_sparse_mapping(
-        cls,
-        non_zero_value_map: Mapping[tuple[int, int], T_co],
-        shape: tuple[M_co, N_co],
-        *,
-        zero_value: Callable[[], T_co] = lambda: 0,
-    ) -> Self:
-        """Construct a matrix from a set of sparse index-to-value pairings.
-
-        Uses the Compressed Sparse Row (CSR) format to store data. Note that
-        this format only saves memory for sufficiently sparse matrices
-        (roughly 50% or more must be zero for large matrices, up to almost 70%
-        or more for smaller ones).
-
-        Keep in mind that operations like ``equal()``, ``not_equal()``, etc.
-        will accept sparse matrices but they will **not** create new ones on
-        their own, as they have no way of knowing whether the result is "sparse
-        enough" to warrant use of CSR storage. Such a process would require
-        iterating through the resultant matrix, which would slow the operation
-        down.
-
-        Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
-        negative (debug-only).
-        """
-        if __debug__:
-            assert_positive_shape(shape)
-        return cls.from_accessor(
-            accessor=SparseAccessor(
-                non_zero_value_map,
-                shape,
-                zero_value=zero_value(),
             ),
         )
 
