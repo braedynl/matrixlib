@@ -622,52 +622,29 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         self: Matrix[P, Q, T_co],
         mapper: Callable[[T_co, S], R],
         other: Matrix[P, Q, S],
-    ) -> Matrix[P, Q, R]:
-        """Return a new matrix that is a mapping of this matrix and another
-        of equal shape.
+    ) -> Iterator[R]:
+        """Return
 
         Raises ``MismatchedDimensionError`` if the ``other`` matrix does not
         have an equal shape (debug-only).
         """
         if __debug__:
             assert_equal_shapes(self.shape, other.shape)
-        return Matrix(
-            array=map(mapper, self, other),
-            shape=self.shape,
-        )
+        return map(mapper, self, other)
 
-    def _binary_scalar_map[S, R](self, mapper: Callable[[T_co, S], R], other: S) -> Matrix[M_co, N_co, R]:
-        """Return a new matrix that is a mapping of this matrix and a repeated
-        scalar.
+    def _binary_scalar_map[S, R](self, mapper: Callable[[T_co, S], R], other: S) -> Iterator[R]:
+        """Return
         """
-        return Matrix(
-            array=map(
-                mapper,
-                self,
-                itertools.repeat(other),
-            ),
-            shape=self.shape,
-        )
+        return map(mapper, self, itertools.repeat(other))
 
-    def _binary_scalar_map_r[S, R](self, mapper: Callable[[S, T_co], R], other: S) -> Matrix[M_co, N_co, R]:
-        """Return a new matrix that is a mapping of this matrix and a repeated
-        scalar, in reverse operand order.
+    def _binary_scalar_map_r[S, R](self, mapper: Callable[[S, T_co], R], other: S) -> Iterator[R]:
+        """Return
         """
-        return Matrix(
-            array=map(
-                mapper,
-                itertools.repeat(other),
-                self,
-            ),
-            shape=self.shape,
-        )
+        return map(mapper, itertools.repeat(other), self)
 
-    def _unary_map[R](self, mapper: Callable[[T_co], R]) -> Matrix[M_co, N_co, R]:
+    def _unary_map[R](self, mapper: Callable[[T_co], R]) -> Iterator[R]:
         """Return a new matrix that is a mapping of this matrix."""
-        return Matrix(
-            array=map(mapper, self),
-            shape=self.shape,
-        )
+        return map(mapper, self)
 
     def replace(self, old: Callable[[], T_co], new: Callable[[], T_co]) -> Matrix[M_co, N_co, T_co]:
         """Return a new matrix with values equal to ``old`` replaced with
@@ -679,30 +656,45 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 return new
             return value
 
-        return self._unary_map(mapper)
+        return Matrix(
+            array=self._unary_map(mapper),
+            shape=self.shape,
+        )
 
     def equal(self, other: object) -> Matrix[M_co, N_co, bool]:
         """Return element-wise ``a == b``."""
         if isinstance(other, Matrix):
-            return self._binary_matrix_map(
+            return Matrix(
+                array=self._binary_matrix_map(
+                    operator.__eq__,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return Matrix(
+            array=self._binary_scalar_map(
                 operator.__eq__,
                 other,
-            )
-        return self._binary_scalar_map(
-            operator.__eq__,
-            other,
+            ),
+            shape=self.shape,
         )
 
     def not_equal(self, other: object) -> Matrix[M_co, N_co, bool]:
         """Return element-wise ``a != b``."""
         if isinstance(other, Matrix):
-            return self._binary_matrix_map(
+            return Matrix(
+                array=self._binary_matrix_map(
+                    operator.__ne__,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return Matrix(
+            array=self._binary_scalar_map(
                 operator.__ne__,
                 other,
-            )
-        return self._binary_scalar_map(
-            operator.__ne__,
-            other,
+            ),
+            shape=self.shape,
         )
 
 
@@ -734,137 +726,154 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
 
     def __add__[P: int, Q: int](self: ComplexMatrix[P, Q, ComplexT_co], other: ComplexMatrix[P, Q] | Complex) -> ComplexMatrix[P, Q]:
         if isinstance(other, ComplexMatrix):
-            return ComplexMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return ComplexMatrix(
+                array=self._binary_matrix_map(
                     operator.__add__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, COMPLEX_TYPES):
-            return ComplexMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return ComplexMatrix(
+                array=self._binary_scalar_map(
                     operator.__add__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if isinstance(other, COMPLEX_TYPES):
-            return ComplexMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return ComplexMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__add__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __sub__[P: int, Q: int](self: ComplexMatrix[P, Q, ComplexT_co], other: ComplexMatrix[P, Q] | Complex) -> ComplexMatrix[P, Q]:
         if isinstance(other, ComplexMatrix):
-            return ComplexMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return ComplexMatrix(
+                array=self._binary_matrix_map(
                     operator.__sub__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, COMPLEX_TYPES):
-            return ComplexMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return ComplexMatrix(
+                array=self._binary_scalar_map(
                     operator.__sub__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if isinstance(other, COMPLEX_TYPES):
-            return ComplexMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return ComplexMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__sub__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __mul__[P: int, Q: int](self: ComplexMatrix[P, Q, ComplexT_co], other: ComplexMatrix[P, Q] | Complex) -> ComplexMatrix[P, Q]:
         if isinstance(other, ComplexMatrix):
-            return ComplexMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return ComplexMatrix(
+                array=self._binary_matrix_map(
                     operator.__mul__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, COMPLEX_TYPES):
-            return ComplexMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return ComplexMatrix(
+                array=self._binary_scalar_map(
                     operator.__mul__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if isinstance(other, COMPLEX_TYPES):
-            return ComplexMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return ComplexMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__mul__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __truediv__[P: int, Q: int](self: ComplexMatrix[P, Q, ComplexT_co], other: ComplexMatrix[P, Q] | Complex) -> ComplexMatrix[P, Q]:
         if isinstance(other, ComplexMatrix):
-            return ComplexMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return ComplexMatrix(
+                array=self._binary_matrix_map(
                     operator.__truediv__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, COMPLEX_TYPES):
-            return ComplexMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return ComplexMatrix(
+                array=self._binary_scalar_map(
                     operator.__truediv__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rtruediv__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if isinstance(other, COMPLEX_TYPES):
-            return ComplexMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return ComplexMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__truediv__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __neg__(self) -> ComplexMatrix[M_co, N_co]:
-        return ComplexMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(operator.__neg__),
+        return ComplexMatrix(
+            array=self._unary_map(operator.__neg__),
+            shape=self.shape,
         )
 
     def __pos__(self) -> ComplexMatrix[M_co, N_co]:
-        return ComplexMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(operator.__pos__),
+        return ComplexMatrix(
+            array=self._unary_map(operator.__pos__),
+            shape=self.shape,
         )
 
     def __abs__(self) -> RealMatrix[M_co, N_co]:
-        return RealMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(abs),
+        return RealMatrix(
+            array=self._unary_map(abs),
+            shape=self.shape,
         )
 
     @property
     def real(self) -> RealMatrix[M_co, N_co]:
-        return RealMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(lambda x: x.real),
+        return RealMatrix(
+            array=self._unary_map(lambda x: x.real),
+            shape=self.shape,
         )
 
     @property
     def imag(self) -> RealMatrix[M_co, N_co]:
-        return RealMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(lambda x: x.imag),
+        return RealMatrix(
+            array=self._unary_map(lambda x: x.imag),
+            shape=self.shape,
         )
 
     @override
@@ -920,8 +929,9 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return ComplexMatrix[M_co, N_co, ComplexT_co].from_matrix(super().replace(old, new))
 
     def conjugate(self) -> ComplexMatrix[M_co, N_co]:
-        return ComplexMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(lambda x: x.conjugate()),
+        return ComplexMatrix(
+            array=self._unary_map(lambda x: x.conjugate()),
+            shape=self.shape,
         )
 
     def transjugate(self) -> ComplexMatrix[N_co, M_co]:
@@ -949,8 +959,20 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             abs_tol=abs_tol,
         )
         if isinstance(other, ComplexMatrix):
-            return self._binary_matrix_map(is_close, other)
-        return self._binary_scalar_map(is_close, other)
+            return Matrix(
+                array=self._binary_matrix_map(
+                    is_close,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return Matrix(
+            array=self._binary_scalar_map(
+                is_close,
+                other,
+            ),
+            shape=self.shape,
+        )
 
 
 class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
@@ -1163,55 +1185,61 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
 
     def __floordiv__[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> RealMatrix[P, Q]:
         if isinstance(other, RealMatrix):
-            return RealMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return RealMatrix(
+                array=self._binary_matrix_map(
                     operator.__floordiv__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, REAL_TYPES):
-            return RealMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return RealMatrix(
+                array=self._binary_scalar_map(
                     operator.__floordiv__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rfloordiv__(self: RealMatrix[M_co, N_co], other: Real) -> RealMatrix[M_co, N_co]:
         if isinstance(other, REAL_TYPES):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return RealMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__floordiv__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __mod__[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> RealMatrix[P, Q]:
         if isinstance(other, RealMatrix):
-            return RealMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return RealMatrix(
+                array=self._binary_matrix_map(
                     operator.__mod__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, REAL_TYPES):
-            return RealMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return RealMatrix(
+                array=self._binary_scalar_map(
                     operator.__mod__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rmod__(self: RealMatrix[M_co, N_co], other: Real) -> RealMatrix[M_co, N_co]:
         if isinstance(other, REAL_TYPES):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return RealMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__mod__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
@@ -1330,26 +1358,74 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def lesser[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> Matrix[P, Q, bool]:
         """Return element-wise ``a < b``."""
         if isinstance(other, RealMatrix):
-            return self._binary_matrix_map(operator.__lt__, other)
-        return self._binary_scalar_map(operator.__lt__, other)
+            return Matrix(
+                array=self._binary_matrix_map(
+                    operator.__lt__,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return Matrix(
+            array=self._binary_scalar_map(
+                operator.__lt__,
+                other,
+            ),
+            shape=self.shape,
+        )
 
     def lesser_equal[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> Matrix[P, Q, bool]:
         """Return element-wise ``a <= b``."""
         if isinstance(other, RealMatrix):
-            return self._binary_matrix_map(operator.__le__, other)
-        return self._binary_scalar_map(operator.__le__, other)
+            return Matrix(
+                array=self._binary_matrix_map(
+                    operator.__le__,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return Matrix(
+            array=self._binary_scalar_map(
+                operator.__le__,
+                other,
+            ),
+            shape=self.shape,
+        )
 
     def greater[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> Matrix[P, Q, bool]:
         """Return element-wise ``a > b``."""
         if isinstance(other, RealMatrix):
-            return self._binary_matrix_map(operator.__gt__, other)
-        return self._binary_scalar_map(operator.__gt__, other)
+            return Matrix(
+                array=self._binary_matrix_map(
+                    operator.__gt__,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return Matrix(
+            array=self._binary_scalar_map(
+                operator.__gt__,
+                other,
+            ),
+            shape=self.shape,
+        )
 
     def greater_equal[P: int, Q: int](self: RealMatrix[P, Q], other: RealMatrix[P, Q] | Real) -> Matrix[P, Q, bool]:
         """Return element-wise ``a >= b``."""
         if isinstance(other, RealMatrix):
-            return self._binary_matrix_map(operator.__ge__, other)
-        return self._binary_scalar_map(operator.__ge__, other)
+            return Matrix(
+                array=self._binary_matrix_map(
+                    operator.__ge__,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return Matrix(
+            array=self._binary_scalar_map(
+                operator.__ge__,
+                other,
+            ),
+            shape=self.shape,
+        )
 
     @overload
     def round(self, ndigits: None = None) -> IntegerMatrix[M_co, N_co]: ...
@@ -1364,31 +1440,36 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         more details.
         """
         if ndigits is None:
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=self._unary_map(round),
+            return IntegerMatrix(
+                array=self._unary_map(round),
+                shape=self.shape,
             )
-        return RealMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(
+        return RealMatrix(
+            array=self._unary_map(
                 functools.partial(round, ndigits=ndigits),
             ),
+            shape=self.shape,
         )
 
     def floor(self) -> IntegerMatrix[M_co, N_co]:
         """Return the matrix with its values floored."""
-        return IntegerMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(math.floor),
+        return IntegerMatrix(
+            array=self._unary_map(math.floor),
+            shape=self.shape,
         )
 
     def ceil(self) -> IntegerMatrix[M_co, N_co]:
         """Return the matrix with its values ceiled."""
-        return IntegerMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(math.ceil),
+        return IntegerMatrix(
+            array=self._unary_map(math.ceil),
+            shape=self.shape,
         )
 
     def trunc(self) -> IntegerMatrix[M_co, N_co]:
         """Return the matrix with its values truncated."""
-        return IntegerMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(math.trunc),
+        return IntegerMatrix(
+            array=self._unary_map(math.trunc),
+            shape=self.shape,
         )
 
     def norm(self) -> float:
@@ -1663,136 +1744,151 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
     def __lshift__[P: int, Q: int](self: IntegerMatrix[P, Q], other: IntegerMatrix[P, Q] | Integer) -> IntegerMatrix[P, Q]:
         if isinstance(other, IntegerMatrix):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return IntegerMatrix(
+                array=self._binary_matrix_map(
                     operator.__lshift__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return IntegerMatrix(
+                array=self._binary_scalar_map(
                     operator.__lshift__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rlshift__(self, other: Integer) -> IntegerMatrix[M_co, N_co]:
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return IntegerMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__lshift__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rshift__[P: int, Q: int](self: IntegerMatrix[P, Q], other: IntegerMatrix[P, Q] | Integer) -> IntegerMatrix[P, Q]:
         if isinstance(other, IntegerMatrix):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return IntegerMatrix(
+                array=self._binary_matrix_map(
                     operator.__rshift__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return IntegerMatrix(
+                array=self._binary_scalar_map(
                     operator.__rshift__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rrshift__(self, other: Integer) -> IntegerMatrix[M_co, N_co]:
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return IntegerMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__rshift__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __and__[P: int, Q: int](self: IntegerMatrix[P, Q], other: IntegerMatrix[P, Q] | Integer) -> IntegerMatrix[P, Q]:
         if isinstance(other, IntegerMatrix):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return IntegerMatrix(
+                array=self._binary_matrix_map(
                     operator.__and__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return IntegerMatrix(
+                array=self._binary_scalar_map(
                     operator.__and__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rand__(self: IntegerMatrix[M_co, N_co], other: Integer) -> IntegerMatrix[M_co, N_co]:
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return IntegerMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__and__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __xor__[P: int, Q: int](self: IntegerMatrix[P, Q], other: IntegerMatrix[P, Q] | Integer) -> IntegerMatrix[P, Q]:
         if isinstance(other, IntegerMatrix):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return IntegerMatrix(
+                array=self._binary_matrix_map(
                     operator.__xor__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return IntegerMatrix(
+                array=self._binary_scalar_map(
                     operator.__xor__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __rxor__(self, other: Integer) -> IntegerMatrix[M_co, N_co]:
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return IntegerMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__xor__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __or__[P: int, Q: int](self: IntegerMatrix[P, Q], other: IntegerMatrix[P, Q] | Integer) -> IntegerMatrix[P, Q]:
         if isinstance(other, IntegerMatrix):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_matrix_map(
+            return IntegerMatrix(
+                array=self._binary_matrix_map(
                     operator.__or__,
                     other,
                 ),
+                shape=self.shape,
             )
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[P, Q].from_matrix(
-                matrix=self._binary_scalar_map(
+            return IntegerMatrix(
+                array=self._binary_scalar_map(
                     operator.__or__,
                     other,
                 ),
+                shape=self.shape,
             )
         return NotImplemented
 
     def __ror__(self, other: Integer) -> IntegerMatrix[M_co, N_co]:
         if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=self._binary_scalar_map_r(
+            return IntegerMatrix(
+                array=self._binary_scalar_map_r(
                     operator.__or__,
                     other,
-                )
+                ),
+                shape=self.shape,
             )
         return NotImplemented
 
@@ -1815,8 +1911,9 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         )
 
     def __invert__(self) -> IntegerMatrix[M_co, N_co]:
-        return IntegerMatrix[M_co, N_co].from_matrix(
-            matrix=self._unary_map(operator.__invert__),
+        return IntegerMatrix(
+            array=self._unary_map(operator.__invert__),
+            shape=self.shape,
         )
 
     @property
