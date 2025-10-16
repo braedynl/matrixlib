@@ -36,7 +36,7 @@ type Real = float | Integer
 type Complex = complex | Real
 type EvenNumber = Literal[-16, -14, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16]
 type OddNumber = Literal[-15, -13, -11, -9, -7, -5, -3, -1, 1, 3, 5, 7, 9, 11, 13, 15]
-type Slice = slice[int | None, int | None, int | None]
+type Slice = slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | None]
 
 INTEGER_TYPES: Final[tuple[type[int]]] = (int,)
 REAL_TYPES: Final[tuple[type[float], type[int]]] = (float,) + INTEGER_TYPES
@@ -52,6 +52,26 @@ IntegerT_co = TypeVar("IntegerT_co", covariant=True, bound=Integer, default=Inte
 
 
 class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
+    """A basic one and two-dimensional immutable sequence.
+
+    Implements a "hybrid" interface, behaving like a one-dimensional sequence
+    by default, and extending with two-dimensional constructs and routines.
+    One-dimensional iteration is always in row-major order unless specified
+    otherwise.
+
+    Key features:
+    - **Shape typing** - the first two type arguments are bound to
+      the matrix's row and column count, respectively, allowing dimension
+      checks to be done by the type checker when using ``typing.Literal`` or
+      ``typing.NewType``. For this reason, most shape checks are done in debug
+      mode only (enabled by ``-O`` during compilation).
+    - **Memory preservation** - slices, permutations, and certain construction
+      routines are implemented using specialized storage types, called
+      "accessors". See the ``AbstractAccessor`` class for more details.
+    - **Easily extendable** - this class was made with extendability in mind -
+      there are very few stipulations to implementing a sub-class of your own,
+      and you can even make accessor types to use for yourself.
+    """
 
     __slots__ = ("_accessor",)
     __match_args__ = ("array", "shape")
@@ -871,6 +891,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
 
     @property
     def real(self) -> RealMatrix[M_co, N_co]:
+        """The matrix's real components."""
         return RealMatrix(
             array=self._unary_map(lambda x: x.real),
             shape=self.shape,
@@ -878,6 +899,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
 
     @property
     def imag(self) -> RealMatrix[M_co, N_co]:
+        """The matrix's imaginary components."""
         return RealMatrix(
             array=self._unary_map(lambda x: x.imag),
             shape=self.shape,
@@ -936,12 +958,14 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return ComplexMatrix[M_co, N_co, ComplexT_co].from_matrix(super().replace(old, new))
 
     def conjugate(self) -> ComplexMatrix[M_co, N_co]:
+        """Return the complex conjugate of the matrix."""
         return ComplexMatrix(
             array=self._unary_map(lambda x: x.conjugate()),
             shape=self.shape,
         )
 
     def transjugate(self) -> ComplexMatrix[N_co, M_co]:
+        """Return the transposed complex conjugate of the matrix."""
         return self.transpose().conjugate()
 
     def is_close(
@@ -2050,17 +2074,13 @@ def interleave[T](iterables: tuple[Iterable[T], ...], leave_counts: tuple[int, .
 
 
 def vec2[RealT: Real = Real](x: RealT, y: RealT) -> RealMatrix[Literal[2], Literal[1], RealT]:
-    """Return a ``RealMatrix`` of shape ``(2, 1)``, comprised of values ``x``
-    and ``y``.
-
-    Matrix type commonly used to represent direction in 2D space.
+    """Convenience function for constructing a ``RealMatrix`` of shape
+    ``(2, 1)``, commonly used in 2D space models.
     """
     return RealMatrix[Literal[2], Literal[1], RealT].col((x, y))
 
 def vec3[RealT: Real = Real](x: RealT, y: RealT, z: RealT) -> RealMatrix[Literal[3], Literal[1], RealT]:
-    """Return a ``RealMatrix`` of shape ``(3, 1)``, comprised of values ``x``,
-    ``y``, and ``z``.
-
-    Matrix type commonly used to represent direction in 3D space.
+    """Convenience function for constructing a ``RealMatrix`` of shape
+    ``(3, 1)``, commonly used in 3D space models.
     """
     return RealMatrix[Literal[3], Literal[1], RealT].col((x, y, z))
