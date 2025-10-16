@@ -313,7 +313,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     @classmethod
     def from_stack(cls, *matrices: Matrix[Any, Any, T_co], by: Rule = Rule.ROW) -> Self:
         """Construct a matrix from a stacking of one or more other matrices
-        along the specified rule.
+        along the specified dimension.
 
         Raises ``ValueError`` if no matrices are provided.
 
@@ -364,8 +364,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         Raises ``ValueError`` if the length of the nested iterables is
         inconsistent (debug-only).
 
-        **Note**: This method does not infer its dimension types. The matrix's
-        dimensions are as explained above.
+        **Note**: This method does not infer its dimension types.
         """
         array: list[T_co] = []
 
@@ -500,11 +499,15 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         effectively does nothing.
 
         Materializing your matrix should only ever be necessary in rare
-        circumstances. A matrix constructed from the use of multiple
-        permutations (e.g., ``transpose()``, ``flip()``, ``rotate()``) may be
-        a case where materialization is warranted, though note that this may
-        vastly increase your program's memory usage if the origin matrix is
-        still in use.
+        circumstances. Consistent use of a matrix constructed from a series of
+        multiple permutations (e.g., ``transpose()``, ``flip()``, ``rotate()``)
+        may be a case where materialization is warranted, though note that this
+        may vastly increase your program's memory usage, especially when the
+        origin matrix is still in use.
+
+        Materialization should only be done once, prior to calculations. Think
+        of it as being akin to compiling a regular expression (from the ``re``
+        module) into a ``Pattern`` object.
         """
         return Matrix(self.array, self.shape)
 
@@ -565,7 +568,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return iter_or(values, reverse=reverse)
 
     def rows(self, *, reverse: bool = False) -> Iterator[Matrix[Literal[1], N_co, T_co]]:
-        """Return an iterator over the rows of the matrix."""
+        """Return an iterator that yields views over the rows of the matrix."""
         target = self._accessor
         for row_index in iter_or(range(self.row_count), reverse=reverse):
             yield Matrix[Literal[1], N_co, T_co].from_accessor(
@@ -573,7 +576,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             )
 
     def cols(self, *, reverse: bool = False) -> Iterator[Matrix[M_co, Literal[1], T_co]]:
-        """Return an iterator over the columns of the matrix."""
+        """Return an iterator that yields views over the columns of the matrix."""
         target = self._accessor
         for col_index in iter_or(range(self.col_count), reverse=reverse):
             yield Matrix[M_co, Literal[1], T_co].from_accessor(
@@ -590,11 +593,11 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def vectors(self, *, reverse: bool = False) -> Iterator[Matrix[Literal[1], N_co, T_co]]: ...
 
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[Matrix[Any, Any, T_co]]:
-        """Return an iterator over the rows or columns of the matrix.
+        """Return an iterator that yields views over the rows or columns of the
+        matrix.
 
-        If by ``ROW``, each row is yielded from top to bottom. If by ``COL``,
-        each column is yielded from left to right. Equivalent to calling
-        ``rows()`` or ``cols()``, respectively.
+        Equivalent to calling ``rows()`` or ``cols()``. See their documentation
+        for more details.
         """
         return self.rows(reverse=reverse) if by is ROW else self.cols(reverse=reverse)
 
@@ -619,7 +622,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return Matrix[Any, Any, T_co | S].from_stack(self, *others, by=by)
 
     def _binary_matrix_map[S, R](self, mapper: Callable[[T_co, S], R], other: Matrix[M_co, N_co, S]) -> Iterator[R]:
-        """Return
+        """Return an iterator that computes ``mapper`` with each value of two
+        matrices, in parallel.
 
         Raises ``MismatchedDimensionError`` if the ``other`` matrix does not
         have an equal shape (debug-only).
@@ -629,22 +633,26 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return map(mapper, self, other)
 
     def _binary_scalar_map[S, R](self, mapper: Callable[[T_co, S], R], other: S) -> Iterator[R]:
-        """Return
+        """Return an iterator that computes ``mapper`` with each value of the
+        matrix and a constant scalar value.
         """
         return map(mapper, self, itertools.repeat(other))
 
     def _binary_scalar_map_r[S, R](self, mapper: Callable[[S, T_co], R], other: S) -> Iterator[R]:
-        """Return
+        """Return an iterator that computes ``mapper`` with each value of the
+        matrix and a constant scalar value, in reverse.
         """
         return map(mapper, itertools.repeat(other), self)
 
     def _unary_map[R](self, mapper: Callable[[T_co], R]) -> Iterator[R]:
-        """Return a new matrix that is a mapping of this matrix."""
+        """Return an iterator that computes ``mapper`` with each value of the
+        matrix.
+        """
         return map(mapper, self)
 
     def replace(self, old: Callable[[], T_co], new: Callable[[], T_co]) -> Matrix[M_co, N_co, T_co]:
-        """Return a new matrix with values equal to ``old`` replaced with
-        ``new``.
+        """Return a new matrix with values equal to ``old()`` replaced with
+        ``new()``.
         """
 
         def mapper(value: T_co, old: T_co = old(), new: T_co = new()) -> T_co:
@@ -851,6 +859,9 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             array=self._unary_map(operator.__pos__),
             shape=self.shape,
         )
+
+    # Absolute value of a complex number is its distance from the origin,
+    # so return a RealMatrix.
 
     def __abs__(self) -> RealMatrix[M_co, N_co]:
         return RealMatrix(
@@ -1636,6 +1647,9 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                 matrix=cast(ComplexMatrix[M_co, N_co, Integer], result),
             )
         return result
+
+    # NOTE: NO override for __truediv__()/__rtruediv__() - division (often)
+    # leaves the realm of integer numbers.
 
     @overload
     def __matmul__[P: int](self, other: IntegerMatrix[N_co, P]) -> IntegerMatrix[M_co, P]: ...
