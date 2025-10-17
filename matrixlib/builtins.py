@@ -356,12 +356,13 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         shape[dy] = matrices[0].shape[dy]
 
         if __debug__:
+            true_count = shape[dy]
             for i in range(1, matrix_count):
-                m, n = matrices[i].shape[dy], shape[dy]
-                if m != n:
+                test_count = matrices[i].shape[dy]
+                if test_count != true_count:
                     raise MismatchedDimensionError(
-                        f"matrix at index {i} has {m} {dy.handle}s, but"
-                        f" precedent matrices have {n}"
+                        f"matrix at index {i} has {test_count} {dy.handle}s,"
+                        f" but precedent matrices have {true_count}"
                     )
 
         return cls(
@@ -389,46 +390,38 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         array: list[T_co] = []
 
         row_count = 0
-        col_count = 0
+        true_col_count = 0
 
-        rows = iter(nesting)
+        raw_rows = iter(nesting)
         try:
-            row = next(rows)
+            raw_row = next(raw_rows)
         except StopIteration:
             return cls(
                 array=array,
-                shape=(
-                    cast(M_co, row_count),
-                    cast(N_co, col_count),
-                ),
+                shape=(cast(M_co, row_count), cast(N_co, true_col_count)),
             )
         else:
-            array.extend(row)
+            array.extend(raw_row)
 
-        row_count = 1
-        col_count = len(array)
+        row_count += 1
+        true_col_count = len(array)
 
-        for row in rows:
+        for raw_row in raw_rows:
             if __debug__:
-                n = 0
-                for value in row:
-                    array.append(value)
-                    n += 1
-                if col_count != n:
+                row = tuple(raw_row)
+                test_col_count = len(row)
+                if true_col_count != test_col_count:
                     raise ValueError(
-                        f"row at index {row_count} has length {n}, but"
-                        f" precedent rows have length {col_count}"
+                        f"row at index {row_count} has length {test_col_count},"
+                        f" but precedent rows have length {true_col_count}"
                     )
             else:
-                array.extend(row)
+                array.extend(raw_row)
             row_count += 1
 
         return cls(
             array=array,
-            shape=(
-                cast(M_co, row_count),
-                cast(N_co, col_count),
-            ),
+            shape=(cast(M_co, row_count), cast(N_co, true_col_count)),
         )
 
     @property
