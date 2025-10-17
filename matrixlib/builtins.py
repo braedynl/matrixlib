@@ -497,7 +497,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 raise DemotionError("cannot demote empty matrix")
         return self[0]
 
-    def materialize(self) -> Matrix[M_co, N_co, T_co]:
+    def materialize(self) -> Self:
         """Return a materialized copy of the matrix.
 
         To preserve memory, some methods produce a ``Matrix`` instance that
@@ -522,7 +522,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         of it as being akin to compiling a regular expression (from the ``re``
         module) into a ``Pattern`` object.
         """
-        return Matrix(self.array, self.shape)
+        return self.__class__(self.array, self.shape)
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix."""
@@ -897,10 +897,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             array=self._unary_map(lambda x: x.imag),
             shape=self.shape,
         )
-
-    @override
-    def materialize(self) -> ComplexMatrix[M_co, N_co, ComplexT_co]:
-        return ComplexMatrix[M_co, N_co, ComplexT_co].from_matrix(super().materialize())
 
     @override
     def transpose(self) -> ComplexMatrix[N_co, M_co, ComplexT_co]:
@@ -1298,10 +1294,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def imag(self) -> IntegerMatrix[M_co, N_co]:
         return IntegerMatrix[M_co, N_co].zeroes(self.shape)
-
-    @override
-    def materialize(self) -> RealMatrix[M_co, N_co, RealT_co]:
-        return RealMatrix[M_co, N_co, RealT_co].from_matrix(super().materialize())
 
     @override
     def transpose(self) -> RealMatrix[N_co, M_co, RealT_co]:
@@ -1947,10 +1939,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def real(self) -> IntegerMatrix[M_co, N_co]:
         return self
-
-    @override
-    def materialize(self) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
-        return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().materialize())
 
     @override
     def transpose(self) -> IntegerMatrix[N_co, M_co, IntegerT_co]:
