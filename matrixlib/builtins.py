@@ -302,7 +302,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     @classmethod
     def fill(cls, value: Callable[[], T_co], shape: tuple[M_co, N_co]) -> Self:
-        """Construct a matrix comprised entirely of a single value,
+        """Construct a matrix comprised entirely of ``value()``,
         efficiently.
 
         Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
@@ -613,26 +613,6 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         for more details.
         """
         return self.rows(reverse=reverse) if by is ROW else self.cols(reverse=reverse)
-
-    @overload
-    def stack[S](self, *others: Matrix[Any, N_co, S], by: Literal[Rule.ROW]) -> Matrix[Any, N_co, T_co | S]: ...
-    @overload
-    def stack[S](self, *others: Matrix[M_co, Any, S], by: Literal[Rule.COL]) -> Matrix[M_co, Any, T_co | S]: ...
-    @overload
-    def stack[S](self, *others: Matrix[Any, Any, S], by: Rule) -> Matrix[Any, Any, T_co | S]: ...
-    @overload
-    def stack[S](self, *others: Matrix[Any, N_co, S]) -> Matrix[Any, N_co, T_co | S]: ...
-
-    def stack[S](self, *others: Matrix[Any, Any, S], by: Rule = Rule.ROW) -> Matrix[Any, Any, T_co | S]:
-        """Return a stacking of the matrix with other matrices along the
-        specified rule.
-
-        Same as ``Matrix.from_stack(self, *others, by=by)``.
-
-        **Note**: This method does not fully infer its dimension types. See the
-        documentation of ``from_stack()`` for details.
-        """
-        return Matrix[Any, Any, T_co | S].from_stack(self, *others, by=by)
 
     def _binary_matrix_map[S, R](self, mapper: Callable[[T_co, S], R], other: Matrix[M_co, N_co, S]) -> Iterator[R]:
         """Return an iterator that computes ``mapper`` with each value of two
