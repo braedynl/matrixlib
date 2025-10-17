@@ -1468,10 +1468,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             shape=self.shape,
         )
 
-    def norm(self) -> float:
-        """Return the Euclidean norm of the matrix."""
-        return math.hypot(*self)
-
 
 class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
