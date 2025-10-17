@@ -30,6 +30,7 @@ from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
 from .exceptions import (DemotionError, MismatchedDimensionError,
                          NegativeDimensionError, ReshapeError)
 from .rule import COL, ROW, Rule
+from .typeshed import Sortable
 
 type Integer = int
 type Real = float | Integer
@@ -1468,6 +1469,17 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             shape=self.shape,
         )
 
+    def sort[SortableT: Sortable](
+        self,
+        *,
+        key: Callable[[RealT_co], SortableT] | None = None,
+    ) -> RealMatrix[M_co, N_co, RealT_co]:
+        """Return the matrix sorted."""
+        return RealMatrix(
+            array=sorted(self.array, key=key),
+            shape=self.shape,
+        )
+
 
 class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
@@ -1973,6 +1985,14 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         return IntegerMatrix[N_co, M_co].from_matrix(
             matrix=cast(RealMatrix[N_co, M_co, Integer], super().transjugate()),
         )
+
+    @override
+    def sort[SortableT: Sortable](
+        self,
+        *,
+        key: Callable[[IntegerT_co], SortableT] | None = None,
+    ) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
+        return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().sort(key=key))
 
 
 def assert_positive_shape(shape: tuple[int, int], /) -> None:
