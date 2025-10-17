@@ -1147,7 +1147,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                 )
 
         if not n1:
-            return IntegerMatrix[M_co, P, Literal[0]].zeroes((m, p))
+            return IntegerMatrix[M_co, P].zeroes((m, p))
 
         return RealMatrix[M_co, P](
             array=(
@@ -1469,10 +1469,19 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             shape=self.shape,
         )
 
-    def sort(self, *, key: Callable[[RealT_co], Sortable] | None = None) -> RealMatrix[M_co, N_co, RealT_co]:
-        """Return the matrix sorted."""
+    def sort(
+        self,
+        *,
+        key: Callable[[RealT_co], Sortable] | None = None,
+        reverse: bool = False,
+    ) -> RealMatrix[M_co, N_co, RealT_co]:
+        """Return the matrix sorted.
+
+        Internally delegates to built-in ``sorted()``. See its documentation
+        for more details.
+        """
         return RealMatrix(
-            array=sorted(self.array, key=key),
+            array=sorted(self.array, key=key, reverse=reverse),
             shape=self.shape,
         )
 
@@ -1983,8 +1992,13 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         )
 
     @override
-    def sort(self, *, key: Callable[[IntegerT_co], Sortable] | None = None) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
-        return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().sort(key=key))
+    def sort(
+        self,
+        *,
+        key: Callable[[IntegerT_co], Sortable] | None = None,
+        reverse: bool = False,
+    ) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
+        return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().sort(key=key, reverse=reverse))
 
 
 def assert_positive_shape(shape: tuple[int, int], /) -> None:
