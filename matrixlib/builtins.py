@@ -393,31 +393,30 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         row_count = 0
         true_col_count = 0
 
-        raw_rows = iter(nesting)
+        rows = iter(nesting)
         try:
-            raw_row = next(raw_rows)
+            row = next(rows)
         except StopIteration:
             return cls(
                 array=array,
                 shape=(cast(M_co, row_count), cast(N_co, true_col_count)),
             )
         else:
-            array.extend(raw_row)
+            array.extend(row)
 
         row_count += 1
         true_col_count = len(array)
 
-        for raw_row in raw_rows:
+        for row in rows:
             if __debug__:
-                row = tuple(raw_row)
+                row = tuple(row)
                 test_col_count = len(row)
                 if true_col_count != test_col_count:
                     raise ValueError(
                         f"row at index {row_count} has length {test_col_count},"
                         f" but precedent rows have length {true_col_count}"
                     )
-            else:
-                array.extend(raw_row)
+            array.extend(row)
             row_count += 1
 
         return cls(
