@@ -1265,6 +1265,23 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             matrix=cast(ComplexMatrix[M_co, N_co, Real], super().__pos__()),
         )
 
+    @overload
+    def __round__(self, ndigits: None = None) -> int: ...
+    @overload
+    def __round__(self, ndigits: SupportsIndex) -> float: ...
+
+    def __round__(self, ndigits: SupportsIndex | None = None) -> float:
+        return round(self.demote(), ndigits)
+
+    def __floor__(self) -> int:
+        return math.floor(self.demote())
+
+    def __ceil__(self) -> int:
+        return math.ceil(self.demote())
+
+    def __trunc__(self) -> int:
+        return math.trunc(self.demote())
+
     @property
     @override
     def real(self) -> RealMatrix[M_co, N_co]:
