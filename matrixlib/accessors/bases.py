@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __all__ = [
+    "AbstractArrayAccessor",
     "MatrixAccessor",
     "RowVectorAccessor",
     "ColVectorAccessor",
@@ -24,6 +25,11 @@ class AbstractArrayAccessor[
 ](AbstractVectorAccessor[M, N, T], metaclass=ABCMeta):
 
     __slots__ = ()
+
+    @classmethod
+    @abstractmethod
+    def from_standard_parts(cls, array: tuple[T, ...], shape: tuple[M, N]) -> Self:
+        raise NotImplementedError
 
     def __hash__(self) -> int:
         return hash((self.array, self.shape))
@@ -69,7 +75,6 @@ class MatrixAccessor[M: int = int, N: int = int, T: object = object](AbstractArr
     shape: tuple[M, N]
 
     def __new__(cls, array: tuple[T, ...], shape: tuple[M, N]) -> Self:
-        assert len(array) == shape[0] * shape[1]
         self = super(MatrixAccessor, cls).__new__(cls)
         self.array = array
         self.shape = shape
@@ -77,6 +82,12 @@ class MatrixAccessor[M: int = int, N: int = int, T: object = object](AbstractArr
 
     def __repr__(self) -> str:
         return f"MatrixAccessor(array={self.array!r}, shape={self.shape!r})"
+
+    @classmethod
+    @override
+    def from_standard_parts(cls, array: tuple[T, ...], shape: tuple[M, N]) -> Self:
+        assert len(array) == shape[0] * shape[1]
+        return cls(array, shape)
 
     @property
     @override
@@ -106,6 +117,12 @@ class RowVectorAccessor[N: int = int, T: object = object](AbstractArrayAccessor[
     def __repr__(self) -> str:
         return f"RowVectorAccessor(array={self.array!r})"
 
+    @classmethod
+    @override
+    def from_standard_parts(cls, array: tuple[T, ...], shape: tuple[Literal[1], N]) -> Self:
+        assert shape == (1, len(array))
+        return cls(array)
+
     @property
     @override
     def col_count(self) -> N:
@@ -128,6 +145,12 @@ class ColVectorAccessor[M: int = int, T: object = object](AbstractArrayAccessor[
 
     def __repr__(self) -> str:
         return f"ColVectorAccessor(array={self.array!r})"
+
+    @classmethod
+    @override
+    def from_standard_parts(cls, array: tuple[T, ...], shape: tuple[M, Literal[1]]) -> Self:
+        assert shape == (len(array), 1)
+        return cls(array)
 
     @property
     @override

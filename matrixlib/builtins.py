@@ -18,11 +18,12 @@ import random
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator, Reversible, Sequence
 from typing import (Any, Final, Generic, Literal, Self, SupportsFloat,
-                    SupportsIndex, TypeVar, cast, overload, override)
+                    SupportsIndex, TypeVar, cast, overload, override, TypeGuard)
 
-from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
-                        ColSliceAccessor, ColVectorAccessor, IdentityAccessor,
-                        MatrixAccessor, MatrixSliceAccessor, ReverseAccessor,
+from .accessors import (AbstractAccessor, AbstractArrayAccessor,
+                        ColFlipAccessor, ColSheerAccessor, ColSliceAccessor,
+                        ColVectorAccessor, IdentityAccessor, MatrixAccessor,
+                        MatrixSliceAccessor, ReverseAccessor,
                         Rotate090Accessor, Rotate180Accessor,
                         Rotate270Accessor, RowFlipAccessor, RowSheerAccessor,
                         RowSliceAccessor, RowVectorAccessor, SliceAccessor,
@@ -38,10 +39,6 @@ type Complex = complex | Real
 type EvenNumber = Literal[-16, -14, -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16]
 type OddNumber = Literal[-15, -13, -11, -9, -7, -5, -3, -1, 1, 3, 5, 7, 9, 11, 13, 15]
 type Slice = slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | None]
-
-INTEGER_TYPES: Final[tuple[type[int]]] = (int,)
-REAL_TYPES: Final[tuple[type[float], type[int]]] = (float,) + INTEGER_TYPES
-COMPLEX_TYPES: Final[tuple[type[complex], type[float], type[int]]] = (complex,) + REAL_TYPES
 
 M_co = TypeVar("M_co", covariant=True, bound=int, default=int)
 N_co = TypeVar("N_co", covariant=True, bound=int, default=int)
@@ -78,7 +75,13 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     __match_args__ = ("array", "shape")
     _accessor: AbstractAccessor[M_co, N_co, T_co]
 
-    def __new__(cls, array: Iterable[T_co] = (), shape: tuple[M_co, N_co] = (0, 0)) -> Self:
+    def __new__(
+        cls,
+        array: Iterable[T_co] = (),
+        shape: tuple[M_co, N_co] = (0, 0),
+        *,
+        storage_type: type[AbstractArrayAccessor[M_co, N_co, Any]] = MatrixAccessor[M_co, N_co, Any],
+    ) -> Self:
         self = super(Matrix, cls).__new__(cls)
         array = tuple(array)
         if __debug__:
@@ -90,7 +93,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                     f"array contains {true_size} values but shape implies"
                     f" {test_size}"
                 )
-        self._accessor = MatrixAccessor(
+        self._accessor = storage_type.from_standard_parts(
             array=array,
             shape=shape,
         )
@@ -458,6 +461,17 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """The number of columns."""
         return self._accessor.col_count
 
+    @property
+    def storage_type(self) -> type[AbstractAccessor[M_co, N_co, T_co]]:
+        return type(self._accessor)
+
+    @property
+    def fallback_storage_type(self) -> type[AbstractArrayAccessor[M_co, N_co, T_co]]:
+        storage_type = self.storage_type
+        if issubclass(storage_type, AbstractArrayAccessor):
+            return storage_type
+        return MatrixAccessor[M_co, N_co, T_co]
+
     def to_nesting(self) -> list[list[T_co]]:
         """Return a singly-nested ``list`` representation of the matrix."""
         result = list[list[T_co]]()
@@ -522,7 +536,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         of it as being akin to compiling a regular expression (from the ``re``
         module) into a ``Pattern`` object.
         """
-        return self.__class__(self.array, self.shape)
+        return type(self)(self.array, self.shape)
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix."""
@@ -721,145 +735,253 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             return ComplexMatrix[Any, Any, ComplexT_co].from_matrix(result)
         return result
 
-    def __add__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:
-        if isinstance(other, ComplexMatrix):
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, Integer], other: Matrix[M_co, N_co, Integer]) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, Integer], other: Integer) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, Real], other: Matrix[M_co, N_co, Real]) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __add__(self: ComplexMatrix[M_co, N_co, Real], other: Real) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __add__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __add__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
+
+    def __add__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_complex_matrix(other):
             return ComplexMatrix(
                 array=self._binary_matrix_map(
                     operator.__add__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, COMPLEX_TYPES):
+        if is_complex_number(other):
             return ComplexMatrix(
                 array=self._binary_scalar_map(
                     operator.__add__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
+
+    @overload
+    def __radd__(self: ComplexMatrix[M_co, N_co, Integer], other: Integer) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __radd__(self: ComplexMatrix[M_co, N_co, Real], other: Real) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
 
     def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
-        if isinstance(other, COMPLEX_TYPES):
+        if is_complex_number(other):
             return ComplexMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__add__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
-    def __sub__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:
-        if isinstance(other, ComplexMatrix):
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, Integer], other: Matrix[M_co, N_co, Integer]) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, Integer], other: Integer) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, Real], other: Matrix[M_co, N_co, Real]) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __sub__(self: ComplexMatrix[M_co, N_co, Real], other: Real) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __sub__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __sub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
+
+    def __sub__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_complex_matrix(other):
             return ComplexMatrix(
                 array=self._binary_matrix_map(
                     operator.__sub__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, COMPLEX_TYPES):
+        if is_complex_number(other):
             return ComplexMatrix(
                 array=self._binary_scalar_map(
                     operator.__sub__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
+
+    @overload
+    def __rsub__(self: ComplexMatrix[M_co, N_co, Integer], other: Integer) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __rsub__(self: ComplexMatrix[M_co, N_co, Real], other: Real) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
 
     def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
-        if isinstance(other, COMPLEX_TYPES):
+        if is_complex_number(other):
             return ComplexMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__sub__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
-    def __mul__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:
-        if isinstance(other, ComplexMatrix):
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, Integer], other: Matrix[M_co, N_co, Integer]) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, Integer], other: Integer) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, Real], other: Matrix[M_co, N_co, Real]) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __mul__(self: ComplexMatrix[M_co, N_co, Real], other: Real) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __mul__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __mul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
+
+    def __mul__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_complex_matrix(other):
             return ComplexMatrix(
                 array=self._binary_matrix_map(
                     operator.__mul__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, COMPLEX_TYPES):
+        if is_complex_number(other):
             return ComplexMatrix(
                 array=self._binary_scalar_map(
                     operator.__mul__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
+
+    @overload
+    def __rmul__(self: ComplexMatrix[M_co, N_co, Integer], other: Integer) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __rmul__(self: ComplexMatrix[M_co, N_co, Real], other: Real) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
 
     def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
-        if isinstance(other, COMPLEX_TYPES):
+        if is_complex_number(other):
             return ComplexMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__mul__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
-    def __truediv__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:
-        if isinstance(other, ComplexMatrix):
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, Real], other: Matrix[M_co, N_co, Real]) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __truediv__(self: ComplexMatrix[M_co, N_co, Real], other: Real) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __truediv__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __truediv__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
+
+    def __truediv__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_complex_matrix(other):
             return ComplexMatrix(
                 array=self._binary_matrix_map(
                     operator.__truediv__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, COMPLEX_TYPES):
+        if is_complex_number(other):
             return ComplexMatrix(
                 array=self._binary_scalar_map(
                     operator.__truediv__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
+    @overload
+    def __rtruediv__(self: ComplexMatrix[M_co, N_co, Real], other: Real) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __rtruediv__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
+
     def __rtruediv__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
-        if isinstance(other, COMPLEX_TYPES):
+        if is_complex_number(other):
             return ComplexMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__truediv__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
+
+    @overload
+    def __neg__(self: ComplexMatrix[M_co, N_co, Integer]) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __neg__(self: ComplexMatrix[M_co, N_co, Real]) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __neg__(self) -> ComplexMatrix[M_co, N_co]: ...
 
     def __neg__(self) -> ComplexMatrix[M_co, N_co]:
         return ComplexMatrix(
             array=self._unary_map(operator.__neg__),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
+
+    @overload
+    def __pos__(self: ComplexMatrix[M_co, N_co, Integer]) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __pos__(self: ComplexMatrix[M_co, N_co, Real]) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __pos__(self) -> ComplexMatrix[M_co, N_co]: ...
 
     def __pos__(self) -> ComplexMatrix[M_co, N_co]:
         return ComplexMatrix(
             array=self._unary_map(operator.__pos__),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
     # Absolute value of a complex number is its distance from the origin,
     # so return a RealMatrix.
 
+    @overload
+    def __abs__(self: ComplexMatrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __abs__(self) -> RealMatrix[M_co, N_co]: ...
+
     def __abs__(self) -> RealMatrix[M_co, N_co]:
         return RealMatrix(
             array=self._unary_map(abs),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
     @property
@@ -868,6 +990,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return RealMatrix(
             array=self._unary_map(lambda x: x.real),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
     @property
@@ -876,6 +999,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return RealMatrix(
             array=self._unary_map(lambda x: x.imag),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
     @override
@@ -926,12 +1050,27 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
     def replace(self, old: Callable[[], ComplexT_co], new: Callable[[], ComplexT_co]) -> ComplexMatrix[M_co, N_co, ComplexT_co]:
         return ComplexMatrix[M_co, N_co, ComplexT_co].from_matrix(super().replace(old, new))
 
+    @overload
+    def conjugate(self: ComplexMatrix[M_co, N_co, Integer]) -> ComplexMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def conjugate(self: ComplexMatrix[M_co, N_co, Real]) -> ComplexMatrix[M_co, N_co, Real]: ...
+    @overload
+    def conjugate(self) -> ComplexMatrix[M_co, N_co]: ...
+
     def conjugate(self) -> ComplexMatrix[M_co, N_co]:
         """Return the complex conjugate of the matrix."""
         return ComplexMatrix(
             array=self._unary_map(lambda x: x.conjugate()),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
+
+    @overload
+    def transjugate(self: ComplexMatrix[M_co, N_co, Integer]) -> ComplexMatrix[N_co, M_co, Integer]: ...
+    @overload
+    def transjugate(self: ComplexMatrix[M_co, N_co, Real]) -> ComplexMatrix[N_co, M_co, Real]: ...
+    @overload
+    def transjugate(self) -> ComplexMatrix[N_co, M_co]: ...
 
     def transjugate(self) -> ComplexMatrix[N_co, M_co]:
         """Return the transposed complex conjugate of the matrix."""
@@ -939,7 +1078,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
 
     def is_close(
         self,
-        other: ComplexMatrix[M_co, N_co] | Complex,
+        other: Matrix[M_co, N_co, Complex] | Complex,
         *,
         rel_tol: SupportsFloat = 1e-09,
         abs_tol: SupportsFloat = 0.0,
@@ -953,26 +1092,26 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         Raises ``MismatchedDimensionError`` if ``other`` is a ``ComplexMatrix``
         of unequal shape (debug-only).
         """
-        is_close = functools.partial(
-            cmath.isclose,
-            rel_tol=rel_tol,
-            abs_tol=abs_tol,
-        )
-        if isinstance(other, ComplexMatrix):
+        is_close = functools.partial(cmath.isclose, rel_tol=rel_tol, abs_tol=abs_tol)
+        if is_complex_matrix(other):
             return Matrix(
                 array=self._binary_matrix_map(
                     is_close,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        return Matrix(
-            array=self._binary_scalar_map(
-                is_close,
-                other,
-            ),
-            shape=self.shape,
-        )
+        if is_complex_number(other):
+            return Matrix(
+                array=self._binary_scalar_map(
+                    is_close,
+                    other,
+                ),
+                shape=self.shape,
+                storage_type=self.fallback_storage_type,
+            )
+        raise TypeError
 
 
 class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
@@ -1003,25 +1142,25 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
 
     def __lt__(self, other: RealMatrix) -> bool:
         """Return true if lexicographic ``a < b``, otherwise false"""
-        if isinstance(other, RealMatrix):
+        if is_real_matrix(other):
             return self.compare(other) < 0
         return NotImplemented
 
     def __le__(self, other: RealMatrix) -> bool:
         """Return true if lexicographic ``a <= b``, otherwise false"""
-        if isinstance(other, RealMatrix):
+        if is_real_matrix(other):
             return self.compare(other) <= 0
         return NotImplemented
 
     def __gt__(self, other: RealMatrix) -> bool:
         """Return true if lexicographic ``a > b``, otherwise false"""
-        if isinstance(other, RealMatrix):
+        if is_real_matrix(other):
             return self.compare(other) > 0
         return NotImplemented
 
     def __ge__(self, other: RealMatrix) -> bool:
         """Return true if lexicographic ``a >= b``, otherwise false"""
-        if isinstance(other, RealMatrix):
+        if is_real_matrix(other):
             return self.compare(other) >= 0
         return NotImplemented
 
@@ -1048,85 +1187,102 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return result
 
     @overload
-    def __add__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]: ...
+    def __add__(self: RealMatrix[M_co, N_co, Integer], other: Matrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
     @overload
-    def __add__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]: ...
+    def __add__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __add__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __add__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __add__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __add__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __add__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:
-        result = super().__add__(other)
-        if isinstance(other, (RealMatrix, REAL_TYPES)):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Real], result),
-            )
-        return result
+    def __add__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_real_object(other):
+            return RealMatrix[M_co, N_co].from_matrix(super().__add__(other))
+        return super().__add__(other)
 
+    @overload
+    def __radd__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
     @overload
     def __radd__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
     @overload
     def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
     def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
-        result = super().__radd__(other)
-        if isinstance(other, REAL_TYPES):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Real], result),
-            )
-        return result
+        if is_real_number(other):
+            return RealMatrix[M_co, N_co].from_matrix(super().__radd__(other))
+        return super().__radd__(other)
 
     @overload
-    def __sub__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]: ...
+    def __sub__(self: RealMatrix[M_co, N_co, Integer], other: Matrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
     @overload
-    def __sub__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]: ...
+    def __sub__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __sub__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __sub__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __sub__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __sub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __sub__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:
-        result = super().__sub__(other)
-        if isinstance(other, (RealMatrix, REAL_TYPES)):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Real], result),
-            )
-        return result
+    def __sub__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_real_object(other):
+            return RealMatrix[M_co, N_co].from_matrix(super().__sub__(other))
+        return super().__sub__(other)
 
+    @overload
+    def __rsub__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
     @overload
     def __rsub__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
     @overload
     def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
     def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
-        result = super().__rsub__(other)
-        if isinstance(other, REAL_TYPES):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Real], result),
-            )
-        return result
+        if is_real_number(other):
+            return RealMatrix[M_co, N_co].from_matrix(super().__rsub__(other))
+        return super().__rsub__(other)
 
     @overload
-    def __mul__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]: ...
+    def __mul__(self: RealMatrix[M_co, N_co, Integer], other: Matrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
     @overload
-    def __mul__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]: ...
+    def __mul__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __mul__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __mul__(self, other: Real) -> RealMatrix[M_co, N_co, Real]: ...
+    @overload
+    def __mul__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __mul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __mul__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:
-        result = super().__mul__(other)
-        if isinstance(other, (RealMatrix, REAL_TYPES)):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Real], result),
-            )
-        return result
+    def __mul__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_real_object(other):
+            return RealMatrix[M_co, N_co].from_matrix(super().__mul__(other))
+        return super().__mul__(other)
 
+    @overload
+    def __rmul__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
     @overload
     def __rmul__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
     @overload
     def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
     def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
-        result = super().__rmul__(other)
-        if isinstance(other, REAL_TYPES):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Real], result),
-            )
-        return result
+        if is_real_number(other):
+            return RealMatrix[M_co, N_co].from_matrix(super().__rmul__(other))
+        return super().__rmul__(other)
 
-    def __matmul__[P: int](self, other: RealMatrix[N_co, P]) -> RealMatrix[M_co, P]:
-        if not isinstance(other, RealMatrix):
+    @overload
+    def __matmul__[P: int](self: RealMatrix[M_co, N_co, Integer], other: Matrix[N_co, P, Integer]) -> RealMatrix[M_co, P, Integer]: ...
+    @overload
+    def __matmul__[P: int](self, other: Matrix[N_co, P, Real]) -> RealMatrix[M_co, P]: ...
+
+    def __matmul__[P: int](self, other: Matrix[N_co, P, Real]) -> RealMatrix[M_co, P]:
+        if not is_real_matrix(other):
             return NotImplemented
 
         a = self
@@ -1158,17 +1314,18 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         )
 
     @overload
-    def __truediv__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]: ...
+    def __truediv__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
     @overload
-    def __truediv__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]: ...
+    def __truediv__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __truediv__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __truediv__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __truediv__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:
-        result = super().__truediv__(other)
-        if isinstance(other, (RealMatrix, REAL_TYPES)):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Real], result),
-            )
-        return result
+    def __truediv__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_real_object(other):
+            return RealMatrix[M_co, N_co].from_matrix(super().__truediv__(other))
+        return super().__truediv__(other)
 
     @overload
     def __rtruediv__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
@@ -1176,94 +1333,152 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def __rtruediv__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
     def __rtruediv__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
-        result = super().__rtruediv__(other)
-        if isinstance(other, REAL_TYPES):
-            return RealMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Real], result),
-            )
-        return result
+        if is_real_number(other):
+            return RealMatrix[M_co, N_co].from_matrix(super().__rtruediv__(other))
+        return super().__rtruediv__(other)
 
-    def __floordiv__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]:
-        if isinstance(other, RealMatrix):
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, Integer], other: Matrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __floordiv__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __floordiv__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __floordiv__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
+
+    def __floordiv__(self, other: Matrix[M_co, N_co, Real] | Real) -> RealMatrix[M_co, N_co]:
+        if is_real_matrix(other):
             return RealMatrix(
                 array=self._binary_matrix_map(
                     operator.__floordiv__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, REAL_TYPES):
+        if is_real_number(other):
             return RealMatrix(
                 array=self._binary_scalar_map(
                     operator.__floordiv__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
+
+    @overload
+    def __rfloordiv__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __rfloordiv__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
 
     def __rfloordiv__(self, other: Real) -> RealMatrix[M_co, N_co]:
-        if isinstance(other, REAL_TYPES):
+        if is_real_number(other):
             return RealMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__floordiv__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
-    def __mod__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]:
-        if isinstance(other, RealMatrix):
+    @overload
+    def __mod__(self: RealMatrix[M_co, N_co, Integer], other: Matrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __mod__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __mod__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __mod__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
+
+    def __mod__(self, other: Matrix[M_co, N_co, Real] | Real) -> RealMatrix[M_co, N_co]:
+        if is_real_matrix(other):
             return RealMatrix(
                 array=self._binary_matrix_map(
                     operator.__mod__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, REAL_TYPES):
+        if is_real_number(other):
             return RealMatrix(
                 array=self._binary_scalar_map(
                     operator.__mod__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
+    @overload
+    def __rmod__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __rmod__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
+
     def __rmod__(self, other: Real) -> RealMatrix[M_co, N_co]:
-        if isinstance(other, REAL_TYPES):
+        if is_real_number(other):
             return RealMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__mod__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
-    def __divmod__(self, other: RealMatrix[M_co, N_co] | Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]:
-        if isinstance(other, (RealMatrix, REAL_TYPES)):
+    @overload
+    def __divmod__(self: RealMatrix[M_co, N_co, Integer], other: Matrix[M_co, N_co, Integer]) -> tuple[RealMatrix[M_co, N_co, Integer], RealMatrix[M_co, N_co, Integer]]: ...
+    @overload
+    def __divmod__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> tuple[RealMatrix[M_co, N_co, Integer], RealMatrix[M_co, N_co, Integer]]: ...
+    @overload
+    def __divmod__(self, other: Matrix[M_co, N_co, Real]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    @overload
+    def __divmod__(self, other: Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+
+    def __divmod__(self, other: Matrix[M_co, N_co, Real] | Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]:
+        if is_real_object(other):
             return (self // other, self % other)
         return NotImplemented
 
+    @overload
+    def __rdivmod__(self: RealMatrix[M_co, N_co, Integer], other: Integer) -> tuple[RealMatrix[M_co, N_co, Integer], RealMatrix[M_co, N_co, Integer]]: ...
+    @overload
+    def __rdivmod__(self, other: Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+
     def __rdivmod__(self, other: Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]:
-        if isinstance(other, REAL_TYPES):
+        if is_real_number(other):
             return (other // self, other % self)
         return NotImplemented
 
-    @override
-    def __neg__(self) -> RealMatrix[M_co, N_co]:
-        return RealMatrix[M_co, N_co].from_matrix(
-            matrix=cast(ComplexMatrix[M_co, N_co, Real], super().__neg__()),
-        )
+    # NOTE: In Pyright, keeping the ComplexMatrix -> ComplexMatrix overload
+    # warns that it overlaps with the RealMatrix -> RealMatrix overload, which
+    # is true. Removing it, however, warns that we aren't covering all of the
+    # overloads of the parent class, which is also true. Thus, we shall ignore.
 
+    # Oddly, Pyright does not get upset about IntegerMatrix's version of this
+    # overload set (which is just IntegerMatrix -> IntegerMatrix). It's only an
+    # issue for RealMatrix. Likely a bug on Pyright's end.
+
+    @overload
+    def __neg__(self: RealMatrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __neg__(self) -> RealMatrix[M_co, N_co]: ...
     @override
-    def __pos__(self) -> RealMatrix[M_co, N_co]:
-        return RealMatrix[M_co, N_co].from_matrix(
-            matrix=cast(ComplexMatrix[M_co, N_co, Real], super().__pos__()),
-        )
+    def __neg__(self) -> RealMatrix[M_co, N_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return RealMatrix[M_co, N_co].from_matrix(super().__neg__())
+
+    @overload
+    def __pos__(self: RealMatrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __pos__(self) -> RealMatrix[M_co, N_co]: ...
+    @override
+    def __pos__(self) -> RealMatrix[M_co, N_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return RealMatrix[M_co, N_co].from_matrix(super().__pos__())
 
     @overload
     def __round__(self, ndigits: None = None) -> int: ...
@@ -1340,17 +1555,23 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def replace(self, old: Callable[[], RealT_co], new: Callable[[], RealT_co]) -> RealMatrix[M_co, N_co, RealT_co]:
         return RealMatrix[M_co, N_co, RealT_co].from_matrix(super().replace(old, new))
 
+    @overload
+    def conjugate(self: RealMatrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def conjugate(self) -> RealMatrix[M_co, N_co]: ...
     @override
-    def conjugate(self) -> RealMatrix[M_co, N_co]:
+    def conjugate(self) -> RealMatrix[M_co, N_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
         return self
 
+    @overload
+    def transjugate(self: RealMatrix[M_co, N_co, Integer]) -> RealMatrix[N_co, M_co, Integer]: ...
+    @overload
+    def transjugate(self) -> RealMatrix[N_co, M_co]: ...
     @override
-    def transjugate(self) -> RealMatrix[N_co, M_co]:
-        return RealMatrix[N_co, M_co].from_matrix(
-            matrix=cast(ComplexMatrix[N_co, M_co, Real], super().transjugate()),
-        )
+    def transjugate(self) -> RealMatrix[N_co, M_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return RealMatrix[N_co, M_co].from_matrix(super().transjugate())
 
-    def compare(self, other: RealMatrix) -> Literal[-1, 0, 1]:
+    def compare(self, other: Matrix[int, int, Real]) -> Literal[-1, 0, 1]:
         """Return literal ``-1``, ``0``, or ``+1`` if the matrix
         lexicographically compares less than, equal, or greater than ``other``,
         respectively
@@ -1368,77 +1589,93 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             return 0
         return (compare(self, other) or compare(self.shape, other.shape))
 
-    def lesser(self, other: RealMatrix[M_co, N_co] | Real) -> Matrix[M_co, N_co, bool]:
+    def lesser(self, other: Matrix[M_co, N_co, Real] | Real) -> Matrix[M_co, N_co, bool]:
         """Return element-wise ``a < b``."""
-        if isinstance(other, RealMatrix):
+        if is_real_matrix(other):
             return Matrix(
                 array=self._binary_matrix_map(
                     operator.__lt__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        return Matrix(
-            array=self._binary_scalar_map(
-                operator.__lt__,
-                other,
-            ),
-            shape=self.shape,
-        )
+        if is_real_number(other):
+            return Matrix(
+                array=self._binary_scalar_map(
+                    operator.__lt__,
+                    other,
+                ),
+                shape=self.shape,
+                storage_type=self.fallback_storage_type,
+            )
+        raise TypeError
 
-    def lesser_equal(self, other: RealMatrix[M_co, N_co] | Real) -> Matrix[M_co, N_co, bool]:
+    def lesser_equal(self, other: Matrix[M_co, N_co, Real] | Real) -> Matrix[M_co, N_co, bool]:
         """Return element-wise ``a <= b``."""
-        if isinstance(other, RealMatrix):
+        if is_real_matrix(other):
             return Matrix(
                 array=self._binary_matrix_map(
                     operator.__le__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        return Matrix(
-            array=self._binary_scalar_map(
-                operator.__le__,
-                other,
-            ),
-            shape=self.shape,
-        )
+        if is_real_number(other):
+            return Matrix(
+                array=self._binary_scalar_map(
+                    operator.__le__,
+                    other,
+                ),
+                shape=self.shape,
+                storage_type=self.fallback_storage_type,
+            )
+        raise TypeError
 
-    def greater(self, other: RealMatrix[M_co, N_co] | Real) -> Matrix[M_co, N_co, bool]:
+    def greater(self, other: Matrix[M_co, N_co, Real] | Real) -> Matrix[M_co, N_co, bool]:
         """Return element-wise ``a > b``."""
-        if isinstance(other, RealMatrix):
+        if is_real_matrix(other):
             return Matrix(
                 array=self._binary_matrix_map(
                     operator.__gt__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        return Matrix(
-            array=self._binary_scalar_map(
-                operator.__gt__,
-                other,
-            ),
-            shape=self.shape,
-        )
+        if is_real_number(other):
+            return Matrix(
+                array=self._binary_scalar_map(
+                    operator.__gt__,
+                    other,
+                ),
+                shape=self.shape,
+                storage_type=self.fallback_storage_type,
+            )
+        raise TypeError
 
-    def greater_equal(self, other: RealMatrix[M_co, N_co] | Real) -> Matrix[M_co, N_co, bool]:
+    def greater_equal(self, other: Matrix[M_co, N_co, Real] | Real) -> Matrix[M_co, N_co, bool]:
         """Return element-wise ``a >= b``."""
-        if isinstance(other, RealMatrix):
+        if is_real_matrix(other):
             return Matrix(
                 array=self._binary_matrix_map(
                     operator.__ge__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        return Matrix(
-            array=self._binary_scalar_map(
-                operator.__ge__,
-                other,
-            ),
-            shape=self.shape,
-        )
+        if is_real_number(other):
+            return Matrix(
+                array=self._binary_scalar_map(
+                    operator.__ge__,
+                    other,
+                ),
+                shape=self.shape,
+                storage_type=self.fallback_storage_type,
+            )
+        raise TypeError
 
     @overload
     def round(self, ndigits: None = None) -> IntegerMatrix[M_co, N_co]: ...
@@ -1456,12 +1693,14 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             return IntegerMatrix(
                 array=self._unary_map(round),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return RealMatrix(
             array=self._unary_map(
                 functools.partial(round, ndigits=ndigits),
             ),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
     def floor(self) -> IntegerMatrix[M_co, N_co]:
@@ -1469,6 +1708,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return IntegerMatrix(
             array=self._unary_map(math.floor),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
     def ceil(self) -> IntegerMatrix[M_co, N_co]:
@@ -1476,6 +1716,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return IntegerMatrix(
             array=self._unary_map(math.ceil),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
     def trunc(self) -> IntegerMatrix[M_co, N_co]:
@@ -1483,6 +1724,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return IntegerMatrix(
             array=self._unary_map(math.trunc),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
     def sort(
@@ -1499,6 +1741,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return RealMatrix(
             array=sorted(self.array, key=key, reverse=reverse),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
 
@@ -1577,19 +1820,22 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         return result
 
     @overload
-    def __add__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]: ...
+    def __add__(self, other: Matrix[M_co, N_co, Integer]) -> IntegerMatrix[M_co, N_co]: ...
     @overload
-    def __add__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]: ...
+    def __add__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
     @overload
-    def __add__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]: ...
+    def __add__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __add__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __add__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __add__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __add__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:  # type: ignore[override]
-        result = super().__add__(other)
-        if isinstance(other, (IntegerMatrix, INTEGER_TYPES)):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+    def __add__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_integer_object(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__add__(other))
+        return super().__add__(other)
 
     @overload
     def __radd__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
@@ -1598,28 +1844,28 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @overload
     def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:  # type: ignore[override]
-        result = super().__radd__(other)
-        if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+    def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_integer_number(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__radd__(other))
+        return super().__radd__(other)
 
     @overload
-    def __sub__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]: ...
+    def __sub__(self, other: Matrix[M_co, N_co, Integer]) -> IntegerMatrix[M_co, N_co]: ...
     @overload
-    def __sub__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]: ...
+    def __sub__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
     @overload
-    def __sub__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]: ...
+    def __sub__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __sub__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __sub__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __sub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __sub__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:  # type: ignore[override]
-        result = super().__sub__(other)
-        if isinstance(other, (IntegerMatrix, INTEGER_TYPES)):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+    def __sub__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_integer_object(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__sub__(other))
+        return super().__sub__(other)
 
     @overload
     def __rsub__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
@@ -1628,28 +1874,28 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @overload
     def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:  # type: ignore[override]
-        result = super().__rsub__(other)
-        if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+    def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_integer_number(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__rsub__(other))
+        return super().__rsub__(other)
 
     @overload
-    def __mul__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]: ...
+    def __mul__(self, other: Matrix[M_co, N_co, Integer]) -> IntegerMatrix[M_co, N_co]: ...
     @overload
-    def __mul__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]: ...
+    def __mul__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
     @overload
-    def __mul__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]: ...
+    def __mul__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __mul__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __mul__(self, other: Matrix[M_co, N_co, Complex]) -> ComplexMatrix[M_co, N_co]: ...
+    @overload
+    def __mul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __mul__(self, other: ComplexMatrix[M_co, N_co] | Complex) -> ComplexMatrix[M_co, N_co]:  # type: ignore[override]
-        result = super().__mul__(other)
-        if isinstance(other, (IntegerMatrix, INTEGER_TYPES)):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+    def __mul__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_integer_object(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__mul__(other))
+        return super().__mul__(other)
 
     @overload
     def __rmul__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
@@ -1658,42 +1904,37 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @overload
     def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]: ...
     @override
-    def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:  # type: ignore[override]
-        result = super().__rmul__(other)
-        if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(ComplexMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+    def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
+        if is_integer_number(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__rmul__(other))
+        return super().__rmul__(other)
 
-    # NOTE: NO override for __truediv__()/__rtruediv__() - division (often)
+    # NOTE: No override for __truediv__()/__rtruediv__() - division (often)
     # leaves the realm of integer numbers.
 
     @overload
-    def __matmul__[P: int](self, other: IntegerMatrix[N_co, P]) -> IntegerMatrix[M_co, P]: ...
+    def __matmul__[P: int](self, other: Matrix[N_co, P, Integer]) -> IntegerMatrix[M_co, P]: ...
     @overload
-    def __matmul__[P: int](self, other: RealMatrix[N_co, P]) -> RealMatrix[M_co, P]: ...
+    def __matmul__[P: int](self, other: Matrix[N_co, P, Real]) -> RealMatrix[M_co, P]: ...
     @override
-    def __matmul__[P: int](self, other: RealMatrix[N_co, P]) -> RealMatrix[M_co, P]:
-        result = super().__matmul__(other)
-        if isinstance(other, IntegerMatrix):
-            return IntegerMatrix[M_co, P].from_matrix(
-                matrix=cast(RealMatrix[M_co, P, Integer], result),
-            )
-        return result
+    def __matmul__[P: int](self, other: Matrix[N_co, P, Real]) -> RealMatrix[M_co, P]:
+        if is_integer_matrix(other):
+            return IntegerMatrix[M_co, P].from_matrix(super().__matmul__(other))
+        return super().__matmul__(other)
 
     @overload
-    def __floordiv__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]: ...
+    def __floordiv__(self, other: Matrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
     @overload
-    def __floordiv__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]: ...
+    def __floordiv__(self, other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __floordiv__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __floordiv__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
     @override
-    def __floordiv__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]:
-        result = super().__floordiv__(other)
-        if isinstance(other, (IntegerMatrix, INTEGER_TYPES)):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(RealMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+    def __floordiv__(self, other: Matrix[M_co, N_co, Real] | Real) -> RealMatrix[M_co, N_co]:
+        if is_integer_object(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__floordiv__(other))
+        return super().__floordiv__(other)
 
     @overload
     def __rfloordiv__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
@@ -1701,25 +1942,23 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     def __rfloordiv__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
     @override
     def __rfloordiv__(self, other: Real) -> RealMatrix[M_co, N_co]:
-        result = super().__rfloordiv__(other)
-        if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(RealMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+        if is_integer_number(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__rfloordiv__(other))
+        return super().__rfloordiv__(other)
 
     @overload
-    def __mod__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]: ...
+    def __mod__(self, other: Matrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
     @overload
-    def __mod__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]: ...
+    def __mod__(self, other: Integer) -> RealMatrix[M_co, N_co, Integer]: ...
+    @overload
+    def __mod__(self, other: Matrix[M_co, N_co, Real]) -> RealMatrix[M_co, N_co]: ...
+    @overload
+    def __mod__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
     @override
-    def __mod__(self, other: RealMatrix[M_co, N_co] | Real) -> RealMatrix[M_co, N_co]:
-        result = super().__mod__(other)
-        if isinstance(other, (IntegerMatrix, INTEGER_TYPES)):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(RealMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+    def __mod__(self, other: Matrix[M_co, N_co, Real] | Real) -> RealMatrix[M_co, N_co]:
+        if is_integer_object(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__mod__(other))
+        return super().__mod__(other)
 
     @overload
     def __rmod__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
@@ -1727,30 +1966,27 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     def __rmod__(self, other: Real) -> RealMatrix[M_co, N_co]: ...
     @override
     def __rmod__(self, other: Real) -> RealMatrix[M_co, N_co]:
-        result = super().__rmod__(other)
-        if isinstance(other, INTEGER_TYPES):
-            return IntegerMatrix[M_co, N_co].from_matrix(
-                matrix=cast(RealMatrix[M_co, N_co, Integer], result),
-            )
-        return result
+        if is_integer_number(other):
+            return IntegerMatrix[M_co, N_co].from_matrix(super().__rmod__(other))
+        return super().__rmod__(other)
 
     @overload
-    def __divmod__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> tuple[IntegerMatrix[M_co, N_co], IntegerMatrix[M_co, N_co]]: ...
+    def __divmod__(self, other: Matrix[M_co, N_co, Integer]) -> tuple[IntegerMatrix[M_co, N_co], IntegerMatrix[M_co, N_co]]: ...
     @overload
-    def __divmod__(self, other: RealMatrix[M_co, N_co] | Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    def __divmod__(self, other: Integer) -> tuple[IntegerMatrix[M_co, N_co], IntegerMatrix[M_co, N_co]]: ...
+    @overload
+    def __divmod__(self, other: Matrix[M_co, N_co, Real]) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
+    @overload
+    def __divmod__(self, other: Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
     @override
-    def __divmod__(self, other: RealMatrix[M_co, N_co] | Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]:
-        result1, result2 = super().__divmod__(other)
-        if isinstance(other, (IntegerMatrix, INTEGER_TYPES)):
+    def __divmod__(self, other: Matrix[M_co, N_co, Real] | Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]:
+        if is_integer_object(other):
+            a, b = super().__divmod__(other)
             return (
-                IntegerMatrix[M_co, N_co].from_matrix(
-                    matrix=cast(RealMatrix[M_co, N_co, Integer], result1),
-                ),
-                IntegerMatrix[M_co, N_co].from_matrix(
-                    matrix=cast(RealMatrix[M_co, N_co, Integer], result2),
-                ),
+                IntegerMatrix[M_co, N_co].from_matrix(a),
+                IntegerMatrix[M_co, N_co].from_matrix(b),
             )
-        return result1, result2
+        return super().__divmod__(other)
 
     @overload
     def __rdivmod__(self, other: Integer) -> tuple[IntegerMatrix[M_co, N_co], IntegerMatrix[M_co, N_co]]: ...
@@ -1758,190 +1994,221 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     def __rdivmod__(self, other: Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]: ...
     @override
     def __rdivmod__(self, other: Real) -> tuple[RealMatrix[M_co, N_co], RealMatrix[M_co, N_co]]:
-        result1, result2 = super().__rdivmod__(other)
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
+            a, b = super().__rdivmod__(other)
             return (
-                IntegerMatrix[M_co, N_co].from_matrix(
-                    matrix=cast(RealMatrix[M_co, N_co, Integer], result1),
-                ),
-                IntegerMatrix[M_co, N_co].from_matrix(
-                    matrix=cast(RealMatrix[M_co, N_co, Integer], result2),
-                ),
+                IntegerMatrix[M_co, N_co].from_matrix(a),
+                IntegerMatrix[M_co, N_co].from_matrix(b),
             )
-        return result1, result2
+        return super().__rdivmod__(other)
 
-    def __lshift__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, IntegerMatrix):
+    @overload
+    def __lshift__(self, other: Matrix[M_co, N_co, Integer]) -> IntegerMatrix[M_co, N_co]: ...
+    @overload
+    def __lshift__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
+
+    def __lshift__(self, other: Matrix[M_co, N_co, Integer] | Integer) -> IntegerMatrix[M_co, N_co]:
+        if is_integer_matrix(other):
             return IntegerMatrix(
                 array=self._binary_matrix_map(
                     operator.__lshift__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map(
                     operator.__lshift__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
     def __rlshift__(self, other: Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__lshift__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
-    def __rshift__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, IntegerMatrix):
+    @overload
+    def __rshift__(self, other: Matrix[M_co, N_co, Integer]) -> IntegerMatrix[M_co, N_co]: ...
+    @overload
+    def __rshift__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
+
+    def __rshift__(self, other: Matrix[M_co, N_co, Integer] | Integer) -> IntegerMatrix[M_co, N_co]:
+        if is_integer_matrix(other):
             return IntegerMatrix(
                 array=self._binary_matrix_map(
                     operator.__rshift__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map(
                     operator.__rshift__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
     def __rrshift__(self, other: Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__rshift__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
-    def __and__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, IntegerMatrix):
+    @overload
+    def __and__(self, other: Matrix[M_co, N_co, Integer]) -> IntegerMatrix[M_co, N_co]: ...
+    @overload
+    def __and__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
+
+    def __and__(self, other: Matrix[M_co, N_co, Integer] | Integer) -> IntegerMatrix[M_co, N_co]:
+        if is_integer_matrix(other):
             return IntegerMatrix(
                 array=self._binary_matrix_map(
                     operator.__and__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map(
                     operator.__and__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
     def __rand__(self, other: Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__and__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
-    def __xor__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, IntegerMatrix):
+    @overload
+    def __xor__(self, other: Matrix[M_co, N_co, Integer]) -> IntegerMatrix[M_co, N_co]: ...
+    @overload
+    def __xor__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
+
+    def __xor__(self, other: Matrix[M_co, N_co, Integer] | Integer) -> IntegerMatrix[M_co, N_co]:
+        if is_integer_matrix(other):
             return IntegerMatrix(
                 array=self._binary_matrix_map(
                     operator.__xor__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map(
                     operator.__xor__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
     def __rxor__(self, other: Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__xor__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
-    def __or__(self, other: IntegerMatrix[M_co, N_co] | Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, IntegerMatrix):
+    @overload
+    def __or__(self, other: Matrix[M_co, N_co, Integer]) -> IntegerMatrix[M_co, N_co]: ...
+    @overload
+    def __or__(self, other: Integer) -> IntegerMatrix[M_co, N_co]: ...
+
+    def __or__(self, other: Matrix[M_co, N_co, Integer] | Integer) -> IntegerMatrix[M_co, N_co]:
+        if is_integer_matrix(other):
             return IntegerMatrix(
                 array=self._binary_matrix_map(
                     operator.__or__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map(
                     operator.__or__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
     def __ror__(self, other: Integer) -> IntegerMatrix[M_co, N_co]:
-        if isinstance(other, INTEGER_TYPES):
+        if is_integer_number(other):
             return IntegerMatrix(
                 array=self._binary_scalar_map_r(
                     operator.__or__,
                     other,
                 ),
                 shape=self.shape,
+                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
     @override
     def __neg__(self) -> IntegerMatrix[M_co, N_co]:
-        return IntegerMatrix[M_co, N_co].from_matrix(
-            matrix=cast(RealMatrix[M_co, N_co, Integer], super().__neg__()),
-        )
+        return IntegerMatrix[M_co, N_co].from_matrix(super().__neg__())
 
     @override
     def __pos__(self) -> IntegerMatrix[M_co, N_co]:
-        return IntegerMatrix[M_co, N_co].from_matrix(
-            matrix=cast(RealMatrix[M_co, N_co, Integer], super().__pos__()),
-        )
+        return IntegerMatrix[M_co, N_co].from_matrix(super().__pos__())
 
     @override
     def __abs__(self) -> IntegerMatrix[M_co, N_co]:
-        return IntegerMatrix[M_co, N_co].from_matrix(
-            matrix=cast(RealMatrix[M_co, N_co, Integer], super().__abs__()),
-        )
+        return IntegerMatrix[M_co, N_co].from_matrix(super().__abs__())
 
     def __invert__(self) -> IntegerMatrix[M_co, N_co]:
         return IntegerMatrix(
             array=self._unary_map(operator.__invert__),
             shape=self.shape,
+            storage_type=self.fallback_storage_type,
         )
 
     @property
@@ -2003,9 +2270,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
     @override
     def transjugate(self) -> IntegerMatrix[N_co, M_co]:
-        return IntegerMatrix[N_co, M_co].from_matrix(
-            matrix=cast(RealMatrix[N_co, M_co, Integer], super().transjugate()),
-        )
+        return IntegerMatrix[N_co, M_co].from_matrix(super().transjugate())
 
     @override
     def sort(
@@ -2078,8 +2343,57 @@ def vec2[RealT: Real = Real](x: RealT, y: RealT) -> RealMatrix[Literal[2], Liter
     """
     return RealMatrix[Literal[2], Literal[1], RealT].col((x, y))
 
+
 def vec3[RealT: Real = Real](x: RealT, y: RealT, z: RealT) -> RealMatrix[Literal[3], Literal[1], RealT]:
     """Convenience function for constructing a ``RealMatrix`` of shape
     ``(3, 1)``, commonly used in 3D space models.
     """
     return RealMatrix[Literal[3], Literal[1], RealT].col((x, y, z))
+
+
+def is_complex_number(obj: object) -> TypeGuard[Complex]:
+    return isinstance(obj, (complex, float, int))
+
+
+def is_complex_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Complex]]:
+    if isinstance(obj, Matrix):
+        if isinstance(obj, ComplexMatrix):
+            return True
+        return all(map(is_complex_number, obj))
+    return False
+
+
+def is_complex_object(obj: object) -> TypeGuard[Matrix[Any, Any, Complex] | Complex]:
+    return is_complex_number(obj) or is_complex_matrix(obj)
+
+
+def is_real_number(obj: object) -> TypeGuard[Real]:
+    return isinstance(obj, (float, int))
+
+
+def is_real_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Real]]:
+    if isinstance(obj, Matrix):
+        if isinstance(obj, RealMatrix):
+            return True
+        return all(map(is_real_number, obj))
+    return False
+
+
+def is_real_object(obj: object) -> TypeGuard[Matrix[Any, Any, Real] | Real]:
+    return is_real_number(obj) or is_real_matrix(obj)
+
+
+def is_integer_number(obj: object) -> TypeGuard[Integer]:
+    return isinstance(obj, int)
+
+
+def is_integer_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Integer]]:
+    if isinstance(obj, Matrix):
+        if isinstance(obj, IntegerMatrix):
+            return True
+        return all(map(is_integer_number, obj))
+    return False
+
+
+def is_integer_object(obj: object) -> TypeGuard[Matrix[Any, Any, Integer] | Integer]:
+    return is_integer_number(obj) or is_integer_matrix(obj)
