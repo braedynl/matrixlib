@@ -31,7 +31,7 @@ class AbstractPermutationAccessor[
     @property
     @abstractmethod
     def target(self) -> AbstractAccessor[M, N, T]:
-        """The permuted accessor"""
+        """The permuted accessor."""
         raise NotImplementedError
 
 
@@ -51,6 +51,9 @@ class TransposeAccessor[
         self = super(TransposeAccessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target,))
 
     @property
     @override
@@ -83,6 +86,9 @@ class RowFlipAccessor[
         self = super(RowFlipAccessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target,))
 
     @property
     @override
@@ -119,6 +125,9 @@ class ColFlipAccessor[
         self.target = target
         return self
 
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target,))
+
     @property
     @override
     def row_count(self) -> M:
@@ -153,6 +162,9 @@ class Rotate090Accessor[
         self = super(Rotate090Accessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target,))
 
     @property
     @override
@@ -189,6 +201,9 @@ class Rotate180Accessor[
         self.target = target
         return self
 
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target,))
+
     @property
     @override
     def row_count(self) -> M:
@@ -220,6 +235,9 @@ class Rotate270Accessor[
         self = super(Rotate270Accessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target,))
 
     @property
     @override

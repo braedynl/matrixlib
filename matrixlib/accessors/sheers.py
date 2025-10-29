@@ -18,7 +18,7 @@ class RowSheerAccessor[N: int = int, T: object = object](AbstractMatrixAccessor[
     row_index: int
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __new__(cls, target: AbstractAccessor[int, N, T], *, row_index: int) -> Self:
+    def __new__(cls, target: AbstractAccessor[int, N, T], row_index: int) -> Self:
         self = super(RowSheerAccessor, cls).__new__(cls)
         self.target = target
         self.row_index = row_index
@@ -26,6 +26,9 @@ class RowSheerAccessor[N: int = int, T: object = object](AbstractMatrixAccessor[
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_index))
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target, self.row_index))
 
     @property
     @override
@@ -48,7 +51,7 @@ class ColSheerAccessor[M: int = int, T: object = object](AbstractMatrixAccessor[
     col_index: int
     col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __new__(cls, target: AbstractAccessor[M, int, T], *, col_index: int) -> Self:
+    def __new__(cls, target: AbstractAccessor[M, int, T], col_index: int) -> Self:
         self = super(ColSheerAccessor, cls).__new__(cls)
         self.target = target
         self.col_index = col_index
@@ -56,6 +59,9 @@ class ColSheerAccessor[M: int = int, T: object = object](AbstractMatrixAccessor[
 
     def __hash__(self) -> int:
         return hash((self.target, self.col_index))
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target, self.col_index))
 
     @property
     @override

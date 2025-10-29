@@ -119,6 +119,9 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     __copy__ = __deepcopy__
 
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.from_accessor, (self._accessor,))
+
     @override
     def __len__(self) -> int:
         return len(self._accessor)
@@ -140,65 +143,65 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         self,
         index: SupportsIndex | Slice | tuple[SupportsIndex | Slice, SupportsIndex | Slice],
     ) -> T_co | Matrix[Any, Any, T_co]:
-        accessor = self._accessor
+        target = self._accessor
 
         if isinstance(index, tuple):
             row_index, col_index = index
 
             if isinstance(row_index, slice):
-                row_window = accessor.resolve_matrix_slice(row_index, by=ROW)
+                row_window = target.resolve_matrix_slice(row_index, by=ROW)
 
                 if isinstance(col_index, slice):
-                    col_window = accessor.resolve_matrix_slice(col_index, by=COL)
+                    col_window = target.resolve_matrix_slice(col_index, by=COL)
 
                     return Matrix[Any, Any, T_co].from_accessor(
                         accessor=MatrixSliceAccessor(
-                            accessor,
+                            target,
                             row_window=row_window,
                             col_window=col_window,
                         ),
                     )
 
-                col_index = accessor.resolve_matrix_index(col_index, by=COL)
+                col_index = target.resolve_matrix_index(col_index, by=COL)
 
                 return Matrix[Any, Literal[1], T_co].from_accessor(
                     accessor=ColSliceAccessor(
-                        accessor,
+                        target,
                         row_window=row_window,
                         col_index=col_index,
                     ),
                 )
 
-            row_index = accessor.resolve_matrix_index(row_index, by=ROW)
+            row_index = target.resolve_matrix_index(row_index, by=ROW)
 
             if isinstance(col_index, slice):
-                col_window = accessor.resolve_matrix_slice(col_index, by=COL)
+                col_window = target.resolve_matrix_slice(col_index, by=COL)
 
                 return Matrix[Literal[1], Any, T_co].from_accessor(
                     accessor=RowSliceAccessor(
-                        accessor,
+                        target,
                         row_index=row_index,
                         col_window=col_window,
                     ),
                 )
 
-            col_index = accessor.resolve_matrix_index(col_index, by=COL)
+            col_index = target.resolve_matrix_index(col_index, by=COL)
 
-            return accessor.matrix_access(row_index, col_index)
+            return target.matrix_access(row_index, col_index)
 
         if isinstance(index, slice):
-            window = accessor.resolve_vector_slice(index)
+            window = target.resolve_vector_slice(index)
 
             return Matrix[Literal[1], Any, T_co].from_accessor(
                 accessor=SliceAccessor(
-                    accessor,
+                    target,
                     window=window,
                 ),
             )
 
-        index = accessor.resolve_vector_index(index)
+        index = target.resolve_vector_index(index)
 
-        return accessor.vector_access(index)
+        return target.vector_access(index)
 
     @override
     def __iter__(self) -> Iterator[T_co]:
@@ -527,7 +530,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         of it as being akin to compiling a regular expression (from the ``re``
         module) into a ``Pattern`` object.
         """
-        return type(self)(self.array, self.shape)
+        return self.__class__(self.array, self.shape)
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix."""

@@ -21,7 +21,7 @@ class SliceAccessor[N: int = int, T: object = object](AbstractVectorAccessor[Lit
     window: range
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __new__(cls, target: AbstractAccessor[int, N, T], *, window: range) -> Self:
+    def __new__(cls, target: AbstractAccessor[int, N, T], window: range) -> Self:
         self = super(SliceAccessor, cls).__new__(cls)
         self.target = target
         self.window = window
@@ -29,6 +29,9 @@ class SliceAccessor[N: int = int, T: object = object](AbstractVectorAccessor[Lit
 
     def __hash__(self) -> int:
         return hash((self.target, self.window))
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target, self.window))
 
     @property
     @override
@@ -49,7 +52,7 @@ class RowSliceAccessor[N: int = int, T: object = object](AbstractMatrixAccessor[
     col_window: range
     row_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __new__(cls, target: AbstractAccessor[int, N, T], *, row_index: int, col_window: range) -> Self:
+    def __new__(cls, target: AbstractAccessor[int, N, T], row_index: int, col_window: range) -> Self:
         self = super(RowSliceAccessor, cls).__new__(cls)
         self.target = target
         self.row_index = row_index
@@ -58,6 +61,9 @@ class RowSliceAccessor[N: int = int, T: object = object](AbstractMatrixAccessor[
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_index, self.col_window))
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target, self.row_index, self.col_window))
 
     @property
     @override
@@ -81,7 +87,7 @@ class ColSliceAccessor[M: int = int, T: object = object](AbstractMatrixAccessor[
     col_index: int
     col_count: Literal[1] = 1  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __new__(cls, target: AbstractAccessor[M, int, T], *, row_window: range, col_index: int) -> Self:
+    def __new__(cls, target: AbstractAccessor[M, int, T], row_window: range, col_index: int) -> Self:
         self = super(ColSliceAccessor, cls).__new__(cls)
         self.target = target
         self.row_window = row_window
@@ -90,6 +96,9 @@ class ColSliceAccessor[M: int = int, T: object = object](AbstractMatrixAccessor[
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_window, self.col_index))
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target, self.row_window, self.col_index))
 
     @property
     @override
@@ -131,6 +140,9 @@ class MatrixSliceAccessor[
 
     def __hash__(self) -> int:
         return hash((self.target, self.row_window, self.col_window))
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.target, self.row_window, self.col_window))
 
     @property
     @override

@@ -77,6 +77,9 @@ class MatrixAccessor[M: int = int, N: int = int, T: object = object](AbstractArr
     def __repr__(self) -> str:
         return f"MatrixAccessor(array={self.array!r}, shape={self.shape!r})"
 
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.array, self.shape))
+
     @property
     @override
     def row_count(self) -> M:
@@ -105,6 +108,9 @@ class RowVectorAccessor[N: int = int, T: object = object](AbstractArrayAccessor[
     def __repr__(self) -> str:
         return f"RowVectorAccessor(array={self.array!r})"
 
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.array,))
+
     @property
     @override
     def col_count(self) -> N:
@@ -127,6 +133,9 @@ class ColVectorAccessor[M: int = int, T: object = object](AbstractArrayAccessor[
 
     def __repr__(self) -> str:
         return f"ColVectorAccessor(array={self.array!r})"
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.array,))
 
     @property
     @override
@@ -170,6 +179,9 @@ class ValueAccessor[
     def __contains__(self, value: object) -> bool:
         return value is self.value or value == self.value
 
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.value, self.shape))
+
     @property
     @override
     def row_count(self) -> M:
@@ -205,12 +217,15 @@ class IdentityAccessor[
     zero_value: T
     shape: tuple[M, N]
 
-    def __new__(cls, non_zero_value: T, shape: tuple[M, N], *, zero_value: T = 0) -> Self:
+    def __new__(cls, non_zero_value: T, shape: tuple[M, N], zero_value: T = 0) -> Self:
         self = super(IdentityAccessor, cls).__new__(cls)
         self.non_zero_value = non_zero_value
         self.shape = shape
         self.zero_value = zero_value
         return self
+
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.non_zero_value, self.shape, self.zero_value))
 
     @property
     @override
