@@ -17,13 +17,12 @@ import operator
 import random
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator, Reversible, Sequence
-from typing import (Any, Final, Generic, Literal, Self, SupportsFloat,
-                    SupportsIndex, TypeVar, cast, overload, override, TypeGuard)
+from typing import (Any, Generic, Literal, Self, SupportsFloat, SupportsIndex,
+                    TypeGuard, TypeVar, cast, overload, override)
 
-from .accessors import (AbstractAccessor, AbstractArrayAccessor,
-                        ColFlipAccessor, ColSheerAccessor, ColSliceAccessor,
-                        ColVectorAccessor, IdentityAccessor, MatrixAccessor,
-                        MatrixSliceAccessor, ReverseAccessor,
+from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
+                        ColSliceAccessor, ColVectorAccessor, IdentityAccessor,
+                        MatrixAccessor, MatrixSliceAccessor, ReverseAccessor,
                         Rotate090Accessor, Rotate180Accessor,
                         Rotate270Accessor, RowFlipAccessor, RowSheerAccessor,
                         RowSliceAccessor, RowVectorAccessor, SliceAccessor,
@@ -75,13 +74,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     __match_args__ = ("array", "shape")
     _accessor: AbstractAccessor[M_co, N_co, T_co]
 
-    def __new__(
-        cls,
-        array: Iterable[T_co] = (),
-        shape: tuple[M_co, N_co] = (0, 0),
-        *,
-        storage_type: type[AbstractArrayAccessor[M_co, N_co, Any]] = MatrixAccessor[M_co, N_co, Any],
-    ) -> Self:
+    def __new__(cls, array: Iterable[T_co] = (), shape: tuple[M_co, N_co] = (0, 0)) -> Self:
         self = super(Matrix, cls).__new__(cls)
         array = tuple(array)
         if __debug__:
@@ -91,12 +84,21 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             if true_size != test_size:
                 raise ReshapeError(
                     f"array contains {true_size} values but shape implies"
-                    f" {test_size}"
+                    f" {test_size}",
                 )
-        self._accessor = storage_type.from_standard_parts(
-            array=array,
-            shape=shape,
-        )
+        match shape:
+            case (1, _):
+                self._accessor = cast(
+                    AbstractAccessor[M_co, N_co, T_co],
+                    RowVectorAccessor(array),
+                )
+            case (_, 1):
+                self._accessor = cast(
+                    AbstractAccessor[M_co, N_co, T_co],
+                    ColVectorAccessor(array),
+                )
+            case (_, _):
+                self._accessor = MatrixAccessor(array, shape)
         return self
 
     def __repr__(self) -> str:
@@ -461,17 +463,6 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """The number of columns."""
         return self._accessor.col_count
 
-    @property
-    def storage_type(self) -> type[AbstractAccessor[M_co, N_co, T_co]]:
-        return type(self._accessor)
-
-    @property
-    def fallback_storage_type(self) -> type[AbstractArrayAccessor[M_co, N_co, T_co]]:
-        storage_type = self.storage_type
-        if issubclass(storage_type, AbstractArrayAccessor):
-            return storage_type
-        return MatrixAccessor[M_co, N_co, T_co]
-
     def to_nesting(self) -> list[list[T_co]]:
         """Return a singly-nested ``list`` representation of the matrix."""
         result = list[list[T_co]]()
@@ -756,7 +747,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_complex_number(other):
             return ComplexMatrix(
@@ -765,7 +755,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -784,7 +773,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -809,7 +797,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_complex_number(other):
             return ComplexMatrix(
@@ -818,7 +805,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -837,7 +823,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -862,7 +847,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_complex_number(other):
             return ComplexMatrix(
@@ -871,7 +855,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -890,7 +873,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -911,7 +893,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_complex_number(other):
             return ComplexMatrix(
@@ -920,7 +901,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -937,7 +917,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -952,7 +931,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return ComplexMatrix(
             array=self._unary_map(operator.__neg__),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     @overload
@@ -966,7 +944,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return ComplexMatrix(
             array=self._unary_map(operator.__pos__),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     # Absolute value of a complex number is its distance from the origin,
@@ -981,7 +958,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return RealMatrix(
             array=self._unary_map(abs),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     @property
@@ -990,7 +966,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return RealMatrix(
             array=self._unary_map(lambda x: x.real),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     @property
@@ -999,7 +974,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return RealMatrix(
             array=self._unary_map(lambda x: x.imag),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     @override
@@ -1062,7 +1036,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
         return ComplexMatrix(
             array=self._unary_map(lambda x: x.conjugate()),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     @overload
@@ -1100,7 +1073,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_complex_number(other):
             return Matrix(
@@ -1109,7 +1081,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         raise TypeError
 
@@ -1354,7 +1325,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_real_number(other):
             return RealMatrix(
@@ -1363,7 +1333,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -1380,7 +1349,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -1401,7 +1369,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_real_number(other):
             return RealMatrix(
@@ -1410,7 +1377,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -1427,7 +1393,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -1598,7 +1563,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_real_number(other):
             return Matrix(
@@ -1607,7 +1571,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         raise TypeError
 
@@ -1620,7 +1583,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_real_number(other):
             return Matrix(
@@ -1629,7 +1591,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         raise TypeError
 
@@ -1642,7 +1603,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_real_number(other):
             return Matrix(
@@ -1651,7 +1611,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         raise TypeError
 
@@ -1664,7 +1623,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_real_number(other):
             return Matrix(
@@ -1673,7 +1631,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         raise TypeError
 
@@ -1693,14 +1650,12 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             return IntegerMatrix(
                 array=self._unary_map(round),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return RealMatrix(
             array=self._unary_map(
                 functools.partial(round, ndigits=ndigits),
             ),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     def floor(self) -> IntegerMatrix[M_co, N_co]:
@@ -1708,7 +1663,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return IntegerMatrix(
             array=self._unary_map(math.floor),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     def ceil(self) -> IntegerMatrix[M_co, N_co]:
@@ -1716,7 +1670,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return IntegerMatrix(
             array=self._unary_map(math.ceil),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     def trunc(self) -> IntegerMatrix[M_co, N_co]:
@@ -1724,7 +1677,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return IntegerMatrix(
             array=self._unary_map(math.trunc),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     def sort(
@@ -1741,7 +1693,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         return RealMatrix(
             array=sorted(self.array, key=key, reverse=reverse),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
 
@@ -2015,7 +1966,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_integer_number(other):
             return IntegerMatrix(
@@ -2024,7 +1974,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2036,7 +1985,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2053,7 +2001,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_integer_number(other):
             return IntegerMatrix(
@@ -2062,7 +2009,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2074,7 +2020,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2091,7 +2036,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_integer_number(other):
             return IntegerMatrix(
@@ -2100,7 +2044,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2112,7 +2055,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2129,7 +2071,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_integer_number(other):
             return IntegerMatrix(
@@ -2138,7 +2079,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2150,7 +2090,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2167,7 +2106,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         if is_integer_number(other):
             return IntegerMatrix(
@@ -2176,7 +2114,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2188,7 +2125,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
                     other,
                 ),
                 shape=self.shape,
-                storage_type=self.fallback_storage_type,
             )
         return NotImplemented
 
@@ -2208,7 +2144,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         return IntegerMatrix(
             array=self._unary_map(operator.__invert__),
             shape=self.shape,
-            storage_type=self.fallback_storage_type,
         )
 
     @property
@@ -2352,10 +2287,14 @@ def vec3[RealT: Real = Real](x: RealT, y: RealT, z: RealT) -> RealMatrix[Literal
 
 
 def is_complex_number(obj: object) -> TypeGuard[Complex]:
+    """Return true if ``obj`` is an instance of ``Complex``, otherwise false."""
     return isinstance(obj, (complex, float, int))
 
 
 def is_complex_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Complex]]:
+    """Return true if ``obj`` is an instance of ``Matrix``, and contains only
+    instances of ``Complex``.
+    """
     if isinstance(obj, Matrix):
         if isinstance(obj, ComplexMatrix):
             return True
@@ -2364,14 +2303,21 @@ def is_complex_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Complex]]:
 
 
 def is_complex_object(obj: object) -> TypeGuard[Matrix[Any, Any, Complex] | Complex]:
+    """Return true if ``obj`` is an instance of either a ``Matrix`` of
+    ``Complex`` values, or a single ``Complex`` value.
+    """
     return is_complex_number(obj) or is_complex_matrix(obj)
 
 
 def is_real_number(obj: object) -> TypeGuard[Real]:
+    """Return true if ``obj`` is an instance of ``Real``, otherwise false."""
     return isinstance(obj, (float, int))
 
 
 def is_real_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Real]]:
+    """Return true if ``obj`` is an instance of ``Matrix``, and contains only
+    instances of ``Real``.
+    """
     if isinstance(obj, Matrix):
         if isinstance(obj, RealMatrix):
             return True
@@ -2380,14 +2326,21 @@ def is_real_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Real]]:
 
 
 def is_real_object(obj: object) -> TypeGuard[Matrix[Any, Any, Real] | Real]:
+    """Return true if ``obj`` is an instance of either a ``Matrix`` of
+    ``Real`` values, or a single ``Real`` value.
+    """
     return is_real_number(obj) or is_real_matrix(obj)
 
 
 def is_integer_number(obj: object) -> TypeGuard[Integer]:
+    """Return true if ``obj`` is an instance of ``Integer``, otherwise false."""
     return isinstance(obj, int)
 
 
 def is_integer_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Integer]]:
+    """Return true if ``obj`` is an instance of ``Matrix``, and contains only
+    instances of ``Integer``.
+    """
     if isinstance(obj, Matrix):
         if isinstance(obj, IntegerMatrix):
             return True
@@ -2396,4 +2349,7 @@ def is_integer_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Integer]]:
 
 
 def is_integer_object(obj: object) -> TypeGuard[Matrix[Any, Any, Integer] | Integer]:
+    """Return true if ``obj`` is an instance of either a ``Matrix`` of
+    ``Integer`` values, or a single ``Integer`` value.
+    """
     return is_integer_number(obj) or is_integer_matrix(obj)
