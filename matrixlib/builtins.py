@@ -486,7 +486,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 result[matrix_index] = self[matrix_index]
         return result
 
-    def demote(self) -> T_co:
+    def demote(self: Matrix[Literal[1], Literal[1], T_co]) -> T_co:
         """Return the only contained value of a ``(1, 1)`` matrix.
 
         Raises ``DemotionError`` if the matrix does not contain exactly one
@@ -960,7 +960,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             shape=self.shape,
         )
 
-    def __complex__(self) -> complex:
+    def __complex__(self: ComplexMatrix[Literal[1], Literal[1], ComplexT_co]) -> complex:
         return complex(self.demote())
 
     @property
@@ -1448,24 +1448,24 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def __pos__(self) -> RealMatrix[M_co, N_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
         return RealMatrix[M_co, N_co].from_matrix(super().__pos__())
 
-    def __float__(self) -> float:
+    def __float__(self: RealMatrix[Literal[1], Literal[1], RealT_co]) -> float:
         return float(self.demote())
 
     @overload
-    def __round__(self, ndigits: None = None) -> int: ...
+    def __round__(self: RealMatrix[Literal[1], Literal[1], RealT_co], ndigits: None = None) -> int: ...
     @overload
-    def __round__(self, ndigits: SupportsIndex) -> float: ...
+    def __round__(self: RealMatrix[Literal[1], Literal[1], RealT_co], ndigits: SupportsIndex) -> float: ...
 
-    def __round__(self, ndigits: SupportsIndex | None = None) -> float:
+    def __round__(self: RealMatrix[Literal[1], Literal[1], RealT_co], ndigits: SupportsIndex | None = None) -> float:
         return round(self.demote(), ndigits)
 
-    def __floor__(self) -> int:
+    def __floor__(self: RealMatrix[Literal[1], Literal[1], RealT_co]) -> int:
         return math.floor(self.demote())
 
-    def __ceil__(self) -> int:
+    def __ceil__(self: RealMatrix[Literal[1], Literal[1], RealT_co]) -> int:
         return math.ceil(self.demote())
 
-    def __trunc__(self) -> int:
+    def __trunc__(self: RealMatrix[Literal[1], Literal[1], RealT_co]) -> int:
         return math.trunc(self.demote())
 
     @property
@@ -2152,7 +2152,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
             shape=self.shape,
         )
 
-    def __int__(self) -> int:
+    def __int__(self: IntegerMatrix[Literal[1], Literal[1], IntegerT_co]) -> int:
         return int(self.demote())
 
     @property
