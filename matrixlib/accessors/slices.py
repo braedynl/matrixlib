@@ -128,7 +128,6 @@ class MatrixSliceAccessor[
     def __new__(
         cls,
         target: AbstractAccessor[int, int, T],
-        *,
         row_window: range,
         col_window: range,
     ) -> Self:

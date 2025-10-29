@@ -169,6 +169,9 @@ class ValueAccessor[
     def __hash__(self) -> int:
         return hash((self.value, self.shape))
 
+    def __reduce__(self) -> tuple[object, ...]:
+        return (self.__class__, (self.value, self.shape))
+
     @override
     def __iter__(self) -> Iterator[T]:
         return itertools.repeat(self.value, times=len(self))
@@ -178,9 +181,6 @@ class ValueAccessor[
     @override
     def __contains__(self, value: object) -> bool:
         return value is self.value or value == self.value
-
-    def __reduce__(self) -> tuple[object, ...]:
-        return (self.__class__, (self.value, self.shape))
 
     @property
     @override
