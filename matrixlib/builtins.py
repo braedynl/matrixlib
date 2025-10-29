@@ -960,6 +960,9 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
             shape=self.shape,
         )
 
+    def __complex__(self) -> complex:
+        return complex(self.demote())
+
     @property
     def real(self) -> RealMatrix[M_co, N_co]:
         """The matrix's real components."""
@@ -1444,6 +1447,9 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def __pos__(self) -> RealMatrix[M_co, N_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
         return RealMatrix[M_co, N_co].from_matrix(super().__pos__())
+
+    def __float__(self) -> float:
+        return float(self.demote())
 
     @overload
     def __round__(self, ndigits: None = None) -> int: ...
@@ -2145,6 +2151,9 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
             array=self._unary_map(operator.__invert__),
             shape=self.shape,
         )
+
+    def __int__(self) -> int:
+        return int(self.demote())
 
     @property
     @override
