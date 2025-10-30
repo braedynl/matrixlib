@@ -10,29 +10,10 @@ __all__ = [
     "ReverseAccessor",
 ]
 
-from abc import ABCMeta, abstractmethod
 from typing import Self, final, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
-
-
-class AbstractPermutationAccessor[
-    M: int = int,
-    N: int = int,
-    T: object = object,
-](AbstractAccessor[M, N, T], metaclass=ABCMeta):
-
-    __slots__ = ()
-
-    def __hash__(self) -> int:
-        return hash(self.target)
-
-    @property
-    @abstractmethod
-    def target(self) -> AbstractAccessor[M, N, T]:
-        """The permuted accessor."""
-        raise NotImplementedError
 
 
 @final
@@ -40,7 +21,7 @@ class TransposeAccessor[
     M: int = int,
     N: int = int,
     T: object = object,
-](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
+](AbstractMatrixAccessor[M, N, T]):
 
     __slots__ = (
         "target",  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -51,6 +32,9 @@ class TransposeAccessor[
         self = super(TransposeAccessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __hash__(self) -> int:
+        return hash(self.target)
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.target,))
@@ -75,7 +59,7 @@ class RowFlipAccessor[
     M: int = int,
     N: int = int,
     T: object = object,
-](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
+](AbstractMatrixAccessor[M, N, T]):
 
     __slots__ = (
         "target",  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -86,6 +70,9 @@ class RowFlipAccessor[
         self = super(RowFlipAccessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __hash__(self) -> int:
+        return hash(self.target)
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.target,))
@@ -113,7 +100,7 @@ class ColFlipAccessor[
     M: int = int,
     N: int = int,
     T: object = object,
-](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
+](AbstractMatrixAccessor[M, N, T]):
 
     __slots__ = (
         "target",  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -124,6 +111,9 @@ class ColFlipAccessor[
         self = super(ColFlipAccessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __hash__(self) -> int:
+        return hash(self.target)
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.target,))
@@ -151,7 +141,7 @@ class Rotate090Accessor[
     M: int = int,
     N: int = int,
     T: object = object,
-](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
+](AbstractMatrixAccessor[M, N, T]):
 
     __slots__ = (
         "target",  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -162,6 +152,9 @@ class Rotate090Accessor[
         self = super(Rotate090Accessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __hash__(self) -> int:
+        return hash(self.target)
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.target,))
@@ -189,7 +182,7 @@ class Rotate180Accessor[
     M: int = int,
     N: int = int,
     T: object = object,
-](AbstractVectorAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
+](AbstractVectorAccessor[M, N, T]):
 
     __slots__ = (
         "target",  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -200,6 +193,9 @@ class Rotate180Accessor[
         self = super(Rotate180Accessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __hash__(self) -> int:
+        return hash(self.target)
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.target,))
@@ -224,7 +220,7 @@ class Rotate270Accessor[
     M: int = int,
     N: int = int,
     T: object = object,
-](AbstractMatrixAccessor[M, N, T], AbstractPermutationAccessor[M, N, T]):
+](AbstractMatrixAccessor[M, N, T]):
 
     __slots__ = (
         "target",  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -235,6 +231,9 @@ class Rotate270Accessor[
         self = super(Rotate270Accessor, cls).__new__(cls)
         self.target = target
         return self
+
+    def __hash__(self) -> int:
+        return hash(self.target)
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.target,))
