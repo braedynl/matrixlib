@@ -2210,36 +2210,24 @@ def iter_or[T](reversible: Reversible[T], *, reverse: bool = False) -> Iterator[
 
 def interleave[T](iterables: tuple[Iterable[T], ...], leave_counts: tuple[int, ...]) -> Iterator[T]:
     """Return an iterator that, for each integer N in ``leave_counts``, yields
-    N elements from the parallel iterable of ``iterables`` repeatedly until all
-    have been exhausted.
+    N elements from the parallel iterable of ``iterables``, repeatedly, until
+    all have been exhausted.
     """
     assert len(iterables) == len(leave_counts)
-
     sentinel = object()
-
-    iterators = tuple(map(iter, iterables))
-    index_queue = deque(range(len(iterators)))
-
-    while index_queue:
-        index = index_queue.popleft()
-        iterator = iterators[index]
-
-        exhausted = False
-
-        leave_count = leave_counts[index]
-        if leave_count:
-            for _ in range(leave_count):
-                value = next(iterator, sentinel)
-                if value is sentinel:
-                    exhausted = True
+    requests = deque(zip(leave_counts, map(iter, iterables)))
+    while requests:
+        request = requests.popleft()
+        if (count := request[0]):
+            iterator = request[1]
+            for _ in range(count):
+                result = next(iterator, sentinel)
+                if result is sentinel:
                     break
                 else:
-                    yield value  # type: ignore
-        else:
-            exhausted = True
-
-        if not exhausted:
-            index_queue.append(index)
+                    yield result  # type: ignore
+            else:
+                requests.append(request)
 
 
 def vec2[RealT: Real = Real](x: RealT, y: RealT) -> RealMatrix[Literal[2], Literal[1], RealT]:
