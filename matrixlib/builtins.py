@@ -21,16 +21,15 @@ from typing import (Any, Generic, Literal, Self, SupportsFloat, SupportsIndex,
                     TypeGuard, TypeVar, cast, overload, override)
 
 from . import exceptions
-from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
-                        ColSliceAccessor, ColVectorAccessor, IdentityAccessor,
-                        MatrixAccessor, MatrixSliceAccessor, ReverseAccessor,
-                        Rotate090Accessor, Rotate180Accessor,
+from .accessors import (COL, ROW, AbstractAccessor, ColFlipAccessor,
+                        ColSheerAccessor, ColSliceAccessor, ColVectorAccessor,
+                        IdentityAccessor, MatrixAccessor, MatrixSliceAccessor,
+                        ReverseAccessor, Rotate090Accessor, Rotate180Accessor,
                         Rotate270Accessor, RowFlipAccessor, RowSheerAccessor,
-                        RowSliceAccessor, RowVectorAccessor, SliceAccessor,
-                        TransposeAccessor, ValueAccessor)
+                        RowSliceAccessor, RowVectorAccessor, Rule,
+                        SliceAccessor, TransposeAccessor, ValueAccessor)
 from .exceptions import (DemotionError, MismatchedDimensionError,
                          NegativeDimensionError, ReshapeError)
-from .rule import COL, ROW, Rule
 from .typeshed import Sortable
 
 type Integer = int

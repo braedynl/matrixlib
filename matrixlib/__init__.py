@@ -10,4 +10,4 @@ Source: https://github.com/braedynl/matrixlib/
 """
 
 from .builtins import *
-from .rule import *
+from .accessors.rule import *

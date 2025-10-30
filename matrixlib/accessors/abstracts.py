@@ -12,7 +12,7 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Iterator
 from typing import Protocol, SupportsIndex, override, runtime_checkable
 
-from ..rule import Rule
+from .rule import Rule
 
 
 class AbstractAccessor[
