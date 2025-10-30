@@ -17,7 +17,7 @@ from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
 
 
-class AbstractArrayAccessor[
+class AbstractDefaultAccessor[
     M: int = int,
     N: int = int,
     T: object = object,
@@ -59,7 +59,11 @@ class AbstractArrayAccessor[
 
 
 @final
-class MatrixAccessor[M: int = int, N: int = int, T: object = object](AbstractArrayAccessor[M, N, T]):
+class MatrixAccessor[
+    M: int = int,
+    N: int = int,
+    T: object = object,
+](AbstractDefaultAccessor[M, N, T]):
 
     __slots__ = (
         "array",  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -73,9 +77,6 @@ class MatrixAccessor[M: int = int, N: int = int, T: object = object](AbstractArr
         self.array = array
         self.shape = shape
         return self
-
-    def __repr__(self) -> str:
-        return f"MatrixAccessor(array={self.array!r}, shape={self.shape!r})"
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.array, self.shape))
@@ -92,7 +93,10 @@ class MatrixAccessor[M: int = int, N: int = int, T: object = object](AbstractArr
 
 
 @final
-class RowVectorAccessor[N: int = int, T: object = object](AbstractArrayAccessor[Literal[1], N, T]):
+class RowVectorAccessor[
+    N: int = int,
+    T: object = object,
+](AbstractDefaultAccessor[Literal[1], N, T]):
 
     __slots__ = (
         "array",  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -105,9 +109,6 @@ class RowVectorAccessor[N: int = int, T: object = object](AbstractArrayAccessor[
         self.array = array
         return self
 
-    def __repr__(self) -> str:
-        return f"RowVectorAccessor(array={self.array!r})"
-
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.array,))
 
@@ -118,7 +119,10 @@ class RowVectorAccessor[N: int = int, T: object = object](AbstractArrayAccessor[
 
 
 @final
-class ColVectorAccessor[M: int = int, T: object = object](AbstractArrayAccessor[M, Literal[1], T]):
+class ColVectorAccessor[
+    M: int = int,
+    T: object = object,
+](AbstractDefaultAccessor[M, Literal[1], T]):
 
     __slots__ = (
         "array",  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -130,9 +134,6 @@ class ColVectorAccessor[M: int = int, T: object = object](AbstractArrayAccessor[
         self = super(ColVectorAccessor, cls).__new__(cls)
         self.array = array
         return self
-
-    def __repr__(self) -> str:
-        return f"ColVectorAccessor(array={self.array!r})"
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.array,))
@@ -162,9 +163,6 @@ class ValueAccessor[
         self.value = value
         self.shape = shape
         return self
-
-    def __repr__(self) -> str:
-        return f"ValueAccessor(value={self.value!r}, shape={self.shape!r})"
 
     def __hash__(self) -> int:
         return hash((self.value, self.shape))
@@ -223,6 +221,9 @@ class IdentityAccessor[
         self.shape = shape
         self.zero_value = zero_value
         return self
+
+    def __hash__(self) -> int:
+        return hash((self.non_zero_value, self.shape, self.zero_value))
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.non_zero_value, self.shape, self.zero_value))
