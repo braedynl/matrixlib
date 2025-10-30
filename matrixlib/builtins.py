@@ -326,65 +326,6 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             ),
         )
 
-    @overload
-    @classmethod
-    def from_stack(cls, *matrices: Matrix[Any, N_co, T_co], by: Literal[Rule.ROW]) -> Self: ...
-    @overload
-    @classmethod
-    def from_stack(cls, *matrices: Matrix[M_co, Any, T_co], by: Literal[Rule.COL]) -> Self: ...
-    @overload
-    @classmethod
-    def from_stack(cls, *matrices: Matrix[Any, Any, T_co], by: Rule) -> Self: ...
-    @overload
-    @classmethod
-    def from_stack(cls, *matrices: Matrix[Any, N_co, T_co]) -> Self: ...
-
-    @classmethod
-    def from_stack(cls, *matrices: Matrix[Any, Any, T_co], by: Rule = Rule.ROW) -> Self:
-        """Construct a matrix from a stacking of one or more other matrices
-        along the specified dimension.
-
-        Raises ``ValueError`` if no matrices are provided.
-
-        Raises ``MismatchedDimensionError`` if the opposite dimension to ``by``
-        is inconsistent across the given matrices (debug-only).
-
-        **Note**: This method does not fully infer its dimension types. The
-        unknown dimension is the sum of the matrices' stacking dimensions (the
-        ``by`` dimension).
-        """
-        matrix_count = len(matrices)
-
-        if not matrix_count:
-            raise ValueError("at least one matrix is required to form a stack")
-
-        dy = ~by
-
-        shape: dict[Rule, Any] = {}
-        shape[by] = sum(matrix.shape[by] for matrix in matrices)
-        shape[dy] = matrices[0].shape[dy]
-
-        if __debug__:
-            true_count = shape[dy]
-            for i in range(1, matrix_count):
-                test_count = matrices[i].shape[dy]
-                if test_count != true_count:
-                    raise MismatchedDimensionError(
-                        f"matrix at index {i} has {test_count} {dy.handle}s,"
-                        f" but precedent matrices have {true_count}"
-                    )
-
-        return cls(
-            array=interleave(
-                matrices,
-                leave_counts=tuple(
-                    matrix.col_count * (matrix.row_count ** dy.value)
-                    for matrix in matrices
-                ),
-            ),
-            shape=(shape[ROW], shape[COL]),
-        )
-
     @classmethod
     def from_nesting(cls, nesting: Iterable[Iterable[T_co]]) -> Self:
         """Construct a matrix from a singly-nested iterable, using the
@@ -651,15 +592,62 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """
         return map(mapper, self)
 
-    def replace(self, old: Callable[[], T_co], new: Callable[[], T_co]) -> Matrix[M_co, N_co, T_co]:
-        """Return a new matrix with values equal to ``old()`` replaced with
-        ``new()``.
+    @overload
+    def stack[S](self, *matrices: Matrix[Any, N_co, S], by: Literal[Rule.ROW]) -> Matrix[Any, N_co, T_co | S]: ...
+    @overload
+    def stack[S](self, *matrices: Matrix[M_co, Any, S], by: Literal[Rule.COL]) -> Matrix[M_co, Any, T_co | S]: ...
+    @overload
+    def stack[S](self, *matrices: Matrix[Any, Any, S], by: Rule) -> Matrix[Any, Any, T_co | S]: ...
+    @overload
+    def stack[S](self, *matrices: Matrix[Any, N_co, S]) -> Matrix[Any, N_co, T_co | S]: ...
+
+    def stack[S](self, *matrices: Matrix[Any, Any, S], by: Rule = Rule.ROW) -> Matrix[Any, Any, T_co | S]:
+        """Return the matrix stacked with one or more other matrices along a
+        dimension.
+
+        Raises ``MismatchedDimensionError`` if the opposite dimension to ``by``
+        is inconsistent across the given matrices (debug-only).
+
+        **Note**: This method does not fully infer its dimension types. The
+        unknown dimension is the sum of the matrices' stacking dimensions (the
+        ``by`` dimension).
+        """
+        dy = ~by
+
+        shape: dict[Rule, Any] = {}
+        shape[by] = self.shape[by] + sum(matrix.shape[by] for matrix in matrices)
+        shape[dy] = self.shape[dy]
+
+        if __debug__:
+            true_count = shape[dy]
+            for i, matrix in enumerate(matrices):
+                test_count = matrix.shape[dy]
+                if test_count != true_count:
+                    raise MismatchedDimensionError(
+                        f"matrix at index {i} has {test_count} {dy.handle}s,"
+                        f" but precedent matrices have {true_count}"
+                    )
+
+        interleaving = (self,) + matrices
+
+        return Matrix(
+            array=interleave(
+                interleaving,
+                leave_counts=tuple(
+                    matrix.col_count * (matrix.row_count ** dy.value)
+                    for matrix in interleaving
+                ),
+            ),
+            shape=(shape[ROW], shape[COL]),
+        )
+
+    def replace[S](self, old: object, new: S) -> Matrix[M_co, N_co, T_co | S]:
+        """Return a new matrix with values equal to ``old`` replaced with
+        ``new``.
         """
 
-        def mapper(value: T_co, old: T_co = old(), new: T_co = new()) -> T_co:
-            if value is old or value == old:
-                return new
-            return value
+        def mapper(value: T_co, old: object = old, new: S = new) -> T_co | S:
+            return new if value is old or value == old else value
 
         return Matrix(
             array=self._unary_map(mapper),
@@ -1025,10 +1013,6 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[ComplexMatrix[Any, Any, ComplexT_co]]:
         return map(ComplexMatrix[Any, Any, ComplexT_co].from_matrix, super().vectors(by=by, reverse=reverse))
-
-    @override
-    def replace(self, old: Callable[[], ComplexT_co], new: Callable[[], ComplexT_co]) -> ComplexMatrix[M_co, N_co, ComplexT_co]:
-        return ComplexMatrix[M_co, N_co, ComplexT_co].from_matrix(super().replace(old, new))
 
     @overload
     def conjugate(self: ComplexMatrix[M_co, N_co, Integer]) -> ComplexMatrix[M_co, N_co, Integer]: ...
@@ -1524,10 +1508,6 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[RealMatrix[Any, Any, RealT_co]]:
         return map(RealMatrix[Any, Any, RealT_co].from_matrix, super().vectors(by=by, reverse=reverse))
-
-    @override
-    def replace(self, old: Callable[[], RealT_co], new: Callable[[], RealT_co]) -> RealMatrix[M_co, N_co, RealT_co]:
-        return RealMatrix[M_co, N_co, RealT_co].from_matrix(super().replace(old, new))
 
     @overload
     def conjugate(self: RealMatrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
@@ -2206,10 +2186,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[IntegerMatrix[Any, Any, IntegerT_co]]:
         return map(IntegerMatrix[Any, Any, IntegerT_co].from_matrix, super().vectors(by=by, reverse=reverse))
-
-    @override
-    def replace(self, old: Callable[[], IntegerT_co], new: Callable[[], IntegerT_co]) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
-        return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().replace(old, new))
 
     @override
     def conjugate(self) -> IntegerMatrix[M_co, N_co]:
