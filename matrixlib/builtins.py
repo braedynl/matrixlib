@@ -1509,6 +1509,9 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[RealMatrix[Any, Any, RealT_co]]:
         return map(RealMatrix[Any, Any, RealT_co].from_matrix, super().vectors(by=by, reverse=reverse))
 
+    # NOTE: Same typing problem as with __neg__() and __pos__() - see note
+    # above them for more details.
+
     @overload
     def conjugate(self: RealMatrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
     @overload
@@ -1680,7 +1683,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         for more details.
         """
         return RealMatrix(
-            array=sorted(self.array, key=key, reverse=reverse),
+            array=sorted(self, key=key, reverse=reverse),
             shape=self.shape,
         )
 
@@ -1693,7 +1696,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     def identity[N: int](
         cls: type[IntegerMatrix[N, N, IntegerT_co]],
         count: N,
-    ) -> IntegerMatrix[N, N, IntegerT_co]:
+    ) -> IntegerMatrix[N, N]:
         """Construct an identity matrix, efficiently.
 
         Raises ``NegativeDimensionError`` if ``count`` is negative
@@ -1705,37 +1708,31 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         if __debug__:
             if count < 0:
                 raise NegativeDimensionError("shape dimensions must be positive")
-        return IntegerMatrix[N, N, IntegerT_co].from_accessor(
+        return IntegerMatrix[N, N].from_accessor(
             accessor=IdentityAccessor(
-                non_zero_value=cast(IntegerT_co, 1),
+                non_zero_value=1,
                 shape=(count, count),
-                zero_value=cast(IntegerT_co, 0),
+                zero_value=0,
             ),
         )
 
     @classmethod
-    def zeroes(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
+    def zeroes(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co]:
         """Construct a matrix comprised entirely of zeroes, efficiently.
 
         **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
         """
-        return IntegerMatrix[M_co, N_co, IntegerT_co].fill(
-            lambda: cast(IntegerT_co, 0),
-            shape,
-        )
+        return IntegerMatrix[M_co, N_co].fill(lambda: 0, shape)
 
     @classmethod
-    def ones(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
+    def ones(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co]:
         """Construct a matrix comprised entirely of ones, efficiently.
 
         **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
         """
-        return IntegerMatrix[M_co, N_co, IntegerT_co].fill(
-            lambda: cast(IntegerT_co, 1),
-            shape,
-        )
+        return IntegerMatrix[M_co, N_co].fill(lambda: 1, shape)
 
     @overload
     def __getitem__(self, index: SupportsIndex) -> IntegerT_co: ...
