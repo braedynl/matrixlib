@@ -528,12 +528,12 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             values = self
         else:
             values = TransposeAccessor(self._accessor)
-        return iter_or(values, reverse=reverse)
+        return optional_reversed(values, reverse=reverse)
 
     def rows(self, *, reverse: bool = False) -> Iterator[Matrix[Literal[1], N_co, T_co]]:
         """Return an iterator that yields views over the rows of the matrix."""
         target = self._accessor
-        for row_index in iter_or(range(self.row_count), reverse=reverse):
+        for row_index in optional_reversed(range(self.row_count), reverse=reverse):
             yield Matrix[Literal[1], N_co, T_co].from_accessor(
                 accessor=RowSheerAccessor(target, row_index=row_index),
             )
@@ -541,7 +541,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def cols(self, *, reverse: bool = False) -> Iterator[Matrix[M_co, Literal[1], T_co]]:
         """Return an iterator that yields views over the columns of the matrix."""
         target = self._accessor
-        for col_index in iter_or(range(self.col_count), reverse=reverse):
+        for col_index in optional_reversed(range(self.col_count), reverse=reverse):
             yield Matrix[M_co, Literal[1], T_co].from_accessor(
                 accessor=ColSheerAccessor(target, col_index=col_index),
             )
@@ -634,7 +634,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return Matrix(
             array=interleave(
                 interleaving,
-                leave_counts=tuple(
+                leave_counts=(
                     matrix.col_count * (matrix.row_count ** dy.value)
                     for matrix in interleaving
                 ),
@@ -2203,19 +2203,18 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().sort(key=key, reverse=reverse))
 
 
-def iter_or[T](reversible: Reversible[T], *, reverse: bool = False) -> Iterator[T]:
+def optional_reversed[T](reversible: Reversible[T], *, reverse: bool = False) -> Iterator[T]:
     """Return the iterator of an object, optionally its reverse iterator."""
     return reversed(reversible) if reverse else iter(reversible)
 
 
-def interleave[T](iterables: tuple[Iterable[T], ...], leave_counts: tuple[int, ...]) -> Iterator[T]:
+def interleave[T](iterables: Iterable[Iterable[T]], leave_counts: Iterable[int]) -> Iterator[T]:
     """Return an iterator that, for each integer N in ``leave_counts``, yields
     N elements from the parallel iterable of ``iterables``, repeatedly, until
     all have been exhausted.
     """
-    assert len(iterables) == len(leave_counts)
     sentinel = object()
-    requests = deque(zip(leave_counts, map(iter, iterables)))
+    requests = deque(zip(leave_counts, map(iter, iterables), strict=True))
     while requests:
         request = requests.popleft()
         if (count := request[0]):
