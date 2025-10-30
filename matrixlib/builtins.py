@@ -20,6 +20,7 @@ from collections.abc import Callable, Iterable, Iterator, Reversible, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsFloat, SupportsIndex,
                     TypeGuard, TypeVar, cast, overload, override)
 
+from . import exceptions
 from .accessors import (AbstractAccessor, ColFlipAccessor, ColSheerAccessor,
                         ColSliceAccessor, ColVectorAccessor, IdentityAccessor,
                         MatrixAccessor, MatrixSliceAccessor, ReverseAccessor,
@@ -78,7 +79,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         self = super(Matrix, cls).__new__(cls)
         array = tuple(array)
         if __debug__:
-            assert_positive_shape(shape)
+            exceptions.check_positive_shape(shape)
             test_size = shape[0] * shape[1]
             true_size = len(array)
             if true_size != test_size:
@@ -246,7 +247,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         negative (debug-only).
         """
         if __debug__:
-            assert_positive_shape(shape)
+            exceptions.check_positive_shape(shape)
         return cls.from_accessor(
             accessor=MatrixAccessor(
                 array=tuple(
@@ -318,7 +319,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         negative (debug-only).
         """
         if __debug__:
-            assert_positive_shape(shape)
+            exceptions.check_positive_shape(shape)
         return cls.from_accessor(
             accessor=ValueAccessor(
                 value=value(),
@@ -571,7 +572,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         have an equal shape (debug-only).
         """
         if __debug__:
-            assert_equal_shapes(self.shape, other.shape)
+            exceptions.check_equal_shapes(self.shape, other.shape)
         return map(mapper, self, other)
 
     def _binary_scalar_map[S, R](self, mapper: Callable[[T_co, S], R], other: S) -> Iterator[R]:
@@ -1090,7 +1091,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         ``RealMatrix`` unless overriden by a child class.
         """
         if __debug__:
-            assert_positive_shape(shape)
+            exceptions.check_positive_shape(shape)
         return RealMatrix[M_co, N_co].from_accessor(
             accessor=MatrixAccessor(
                 array=tuple(
@@ -2200,22 +2201,6 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         reverse: bool = False,
     ) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
         return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().sort(key=key, reverse=reverse))
-
-
-def assert_positive_shape(shape: tuple[int, int], /) -> None:
-    """Raise ``NegativeDimensionError`` if the given shape contains a negative
-    dimension, otherwise do nothing.
-    """
-    if shape[0] < 0 or shape[1] < 0:
-        raise NegativeDimensionError("shape dimensions must be positive")
-
-
-def assert_equal_shapes(shape1: tuple[int, int], shape2: tuple[int, int], /) -> None:
-    """Raise ``MismatchedDimensionError`` if the two given shapes are not
-    equal, otherwise do nothing.
-    """
-    if shape1 != shape2:
-        raise MismatchedDimensionError(f"unequal shapes, {shape1} and {shape2}")
 
 
 def iter_or[T](reversible: Reversible[T], *, reverse: bool = False) -> Iterator[T]:
