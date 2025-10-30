@@ -9,5 +9,6 @@ Version: 0.3.2
 Source: https://github.com/braedynl/matrixlib/
 """
 
-from .builtins import *
 from .accessors.rule import *
+from .builtins import *
+from .exceptions import *
