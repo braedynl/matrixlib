@@ -21,13 +21,17 @@ from typing import (Any, Generic, Literal, Self, SupportsFloat, SupportsIndex,
                     TypeGuard, TypeVar, cast, overload, override)
 
 from . import exceptions
-from .accessors import (COL, ROW, AbstractAccessor, ColFlipAccessor,
-                        ColSheerAccessor, ColSliceAccessor, ColVectorAccessor,
-                        IdentityAccessor, MatrixAccessor, MatrixSliceAccessor,
-                        ReverseAccessor, Rotate090Accessor, Rotate180Accessor,
-                        Rotate270Accessor, RowFlipAccessor, RowSheerAccessor,
-                        RowSliceAccessor, RowVectorAccessor, Rule,
-                        SliceAccessor, TransposeAccessor, ValueAccessor)
+from .accessors.abstracts import AbstractAccessor
+from .accessors.bases import (ColVectorAccessor, IdentityAccessor,
+                              MatrixAccessor, RowVectorAccessor, ValueAccessor)
+from .accessors.permutations import (ColFlipAccessor, ReverseAccessor,
+                                     Rotate090Accessor, Rotate180Accessor,
+                                     Rotate270Accessor, RowFlipAccessor,
+                                     TransposeAccessor)
+from .accessors.rule import COL, ROW, Rule
+from .accessors.sheers import ColSheerAccessor, RowSheerAccessor
+from .accessors.slices import (ColSliceAccessor, MatrixSliceAccessor,
+                               RowSliceAccessor, SliceAccessor)
 from .exceptions import (DemotionError, MismatchedDimensionError,
                          NegativeDimensionError, ReshapeError)
 from .typeshed import Sortable
