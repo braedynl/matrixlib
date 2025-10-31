@@ -4,13 +4,12 @@ __all__ = [
     "AbstractAccessor",
     "AbstractVectorAccessor",
     "AbstractMatrixAccessor",
-    "HasTarget",
 ]
 
 import operator
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterator
-from typing import Protocol, SupportsIndex, override, runtime_checkable
+from typing import SupportsIndex, override
 
 from .rule import Rule
 
@@ -210,20 +209,6 @@ class AbstractMatrixAccessor[
     def vector_access(self, index: int) -> T:
         row_index, col_index = divmod(index, self.col_count)
         return self.matrix_access(row_index, col_index)
-
-
-@runtime_checkable
-class HasTarget(Protocol):
-
-    @property
-    @abstractmethod
-    def target(self) -> AbstractAccessor:
-        """The accessor target.
-
-        Used by accessor types that refer to other accessors as a means of data
-        storage (a "view").
-        """
-        raise NotImplementedError
 
 
 def resolve_index(key: SupportsIndex, bound: int) -> int:
