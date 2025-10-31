@@ -10,6 +10,9 @@ def interleave[T](iterables: Iterable[Iterable[T]], leave_counts: Iterable[int])
     """Return an iterator that, for each integer N in ``leave_counts``, yields
     N elements from the parallel iterable of ``iterables``, repeatedly, until
     all have been exhausted.
+
+    Raises ``ValueError`` if the length of ``iterables`` does not match the
+    length of ``leave_counts``.
     """
 
     sentinel = object()

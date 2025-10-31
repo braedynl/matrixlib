@@ -9,7 +9,7 @@ __all__ = [
 
 
 def logical_and(a: object, b: object, /) -> bool:
-    """Return the logical and of two objects."""
+    """Return the logical ``and`` of two objects."""
     return not not (a and b)
 
 
@@ -19,10 +19,10 @@ def logical_xor(a: object, b: object, /) -> bool:
 
 
 def logical_or(a: object, b: object, /) -> bool:
-    """Return the logical or of two objects."""
+    """Return the logical ``or`` of two objects."""
     return not not (a or b)
 
 
 def logical_not(a: object, /) -> bool:
-    """Return the logical not of an object."""
+    """Return the logical ``not`` of an object."""
     return not a
