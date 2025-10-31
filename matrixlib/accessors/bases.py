@@ -25,9 +25,6 @@ class AbstractDefaultAccessor[
 
     __slots__ = ()
 
-    def __hash__(self) -> int:
-        return hash((self.array, self.shape))
-
     @override
     def __len__(self) -> int:
         return len(self.array)
@@ -78,6 +75,9 @@ class MatrixAccessor[
         self.shape = shape
         return self
 
+    def __hash__(self) -> int:
+        return hash((self.array, self.shape))
+
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.array, self.shape))
 
@@ -109,6 +109,9 @@ class RowVectorAccessor[
         self.array = array
         return self
 
+    def __hash__(self) -> int:
+        return hash(self.array)
+
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.array,))
 
@@ -134,6 +137,9 @@ class ColVectorAccessor[
         self = super(ColVectorAccessor, cls).__new__(cls)
         self.array = array
         return self
+
+    def __hash__(self) -> int:
+        return hash(self.array)
 
     def __reduce__(self) -> tuple[object, ...]:
         return (self.__class__, (self.array,))
