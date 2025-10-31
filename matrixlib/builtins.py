@@ -413,25 +413,14 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def to_nesting(self) -> list[list[T_co]]:
         """Return a singly-nested ``list`` representation of the matrix."""
-        result = list[list[T_co]]()
-        row_indices = range(self.row_count)
-        col_indices = range(self.col_count)
-        for row_index in row_indices:
-            result.append([])
-            for col_index in col_indices:
-                matrix_index = (row_index, col_index)
-                result[row_index].append(self[matrix_index])
-        return result
+        return list(map(list, self.rows()))
 
     def to_mapping(self) -> dict[tuple[int, int], T_co]:
         """Return an index-to-value ``dict`` representation of the matrix."""
         result = dict[tuple[int, int], T_co]()
-        row_indices = range(self.row_count)
-        col_indices = range(self.col_count)
-        for row_index in row_indices:
-            for col_index in col_indices:
-                matrix_index = (row_index, col_index)
-                result[matrix_index] = self[matrix_index]
+        for row_index, row in enumerate(self.rows()):
+            for col_index, val in enumerate(row):
+                result[row_index, col_index] = val
         return result
 
     def demote(self: Matrix[Literal[1], Literal[1], T_co]) -> T_co:
