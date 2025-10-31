@@ -315,18 +315,21 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return self
 
     @classmethod
-    def fill(cls, value: Callable[[], T_co], shape: tuple[M_co, N_co]) -> Self:
-        """Construct a matrix comprised entirely of ``value()``,
-        efficiently.
+    def fill(cls, value: object, shape: tuple[M_co, N_co]) -> Self:
+        """Construct a matrix comprised entirely of ``value``, efficiently.
 
         Raises ``NegativeDimensionError`` if a dimension of ``shape`` is
         negative (debug-only).
+
+        **Note**: This method does not infer its value type. ``value`` should
+        technically be ``T_co``, but can not be typed that way currently, due
+        to how type checkers infer variance.
         """
         if __debug__:
             exceptions.check_positive_shape(shape)
         return cls.from_accessor(
             accessor=ValueAccessor(
-                value=value(),
+                value=cast(T_co, value),
                 shape=shape,
             ),
         )
@@ -1882,7 +1885,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
         """
-        return IntegerMatrix[M_co, N_co].fill(lambda: 0, shape)
+        return IntegerMatrix[M_co, N_co].fill(0, shape)
 
     @classmethod
     def ones(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co]:
@@ -1891,7 +1894,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
         """
-        return IntegerMatrix[M_co, N_co].fill(lambda: 1, shape)
+        return IntegerMatrix[M_co, N_co].fill(1, shape)
 
     @overload
     def __getitem__(self, index: SupportsIndex) -> IntegerT_co: ...
