@@ -17,12 +17,11 @@ import itertools
 import math
 import operator
 import random
-from collections import deque
 from collections.abc import Callable, Iterable, Iterator, Reversible, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsFloat, SupportsIndex,
                     TypeGuard, TypeVar, cast, overload, override)
 
-from . import exceptions
+from . import exceptions, utilities
 from .accessors.abstracts import AbstractAccessor
 from .accessors.bases import (ColVectorAccessor, IdentityAccessor,
                               MatrixAccessor, RowVectorAccessor, ValueAccessor)
@@ -627,7 +626,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         interleaving = (self,) + matrices
 
         return Matrix(
-            array=interleave(
+            array=utilities.interleave(
                 interleaving,
                 leave_counts=(
                     matrix.col_count * (matrix.row_count ** dy.value)
@@ -726,14 +725,14 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
         if isinstance(other, Matrix):
             return BooleanMatrix(
                 array=self._binary_matrix_map(
-                    logical_and,
+                    utilities.logical_and,
                     other,
                 ),
                 shape=self.shape,
             )
         return BooleanMatrix(
             array=self._binary_scalar_map(
-                logical_and,
+                utilities.logical_and,
                 other,
             ),
             shape=self.shape,
@@ -742,7 +741,7 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
     def __rand__(self, other: object) -> BooleanMatrix[M_co, N_co]:
         return BooleanMatrix(
             array=self._binary_scalar_map_r(
-                logical_and,
+                utilities.logical_and,
                 other,
             ),
             shape=self.shape,
@@ -752,14 +751,14 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
         if isinstance(other, Matrix):
             return BooleanMatrix(
                 array=self._binary_matrix_map(
-                    logical_xor,
+                    utilities.logical_xor,
                     other,
                 ),
                 shape=self.shape,
             )
         return BooleanMatrix(
             array=self._binary_scalar_map(
-                logical_xor,
+                utilities.logical_xor,
                 other,
             ),
             shape=self.shape,
@@ -768,7 +767,7 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
     def __rxor__(self, other: object) -> BooleanMatrix[M_co, N_co]:
         return BooleanMatrix(
             array=self._binary_scalar_map_r(
-                logical_xor,
+                utilities.logical_xor,
                 other,
             ),
             shape=self.shape,
@@ -778,14 +777,14 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
         if isinstance(other, Matrix):
             return BooleanMatrix(
                 array=self._binary_matrix_map(
-                    logical_or,
+                    utilities.logical_or,
                     other,
                 ),
                 shape=self.shape,
             )
         return BooleanMatrix(
             array=self._binary_scalar_map(
-                logical_or,
+                utilities.logical_or,
                 other,
             ),
             shape=self.shape,
@@ -794,7 +793,7 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
     def __ror__(self, other: object) -> BooleanMatrix[M_co, N_co]:
         return BooleanMatrix(
             array=self._binary_scalar_map_r(
-                logical_or,
+                utilities.logical_or,
                 other,
             ),
             shape=self.shape,
@@ -802,7 +801,7 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
 
     def __invert__(self) -> BooleanMatrix[M_co, N_co]:
         return BooleanMatrix(
-            array=self._unary_map(logical_not),
+            array=self._unary_map(utilities.logical_not),
             shape=self.shape,
         )
 
@@ -2367,27 +2366,6 @@ def optional_reversed[T](reversible: Reversible[T], *, reverse: bool = False) ->
     return reversed(reversible) if reverse else iter(reversible)
 
 
-def interleave[T](iterables: Iterable[Iterable[T]], leave_counts: Iterable[int]) -> Iterator[T]:
-    """Return an iterator that, for each integer N in ``leave_counts``, yields
-    N elements from the parallel iterable of ``iterables``, repeatedly, until
-    all have been exhausted.
-    """
-    sentinel = object()
-    requests = deque(zip(leave_counts, map(iter, iterables), strict=True))
-    while requests:
-        request = requests.popleft()
-        if (count := request[0]):
-            iterator = request[1]
-            for _ in range(count):
-                result = next(iterator, sentinel)
-                if result is sentinel:
-                    break
-                else:
-                    yield result  # type: ignore
-            else:
-                requests.append(request)
-
-
 def is_complex_number(obj: object) -> TypeGuard[Complex]:
     """Return true if ``obj`` is an instance of ``Complex``, otherwise false."""
     return isinstance(obj, (complex, float, int))
@@ -2455,23 +2433,3 @@ def is_integer_object(obj: object) -> TypeGuard[Matrix[Any, Any, Integer] | Inte
     ``Integer`` values, or a single ``Integer`` value.
     """
     return is_integer_number(obj) or is_integer_matrix(obj)
-
-
-def logical_and(a: object, b: object, /) -> bool:
-    """Return the logical and of two objects."""
-    return not not (a and b)
-
-
-def logical_xor(a: object, b: object, /) -> bool:
-    """Return the logical exclusive-or of two objects."""
-    return (not not a) != (not not b)
-
-
-def logical_or(a: object, b: object, /) -> bool:
-    """Return the logical or of two objects."""
-    return not not (a or b)
-
-
-def logical_not(a: object, /) -> bool:
-    """Return the logical not of an object."""
-    return not a
