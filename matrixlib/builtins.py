@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __all__ = [
     "Matrix",
+    "BooleanMatrix",
     "ComplexMatrix",
     "RealMatrix",
     "IntegerMatrix",
@@ -648,17 +649,17 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             shape=self.shape,
         )
 
-    def equal(self, other: object) -> Matrix[M_co, N_co, bool]:
+    def equal(self, other: object) -> BooleanMatrix[M_co, N_co]:
         """Return element-wise ``a == b``."""
         if isinstance(other, Matrix):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_matrix_map(
                     operator.__eq__,
                     other,
                 ),
                 shape=self.shape,
             )
-        return Matrix(
+        return BooleanMatrix(
             array=self._binary_scalar_map(
                 operator.__eq__,
                 other,
@@ -666,23 +667,187 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             shape=self.shape,
         )
 
-    def not_equal(self, other: object) -> Matrix[M_co, N_co, bool]:
+    def not_equal(self, other: object) -> BooleanMatrix[M_co, N_co]:
         """Return element-wise ``a != b``."""
         if isinstance(other, Matrix):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_matrix_map(
                     operator.__ne__,
                     other,
                 ),
                 shape=self.shape,
             )
-        return Matrix(
+        return BooleanMatrix(
             array=self._binary_scalar_map(
                 operator.__ne__,
                 other,
             ),
             shape=self.shape,
         )
+
+
+class BooleanMatrix(Matrix[M_co, N_co, bool]):
+    """``Matrix`` sub-class specialized for boolean operations.
+
+    **Note**: This class does *not* inherit from ``IntegerMatrix``, even though
+    ``bool`` is technically a sub-type of ``Integer``. There are a few reasons
+    for this, but the predominant one is due to ``bool`` not being very
+    appropriately conceptualized as a "number" - a sentiment that seems to be
+    shared by many Python contributors, especially with the deprecation of
+    ``bool``'s bitwise inversion in Python 3.12.
+    """
+
+    __slots__ = ()
+
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> bool: ...
+    @overload
+    def __getitem__(self, index: Slice) -> BooleanMatrix[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, index: tuple[SupportsIndex, SupportsIndex]) -> bool: ...
+    @overload
+    def __getitem__(self, index: tuple[SupportsIndex, Slice]) -> BooleanMatrix[Literal[1], Any]: ...
+    @overload
+    def __getitem__(self, index: tuple[Slice, SupportsIndex]) -> BooleanMatrix[Any, Literal[1]]: ...
+    @overload
+    def __getitem__(self, index: tuple[Slice, Slice]) -> BooleanMatrix[Any, Any]: ...
+    @override
+    def __getitem__(
+        self,
+        index: SupportsIndex | Slice | tuple[SupportsIndex | Slice, SupportsIndex | Slice],
+    ) -> bool | BooleanMatrix[Any, Any]:
+        result = super().__getitem__(index)
+        if isinstance(result, Matrix):
+            return BooleanMatrix[Any, Any].from_matrix(result)
+        return result
+
+    def __and__(self, other: object) -> BooleanMatrix[M_co, N_co]:
+        if isinstance(other, Matrix):
+            return BooleanMatrix(
+                array=self._binary_matrix_map(
+                    logical_and,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return BooleanMatrix(
+            array=self._binary_scalar_map(
+                logical_and,
+                other,
+            ),
+            shape=self.shape,
+        )
+
+    def __rand__(self, other: object) -> BooleanMatrix[M_co, N_co]:
+        return BooleanMatrix(
+            array=self._binary_scalar_map_r(
+                logical_and,
+                other,
+            ),
+            shape=self.shape,
+        )
+
+    def __xor__(self, other: object) -> BooleanMatrix[M_co, N_co]:
+        if isinstance(other, Matrix):
+            return BooleanMatrix(
+                array=self._binary_matrix_map(
+                    logical_xor,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return BooleanMatrix(
+            array=self._binary_scalar_map(
+                logical_xor,
+                other,
+            ),
+            shape=self.shape,
+        )
+
+    def __rxor__(self, other: object) -> BooleanMatrix[M_co, N_co]:
+        return BooleanMatrix(
+            array=self._binary_scalar_map_r(
+                logical_xor,
+                other,
+            ),
+            shape=self.shape,
+        )
+
+    def __or__(self, other: object) -> BooleanMatrix[M_co, N_co]:
+        if isinstance(other, Matrix):
+            return BooleanMatrix(
+                array=self._binary_matrix_map(
+                    logical_or,
+                    other,
+                ),
+                shape=self.shape,
+            )
+        return BooleanMatrix(
+            array=self._binary_scalar_map(
+                logical_or,
+                other,
+            ),
+            shape=self.shape,
+        )
+
+    def __ror__(self, other: object) -> BooleanMatrix[M_co, N_co]:
+        return BooleanMatrix(
+            array=self._binary_scalar_map_r(
+                logical_or,
+                other,
+            ),
+            shape=self.shape,
+        )
+
+    def __invert__(self) -> BooleanMatrix[M_co, N_co]:
+        return BooleanMatrix(
+            array=self._unary_map(logical_not),
+            shape=self.shape,
+        )
+
+    @override
+    def transpose(self) -> BooleanMatrix[N_co, M_co]:
+        return BooleanMatrix[N_co, M_co].from_matrix(super().transpose())
+
+    @override
+    def flip(self, *, by: Rule = Rule.ROW) -> BooleanMatrix[M_co, N_co]:
+        return BooleanMatrix[M_co, N_co].from_matrix(super().flip(by=by))
+
+    @overload
+    def rotate(self, n: EvenNumber) -> BooleanMatrix[M_co, N_co]: ...
+    @overload
+    def rotate(self, n: OddNumber) -> BooleanMatrix[N_co, M_co]: ...
+    @overload
+    def rotate(self, n: SupportsIndex) -> BooleanMatrix[Any, Any]: ...
+    @overload
+    def rotate(self) -> BooleanMatrix[N_co, M_co]: ...
+    @override
+    def rotate(self, n: SupportsIndex = 1) -> BooleanMatrix[Any, Any]:
+        return BooleanMatrix[Any, Any].from_matrix(super().rotate(n=n))
+
+    @override
+    def reverse(self) -> BooleanMatrix[M_co, N_co]:
+        return BooleanMatrix[M_co, N_co].from_matrix(super().reverse())
+
+    @override
+    def rows(self, *, reverse: bool = False) -> Iterator[BooleanMatrix[Literal[1], N_co]]:
+        return map(BooleanMatrix[Literal[1], N_co].from_matrix, super().rows(reverse=reverse))
+
+    @override
+    def cols(self, *, reverse: bool = False) -> Iterator[BooleanMatrix[M_co, Literal[1]]]:
+        return map(BooleanMatrix[M_co, Literal[1]].from_matrix, super().cols(reverse=reverse))
+
+    @overload
+    def vectors(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[BooleanMatrix[Literal[1], N_co]]: ...
+    @overload
+    def vectors(self, *, by: Literal[Rule.COL], reverse: bool = False) -> Iterator[BooleanMatrix[M_co, Literal[1]]]: ...
+    @overload
+    def vectors(self, *, by: Rule, reverse: bool = False) -> Iterator[BooleanMatrix[Any, Any]]: ...
+    @overload
+    def vectors(self, *, reverse: bool = False) -> Iterator[BooleanMatrix[Literal[1], N_co]]: ...
+    @override
+    def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[BooleanMatrix[Any, Any]]:
+        return map(BooleanMatrix[Any, Any].from_matrix, super().vectors(by=by, reverse=reverse))
 
 
 class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
@@ -1540,10 +1705,10 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             return 0
         return (compare(self, other) or compare(self.shape, other.shape))
 
-    def lesser(self, other: Matrix[M_co, N_co, Real] | Real) -> Matrix[M_co, N_co, bool]:
+    def lesser(self, other: Matrix[M_co, N_co, Real] | Real) -> BooleanMatrix[M_co, N_co]:
         """Return element-wise ``a < b``."""
         if is_real_matrix(other):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_matrix_map(
                     operator.__lt__,
                     other,
@@ -1551,7 +1716,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                 shape=self.shape,
             )
         if is_real_number(other):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_scalar_map(
                     operator.__lt__,
                     other,
@@ -1560,10 +1725,10 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             )
         raise TypeError
 
-    def lesser_equal(self, other: Matrix[M_co, N_co, Real] | Real) -> Matrix[M_co, N_co, bool]:
+    def lesser_equal(self, other: Matrix[M_co, N_co, Real] | Real) -> BooleanMatrix[M_co, N_co]:
         """Return element-wise ``a <= b``."""
         if is_real_matrix(other):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_matrix_map(
                     operator.__le__,
                     other,
@@ -1571,7 +1736,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                 shape=self.shape,
             )
         if is_real_number(other):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_scalar_map(
                     operator.__le__,
                     other,
@@ -1580,10 +1745,10 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             )
         raise TypeError
 
-    def greater(self, other: Matrix[M_co, N_co, Real] | Real) -> Matrix[M_co, N_co, bool]:
+    def greater(self, other: Matrix[M_co, N_co, Real] | Real) -> BooleanMatrix[M_co, N_co]:
         """Return element-wise ``a > b``."""
         if is_real_matrix(other):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_matrix_map(
                     operator.__gt__,
                     other,
@@ -1591,7 +1756,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                 shape=self.shape,
             )
         if is_real_number(other):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_scalar_map(
                     operator.__gt__,
                     other,
@@ -1600,10 +1765,10 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             )
         raise TypeError
 
-    def greater_equal(self, other: Matrix[M_co, N_co, Real] | Real) -> Matrix[M_co, N_co, bool]:
+    def greater_equal(self, other: Matrix[M_co, N_co, Real] | Real) -> BooleanMatrix[M_co, N_co]:
         """Return element-wise ``a >= b``."""
         if is_real_matrix(other):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_matrix_map(
                     operator.__ge__,
                     other,
@@ -1611,7 +1776,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
                 shape=self.shape,
             )
         if is_real_number(other):
-            return Matrix(
+            return BooleanMatrix(
                 array=self._binary_scalar_map(
                     operator.__ge__,
                     other,
@@ -2303,3 +2468,23 @@ def is_integer_object(obj: object) -> TypeGuard[Matrix[Any, Any, Integer] | Inte
     ``Integer`` values, or a single ``Integer`` value.
     """
     return is_integer_number(obj) or is_integer_matrix(obj)
+
+
+def logical_and(a: object, b: object, /) -> bool:
+    """Return the logical and of two objects."""
+    return not not (a and b)
+
+
+def logical_xor(a: object, b: object, /) -> bool:
+    """Return the logical exclusive-or of two objects."""
+    return (not not a) != (not not b)
+
+
+def logical_or(a: object, b: object, /) -> bool:
+    """Return the logical or of two objects."""
+    return not not (a or b)
+
+
+def logical_not(a: object, /) -> bool:
+    """Return the logical not of an object."""
+    return not a
