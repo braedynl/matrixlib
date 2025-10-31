@@ -1094,25 +1094,25 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
             ),
         )
 
-    def __lt__(self, other: RealMatrix) -> bool:
+    def __lt__(self, other: Matrix[int, int, Real]) -> bool:
         """Return true if lexicographic ``a < b``, otherwise false"""
         if is_real_matrix(other):
             return self.compare(other) < 0
         return NotImplemented
 
-    def __le__(self, other: RealMatrix) -> bool:
+    def __le__(self, other: Matrix[int, int, Real]) -> bool:
         """Return true if lexicographic ``a <= b``, otherwise false"""
         if is_real_matrix(other):
             return self.compare(other) <= 0
         return NotImplemented
 
-    def __gt__(self, other: RealMatrix) -> bool:
+    def __gt__(self, other: Matrix[int, int, Real]) -> bool:
         """Return true if lexicographic ``a > b``, otherwise false"""
         if is_real_matrix(other):
             return self.compare(other) > 0
         return NotImplemented
 
-    def __ge__(self, other: RealMatrix) -> bool:
+    def __ge__(self, other: Matrix[int, int, Real]) -> bool:
         """Return true if lexicographic ``a >= b``, otherwise false"""
         if is_real_matrix(other):
             return self.compare(other) >= 0
