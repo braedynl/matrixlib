@@ -516,10 +516,11 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         If by ``ROW``, values are yielded in row-major order. If by ``COL``,
         column-major order.
         """
+        target = self._accessor
         if by is ROW:
-            values = self
+            values = target
         else:
-            values = TransposeAccessor(self._accessor)
+            values = TransposeAccessor(target)
         return optional_reversed(values, reverse=reverse)
 
     def rows(self, *, reverse: bool = False) -> Iterator[Matrix[Literal[1], N_co, T_co]]:
