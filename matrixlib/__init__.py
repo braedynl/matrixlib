@@ -12,3 +12,4 @@ Source: https://github.com/braedynl/matrixlib/
 from .accessors.rule import *
 from .builtins import *
 from .exceptions import *
+from .extras import *
