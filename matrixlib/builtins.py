@@ -98,8 +98,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             true_size = len(array)
             if true_size != test_size:
                 raise ReshapeError(
-                    f"array contains {true_size} values but shape implies"
-                    f" {test_size}",
+                    f"array contains {true_size} values but shape implies "
+                    f"{test_size}",
                 )
         self._accessor = cls._create_default_accessor(array, shape)
         return self
@@ -356,8 +356,9 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 test_col_count = len(row)
                 if true_col_count != test_col_count:
                     raise ValueError(
-                        f"row at index {row_count} has length {test_col_count},"
-                        f" but precedent rows have length {true_col_count}"
+                        f"row at index {row_count} has length "
+                        f"{test_col_count}, but precedent rows have length "
+                        f"{true_col_count}",
                     )
             array.extend(row)
             row_count += 1
@@ -614,8 +615,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 test_count = matrix.shape[dy]
                 if test_count != true_count:
                     raise MismatchedDimensionError(
-                        f"matrix at index {i} has {test_count} {dy.handle}s,"
-                        f" but precedent matrices have {true_count}"
+                        f"matrix at index {i} has {test_count} {dy.handle}s, "
+                        f"but precedent matrices have {true_count}",
                     )
 
         interleaving = (self,) + matrices
@@ -1409,9 +1410,9 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         if __debug__:
             if n1 != n2:
                 raise MismatchedDimensionError(
-                    f"cannot multiply matrices with mismatched inner"
-                    f" dimensions, left operand has {n1} columns but right"
-                    f" operand has {n2} rows"
+                    f"cannot multiply matrices with mismatched inner "
+                    f"dimensions, left operand has {n1} columns but right "
+                    f"operand has {n2} rows",
                 )
 
         if not n1:
