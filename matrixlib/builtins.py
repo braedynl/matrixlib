@@ -9,6 +9,7 @@ __all__ = [
     "ComplexMatrix",
     "RealMatrix",
     "IntegerMatrix",
+    "MutableMatrix",
 ]
 
 import cmath
@@ -17,14 +18,13 @@ import itertools
 import math
 import operator
 import random
-from collections.abc import Callable, Iterable, Iterator, Reversible, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsFloat, SupportsIndex,
                     TypeGuard, TypeVar, cast, overload, override)
 
 from . import exceptions, utilities
-from .accessors.abstracts import AbstractAccessor
-from .accessors.bases import (ColVectorAccessor, IdentityAccessor,
-                              MatrixAccessor, RowVectorAccessor, ValueAccessor)
+from .accessors.abstracts import AbstractAccessor, AbstractMutableAccessor
+from .accessors.defaults import DefaultAccessor, MutableDefaultAccessor
 from .accessors.permutations import (ColFlipAccessor, ReverseAccessor,
                                      Rotate090Accessor, Rotate180Accessor,
                                      Rotate270Accessor, RowFlipAccessor,
@@ -46,6 +46,11 @@ type Slice = slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | N
 
 M_co = TypeVar("M_co", covariant=True, bound=int, default=int)
 N_co = TypeVar("N_co", covariant=True, bound=int, default=int)
+
+T = TypeVar("T", bound=object, default=object)
+ComplexT = TypeVar("ComplexT", bound=Complex, default=Complex)
+RealT = TypeVar("RealT", bound=Real, default=Real)
+IntegerT = TypeVar("IntegerT", bound=Integer, default=Integer)
 
 T_co = TypeVar("T_co", covariant=True, bound=object, default=object)
 ComplexT_co = TypeVar("ComplexT_co", covariant=True, bound=Complex, default=Complex)
@@ -79,6 +84,11 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     __match_args__ = ("array", "shape")
     _accessor: AbstractAccessor[M_co, N_co, T_co]
 
+    @classmethod
+    def _create_default_accessor(cls, array: Iterable[T_co], shape: tuple[M_co, N_co]) -> AbstractAccessor[M_co, N_co, T_co]:
+        """Accessor instance constructed upon initial creation of a ``Matrix``."""
+        return DefaultAccessor(array, shape)
+
     def __new__(cls, array: Iterable[T_co] = (), shape: tuple[M_co, N_co] = (0, 0)) -> Self:
         self = super(Matrix, cls).__new__(cls)
         array = tuple(array)
@@ -91,19 +101,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                     f"array contains {true_size} values but shape implies"
                     f" {test_size}",
                 )
-        match shape:
-            case (1, _):
-                self._accessor = cast(
-                    AbstractAccessor[M_co, N_co, T_co],
-                    RowVectorAccessor(array),
-                )
-            case (_, 1):
-                self._accessor = cast(
-                    AbstractAccessor[M_co, N_co, T_co],
-                    ColVectorAccessor(array),
-                )
-            case (_, _):
-                self._accessor = MatrixAccessor(array, shape)
+        self._accessor = cls._create_default_accessor(array, shape)
         return self
 
     def __repr__(self) -> str:
@@ -124,7 +122,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     __copy__ = __deepcopy__
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.from_accessor, (self._accessor,))
 
     @override
@@ -252,15 +250,13 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """
         if __debug__:
             exceptions.check_positive_shape(shape)
-        return cls.from_accessor(
-            accessor=MatrixAccessor(
-                array=tuple(
-                    function(i, j)
-                    for i in range(shape[0])
-                    for j in range(shape[1])
-                ),
-                shape=shape,
+        return cls(
+            array=(
+                function(i, j)
+                for i in range(shape[0])
+                for j in range(shape[1])
             ),
+            shape=shape,
         )
 
     @classmethod
@@ -275,12 +271,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         ``array``.
         """
         array = tuple(array)
-        return cls.from_accessor(
-            accessor=cast(
-                AbstractAccessor[M_co, N_co, T_co],
-                RowVectorAccessor(array),
-            ),
-        )
+        shape = cast(tuple[M_co, N_co], (1, len(array)))
+        return cls(array, shape)
 
     @classmethod
     def col(cls, array: Iterable[T_co]) -> Self:
@@ -294,12 +286,8 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         ``Literal[1]``.
         """
         array = tuple(array)
-        return cls.from_accessor(
-            accessor=cast(
-                AbstractAccessor[M_co, N_co, T_co],
-                ColVectorAccessor(array),
-            ),
-        )
+        shape = cast(tuple[M_co, N_co], (len(array), 1))
+        return cls(array, shape)
 
     @classmethod
     def vector(cls, array: Iterable[T_co], *, by: Rule = Rule.ROW) -> Self:
@@ -327,11 +315,9 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         """
         if __debug__:
             exceptions.check_positive_shape(shape)
-        return cls.from_accessor(
-            accessor=ValueAccessor(
-                value=cast(T_co, value),
-                shape=shape,
-            ),
+        return cls(
+            array=itertools.repeat(cast(T_co, value), shape[0] * shape[1]),
+            shape=shape,
         )
 
     @classmethod
@@ -525,12 +511,15 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             values = target
         else:
             values = TransposeAccessor(target)
-        return optional_reversed(values, reverse=reverse)
+        return utilities.optional_reversed(values, reverse=reverse)
 
     def rows(self, *, reverse: bool = False) -> Iterator[Matrix[Literal[1], N_co, T_co]]:
         """Return an iterator that yields views over the rows of the matrix."""
         target = self._accessor
-        for row_index in optional_reversed(range(self.row_count), reverse=reverse):
+        for row_index in utilities.optional_reversed(
+            range(self.row_count),
+            reverse=reverse,
+        ):
             yield Matrix[Literal[1], N_co, T_co].from_accessor(
                 accessor=RowSheerAccessor(target, row_index=row_index),
             )
@@ -538,7 +527,10 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     def cols(self, *, reverse: bool = False) -> Iterator[Matrix[M_co, Literal[1], T_co]]:
         """Return an iterator that yields views over the columns of the matrix."""
         target = self._accessor
-        for col_index in optional_reversed(range(self.col_count), reverse=reverse):
+        for col_index in utilities.optional_reversed(
+            range(self.col_count),
+            reverse=reverse,
+        ):
             yield Matrix[M_co, Literal[1], T_co].from_accessor(
                 accessor=ColSheerAccessor(target, col_index=col_index),
             )
@@ -1253,14 +1245,12 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
         """
         if __debug__:
             exceptions.check_positive_shape(shape)
-        return RealMatrix[M_co, N_co].from_accessor(
-            accessor=MatrixAccessor(
-                array=tuple(
-                    random.random()
-                    for _ in range(shape[0] * shape[1])
-                ),
-                shape=shape,
+        return RealMatrix[M_co, N_co](
+            array=utilities.repeat_call(
+                random.random,
+                times=shape[0] * shape[1],
             ),
+            shape=shape,
         )
 
     def __lt__(self, other: Matrix[int, int, Real]) -> bool:
@@ -1870,12 +1860,9 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         if __debug__:
             if count < 0:
                 raise NegativeDimensionError("shape dimensions must be positive")
-        return IntegerMatrix[N, N].from_accessor(
-            accessor=IdentityAccessor(
-                non_zero_value=1,
-                shape=(count, count),
-                zero_value=0,
-            ),
+        return IntegerMatrix[N, N].from_function(
+            lambda i, j: 1 if i == j else 0,
+            shape=(count, count),
         )
 
     @classmethod
@@ -2364,9 +2351,126 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().sort(key=key, reverse=reverse))
 
 
-def optional_reversed[T](reversible: Reversible[T], *, reverse: bool = False) -> Iterator[T]:
-    """Return the iterator of an object, optionally its reverse iterator."""
-    return reversed(reversible) if reverse else iter(reversible)
+class MutableMatrix(Matrix[M_co, N_co, T]):
+
+    __slots__ = ()
+
+    @classmethod
+    @override
+    def _create_default_accessor(cls, array: Iterable[T], shape: tuple[M_co, N_co]) -> AbstractMutableAccessor[M_co, N_co, T]:
+        return MutableDefaultAccessor(array, shape)
+
+    if __debug__:
+        def __init__(self, array: Iterable[T], shape: tuple[M_co, N_co]) -> None:
+            accessor = self._accessor
+            if not isinstance(accessor, AbstractMutableAccessor):
+                raise TypeError(
+                    "MutableMatrix instantiated with non-mutable accessor type",
+                )
+
+    @classmethod
+    @override
+    def from_accessor(cls, accessor: AbstractAccessor[M_co, N_co, T]) -> Self:
+        """Construct a matrix from an accessor.
+
+        Specific to ``MutableMatrix`` and its sub-classes: non-mutable accessor
+        types are casted to a "built-in" mutable accessor type, meaning that
+        this method can run, at worst, in O(M * N) time as opposed to its
+        typical O(1) time.
+
+        **Note**: This method bypasses the default constructor, as it is
+        assumed that the accessor is fully validated. This method is used for
+        internal optimisations but may be employed with proper care. This
+        method will never raise an exception on its own, but may cause others
+        to do so (often, very mysterious ones) if the accessor does not adhere
+        to accessor implementation rules.
+        """
+        if not isinstance(accessor, AbstractMutableAccessor):
+            accessor = cls._create_default_accessor(
+                array=accessor,
+                shape=accessor.shape,
+            )
+        return super().from_accessor(accessor)
+
+    @overload
+    def __setitem__(self, index: SupportsIndex, value: T) -> None: ...
+    @overload
+    def __setitem__(self, index: Slice, value: Iterable[T]) -> None: ...
+    @overload
+    def __setitem__(self, index: tuple[SupportsIndex, SupportsIndex], value: T) -> None: ...
+    @overload
+    def __setitem__(self, index: tuple[SupportsIndex, Slice], value: Matrix[Literal[1], int, T]) -> None: ...
+    @overload
+    def __setitem__(self, index: tuple[Slice, SupportsIndex], value: Matrix[int, Literal[1], T]) -> None: ...
+    @overload
+    def __setitem__(self, index: tuple[Slice, Slice], value: Matrix[int, int, T]) -> None: ...
+
+    def __setitem__(
+        self,
+        index: SupportsIndex | Slice | tuple[SupportsIndex | Slice, SupportsIndex | Slice],
+        value: T | Iterable[T],
+    ) -> None:
+        accessor = self._accessor
+        assert isinstance(accessor, AbstractMutableAccessor)
+
+        if isinstance(index, tuple):
+            row_index, col_index = index
+
+            if isinstance(row_index, slice):
+                row_window = accessor.resolve_matrix_slice(row_index, by=ROW)
+
+                if isinstance(col_index, slice):
+                    col_window = accessor.resolve_matrix_slice(col_index, by=COL)
+                    assert isinstance(value, Matrix)
+                    return accessor.ranged_matrix_modify(row_window, col_window, value)
+
+                col_index = accessor.resolve_matrix_index(col_index, by=COL)
+                assert isinstance(value, Matrix)
+                return accessor.ranged_matrix_modify(row_window, (col_index,), value)
+
+            row_index = accessor.resolve_matrix_index(row_index, by=ROW)
+
+            if isinstance(col_index, slice):
+                col_window = accessor.resolve_matrix_slice(col_index, by=COL)
+                assert isinstance(value, Matrix)
+                return accessor.ranged_matrix_modify((row_index,), col_window, value)
+
+            col_index = accessor.resolve_matrix_index(col_index, by=COL)
+            assert not isinstance(value, Iterable)
+            return accessor.matrix_modify(row_index, col_index, value)
+
+        if isinstance(index, slice):
+            window = accessor.resolve_vector_slice(index)
+            assert isinstance(value, Iterable)
+            return accessor.ranged_vector_modify(window, tuple(value))
+
+        index = accessor.resolve_vector_index(index)
+        assert not isinstance(value, Iterable)
+        return accessor.vector_modify(index, value)
+
+
+class MutableComplexMatrix(
+    MutableMatrix[M_co, N_co, ComplexT],
+    ComplexMatrix[M_co, N_co, ComplexT],
+):
+
+    __slots__ = ()
+
+
+class MutableRealMatrix(
+    MutableComplexMatrix[M_co, N_co, RealT],
+    RealMatrix[M_co, N_co, RealT],
+):
+
+    __slots__ = ()
+
+
+class MutableIntegerMatrix(
+    MutableRealMatrix[M_co, N_co, IntegerT],
+    IntegerMatrix[M_co, N_co, IntegerT],
+):
+
+    __slots__ = ()
 
 
 def is_complex_number(obj: object) -> TypeGuard[Complex]:

@@ -4,6 +4,9 @@ __all__ = [
     "AbstractAccessor",
     "AbstractVectorAccessor",
     "AbstractMatrixAccessor",
+    "AbstractMutableAccessor",
+    "AbstractMutableVectorAccessor",
+    "AbstractMutableMatrixAccessor",
 ]
 
 import operator
@@ -12,13 +15,10 @@ from collections.abc import Iterator
 from typing import SupportsIndex, override
 
 from .rule import Rule
+from .typeshed import ShapedIterable, SizedIterable
 
 
-class AbstractAccessor[
-    M: int = int,
-    N: int = int,
-    T: object = object,
-](metaclass=ABCMeta):
+class AbstractAccessor[M: int = int, N: int = int, T: object = object](metaclass=ABCMeta):
     """Base class of the accessor hierarchy.
 
     Accessors are an internal interface used by the ``Matrix`` type to
@@ -147,11 +147,10 @@ class AbstractAccessor[
         return resolve_slice(key, bound)
 
 
-class AbstractVectorAccessor[
-    M: int = int,
-    N: int = int,
-    T: object = object,
-](AbstractAccessor[M, N, T], metaclass=ABCMeta):
+class AbstractVectorAccessor[M: int = int, N: int = int, T: object = object](
+    AbstractAccessor[M, N, T],
+    metaclass=ABCMeta,
+):
     """Sub-class of ``AbstractAccessor`` with preference for vector access.
 
     Calls to ``matrix_access()`` are re-routed to ``vector_access()``.
@@ -177,11 +176,10 @@ class AbstractVectorAccessor[
         return self.vector_access(index)
 
 
-class AbstractMatrixAccessor[
-    M: int = int,
-    N: int = int,
-    T: object = object,
-](AbstractAccessor[M, N, T], metaclass=ABCMeta):
+class AbstractMatrixAccessor[M: int = int, N: int = int, T: object = object](
+    AbstractAccessor[M, N, T],
+    metaclass=ABCMeta,
+):
     """Sub-class of ``AbstractAccessor`` with preference for matrix access.
 
     Calls to ``vector_access()`` are re-routed to ``matrix_access()``.
@@ -209,6 +207,95 @@ class AbstractMatrixAccessor[
     def vector_access(self, index: int) -> T:
         row_index, col_index = divmod(index, self.col_count)
         return self.matrix_access(row_index, col_index)
+
+
+class AbstractMutableAccessor[M: int = int, N: int = int, T: object = object](
+    AbstractAccessor[M, N, T],
+    metaclass=ABCMeta,
+):
+
+    __slots__ = ()
+
+    @abstractmethod
+    def vector_modify(self, index: int, value: T) -> None:
+        """Modify the value at ``index``."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def matrix_modify(self, row_index: int, col_index: int, value: T) -> None:
+        """Modify the value at ``row_index``, ``col_index``."""
+        raise NotImplementedError
+
+    def ranged_vector_modify(
+        self,
+        range: SizedIterable[int],
+        sized: SizedIterable[T],
+    ) -> None:
+        """Modify the value at each index of ``range``.
+
+        Raises ``ValueError`` if the size of ``range`` does not equal the size
+        of ``sized``.
+        """
+        if len(range) != len(sized):
+            raise ValueError(
+                f"selected size {len(range)} area but size {len(sized)} "
+                f"iterable was provided",
+            )
+        values = iter(sized)
+        for index in range:
+            value = next(values)
+            self.vector_modify(index, value)
+
+    def ranged_matrix_modify(
+        self,
+        row_range: SizedIterable[int],
+        col_range: SizedIterable[int],
+        shaped: ShapedIterable[int, int, T],
+    ) -> None:
+        """Modify the value at each row and column index of ``row_range`` and
+        ``col_range``.
+
+        Raises ``ValueError`` if the shape of ``row_range`` and ``col_range``
+        does not equal the shape of ``shaped``.
+        """
+        if (len(row_range), len(col_range)) != shaped.shape:
+            raise ValueError(
+                f"selected shape ({len(row_range)}, {len(col_range)}) area but "
+                f"shape {shaped.shape} iterable was provided",
+            )
+        values = iter(shaped)
+        for row_index in row_range:
+            for col_index in col_range:
+                value = next(values)
+                self.matrix_modify(row_index, col_index, value)
+
+
+class AbstractMutableVectorAccessor[M: int = int, N: int = int, T: object = object](
+    AbstractMutableAccessor[M, N, T],
+    AbstractVectorAccessor[M, N, T],
+    metaclass=ABCMeta,
+):
+
+    __slots__ = ()
+
+    @override
+    def matrix_modify(self, row_index: int, col_index: int, value: T) -> None:
+        index = row_index * self.col_count + col_index
+        self.vector_modify(index, value)
+
+
+class AbstractMutableMatrixAccessor[M: int = int, N: int = int, T: object = object](
+    AbstractMutableAccessor[M, N, T],
+    AbstractMatrixAccessor[M, N, T],
+    metaclass=ABCMeta,
+):
+
+    __slots__ = ()
+
+    @override
+    def vector_modify(self, index: int, value: T) -> None:
+        row_index, col_index = divmod(index, self.col_count)
+        self.matrix_modify(row_index, col_index, value)
 
 
 def resolve_index(key: SupportsIndex, bound: int) -> int:
