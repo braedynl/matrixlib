@@ -10,6 +10,10 @@ __all__ = [
     "RealMatrix",
     "IntegerMatrix",
     "MutableMatrix",
+    "MutableBooleanMatrix",
+    "MutableComplexMatrix",
+    "MutableRealMatrix",
+    "MutableIntegerMatrix",
 ]
 
 import cmath
@@ -2448,6 +2452,14 @@ class MutableMatrix(Matrix[M_co, N_co, T]):
         index = accessor.resolve_vector_index(index)
         assert not isinstance(value, Iterable)
         return accessor.vector_modify(index, value)
+
+
+class MutableBooleanMatrix(
+    MutableMatrix[M_co, N_co, bool],
+    BooleanMatrix[M_co, N_co],
+):
+
+    __slots__ = ()
 
 
 class MutableComplexMatrix(
