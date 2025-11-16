@@ -623,7 +623,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return Matrix(
             array=utilities.interleave(
                 interleaving,
-                leave_counts=(
+                counts=(
                     matrix.col_count * (matrix.row_count ** dy.value)
                     for matrix in interleaving
                 ),

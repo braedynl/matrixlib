@@ -12,16 +12,16 @@ from collections.abc import Callable, Reversible
 from typing import Iterable, Iterator
 
 
-def interleave[T](iterables: Iterable[Iterable[T]], leave_counts: Iterable[int]) -> Iterator[T]:
-    """Return an iterator that, for each integer N in ``leave_counts``, yields
-    N elements from the parallel iterable of ``iterables``, repeatedly, until
-    all have been exhausted.
+def interleave[T](iterables: Iterable[Iterable[T]], counts: Iterable[int]) -> Iterator[T]:
+    """Return an iterator that, for each integer N in ``counts``, yields N
+    elements from the parallel iterable of ``iterables``, repeatedly, until all
+    have been exhausted.
 
     Raises ``ValueError`` if the length of ``iterables`` does not match the
-    length of ``leave_counts``.
+    length of ``counts``.
     """
     sentinel = object()
-    requests = collections.deque(zip(leave_counts, map(iter, iterables), strict=True))
+    requests = collections.deque(zip(counts, map(iter, iterables), strict=True))
 
     while requests:
         request = requests.popleft()
