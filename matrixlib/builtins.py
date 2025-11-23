@@ -2392,12 +2392,12 @@ class MutableMatrix(Matrix[M_co, N_co, T]):
     # since b is a view of a. This is actually how NumPy arrays operate, but
     # it's a common pitfall for users that are not familiar with views. This
     # example, in actuality, will raise an error for a missing __setitem__()
-    # method, since it'll produce a Matrix - users can make it mutable by
-    # explicitly casting it:
+    # method, since it'll produce an immutable Matrix - users are advised to
+    # cast it to a mutable matrix type if mutable operations are needed, which
+    # will simultaneously take a copy:
     #
-    # b = MutableMatrix._cast(a.transpose())
-    #
-    # And, in doing so, b will have an array separate from a.
+    # b = MutableMatrix.from_matrix(a.transpose())
+    # b[0] = 100  # Now possible, and won't have side effects on a
 
     @classmethod
     @override
