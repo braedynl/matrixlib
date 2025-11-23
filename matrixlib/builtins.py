@@ -2365,6 +2365,14 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         return IntegerMatrix[M_co, N_co, IntegerT_co]._cast(super().sort(key=key, reverse=reverse))
 
 
+# MutableMatrix is NOT a collections.abc.MutableSequence, as we do not support
+# operations that can alter shape (e.g., insertions, deletions, etc.). If, in a
+# far-off future we gain the capability to type things like M_co + 1,
+# M1_co + M2_co, etc., then we would maybe add shape-altering functions as a
+# new class that uses a data structure better suited to row/column
+# insertions/deletions.
+
+
 class MutableMatrix(Matrix[M_co, N_co, T]):
 
     __slots__ = ()
