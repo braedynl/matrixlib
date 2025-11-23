@@ -17,6 +17,7 @@ __all__ = [
 ]
 
 import cmath
+import copy
 import functools
 import itertools
 import math
@@ -2360,25 +2361,67 @@ class MutableMatrix(Matrix[M_co, N_co, T]):
 
     __slots__ = ()
 
+    # "When the __hash__() method of a class is None, instances of the class
+    # will raise an appropriate TypeError when a program attempts to retrieve
+    # their hash value, and will also be correctly identified as unhashable
+    # when checking isinstance(obj, collections.abc.Hashable)."
+    # From: https://docs.python.org/3/reference/datamodel.html#object.__hash__
+    __hash__ = None  # type: ignore
+
+    # Methods that produce accessor views are only wrapped by immutable Matrix
+    # types, meaning that a MutableMatrix (under normal circumstances) will
+    # never be created with a TransposeAccessor, RowFlipAccessor, etc. We
+    # knowingly lack mutable variants of these accessor types, as "mutable
+    # views" can often produce confusing behaviour. For example, suppose
+    # MutableMatrix.transpose() used a kind of mutable TransposeAccessor:
+    #
+    # a = MutableMatrix(...)
+    # b = a.transpose()
+    # b[0] = 100
+    #
+    # The last line would set the 0th entry to 100 for BOTH matrices b and a,
+    # since b is a view of a. This is actually how NumPy arrays operate, but
+    # it's a common pitfall for users that are not familiar with views. This
+    # example, in actuality, will raise an error for a missing __setitem__()
+    # method, since it'll produce a Matrix - users can make it mutable by
+    # explicitly casting it:
+    #
+    # b = MutableMatrix.from_matrix(a.transpose())
+    #
+    # And, in doing so, b will have an array separate from a.
+
     @classmethod
     @override
     def _create_default_accessor(cls, array: Iterable[T], shape: tuple[M_co, N_co]) -> AbstractMutableAccessor[M_co, N_co, T]:
         return MutableDefaultAccessor(array, shape)
 
-    if __debug__:
-        def __init__(self, array: Iterable[T], shape: tuple[M_co, N_co]) -> None:
-            accessor = self._accessor
-            if not isinstance(accessor, AbstractMutableAccessor):
-                raise TypeError(
-                    "MutableMatrix instantiated with non-mutable accessor type",
-                )
+    def __init__(self, array: Iterable[T], shape: tuple[M_co, N_co]) -> None:
+        # This implementation guarantees that a MutableMatrix cannot be
+        # constructed with an immutable accessor type. Sub-classes could
+        # implement methods that break this guarantee, however, and so this is
+        # here for implementors to essentially "check their work".
+        if __debug__:
+            if not isinstance(self._accessor, AbstractMutableAccessor):
+                raise TypeError("MutableMatrix instantiated with immutable accessor type")
+
+    @override
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        result = object.__new__(self.__class__)
+        result._accessor = copy.deepcopy(self._accessor, memo)
+        return result
+
+    @override
+    def __copy__(self) -> Self:
+        result = object.__new__(self.__class__)
+        result._accessor = copy.copy(self._accessor)
+        return result
 
     @classmethod
     @override
     def from_accessor(cls, accessor: AbstractAccessor[M_co, N_co, T]) -> Self:
         """Construct a matrix from an accessor.
 
-        Specific to ``MutableMatrix`` and its sub-classes: non-mutable accessor
+        Specific to ``MutableMatrix`` and its sub-classes: immutable accessor
         types are casted to a "built-in" mutable accessor type, meaning that
         this method can run, at worst, in O(M * N) time as opposed to its
         typical O(1) time.
@@ -2452,6 +2495,10 @@ class MutableMatrix(Matrix[M_co, N_co, T]):
         index = accessor.resolve_vector_index(index)
         assert not isinstance(value, Iterable)
         return accessor.vector_modify(index, value)
+
+    def copy(self) -> Self:
+        """Return a shallow copy of the matrix."""
+        return copy.copy(self)
 
 
 class MutableBooleanMatrix(
