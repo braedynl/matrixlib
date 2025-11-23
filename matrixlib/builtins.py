@@ -232,12 +232,19 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     @classmethod
     def _cast(cls, matrix: Matrix[M_co, N_co, T_co]) -> Self:
-        """Construct a matrix by referencing another matrix's accessor.
+        """Construct a matrix from another's accessor.
 
-        Use this method to cast a matrix to a different sub-class. Note that
-        the old instance may share its data with the new one.
+        Similar, but not identical to ``from_matrix()``. ``from_matrix()``
+        always takes a copy of the accessor, whereas ``_cast()`` tries its best
+        not to. This method is typically used to cast instances into different
+        sub-classes, hence the name.
         """
         return cls._from_accessor(matrix._accessor)
+
+    @classmethod
+    def from_matrix(cls, matrix: Matrix[M_co, N_co, T_co]) -> Self:
+        """Construct a matrix from another's accessor."""
+        return cls._from_accessor(copy.copy(matrix._accessor))
 
     @classmethod
     def from_function(cls, function: Callable[[int, int], T_co], shape: tuple[M_co, N_co]) -> Self:
