@@ -347,7 +347,10 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         except StopIteration:
             return cls(
                 array=array,
-                shape=(cast(M_co, row_count), cast(N_co, true_col_count)),
+                shape=cast(
+                    tuple[M_co, N_co],
+                    (row_count, true_col_count),
+                ),
             )
         else:
             array.extend(row)
@@ -370,7 +373,10 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
         return cls(
             array=array,
-            shape=(cast(M_co, row_count), cast(N_co, true_col_count)),
+            shape=cast(
+                tuple[M_co, N_co],
+                (row_count, true_col_count),
+            ),
         )
 
     @property
