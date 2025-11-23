@@ -5,6 +5,7 @@ __all__ = [
     "MutableDefaultAccessor",
 ]
 
+import copy
 from collections.abc import Iterable, Iterator
 from typing import Any, Self, override
 
@@ -32,6 +33,11 @@ class DefaultAccessor[
 
     def __hash__(self) -> int:
         return hash((self.array, self.shape))
+
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
 
     def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.array, self.shape))
@@ -81,6 +87,18 @@ class MutableDefaultAccessor[
         self.shape = shape  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # No hash
+
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        result = object.__new__(self.__class__)
+        result.array = copy.deepcopy(self.array, memo)
+        result.shape = self.shape
+        return result
+
+    def __copy__(self) -> Self:
+        result = object.__new__(self.__class__)
+        result.array = copy.copy(self.array)
+        result.shape = self.shape
+        return result
 
     def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.array, self.shape))

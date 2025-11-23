@@ -5,7 +5,7 @@ __all__ = [
     "ColSheerAccessor",
 ]
 
-from typing import Literal, Self, final, override
+from typing import Any, Literal, Self, final, override
 
 from .abstracts import AbstractAccessor, AbstractMatrixAccessor
 
@@ -27,7 +27,12 @@ class RowSheerAccessor[N: int = int, T: object = object](AbstractMatrixAccessor[
     def __hash__(self) -> int:
         return hash((self.target, self.row_index))
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target, self.row_index))
 
     @property
@@ -60,7 +65,12 @@ class ColSheerAccessor[M: int = int, T: object = object](AbstractMatrixAccessor[
     def __hash__(self) -> int:
         return hash((self.target, self.col_index))
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target, self.col_index))
 
     @property

@@ -10,7 +10,7 @@ __all__ = [
     "ReverseAccessor",
 ]
 
-from typing import Self, final, override
+from typing import Any, Self, final, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
@@ -36,7 +36,12 @@ class TransposeAccessor[
     def __hash__(self) -> int:
         return hash(self.target)
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target,))
 
     @property
@@ -74,7 +79,12 @@ class RowFlipAccessor[
     def __hash__(self) -> int:
         return hash(self.target)
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target,))
 
     @property
@@ -115,7 +125,12 @@ class ColFlipAccessor[
     def __hash__(self) -> int:
         return hash(self.target)
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target,))
 
     @property
@@ -156,7 +171,12 @@ class Rotate090Accessor[
     def __hash__(self) -> int:
         return hash(self.target)
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target,))
 
     @property
@@ -197,7 +217,12 @@ class Rotate180Accessor[
     def __hash__(self) -> int:
         return hash(self.target)
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target,))
 
     @property
@@ -235,7 +260,12 @@ class Rotate270Accessor[
     def __hash__(self) -> int:
         return hash(self.target)
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target,))
 
     @property

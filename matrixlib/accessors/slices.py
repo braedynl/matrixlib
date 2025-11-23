@@ -7,7 +7,7 @@ __all__ = [
     "MatrixSliceAccessor",
 ]
 
-from typing import Literal, Self, cast, final, override
+from typing import Any, Literal, Self, cast, final, override
 
 from .abstracts import (AbstractAccessor, AbstractMatrixAccessor,
                         AbstractVectorAccessor)
@@ -30,7 +30,12 @@ class SliceAccessor[N: int = int, T: object = object](AbstractVectorAccessor[Lit
     def __hash__(self) -> int:
         return hash((self.target, self.window))
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target, self.window))
 
     @property
@@ -62,7 +67,12 @@ class RowSliceAccessor[N: int = int, T: object = object](AbstractMatrixAccessor[
     def __hash__(self) -> int:
         return hash((self.target, self.row_index, self.col_window))
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target, self.row_index, self.col_window))
 
     @property
@@ -97,7 +107,12 @@ class ColSliceAccessor[M: int = int, T: object = object](AbstractMatrixAccessor[
     def __hash__(self) -> int:
         return hash((self.target, self.row_window, self.col_index))
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target, self.row_window, self.col_index))
 
     @property
@@ -140,7 +155,12 @@ class MatrixSliceAccessor[
     def __hash__(self) -> int:
         return hash((self.target, self.row_window, self.col_window))
 
-    def __reduce__(self) -> tuple[object, ...]:
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self:
+        return self
+
+    __copy__ = __deepcopy__
+
+    def __reduce__(self) -> str | tuple[Any, ...]:
         return (self.__class__, (self.target, self.row_window, self.col_window))
 
     @property
