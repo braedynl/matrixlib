@@ -128,7 +128,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
     __copy__ = __deepcopy__
 
     def __reduce__(self) -> str | tuple[Any, ...]:
-        return (self.from_accessor, (self._accessor,))
+        return (self._from_accessor, (self._accessor,))
 
     @override
     def __len__(self) -> int:
@@ -162,7 +162,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
                 if isinstance(col_index, slice):
                     col_window = target.resolve_matrix_slice(col_index, by=COL)
 
-                    return Matrix[Any, Any, T_co].from_accessor(
+                    return Matrix[Any, Any, T_co]._from_accessor(
                         accessor=MatrixSliceAccessor(
                             target,
                             row_window=row_window,
@@ -172,7 +172,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
                 col_index = target.resolve_matrix_index(col_index, by=COL)
 
-                return Matrix[Any, Literal[1], T_co].from_accessor(
+                return Matrix[Any, Literal[1], T_co]._from_accessor(
                     accessor=ColSliceAccessor(
                         target,
                         row_window=row_window,
@@ -185,7 +185,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             if isinstance(col_index, slice):
                 col_window = target.resolve_matrix_slice(col_index, by=COL)
 
-                return Matrix[Literal[1], Any, T_co].from_accessor(
+                return Matrix[Literal[1], Any, T_co]._from_accessor(
                     accessor=RowSliceAccessor(
                         target,
                         row_index=row_index,
@@ -200,7 +200,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         if isinstance(index, slice):
             window = target.resolve_vector_slice(index)
 
-            return Matrix[Literal[1], Any, T_co].from_accessor(
+            return Matrix[Literal[1], Any, T_co]._from_accessor(
                 accessor=SliceAccessor(
                     target,
                     window=window,
@@ -224,24 +224,20 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         return value in self._accessor
 
     @classmethod
-    def from_accessor(cls, accessor: AbstractAccessor[M_co, N_co, T_co]) -> Self:
-        """Construct a matrix from an accessor.
-
-        **Note**: This method bypasses the default constructor, as it is
-        assumed that the accessor is fully validated. This method is used for
-        internal optimisations but may be employed with proper care. This
-        method will never raise an exception on its own, but may cause others
-        to do so (often, very mysterious ones) if the accessor does not adhere
-        to accessor implementation rules.
-        """
+    def _from_accessor(cls, accessor: AbstractAccessor[M_co, N_co, T_co]) -> Self:
+        """Construct a matrix from an accessor."""
         self = super(Matrix, cls).__new__(cls)
         self._accessor = accessor
         return self
 
     @classmethod
-    def from_matrix(cls, matrix: Matrix[M_co, N_co, T_co]) -> Self:
-        """Construct a matrix by referencing another's accessor."""
-        return cls.from_accessor(matrix._accessor)
+    def _cast(cls, matrix: Matrix[M_co, N_co, T_co]) -> Self:
+        """Construct a matrix by referencing another matrix's accessor.
+
+        Use this method to cast a matrix to a different sub-class. Note that
+        the old instance may share its data with the new one.
+        """
+        return cls._from_accessor(matrix._accessor)
 
     @classmethod
     def from_function(cls, function: Callable[[int, int], T_co], shape: tuple[M_co, N_co]) -> Self:
@@ -470,7 +466,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
 
     def transpose(self) -> Matrix[N_co, M_co, T_co]:
         """Return a transposed view of the matrix."""
-        return Matrix[N_co, M_co, T_co].from_accessor(
+        return Matrix[N_co, M_co, T_co]._from_accessor(
             accessor=TransposeAccessor(self._accessor),
         )
 
@@ -481,7 +477,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             accessor = RowFlipAccessor(target)
         else:
             accessor = ColFlipAccessor(target)
-        return Matrix[M_co, N_co, T_co].from_accessor(accessor)
+        return Matrix[M_co, N_co, T_co]._from_accessor(accessor)
 
     @overload
     def rotate(self, n: EvenNumber) -> Matrix[M_co, N_co, T_co]: ...
@@ -504,11 +500,11 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             accessor = Rotate180Accessor(target)
         else:
             accessor = Rotate270Accessor(target)
-        return Matrix[Any, Any, T_co].from_accessor(accessor)
+        return Matrix[Any, Any, T_co]._from_accessor(accessor)
 
     def reverse(self) -> Matrix[M_co, N_co, T_co]:
         """Return a reversed view of the matrix."""
-        return Matrix[M_co, N_co, T_co].from_accessor(
+        return Matrix[M_co, N_co, T_co]._from_accessor(
             accessor=ReverseAccessor(self._accessor),
         )
 
@@ -532,7 +528,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             range(self.row_count),
             reverse=reverse,
         ):
-            yield Matrix[Literal[1], N_co, T_co].from_accessor(
+            yield Matrix[Literal[1], N_co, T_co]._from_accessor(
                 accessor=RowSheerAccessor(target, row_index=row_index),
             )
 
@@ -543,7 +539,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
             range(self.col_count),
             reverse=reverse,
         ):
-            yield Matrix[M_co, Literal[1], T_co].from_accessor(
+            yield Matrix[M_co, Literal[1], T_co]._from_accessor(
                 accessor=ColSheerAccessor(target, col_index=col_index),
             )
 
@@ -725,7 +721,7 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
     ) -> bool | BooleanMatrix[Any, Any]:
         result = super().__getitem__(index)
         if isinstance(result, Matrix):
-            return BooleanMatrix[Any, Any].from_matrix(result)
+            return BooleanMatrix[Any, Any]._cast(result)
         return result
 
     def __and__(self, other: object) -> BooleanMatrix[M_co, N_co]:
@@ -814,11 +810,11 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
 
     @override
     def transpose(self) -> BooleanMatrix[N_co, M_co]:
-        return BooleanMatrix[N_co, M_co].from_matrix(super().transpose())
+        return BooleanMatrix[N_co, M_co]._cast(super().transpose())
 
     @override
     def flip(self, *, by: Rule = Rule.ROW) -> BooleanMatrix[M_co, N_co]:
-        return BooleanMatrix[M_co, N_co].from_matrix(super().flip(by=by))
+        return BooleanMatrix[M_co, N_co]._cast(super().flip(by=by))
 
     @overload
     def rotate(self, n: EvenNumber) -> BooleanMatrix[M_co, N_co]: ...
@@ -830,19 +826,19 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
     def rotate(self) -> BooleanMatrix[N_co, M_co]: ...
     @override
     def rotate(self, n: SupportsIndex = 1) -> BooleanMatrix[Any, Any]:
-        return BooleanMatrix[Any, Any].from_matrix(super().rotate(n=n))
+        return BooleanMatrix[Any, Any]._cast(super().rotate(n=n))
 
     @override
     def reverse(self) -> BooleanMatrix[M_co, N_co]:
-        return BooleanMatrix[M_co, N_co].from_matrix(super().reverse())
+        return BooleanMatrix[M_co, N_co]._cast(super().reverse())
 
     @override
     def rows(self, *, reverse: bool = False) -> Iterator[BooleanMatrix[Literal[1], N_co]]:
-        return map(BooleanMatrix[Literal[1], N_co].from_matrix, super().rows(reverse=reverse))
+        return map(BooleanMatrix[Literal[1], N_co]._cast, super().rows(reverse=reverse))
 
     @override
     def cols(self, *, reverse: bool = False) -> Iterator[BooleanMatrix[M_co, Literal[1]]]:
-        return map(BooleanMatrix[M_co, Literal[1]].from_matrix, super().cols(reverse=reverse))
+        return map(BooleanMatrix[M_co, Literal[1]]._cast, super().cols(reverse=reverse))
 
     @overload
     def vectors(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[BooleanMatrix[Literal[1], N_co]]: ...
@@ -854,7 +850,7 @@ class BooleanMatrix(Matrix[M_co, N_co, bool]):
     def vectors(self, *, reverse: bool = False) -> Iterator[BooleanMatrix[Literal[1], N_co]]: ...
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[BooleanMatrix[Any, Any]]:
-        return map(BooleanMatrix[Any, Any].from_matrix, super().vectors(by=by, reverse=reverse))
+        return map(BooleanMatrix[Any, Any]._cast, super().vectors(by=by, reverse=reverse))
 
 
 class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
@@ -880,7 +876,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
     ) -> ComplexT_co | ComplexMatrix[Any, Any, ComplexT_co]:
         result = super().__getitem__(index)
         if isinstance(result, Matrix):
-            return ComplexMatrix[Any, Any, ComplexT_co].from_matrix(result)
+            return ComplexMatrix[Any, Any, ComplexT_co]._cast(result)
         return result
 
     @overload
@@ -1138,11 +1134,11 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
 
     @override
     def transpose(self) -> ComplexMatrix[N_co, M_co, ComplexT_co]:
-        return ComplexMatrix[N_co, M_co, ComplexT_co].from_matrix(super().transpose())
+        return ComplexMatrix[N_co, M_co, ComplexT_co]._cast(super().transpose())
 
     @override
     def flip(self, *, by: Rule = Rule.ROW) -> ComplexMatrix[M_co, N_co, ComplexT_co]:
-        return ComplexMatrix[M_co, N_co, ComplexT_co].from_matrix(super().flip(by=by))
+        return ComplexMatrix[M_co, N_co, ComplexT_co]._cast(super().flip(by=by))
 
     @overload
     def rotate(self, n: EvenNumber) -> ComplexMatrix[M_co, N_co, ComplexT_co]: ...
@@ -1154,19 +1150,19 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
     def rotate(self) -> ComplexMatrix[N_co, M_co, ComplexT_co]: ...
     @override
     def rotate(self, n: SupportsIndex = 1) -> ComplexMatrix[Any, Any, ComplexT_co]:
-        return ComplexMatrix[Any, Any, ComplexT_co].from_matrix(super().rotate(n=n))
+        return ComplexMatrix[Any, Any, ComplexT_co]._cast(super().rotate(n=n))
 
     @override
     def reverse(self) -> ComplexMatrix[M_co, N_co, ComplexT_co]:
-        return ComplexMatrix[M_co, N_co, ComplexT_co].from_matrix(super().reverse())
+        return ComplexMatrix[M_co, N_co, ComplexT_co]._cast(super().reverse())
 
     @override
     def rows(self, *, reverse: bool = False) -> Iterator[ComplexMatrix[Literal[1], N_co, ComplexT_co]]:
-        return map(ComplexMatrix[Literal[1], N_co, ComplexT_co].from_matrix, super().rows(reverse=reverse))
+        return map(ComplexMatrix[Literal[1], N_co, ComplexT_co]._cast, super().rows(reverse=reverse))
 
     @override
     def cols(self, *, reverse: bool = False) -> Iterator[ComplexMatrix[M_co, Literal[1], ComplexT_co]]:
-        return map(ComplexMatrix[M_co, Literal[1], ComplexT_co].from_matrix, super().cols(reverse=reverse))
+        return map(ComplexMatrix[M_co, Literal[1], ComplexT_co]._cast, super().cols(reverse=reverse))
 
     @overload
     def vectors(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[ComplexMatrix[Literal[1], N_co, ComplexT_co]]: ...
@@ -1178,7 +1174,7 @@ class ComplexMatrix(Matrix[M_co, N_co, ComplexT_co]):
     def vectors(self, *, reverse: bool = False) -> Iterator[ComplexMatrix[Literal[1], N_co, ComplexT_co]]: ...
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[ComplexMatrix[Any, Any, ComplexT_co]]:
-        return map(ComplexMatrix[Any, Any, ComplexT_co].from_matrix, super().vectors(by=by, reverse=reverse))
+        return map(ComplexMatrix[Any, Any, ComplexT_co]._cast, super().vectors(by=by, reverse=reverse))
 
     @overload
     def conjugate(self: ComplexMatrix[M_co, N_co, Integer]) -> ComplexMatrix[M_co, N_co, Integer]: ...
@@ -1308,7 +1304,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     ) -> RealT_co | RealMatrix[Any, Any, RealT_co]:
         result = super().__getitem__(index)
         if isinstance(result, Matrix):
-            return RealMatrix[Any, Any, RealT_co].from_matrix(result)
+            return RealMatrix[Any, Any, RealT_co]._cast(result)
         return result
 
     @overload
@@ -1326,7 +1322,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def __add__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
         if is_real_object(other):
-            return RealMatrix[M_co, N_co].from_matrix(super().__add__(other))
+            return RealMatrix[M_co, N_co]._cast(super().__add__(other))
         return super().__add__(other)
 
     @overload
@@ -1338,7 +1334,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if is_real_number(other):
-            return RealMatrix[M_co, N_co].from_matrix(super().__radd__(other))
+            return RealMatrix[M_co, N_co]._cast(super().__radd__(other))
         return super().__radd__(other)
 
     @overload
@@ -1356,7 +1352,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def __sub__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
         if is_real_object(other):
-            return RealMatrix[M_co, N_co].from_matrix(super().__sub__(other))
+            return RealMatrix[M_co, N_co]._cast(super().__sub__(other))
         return super().__sub__(other)
 
     @overload
@@ -1368,7 +1364,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if is_real_number(other):
-            return RealMatrix[M_co, N_co].from_matrix(super().__rsub__(other))
+            return RealMatrix[M_co, N_co]._cast(super().__rsub__(other))
         return super().__rsub__(other)
 
     @overload
@@ -1386,7 +1382,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def __mul__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
         if is_real_object(other):
-            return RealMatrix[M_co, N_co].from_matrix(super().__mul__(other))
+            return RealMatrix[M_co, N_co]._cast(super().__mul__(other))
         return super().__mul__(other)
 
     @overload
@@ -1398,7 +1394,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if is_real_number(other):
-            return RealMatrix[M_co, N_co].from_matrix(super().__rmul__(other))
+            return RealMatrix[M_co, N_co]._cast(super().__rmul__(other))
         return super().__rmul__(other)
 
     @overload
@@ -1449,7 +1445,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def __truediv__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
         if is_real_object(other):
-            return RealMatrix[M_co, N_co].from_matrix(super().__truediv__(other))
+            return RealMatrix[M_co, N_co]._cast(super().__truediv__(other))
         return super().__truediv__(other)
 
     @overload
@@ -1459,7 +1455,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     @override
     def __rtruediv__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if is_real_number(other):
-            return RealMatrix[M_co, N_co].from_matrix(super().__rtruediv__(other))
+            return RealMatrix[M_co, N_co]._cast(super().__rtruediv__(other))
         return super().__rtruediv__(other)
 
     @overload
@@ -1589,7 +1585,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def __neg__(self) -> RealMatrix[M_co, N_co]: ...
     @override
     def __neg__(self) -> RealMatrix[M_co, N_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return RealMatrix[M_co, N_co].from_matrix(super().__neg__())
+        return RealMatrix[M_co, N_co]._cast(super().__neg__())
 
     @overload
     def __pos__(self: RealMatrix[M_co, N_co, Integer]) -> RealMatrix[M_co, N_co, Integer]: ...
@@ -1597,7 +1593,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def __pos__(self) -> RealMatrix[M_co, N_co]: ...
     @override
     def __pos__(self) -> RealMatrix[M_co, N_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return RealMatrix[M_co, N_co].from_matrix(super().__pos__())
+        return RealMatrix[M_co, N_co]._cast(super().__pos__())
 
     def __float__(self: RealMatrix[Literal[1], Literal[1], RealT_co]) -> float:
         return float(self.demote())
@@ -1631,11 +1627,11 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
 
     @override
     def transpose(self) -> RealMatrix[N_co, M_co, RealT_co]:
-        return RealMatrix[N_co, M_co, RealT_co].from_matrix(super().transpose())
+        return RealMatrix[N_co, M_co, RealT_co]._cast(super().transpose())
 
     @override
     def flip(self, *, by: Rule = Rule.ROW) -> RealMatrix[M_co, N_co, RealT_co]:
-        return RealMatrix[M_co, N_co, RealT_co].from_matrix(super().flip(by=by))
+        return RealMatrix[M_co, N_co, RealT_co]._cast(super().flip(by=by))
 
     @overload
     def rotate(self, n: EvenNumber) -> RealMatrix[M_co, N_co, RealT_co]: ...
@@ -1647,19 +1643,19 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def rotate(self) -> RealMatrix[N_co, M_co, RealT_co]: ...
     @override
     def rotate(self, n: SupportsIndex = 1) -> RealMatrix[Any, Any, RealT_co]:
-        return RealMatrix[Any, Any, RealT_co].from_matrix(super().rotate(n=n))
+        return RealMatrix[Any, Any, RealT_co]._cast(super().rotate(n=n))
 
     @override
     def reverse(self) -> RealMatrix[M_co, N_co, RealT_co]:
-        return RealMatrix[M_co, N_co, RealT_co].from_matrix(super().reverse())
+        return RealMatrix[M_co, N_co, RealT_co]._cast(super().reverse())
 
     @override
     def rows(self, *, reverse: bool = False) -> Iterator[RealMatrix[Literal[1], N_co, RealT_co]]:
-        return map(RealMatrix[Literal[1], N_co, RealT_co].from_matrix, super().rows(reverse=reverse))
+        return map(RealMatrix[Literal[1], N_co, RealT_co]._cast, super().rows(reverse=reverse))
 
     @override
     def cols(self, *, reverse: bool = False) -> Iterator[RealMatrix[M_co, Literal[1], RealT_co]]:
-        return map(RealMatrix[M_co, Literal[1], RealT_co].from_matrix, super().cols(reverse=reverse))
+        return map(RealMatrix[M_co, Literal[1], RealT_co]._cast, super().cols(reverse=reverse))
 
     @overload
     def vectors(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[RealMatrix[Literal[1], N_co, RealT_co]]: ...
@@ -1671,7 +1667,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def vectors(self, *, reverse: bool = False) -> Iterator[RealMatrix[Literal[1], N_co, RealT_co]]: ...
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[RealMatrix[Any, Any, RealT_co]]:
-        return map(RealMatrix[Any, Any, RealT_co].from_matrix, super().vectors(by=by, reverse=reverse))
+        return map(RealMatrix[Any, Any, RealT_co]._cast, super().vectors(by=by, reverse=reverse))
 
     # NOTE: Same typing problem as with __neg__() and __pos__() - see note
     # above them for more details.
@@ -1690,7 +1686,7 @@ class RealMatrix(ComplexMatrix[M_co, N_co, RealT_co]):
     def transjugate(self) -> RealMatrix[N_co, M_co]: ...
     @override
     def transjugate(self) -> RealMatrix[N_co, M_co]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return RealMatrix[N_co, M_co].from_matrix(super().transjugate())
+        return RealMatrix[N_co, M_co]._cast(super().transjugate())
 
     def compare(self, other: Matrix[int, int, Real]) -> Literal[-1, 0, 1]:
         """Return literal ``-1``, ``0``, or ``+1`` if the matrix
@@ -1914,7 +1910,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     ) -> IntegerT_co | IntegerMatrix[Any, Any, IntegerT_co]:
         result = super().__getitem__(index)
         if isinstance(result, Matrix):
-            return IntegerMatrix[Any, Any, IntegerT_co].from_matrix(result)
+            return IntegerMatrix[Any, Any, IntegerT_co]._cast(result)
         return result
 
     @overload
@@ -1932,7 +1928,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __add__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
         if is_integer_object(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__add__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__add__(other))
         return super().__add__(other)
 
     @overload
@@ -1944,7 +1940,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __radd__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if is_integer_number(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__radd__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__radd__(other))
         return super().__radd__(other)
 
     @overload
@@ -1962,7 +1958,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __sub__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
         if is_integer_object(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__sub__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__sub__(other))
         return super().__sub__(other)
 
     @overload
@@ -1974,7 +1970,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __rsub__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if is_integer_number(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__rsub__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__rsub__(other))
         return super().__rsub__(other)
 
     @overload
@@ -1992,7 +1988,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __mul__(self, other: Matrix[M_co, N_co, Complex] | Complex) -> ComplexMatrix[M_co, N_co]:
         if is_integer_object(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__mul__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__mul__(other))
         return super().__mul__(other)
 
     @overload
@@ -2004,7 +2000,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __rmul__(self, other: Complex) -> ComplexMatrix[M_co, N_co]:
         if is_integer_number(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__rmul__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__rmul__(other))
         return super().__rmul__(other)
 
     # NOTE: No override for __truediv__()/__rtruediv__() - division (often)
@@ -2017,7 +2013,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __matmul__[P: int](self, other: Matrix[N_co, P, Real]) -> RealMatrix[M_co, P]:
         if is_integer_matrix(other):
-            return IntegerMatrix[M_co, P].from_matrix(super().__matmul__(other))
+            return IntegerMatrix[M_co, P]._cast(super().__matmul__(other))
         return super().__matmul__(other)
 
     @overload
@@ -2031,7 +2027,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __floordiv__(self, other: Matrix[M_co, N_co, Real] | Real) -> RealMatrix[M_co, N_co]:
         if is_integer_object(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__floordiv__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__floordiv__(other))
         return super().__floordiv__(other)
 
     @overload
@@ -2041,7 +2037,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __rfloordiv__(self, other: Real) -> RealMatrix[M_co, N_co]:
         if is_integer_number(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__rfloordiv__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__rfloordiv__(other))
         return super().__rfloordiv__(other)
 
     @overload
@@ -2055,7 +2051,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __mod__(self, other: Matrix[M_co, N_co, Real] | Real) -> RealMatrix[M_co, N_co]:
         if is_integer_object(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__mod__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__mod__(other))
         return super().__mod__(other)
 
     @overload
@@ -2065,7 +2061,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     @override
     def __rmod__(self, other: Real) -> RealMatrix[M_co, N_co]:
         if is_integer_number(other):
-            return IntegerMatrix[M_co, N_co].from_matrix(super().__rmod__(other))
+            return IntegerMatrix[M_co, N_co]._cast(super().__rmod__(other))
         return super().__rmod__(other)
 
     @overload
@@ -2081,8 +2077,8 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         if is_integer_object(other):
             a, b = super().__divmod__(other)
             return (
-                IntegerMatrix[M_co, N_co].from_matrix(a),
-                IntegerMatrix[M_co, N_co].from_matrix(b),
+                IntegerMatrix[M_co, N_co]._cast(a),
+                IntegerMatrix[M_co, N_co]._cast(b),
             )
         return super().__divmod__(other)
 
@@ -2095,8 +2091,8 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         if is_integer_number(other):
             a, b = super().__rdivmod__(other)
             return (
-                IntegerMatrix[M_co, N_co].from_matrix(a),
-                IntegerMatrix[M_co, N_co].from_matrix(b),
+                IntegerMatrix[M_co, N_co]._cast(a),
+                IntegerMatrix[M_co, N_co]._cast(b),
             )
         return super().__rdivmod__(other)
 
@@ -2277,15 +2273,15 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
     @override
     def __neg__(self) -> IntegerMatrix[M_co, N_co]:
-        return IntegerMatrix[M_co, N_co].from_matrix(super().__neg__())
+        return IntegerMatrix[M_co, N_co]._cast(super().__neg__())
 
     @override
     def __pos__(self) -> IntegerMatrix[M_co, N_co]:
-        return IntegerMatrix[M_co, N_co].from_matrix(super().__pos__())
+        return IntegerMatrix[M_co, N_co]._cast(super().__pos__())
 
     @override
     def __abs__(self) -> IntegerMatrix[M_co, N_co]:
-        return IntegerMatrix[M_co, N_co].from_matrix(super().__abs__())
+        return IntegerMatrix[M_co, N_co]._cast(super().__abs__())
 
     def __invert__(self) -> IntegerMatrix[M_co, N_co]:
         return IntegerMatrix(
@@ -2303,11 +2299,11 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
     @override
     def transpose(self) -> IntegerMatrix[N_co, M_co, IntegerT_co]:
-        return IntegerMatrix[N_co, M_co, IntegerT_co].from_matrix(super().transpose())
+        return IntegerMatrix[N_co, M_co, IntegerT_co]._cast(super().transpose())
 
     @override
     def flip(self, *, by: Rule = Rule.ROW) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
-        return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().flip(by=by))
+        return IntegerMatrix[M_co, N_co, IntegerT_co]._cast(super().flip(by=by))
 
     @overload
     def rotate(self, n: EvenNumber) -> IntegerMatrix[M_co, N_co, IntegerT_co]: ...
@@ -2319,19 +2315,19 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     def rotate(self) -> IntegerMatrix[N_co, M_co, IntegerT_co]: ...
     @override
     def rotate(self, n: SupportsIndex = 1) -> IntegerMatrix[Any, Any, IntegerT_co]:
-        return IntegerMatrix[Any, Any, IntegerT_co].from_matrix(super().rotate(n=n))
+        return IntegerMatrix[Any, Any, IntegerT_co]._cast(super().rotate(n=n))
 
     @override
     def reverse(self) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
-        return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().reverse())
+        return IntegerMatrix[M_co, N_co, IntegerT_co]._cast(super().reverse())
 
     @override
     def rows(self, *, reverse: bool = False) -> Iterator[IntegerMatrix[Literal[1], N_co, IntegerT_co]]:
-        return map(IntegerMatrix[Literal[1], N_co, IntegerT_co].from_matrix, super().rows(reverse=reverse))
+        return map(IntegerMatrix[Literal[1], N_co, IntegerT_co]._cast, super().rows(reverse=reverse))
 
     @override
     def cols(self, *, reverse: bool = False) -> Iterator[IntegerMatrix[M_co, Literal[1], IntegerT_co]]:
-        return map(IntegerMatrix[M_co, Literal[1], IntegerT_co].from_matrix, super().cols(reverse=reverse))
+        return map(IntegerMatrix[M_co, Literal[1], IntegerT_co]._cast, super().cols(reverse=reverse))
 
     @overload
     def vectors(self, *, by: Literal[Rule.ROW], reverse: bool = False) -> Iterator[IntegerMatrix[Literal[1], N_co, IntegerT_co]]: ...
@@ -2343,7 +2339,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
     def vectors(self, *, reverse: bool = False) -> Iterator[IntegerMatrix[Literal[1], N_co, IntegerT_co]]: ...
     @override
     def vectors(self, *, by: Rule = Rule.ROW, reverse: bool = False) -> Iterator[IntegerMatrix[Any, Any, IntegerT_co]]:
-        return map(IntegerMatrix[Any, Any, IntegerT_co].from_matrix, super().vectors(by=by, reverse=reverse))
+        return map(IntegerMatrix[Any, Any, IntegerT_co]._cast, super().vectors(by=by, reverse=reverse))
 
     @override
     def conjugate(self) -> IntegerMatrix[M_co, N_co]:
@@ -2351,7 +2347,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
     @override
     def transjugate(self) -> IntegerMatrix[N_co, M_co]:
-        return IntegerMatrix[N_co, M_co].from_matrix(super().transjugate())
+        return IntegerMatrix[N_co, M_co]._cast(super().transjugate())
 
     @override
     def sort(
@@ -2360,7 +2356,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         key: Callable[[IntegerT_co], Sortable] | None = None,
         reverse: bool = False,
     ) -> IntegerMatrix[M_co, N_co, IntegerT_co]:
-        return IntegerMatrix[M_co, N_co, IntegerT_co].from_matrix(super().sort(key=key, reverse=reverse))
+        return IntegerMatrix[M_co, N_co, IntegerT_co]._cast(super().sort(key=key, reverse=reverse))
 
 
 class MutableMatrix(Matrix[M_co, N_co, T]):
@@ -2392,7 +2388,7 @@ class MutableMatrix(Matrix[M_co, N_co, T]):
     # method, since it'll produce a Matrix - users can make it mutable by
     # explicitly casting it:
     #
-    # b = MutableMatrix.from_matrix(a.transpose())
+    # b = MutableMatrix._cast(a.transpose())
     #
     # And, in doing so, b will have an array separate from a.
 
@@ -2424,27 +2420,20 @@ class MutableMatrix(Matrix[M_co, N_co, T]):
 
     @classmethod
     @override
-    def from_accessor(cls, accessor: AbstractAccessor[M_co, N_co, T]) -> Self:
+    def _from_accessor(cls, accessor: AbstractAccessor[M_co, N_co, T]) -> Self:
         """Construct a matrix from an accessor.
 
         Specific to ``MutableMatrix`` and its sub-classes: immutable accessor
         types are casted to a "built-in" mutable accessor type, meaning that
         this method can run, at worst, in O(M * N) time as opposed to its
         typical O(1) time.
-
-        **Note**: This method bypasses the default constructor, as it is
-        assumed that the accessor is fully validated. This method is used for
-        internal optimisations but may be employed with proper care. This
-        method will never raise an exception on its own, but may cause others
-        to do so (often, very mysterious ones) if the accessor does not adhere
-        to accessor implementation rules.
         """
         if not isinstance(accessor, AbstractMutableAccessor):
             accessor = cls._create_default_accessor(
                 array=accessor,
                 shape=accessor.shape,
             )
-        return super().from_accessor(accessor)
+        return super()._from_accessor(accessor)
 
     @overload
     def __setitem__(self, index: SupportsIndex, value: T) -> None: ...
