@@ -618,7 +618,7 @@ class Matrix(Sequence[T_co], Generic[M_co, N_co, T_co]):
         dy = ~by
 
         shape: dict[Rule, Any] = {}
-        shape[by] = self.shape[by] + sum(matrix.shape[by] for matrix in matrices)
+        shape[by] = sum((matrix.shape[by] for matrix in matrices), start=self.shape[by])
         shape[dy] = self.shape[dy]
 
         if __debug__:
@@ -1862,7 +1862,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
         cls: type[IntegerMatrix[N, N, IntegerT_co]],
         count: N,
     ) -> IntegerMatrix[N, N]:
-        """Construct an identity matrix, efficiently.
+        """Construct an identity matrix.
 
         Raises ``NegativeDimensionError`` if ``count`` is negative
         (debug-only).
@@ -1880,7 +1880,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
     @classmethod
     def zeroes(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co]:
-        """Construct a matrix comprised entirely of zeroes, efficiently.
+        """Construct a matrix comprised entirely of zeroes.
 
         **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
@@ -1889,7 +1889,7 @@ class IntegerMatrix(RealMatrix[M_co, N_co, IntegerT_co]):
 
     @classmethod
     def ones(cls, shape: tuple[M_co, N_co]) -> IntegerMatrix[M_co, N_co]:
-        """Construct a matrix comprised entirely of ones, efficiently.
+        """Construct a matrix comprised entirely of ones.
 
         **Note**: Unlike most other class methods, this one always returns an
         ``IntegerMatrix`` unless overriden by a child class.
