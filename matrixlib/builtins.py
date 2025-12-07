@@ -25,7 +25,7 @@ import operator
 import random
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import (Any, Generic, Literal, Self, SupportsFloat, SupportsIndex,
-                    TypeGuard, TypeVar, cast, overload, override)
+                    TypeIs, TypeVar, cast, overload, override)
 
 from . import exceptions, utilities
 from .accessors.abstracts import AbstractAccessor, AbstractMutableAccessor
@@ -2541,12 +2541,12 @@ class MutableIntegerMatrix(
     __slots__ = ()
 
 
-def is_complex_number(obj: object) -> TypeGuard[Complex]:
+def is_complex_number(obj: object, /) -> TypeIs[Complex]:
     """Return true if ``obj`` is an instance of ``Complex``, otherwise false."""
     return isinstance(obj, (complex, float, int))
 
 
-def is_complex_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Complex]]:
+def is_complex_matrix(obj: object, /) -> TypeIs[Matrix[Any, Any, Complex]]:
     """Return true if ``obj`` is an instance of ``Matrix``, and contains only
     instances of ``Complex``.
     """
@@ -2557,19 +2557,19 @@ def is_complex_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Complex]]:
     return False
 
 
-def is_complex_object(obj: object) -> TypeGuard[Matrix[Any, Any, Complex] | Complex]:
+def is_complex_object(obj: object, /) -> TypeIs[Matrix[Any, Any, Complex] | Complex]:
     """Return true if ``obj`` is an instance of either a ``Matrix`` of
     ``Complex`` values, or a single ``Complex`` value.
     """
     return is_complex_number(obj) or is_complex_matrix(obj)
 
 
-def is_real_number(obj: object) -> TypeGuard[Real]:
+def is_real_number(obj: object, /) -> TypeIs[Real]:
     """Return true if ``obj`` is an instance of ``Real``, otherwise false."""
     return isinstance(obj, (float, int))
 
 
-def is_real_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Real]]:
+def is_real_matrix(obj: object, /) -> TypeIs[Matrix[Any, Any, Real]]:
     """Return true if ``obj`` is an instance of ``Matrix``, and contains only
     instances of ``Real``.
     """
@@ -2580,19 +2580,19 @@ def is_real_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Real]]:
     return False
 
 
-def is_real_object(obj: object) -> TypeGuard[Matrix[Any, Any, Real] | Real]:
+def is_real_object(obj: object, /) -> TypeIs[Matrix[Any, Any, Real] | Real]:
     """Return true if ``obj`` is an instance of either a ``Matrix`` of
     ``Real`` values, or a single ``Real`` value.
     """
     return is_real_number(obj) or is_real_matrix(obj)
 
 
-def is_integer_number(obj: object) -> TypeGuard[Integer]:
+def is_integer_number(obj: object, /) -> TypeIs[Integer]:
     """Return true if ``obj`` is an instance of ``Integer``, otherwise false."""
     return isinstance(obj, int)
 
 
-def is_integer_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Integer]]:
+def is_integer_matrix(obj: object, /) -> TypeIs[Matrix[Any, Any, Integer]]:
     """Return true if ``obj`` is an instance of ``Matrix``, and contains only
     instances of ``Integer``.
     """
@@ -2603,7 +2603,7 @@ def is_integer_matrix(obj: object) -> TypeGuard[Matrix[Any, Any, Integer]]:
     return False
 
 
-def is_integer_object(obj: object) -> TypeGuard[Matrix[Any, Any, Integer] | Integer]:
+def is_integer_object(obj: object, /) -> TypeIs[Matrix[Any, Any, Integer] | Integer]:
     """Return true if ``obj`` is an instance of either a ``Matrix`` of
     ``Integer`` values, or a single ``Integer`` value.
     """
